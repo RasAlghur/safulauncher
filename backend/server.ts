@@ -16,11 +16,17 @@ interface TokenMetadata {
 }
 
 const app = express();
-app.use(cors());
+const ALLOWED = process.env.ALLOWED_ORIGINS?.split(',') || [];
+app.use(cors({ origin: ALLOWED }));
+
+
 app.use(express.json());
 
 // Upload setup
 const uploadDir = path.resolve(__dirname, '..', 'public', 'uploads');
+// expose the uploads folder so <img src="/uploads/…"> works
+app.use('/uploads', express.static(uploadDir));
+
 fs.mkdirSync(uploadDir, { recursive: true });
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),
