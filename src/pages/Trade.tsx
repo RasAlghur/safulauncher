@@ -433,7 +433,7 @@ export default function Trade() {
                                     <button
                                         className="admin-btn start-trading"
                                         onClick={handleStartTrading}
-                                        disabled={isTransactionPending || isStartTrading === 1}
+                                        disabled={isTransactionPending || isStartTrading === 1 || isProcessingTxn}
                                     >
                                         {isStartTrading === 1 ? 'Trading Started' : 'Start Trading'}
                                     </button>
@@ -447,12 +447,12 @@ export default function Trade() {
                                             value={whitelistAddresses}
                                             onChange={(e) => setWhitelistAddresses(e.target.value)}
                                             placeholder="Enter addresses separated by commas"
-                                            disabled={isTransactionPending}
+                                            disabled={isTransactionPending || isProcessingTxn}
                                         />
                                         <button
                                             className="admin-btn add-whitelist"
                                             onClick={handleAddToWhitelist}
-                                            disabled={isTransactionPending || !whitelistAddresses.trim()}
+                                            disabled={isTransactionPending || !whitelistAddresses.trim() || isProcessingTxn}
                                         >
                                             Add to Whitelist
                                         </button>
@@ -460,7 +460,7 @@ export default function Trade() {
                                     <button
                                         className="admin-btn disable-whitelist"
                                         onClick={handleDisableWhitelist}
-                                        disabled={isTransactionPending}
+                                        disabled={isTransactionPending || isProcessingTxn}
                                     >
                                         Disable Whitelist
                                     </button>
