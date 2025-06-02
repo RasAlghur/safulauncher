@@ -312,7 +312,11 @@ export default function Launch() {
             fd.append('website', website);
             fd.append('description', description);
             fd.append('tokenCreator', result?.from);
-            const topic1 = result?.logs[2].topics[1];
+
+            // Target the last log instead of hardcoded index 2
+            const lastLog = result?.logs[result.logs.length - 1];
+            const topic1 = lastLog?.topics[1];
+
             let decodedAddress = "";
             if (topic1) {
                 decodedAddress = ethers.getAddress("0x" + topic1.slice(-40));
@@ -324,7 +328,7 @@ export default function Launch() {
             fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
         }
     }, [isConfirmed]);
-
+    
     console.log("createToken args:", argArray, "value:", ethValue.toString());
 
     return (
