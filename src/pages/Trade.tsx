@@ -199,6 +199,7 @@ export default function Trade() {
     const tokenSold = infoData ? Number(infoData[10]) : 0;
     const isStartTrading = infoData ? Number(infoData[1]) : 0;
     const isListed = infoData ? Number(infoData[2]) : 0;
+    const isWhiteListOngoing = infoData ? Number(infoData[3]) : 0;
 
     const curvePercent = infoData
         ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
@@ -409,8 +410,9 @@ export default function Trade() {
             <div className="container">
                 <h1>Trade • {token.name} ({token.symbol})</h1>
                 <p>Token supply: {(tokenSupply / 1e18).toLocaleString()}</p>
-                <p>Trade trading start: {isStartTrading}</p>
-                <p>Trade is listed on uniswap: {isListed}</p>
+                <p>Token trading started: {isStartTrading}</p>
+                <p>Token whitelist round is ongoing: {isWhiteListOngoing}</p>
+                <p>Token is listed on uniswap: {isListed}</p>
 
                 {/* Admin Panel - Only show if user is token creator */}
                 {isTokenCreator && (
