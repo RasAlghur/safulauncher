@@ -167,7 +167,9 @@ export default function Launch() {
             }
             fd.append('tokenAddress', decodedAddress);
             if (logo) fd.append('logo', logo);
-            fetch('/api/tokens', { method: 'POST', body: fd });
+
+            const API = `https://safulauncher-production.up.railway.app`;
+            fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
         }
     }, [isConfirmed]);
 

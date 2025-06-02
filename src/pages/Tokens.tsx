@@ -15,8 +15,9 @@ interface TokenMetadata {
 export default function Tokens() {
     const [tokens, setTokens] = useState<TokenMetadata[]>([]);
 
+    const API = `https://safulauncher-production.up.railway.app`;
     useEffect(() => {
-        fetch('/api/tokens')
+        fetch(`${API}/api/tokens`)
             .then(res => res.json())
             .then((data: TokenMetadata[]) => setTokens(data));
     }, []);
@@ -29,7 +30,13 @@ export default function Tokens() {
                     {tokens.map((t, i) => (
                         <li key={i} style={{ margin: '1rem 0', border: '1px solid #ddd', padding: '1rem' }}>
                             <Link to={`/trade/${t.tokenAddress}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                {t.logoFilename && <img src={`/uploads/${t.logoFilename}`} width={64} alt="logo" />}
+                                {t.logoFilename && (
+                                    <img
+                                        src={`${API}/uploads/${t.logoFilename}`}
+                                        width={64}
+                                        alt={`${t.symbol} logo`}
+                                    />
+                                )}
                                 <h3>{t.name} ({t.symbol})</h3>
                                 <p>Address: {t.tokenAddress}</p>
                                 {t.website && <p>Website: <a href={t.website}>{t.website}</a></p>}

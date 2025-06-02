@@ -1,3 +1,5 @@
+// src/pages/Trade.tsx
+
 import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -21,7 +23,7 @@ interface TokenMetadata {
 }
 
 export default function Trade() {
-    const {address} = useAccount();
+    const { address } = useAccount();
     const { tokenAddress } = useParams<{ tokenAddress: `0x${string}` }>();
     const [token, setToken] = useState<TokenMetadata | null>(null);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
@@ -47,7 +49,7 @@ export default function Trade() {
             }
             : undefined
     );
-    
+
     const { data: amountOut, isLoading: isLoadingAmountOut,
         refetch: refetchAmountOut } = useReadContract(
             tokenAddress
@@ -130,10 +132,12 @@ export default function Trade() {
         refetchBalance
     ])
 
+    const API = `https://safulauncher-production.up.railway.app`;
+
     // Load token metadata
     useEffect(() => {
         setIsLoadingToken(true);
-        fetch('/api/tokens')
+        fetch(`${API}/api/tokens`)
             .then(res => res.json())
             .then((all: TokenMetadata[]) => {
                 const match = all.find(
@@ -223,7 +227,7 @@ export default function Trade() {
                                 disabled={isTransactionPending}
                             >Sell</button>
                         </div>
-                        
+
                         {/* Display token balance when in sell mode */}
                         {mode === 'sell' && (
                             <div className="balance-display">
@@ -234,7 +238,7 @@ export default function Trade() {
                                 )}
                             </div>
                         )}
-                        
+
                         <form className="trade-form" onSubmit={handleSubmit}>
                             <label id="inputLabel">
                                 Amount ({mode === 'buy' ? 'ETH' : token.symbol})
