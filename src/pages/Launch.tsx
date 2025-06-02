@@ -8,8 +8,12 @@ import {
 import { LAUNCHER_ABI } from "../web3/config";
 import { ethers } from "ethers";
 
-export default function Launch() {
+interface ValidationError {
+    field: string;
+    message: string;
+}
 
+export default function Launch() {
     // Basic fields
     const [name, setName] = useState("");
     const [symbol, setSymbol] = useState("");
@@ -17,7 +21,6 @@ export default function Launch() {
     const [website, setWebsite] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [logo, setLogo] = useState<File | null>(null);
-
 
     // Toggles
     const [enableTax, setEnableTax] = useState(false);
@@ -35,21 +38,193 @@ export default function Launch() {
     const [platformFeeList, setPlatformFeeList] = useState<{ addr: string; pct: number }[]>([]);
     const [platformFeeBps, setPlatformFeeBps] = useState<number>(0);
 
+    // Validation state
+    const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+    const [isFormValid, setIsFormValid] = useState(false);
+
     const { data: txHash, isPending, error, writeContract } = useWriteContract();
     const { data: result, isLoading: isConfirming, isSuccess: isConfirmed } =
         useWaitForTransactionReceipt({ hash: txHash });
+
     // Handlers to add/remove entries
     const addItem = <T,>(arr: T[], setter: React.Dispatch<React.SetStateAction<T[]>>, item: T, max: number) => {
         if (arr.length >= max) return;
         setter([...arr, item]);
     };
+
     const removeItem = <T,>(arr: T[], setter: React.Dispatch<React.SetStateAction<T[]>>, idx: number) => {
         setter(arr.filter((_, i) => i !== idx));
     };
 
+    // Address validation helper
+    const isValidAddress = (addr: string): boolean => {
+        try {
+            return ethers.isAddress(addr) && addr !== ethers.ZeroAddress;
+        } catch {
+            return false;
+        }
+    };
+
+    // Comprehensive validation function
+    const validateForm = useCallback((): ValidationError[] => {
+        const errors: ValidationError[] = [];
+
+        // Basic field validation
+        if (!name.trim()) {
+            errors.push({ field: 'name', message: 'Token name is required' });
+        }
+        if (!symbol.trim()) {
+            errors.push({ field: 'symbol', message: 'Token symbol is required' });
+        }
+        if (supply <= 0) {
+            errors.push({ field: 'supply', message: 'Supply must be greater than 0' });
+        }
+
+        // Tax validation
+        if (enableTax) {
+            const taxBpsSum = taxList.reduce((sum, t) => sum + (t.bps || 0), 0);
+
+            if (taxBpsSum > 1000) {
+                errors.push({ field: 'tax', message: 'Total tax cannot exceed 10% (1000 BPS)' });
+            }
+
+            if (taxList.length > 5) {
+                errors.push({ field: 'tax', message: 'Maximum 5 tax recipients allowed' });
+            }
+
+            // Validate tax addresses and percentages
+            taxList.forEach((tax, index) => {
+                if (tax.addr && !isValidAddress(tax.addr)) {
+                    errors.push({ field: 'tax', message: `Tax recipient ${index + 1}: Invalid address` });
+                }
+                if (tax.bps < 0 || tax.bps > 1000) {
+                    errors.push({ field: 'tax', message: `Tax recipient ${index + 1}: BPS must be between 0-1000` });
+                }
+            });
+
+            // Check for incomplete tax entries
+            const incompleteTaxEntries = taxList.some(tax => !tax.addr || tax.bps <= 0);
+            if (incompleteTaxEntries) {
+                errors.push({ field: 'tax', message: 'All tax recipients must have valid addresses and percentages > 0' });
+            }
+        }
+
+        // Whitelist validation
+        if (enableWhitelist) {
+            if (whitelist.length > 200) {
+                errors.push({ field: 'whitelist', message: 'Maximum 200 whitelist addresses allowed' });
+            }
+
+            // Validate whitelist addresses
+            whitelist.forEach((addr, index) => {
+                if (addr && !isValidAddress(addr)) {
+                    errors.push({ field: 'whitelist', message: `Whitelist address ${index + 1}: Invalid address` });
+                }
+            });
+
+            // Check for empty whitelist entries
+            const emptyWhitelistEntries = whitelist.some(addr => !addr.trim());
+            if (emptyWhitelistEntries) {
+                errors.push({ field: 'whitelist', message: 'All whitelist entries must have valid addresses' });
+            }
+        }
+
+        // Bundle validation
+        if (enableBundle) {
+            if (bundleList.length > 30) {
+                errors.push({ field: 'bundle', message: 'Maximum 30 bundle entries allowed' });
+            }
+
+            if (bundleEth <= 0) {
+                errors.push({ field: 'bundle', message: 'Bundle ETH amount must be greater than 0' });
+            }
+
+            if (bundleList.length === 0) {
+                errors.push({ field: 'bundle', message: 'At least one bundle recipient is required when bundle is enabled' });
+            }
+
+            // Validate bundle addresses and percentages
+            let totalBundlePercent = 0;
+            bundleList.forEach((bundle, index) => {
+                if (bundle.addr && !isValidAddress(bundle.addr)) {
+                    errors.push({ field: 'bundle', message: `Bundle recipient ${index + 1}: Invalid address` });
+                }
+                if (bundle.pct <= 0 || bundle.pct > 100) {
+                    errors.push({ field: 'bundle', message: `Bundle recipient ${index + 1}: Percentage must be between 0-100%` });
+                }
+                totalBundlePercent += bundle.pct || 0;
+            });
+
+            // Check if bundle percentages sum to 100%
+            if (bundleList.length > 0 && Math.abs(totalBundlePercent - 100) > 0.01) {
+                errors.push({ field: 'bundle', message: 'Bundle percentages must sum to exactly 100%' });
+            }
+
+            // Check for incomplete bundle entries
+            const incompleteBundleEntries = bundleList.some(bundle => !bundle.addr || bundle.pct <= 0);
+            if (incompleteBundleEntries) {
+                errors.push({ field: 'bundle', message: 'All bundle recipients must have valid addresses and percentages > 0' });
+            }
+        }
+
+        // Platform fee validation
+        if (enablePlatformFee) {
+            if (platformFeeBps > 500) {
+                errors.push({ field: 'platformFee', message: 'Platform fee cannot exceed 5% (500 BPS)' });
+            }
+
+            if (platformFeeBps < 0) {
+                errors.push({ field: 'platformFee', message: 'Platform fee BPS cannot be negative' });
+            }
+
+            if (platformFeeList.length > 5) {
+                errors.push({ field: 'platformFee', message: 'Maximum 5 platform fee recipients allowed' });
+            }
+
+            if (platformFeeList.length === 0) {
+                errors.push({ field: 'platformFee', message: 'At least one platform fee recipient is required when platform fee is enabled' });
+            }
+
+            // Validate platform fee addresses and percentages
+            let totalPlatformPercent = 0;
+            platformFeeList.forEach((fee, index) => {
+                if (fee.addr && !isValidAddress(fee.addr)) {
+                    errors.push({ field: 'platformFee', message: `Platform fee recipient ${index + 1}: Invalid address` });
+                }
+                if (fee.pct <= 0 || fee.pct > 100) {
+                    errors.push({ field: 'platformFee', message: `Platform fee recipient ${index + 1}: Percentage must be between 0-100%` });
+                }
+                totalPlatformPercent += fee.pct || 0;
+            });
+
+            // Check if platform fee percentages sum to 100%
+            if (platformFeeList.length > 0 && Math.abs(totalPlatformPercent - 100) > 0.01) {
+                errors.push({ field: 'platformFee', message: 'Platform fee percentages must sum to exactly 100%' });
+            }
+
+            // Check for incomplete platform fee entries
+            const incompletePlatformEntries = platformFeeList.some(fee => !fee.addr || fee.pct <= 0);
+            if (incompletePlatformEntries) {
+                errors.push({ field: 'platformFee', message: 'All platform fee recipients must have valid addresses and percentages > 0' });
+            }
+        }
+
+        return errors;
+    }, [
+        name, symbol, supply, enableTax, taxList, enableWhitelist, whitelist,
+        enableBundle, bundleList, bundleEth, enablePlatformFee, platformFeeBps, platformFeeList
+    ]);
+
+    // Run validation whenever form data changes
+    useEffect(() => {
+        const errors = validateForm();
+        setValidationErrors(errors);
+        setIsFormValid(errors.length === 0);
+    }, [validateForm]);
+
     // Compute conditional inputs
     const taxBpsSum: bigint = enableTax
-        ? taxList.reduce((sum, t) => sum + BigInt(t.bps), 0n)
+        ? taxList.reduce((sum, t) => sum + BigInt(t.bps || 0), 0n)
         : 0n;
     const taxRecipientsAddrs = enableTax
         ? (taxList.map(t => t.addr) as readonly `0x${string}`[])
@@ -80,19 +255,6 @@ export default function Launch() {
         ? (platformFeeList.map(p => Math.floor(p.pct * 100)) as readonly number[])
         : ([] as readonly number[]);
 
-    // Validation (optional inline checks)
-    const validate = () => {
-        if (enableTax && taxBpsSum > 1000n) throw new Error("Tax exceeds 10% limit");
-        if (enableBundle && bundleList.length > 30) throw new Error("Max 30 bundle entries");
-        if (enableWhitelist && whitelist.length > 200) throw new Error("Max 200 whitelist addresses");
-        if (
-            enablePlatformFee &&
-            (pfBps > 500 || pfPercs.reduce((a, b) => a + b, 0) !== 10000)
-        ) {
-            throw new Error("Invalid platform fee config");
-        }
-    };
-
     // Build args
     const argArray: [
         string, string, bigint, bigint, boolean, boolean, boolean,
@@ -121,8 +283,15 @@ export default function Launch() {
     const handleSubmit = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
+
+            // Final validation check before submission
+            const errors = validateForm();
+            if (errors.length > 0) {
+                setValidationErrors(errors);
+                return;
+            }
+
             try {
-                validate();
                 writeContract({
                     ...LAUNCHER_ABI,
                     functionName: "createToken",
@@ -132,25 +301,8 @@ export default function Launch() {
             } catch (err) {
                 console.error(err);
             }
-        }, [
-        name,
-        symbol,
-        supply,
-        enableTax,
-        taxList,
-        lpOption,
-        enableWhitelist,
-        startNow,
-        enableBundle,
-        bundleList,
-        bundleEth,
-        whitelist,
-        enablePlatformFee,
-        platformFeeBps,
-        platformFeeList,
-    ]
+        }, [validateForm, argArray, ethValue, writeContract]
     );
-
 
     useEffect(() => {
         if (isConfirmed && result) {
@@ -160,7 +312,7 @@ export default function Launch() {
             fd.append('website', website);
             fd.append('description', description);
             fd.append('tokenCreator', result?.from);
-            const topic1 = result?.logs[2].topics[1]; // e.g., "0x000...1234"
+            const topic1 = result?.logs[2].topics[1];
             let decodedAddress = "";
             if (topic1) {
                 decodedAddress = ethers.getAddress("0x" + topic1.slice(-40));
@@ -173,12 +325,32 @@ export default function Launch() {
         }
     }, [isConfirmed]);
 
-    console.log("string calldata name | string calldata symbol | uint256 supply | uint256 taxBps_ | bool lockLp | bool whitelistOnly_ | bool startNow | address[] calldata bundleAddrs | uint16[] calldata bundleShares | address[] calldata taxRecipients | uint16[] calldata taxPercents | address[] calldata initialWhitelist | uint16 platformFeeBps_ | address[] calldata platformFeeRecipients_ | uint16[] calldata platformFeePercents_")
     console.log("createToken args:", argArray, "value:", ethValue.toString());
 
     return (
         <div className="container">
             <h1>Launch Your Token</h1>
+
+            {/* Validation Errors Display */}
+            {validationErrors.length > 0 && (
+                <div className="validation-errors" style={{
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    marginBottom: '20px'
+                }}>
+                    <h3 style={{ color: '#dc2626', margin: '0 0 8px 0' }}>Please fix the following issues:</h3>
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {validationErrors.map((error, index) => (
+                            <li key={index} style={{ color: '#dc2626', marginBottom: '4px' }}>
+                                <strong>{error.field}:</strong> {error.message}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             <form id="launch-form" onSubmit={handleSubmit}>
                 {/* Name */}
                 <label>
@@ -190,7 +362,7 @@ export default function Launch() {
                         required
                     />
                 </label>
-                <div className="help">Token name (e.g. “MoonCat”)</div>
+                <div className="help">Token name (e.g. "MoonCat")</div>
 
                 {/* Symbol */}
                 <label>
@@ -202,7 +374,7 @@ export default function Launch() {
                         required
                     />
                 </label>
-                <div className="help">Ticker symbol (e.g. “MCAT”)</div>
+                <div className="help">Ticker symbol (e.g. "MCAT")</div>
 
                 {/* Supply */}
                 <label>
@@ -210,11 +382,13 @@ export default function Launch() {
                     <input
                         type="number"
                         value={supply}
-                        onChange={e => setSupply(parseInt(e.target.value))}
+                        onChange={e => setSupply(parseInt(e.target.value) || 0)}
                         required
+                        min="1"
                     />
                 </label>
                 <div className="help">Total supply (e.g. 1,000,000,000)</div>
+
                 <input type="url" placeholder="Website" value={website} onChange={e => setWebsite(e.target.value)} />
                 <textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
                 <input type="file" accept="image/*" onChange={e => setLogo(e.target.files?.[0] ?? null)} />
@@ -222,27 +396,24 @@ export default function Launch() {
                 {/* Tax Toggle */}
                 <div className="toggle-group">
                     <span>Enable Tax</span>
-                    <div
-                        className="toggle"
-                        onClick={() => setEnableTax(!enableTax)}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={enableTax}
-                            readOnly
-                        />
+                    <div className="toggle" onClick={() => setEnableTax(!enableTax)}>
+                        <input type="checkbox" checked={enableTax} readOnly />
                         <div className="knob" />
                     </div>
                 </div>
-                <div className="help">Collect up to 10% tax on Uniswap trades.</div>
+                <div className="help">Collect up to 10% tax on Uniswap trades. (Max 5 recipients)</div>
 
                 {/* Tax Section */}
                 {enableTax && (
                     <div id="tax-section" className="group">
+                        <div className="help" style={{ marginBottom: '10px' }}>
+                            Current total: {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS
+                            ({(taxList.reduce((sum, t) => sum + (t.bps || 0), 0) / 100).toFixed(1)}%)
+                        </div>
                         {taxList.map((t, i) => (
                             <div key={i} className="group-item">
                                 <input
-                                    placeholder="0x…"
+                                    placeholder="0x..."
                                     value={t.addr}
                                     onChange={e => {
                                         const list = [...taxList];
@@ -251,22 +422,28 @@ export default function Launch() {
                                     }}
                                 />
                                 <input
-                                    placeholder="e.g.200"
+                                    placeholder="BPS (e.g. 200 = 2%)"
                                     type="number"
                                     value={t.bps}
                                     onChange={e => {
                                         const list = [...taxList];
-                                        list[i].bps = parseInt(e.target.value);
+                                        list[i].bps = parseInt(e.target.value) || 0;
                                         setTaxList(list);
                                     }}
+                                    min="0"
+                                    max="1000"
                                 />
                                 <button type="button" onClick={() => removeItem(taxList, setTaxList, i)}>
                                     Remove
                                 </button>
                             </div>
                         ))}
-                        <button type="button" onClick={() => addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)}>
-                            + Add Tax Recipient
+                        <button
+                            type="button"
+                            onClick={() => addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)}
+                            disabled={taxList.length >= 5}
+                        >
+                            + Add Tax Recipient ({taxList.length}/5)
                         </button>
                     </div>
                 )}
@@ -274,15 +451,12 @@ export default function Launch() {
                 {/* Whitelist Toggle */}
                 <div className="toggle-group">
                     <span>Whitelist Only</span>
-                    <div
-                        className="toggle"
-                        onClick={() => setEnableWhitelist(!enableWhitelist)}
-                    >
+                    <div className="toggle" onClick={() => setEnableWhitelist(!enableWhitelist)}>
                         <input type="checkbox" checked={enableWhitelist} readOnly />
                         <div className="knob" />
                     </div>
                 </div>
-                <div className="help">Only whitelisted addresses can buy initially.</div>
+                <div className="help">Only whitelisted addresses can buy initially. (Max 200 addresses)</div>
 
                 {/* Whitelist Section */}
                 {enableWhitelist && (
@@ -290,7 +464,7 @@ export default function Launch() {
                         {whitelist.map((addr, i) => (
                             <div key={i} className="group-item">
                                 <input
-                                    placeholder="0x…"
+                                    placeholder="0x..."
                                     value={addr}
                                     onChange={e => {
                                         const list = [...whitelist];
@@ -303,8 +477,12 @@ export default function Launch() {
                                 </button>
                             </div>
                         ))}
-                        <button type="button" onClick={() => addItem(whitelist, setWhitelist, "", 200)}>
-                            + Add Whitelist Address
+                        <button
+                            type="button"
+                            onClick={() => addItem(whitelist, setWhitelist, "", 200)}
+                            disabled={whitelist.length >= 200}
+                        >
+                            + Add Whitelist Address ({whitelist.length}/200)
                         </button>
                     </div>
                 )}
@@ -312,10 +490,7 @@ export default function Launch() {
                 {/* Start Now Toggle */}
                 <div className="toggle-group">
                     <span>Start Trading Now</span>
-                    <div
-                        className="toggle"
-                        onClick={() => setStartNow(!startNow)}
-                    >
+                    <div className="toggle" onClick={() => setStartNow(!startNow)}>
                         <input type="checkbox" checked={startNow} readOnly />
                         <div className="knob" />
                     </div>
@@ -339,15 +514,12 @@ export default function Launch() {
                 {/* Bundle Toggle */}
                 <div className="toggle-group">
                     <span>Enable Bundle</span>
-                    <div
-                        className="toggle"
-                        onClick={() => setEnableBundle(!enableBundle)}
-                    >
+                    <div className="toggle" onClick={() => setEnableBundle(!enableBundle)}>
                         <input type="checkbox" checked={enableBundle} readOnly />
                         <div className="knob" />
                     </div>
                 </div>
-                <div className="help">Dev pre-buy (max 15% of supply).</div>
+                <div className="help">Dev pre-buy (max 15% of supply, max 30 recipients).</div>
 
                 {/* Bundle Section */}
                 {enableBundle && (
@@ -357,16 +529,22 @@ export default function Launch() {
                             <input
                                 type="number"
                                 value={bundleEth}
-                                onChange={e => setBundleEth(parseFloat(e.target.value))}
+                                onChange={e => setBundleEth(parseFloat(e.target.value) || 0)}
                                 placeholder="10"
+                                min="0"
+                                step="0.001"
                             />
                         </label>
                         <div className="help">ETH to spend on initial pre-buy.</div>
 
+                        <div className="help" style={{ marginBottom: '10px' }}>
+                            Current total: {bundleList.reduce((sum, b) => sum + (b.pct || 0), 0).toFixed(2)}%
+                        </div>
+
                         {bundleList.map((b, i) => (
                             <div key={i} className="group-item">
                                 <input
-                                    placeholder="0x…"
+                                    placeholder="0x..."
                                     value={b.addr}
                                     onChange={e => {
                                         const list = [...bundleList];
@@ -375,22 +553,29 @@ export default function Launch() {
                                     }}
                                 />
                                 <input
-                                    placeholder="e.g.5%"
+                                    placeholder="Percentage (e.g. 50)"
                                     type="number"
                                     value={b.pct}
                                     onChange={e => {
                                         const list = [...bundleList];
-                                        list[i].pct = parseFloat(e.target.value);
+                                        list[i].pct = parseFloat(e.target.value) || 0;
                                         setBundleList(list);
                                     }}
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
                                 />
                                 <button type="button" onClick={() => removeItem(bundleList, setBundleList, i)}>
                                     Remove
                                 </button>
                             </div>
                         ))}
-                        <button type="button" onClick={() => addItem(bundleList, setBundleList, { addr: "", pct: 0 }, 30)}>
-                            + Add Bundle Entry
+                        <button
+                            type="button"
+                            onClick={() => addItem(bundleList, setBundleList, { addr: "", pct: 0 }, 30)}
+                            disabled={bundleList.length >= 30}
+                        >
+                            + Add Bundle Entry ({bundleList.length}/30)
                         </button>
                     </div>
                 )}
@@ -398,15 +583,12 @@ export default function Launch() {
                 {/* Platform Fee Toggle */}
                 <div className="toggle-group">
                     <span>Enable Platform Fees</span>
-                    <div
-                        className="toggle"
-                        onClick={() => setEnablePlatformFee(!enablePlatformFee)}
-                    >
+                    <div className="toggle" onClick={() => setEnablePlatformFee(!enablePlatformFee)}>
                         <input type="checkbox" checked={enablePlatformFee} readOnly />
                         <div className="knob" />
                     </div>
                 </div>
-                <div className="help">Dev/platform fee (max 5%).</div>
+                <div className="help">Dev/platform fee (max 5%, max 5 recipients).</div>
 
                 {/* Platform Fee Section */}
                 {enablePlatformFee && (
@@ -416,16 +598,22 @@ export default function Launch() {
                             <input
                                 type="number"
                                 value={platformFeeBps}
-                                onChange={e => setPlatformFeeBps(parseInt(e.target.value))}
-                                placeholder="e.g.250"
+                                onChange={e => setPlatformFeeBps(parseInt(e.target.value) || 0)}
+                                placeholder="e.g. 250 (2.5%)"
+                                min="0"
+                                max="500"
                             />
                         </label>
                         <div className="help">Max 500 BPS (5%).</div>
 
+                        <div className="help" style={{ marginBottom: '10px' }}>
+                            Current total: {platformFeeList.reduce((sum, p) => sum + (p.pct || 0), 0).toFixed(2)}%
+                        </div>
+
                         {platformFeeList.map((p, i) => (
                             <div key={i} className="group-item">
                                 <input
-                                    placeholder="0x…"
+                                    placeholder="0x..."
                                     value={p.addr}
                                     onChange={e => {
                                         const list = [...platformFeeList];
@@ -434,29 +622,44 @@ export default function Launch() {
                                     }}
                                 />
                                 <input
-                                    placeholder="e.g.50%"
+                                    placeholder="Percentage (e.g. 50)"
                                     type="number"
                                     value={p.pct}
                                     onChange={e => {
                                         const list = [...platformFeeList];
-                                        list[i].pct = parseFloat(e.target.value);
+                                        list[i].pct = parseFloat(e.target.value) || 0;
                                         setPlatformFeeList(list);
                                     }}
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
                                 />
                                 <button type="button" onClick={() => removeItem(platformFeeList, setPlatformFeeList, i)}>
                                     Remove
                                 </button>
                             </div>
                         ))}
-                        <button type="button" onClick={() => addItem(platformFeeList, setPlatformFeeList, { addr: "", pct: 0 }, 5)}>
-                            + Add Platform Fee Recipient
+                        <button
+                            type="button"
+                            onClick={() => addItem(platformFeeList, setPlatformFeeList, { addr: "", pct: 0 }, 5)}
+                            disabled={platformFeeList.length >= 5}
+                        >
+                            + Add Platform Fee Recipient ({platformFeeList.length}/5)
                         </button>
                     </div>
                 )}
 
                 {/* Submit */}
-                <button type="submit" className="submit-btn" disabled={isPending || isConfirming}>
-                    Create Token
+                <button
+                    type="submit"
+                    className="submit-btn"
+                    disabled={isPending || isConfirming || !isFormValid}
+                    style={{
+                        opacity: !isFormValid ? 0.5 : 1,
+                        cursor: !isFormValid ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    {!isFormValid ? 'Fix Validation Errors' : 'Create Token'}
                 </button>
             </form>
 
