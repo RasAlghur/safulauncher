@@ -5,7 +5,7 @@ import {
     useWaitForTransactionReceipt,
     type BaseError,
 } from "wagmi";
-import { SAFU_LAUNCHER_CA, LAUNCHER_ABI } from "../web3/config";
+import { LAUNCHER_ABI } from "../web3/config";
 import { ethers } from "ethers";
 
 export default function Launch() {

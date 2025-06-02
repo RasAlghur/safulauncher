@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, type FormEvent } from 'react';
+import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     useAccount,

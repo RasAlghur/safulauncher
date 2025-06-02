@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import { BrowserRouter as Router, Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Home from './pages/Home'
 import Launch from './pages/Launch'
