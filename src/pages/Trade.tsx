@@ -29,9 +29,24 @@ export default function Trade() {
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
     const [amount, setAmount] = useState<string>('');
     const [isLoadingToken, setIsLoadingToken] = useState(true);
+    const [needsApproval, setNeedsApproval] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
+    const [isProcessingTxn, setIsProcessingTxn] = useState(false);
+
+    // Admin function states
+    const [whitelistAddresses, setWhitelistAddresses] = useState<string>('');
+    const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+    // Track the type of the last transaction: 'approval', 'sell', or admin functions
+    const [lastTxnType, setLastTxnType] = useState<"approval" | "sell" | "startTrading" | "addToWhitelist" | "disableWhitelist" | null>(
+        null
+    );
+
+    // Check if current user is the token creator
+    const isTokenCreator = address && token && address.toLowerCase() === token.tokenCreator.toLowerCase();
 
     // Wagmi hooks
-    const { data: txHash, writeContract, isPending: isWritePending } = useWriteContract();
+    const { data: txHash, writeContract, isPending: isWritePending, error } = useWriteContract();
     const { isLoading: isConfirming, isSuccess: isConfirmed } =
         useWaitForTransactionReceipt({ hash: txHash });
 
@@ -43,12 +58,115 @@ export default function Trade() {
         tokenAddress && address
             ? {
                 ...TOKEN_ABI,
-                address: tokenAddress,
+                address: tokenAddress as `0x${string}`,
                 functionName: 'balanceOf',
                 args: [address as `0x${string}`]
             }
             : undefined
     );
+
+    const {
+        data: allowance,
+        isLoading: isLoadingAllowance,
+        refetch: refetchAllowance,
+    } = useReadContract(
+        tokenAddress && address
+            ? {
+                ...TOKEN_ABI,
+                address: tokenAddress,
+                functionName: "allowance",
+                args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+            }
+            : undefined
+    );
+
+    // Admin function to start trading
+    const handleStartTrading = useCallback(() => {
+        if (!tokenAddress || !isTokenCreator) return;
+        setErrorMsg("");
+        setLastTxnType("startTrading");
+
+        writeContract({
+            ...LAUNCHER_ABI,
+            address: SAFU_LAUNCHER_CA,
+            functionName: 'startTrading',
+            args: [tokenAddress as `0x${string}`]
+        });
+        setIsProcessingTxn(true);
+    }, [writeContract, tokenAddress, isTokenCreator]);
+
+    // Admin function to add addresses to whitelist
+    const handleAddToWhitelist = useCallback(() => {
+        if (!tokenAddress || !isTokenCreator || !whitelistAddresses.trim()) {
+            setErrorMsg("Please enter valid addresses to whitelist");
+            return;
+        }
+
+        // Parse comma-separated addresses
+        const addresses = whitelistAddresses
+            .split(',')
+            .map(addr => addr.trim())
+            .filter(addr => addr.length > 0);
+
+        if (addresses.length === 0) {
+            setErrorMsg("Please enter valid addresses");
+            return;
+        }
+
+        setErrorMsg("");
+        setLastTxnType("addToWhitelist");
+
+        writeContract({
+            ...LAUNCHER_ABI,
+            address: SAFU_LAUNCHER_CA,
+            functionName: 'addToWhitelist',
+            args: [tokenAddress as `0x${string}`, addresses as `0x${string}`[]]
+        });
+        setIsProcessingTxn(true);
+    }, [writeContract, tokenAddress, isTokenCreator, whitelistAddresses]);
+
+    // Admin function to disable whitelist
+    const handleDisableWhitelist = useCallback(() => {
+        if (!tokenAddress || !isTokenCreator) return;
+        setErrorMsg("");
+        setLastTxnType("disableWhitelist");
+
+        writeContract({
+            ...LAUNCHER_ABI,
+            address: SAFU_LAUNCHER_CA,
+            functionName: 'disableWhitelist',
+            args: [tokenAddress as `0x${string}`]
+        });
+        setIsProcessingTxn(true);
+    }, [writeContract, tokenAddress, isTokenCreator]);
+
+    // Function to handle approval.
+    const handleApprove = useCallback(() => {
+        setErrorMsg("");
+        if (isLoadingAllowance || isConfirming) return;
+        if (mode === 'sell' && !amount) {
+            setErrorMsg("Please enter an amount to sell");
+            return;
+        }
+
+        // Mark this txn as an approval txn.
+        setLastTxnType("approval");
+        writeContract({
+            ...TOKEN_ABI,
+            functionName: "approve",
+            address: tokenAddress!,
+            args: [SAFU_LAUNCHER_CA as `0x${string}`, tokenValue], // Use tokenValue (parsed amount)
+        });
+        setIsProcessingTxn(true);
+    }, [
+        isLoadingAllowance,
+        isConfirming,
+        amount,
+        tokenValue,
+        writeContract,
+        tokenAddress,
+        mode,
+    ]);
 
     const { data: amountOut, isLoading: isLoadingAmountOut,
         refetch: refetchAmountOut } = useReadContract(
@@ -96,6 +214,7 @@ export default function Trade() {
     const handleMode = (m: 'buy' | 'sell') => {
         setMode(m);
         setAmount('');
+        setErrorMsg('');
     };
 
     const handleMaxClick = useCallback(() => {
@@ -105,9 +224,14 @@ export default function Trade() {
         }
     }, [mode, getBalance]);
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = useCallback((e: FormEvent) => {
         e.preventDefault();
         if (!tokenAddress) return;
+        setErrorMsg("");
+        if (isConfirming) return;
+
+        // Mark this txn as a sell txn.
+        setLastTxnType("sell");
         writeContract({
             ...LAUNCHER_ABI,
             address: SAFU_LAUNCHER_CA,
@@ -117,20 +241,64 @@ export default function Trade() {
                 : [tokenAddress],
             value: mode === 'buy' ? ethValue : undefined,
         });
-    };
+        setIsProcessingTxn(true);
+    }, [isConfirming, writeContract, tokenAddress, mode, tokenValue, ethValue]);
 
+    // Check if approval is needed whenever allowance or amount changes.
+    useEffect(() => {
+        if (
+            mode === 'sell' &&
+            allowance !== undefined &&
+            amount &&
+            !isLoadingAllowance
+        ) {
+            const parsedAmount = ethers.parseEther(amount);
+            setNeedsApproval(allowance < parsedAmount);
+        } else {
+            setNeedsApproval(false);
+        }
+    }, [allowance, amount, isLoadingAllowance, mode]);
+
+    // If a transaction error occurs (e.g. cancellation), reset the processing flag.
+    useEffect(() => {
+        if (error) {
+            setIsProcessingTxn(false);
+        }
+    }, [error]);
+
+    // Reset processing state when there's no active transaction.
+    useEffect(() => {
+        if (!txHash) {
+            setIsProcessingTxn(false);
+        }
+    }, [txHash]);
+
+    // Handle the sell process (approval first if needed, then sell)
+    const handleSellProcess = useCallback(() => {
+        if (needsApproval) {
+            handleApprove();
+        } else {
+            handleSubmit({ preventDefault: () => { } } as FormEvent);
+        }
+    }, [needsApproval, handleApprove, handleSubmit]);
+
+    // Refetch data after transaction confirmation
     useEffect(() => {
         if (isConfirmed && txHash) {
             refetchInfoData();
             refetchAmountOut();
             refetchBalance();
+            refetchAllowance(); // Also refetch allowance after approval
+
+            // Reset processing state after successful transaction
+            setIsProcessingTxn(false);
+
+            // Clear whitelist input after successful addition
+            if (lastTxnType === "addToWhitelist") {
+                setWhitelistAddresses('');
+            }
         }
-    }, [isConfirmed,
-        txHash,
-        refetchInfoData,
-        refetchAmountOut,
-        refetchBalance
-    ])
+    }, [isConfirmed, txHash, refetchInfoData, refetchAmountOut, refetchBalance, refetchAllowance, lastTxnType]);
 
     const API = `https://safulauncher-production.up.railway.app`;
 
@@ -200,6 +368,42 @@ export default function Trade() {
         );
     }
 
+    // Get button text based on mode and approval status
+    const getButtonText = () => {
+        if (isWritePending) return 'Confirming...';
+        if (isConfirming) return 'Processing...';
+
+        if (mode === 'buy') {
+            return 'Buy';
+        } else {
+            return needsApproval ? 'Approve' : 'Sell';
+        }
+    };
+
+    // Handle button click based on mode and approval status
+    const handleButtonClick = (e: FormEvent) => {
+        e.preventDefault();
+        if (mode === 'buy') {
+            handleSubmit(e);
+        } else {
+            handleSellProcess();
+        }
+    };
+
+    // Get admin transaction status message
+    const getAdminTxnMessage = () => {
+        switch (lastTxnType) {
+            case "startTrading":
+                return "Trading started successfully!";
+            case "addToWhitelist":
+                return "Addresses added to whitelist successfully!";
+            case "disableWhitelist":
+                return "Whitelist disabled successfully!";
+            default:
+                return "Transaction confirmed successfully!";
+        }
+    };
+
     return (
         <>
             <div className="container">
@@ -207,6 +411,64 @@ export default function Trade() {
                 <p>Token supply: {(tokenSupply / 1e18).toLocaleString()}</p>
                 <p>Trade trading start: {isStartTrading}</p>
                 <p>Trade is listed on uniswap: {isListed}</p>
+
+                {/* Admin Panel - Only show if user is token creator */}
+                {isTokenCreator && (
+                    <div className="admin-panel">
+                        <div className="admin-header">
+                            <h3>🔧 Admin Controls</h3>
+                            <button
+                                className="toggle-admin-btn"
+                                onClick={() => setShowAdminPanel(!showAdminPanel)}
+                                disabled={isTransactionPending}
+                            >
+                                {showAdminPanel ? 'Hide' : 'Show'} Controls
+                            </button>
+                        </div>
+
+                        {showAdminPanel && (
+                            <div className="admin-controls">
+                                <div className="admin-section">
+                                    <h4>Trading Control</h4>
+                                    <button
+                                        className="admin-btn start-trading"
+                                        onClick={handleStartTrading}
+                                        disabled={isTransactionPending || isStartTrading === 1}
+                                    >
+                                        {isStartTrading === 1 ? 'Trading Started' : 'Start Trading'}
+                                    </button>
+                                </div>
+
+                                <div className="admin-section">
+                                    <h4>Whitelist Management</h4>
+                                    <div className="whitelist-input">
+                                        <input
+                                            type="text"
+                                            value={whitelistAddresses}
+                                            onChange={(e) => setWhitelistAddresses(e.target.value)}
+                                            placeholder="Enter addresses separated by commas"
+                                            disabled={isTransactionPending}
+                                        />
+                                        <button
+                                            className="admin-btn add-whitelist"
+                                            onClick={handleAddToWhitelist}
+                                            disabled={isTransactionPending || !whitelistAddresses.trim()}
+                                        >
+                                            Add to Whitelist
+                                        </button>
+                                    </div>
+                                    <button
+                                        className="admin-btn disable-whitelist"
+                                        onClick={handleDisableWhitelist}
+                                        disabled={isTransactionPending}
+                                    >
+                                        Disable Whitelist
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="top-section">
                     <div id="chart-container">
@@ -239,7 +501,7 @@ export default function Trade() {
                             </div>
                         )}
 
-                        <form className="trade-form" onSubmit={handleSubmit}>
+                        <form className="trade-form" onSubmit={handleButtonClick}>
                             <label id="inputLabel">
                                 Amount ({mode === 'buy' ? 'ETH' : token.symbol})
                             </label>
@@ -271,18 +533,24 @@ export default function Trade() {
                                     <span className="loading-text">Calculating...</span>
                                 ) : (
                                     <>
-                                        You will receive {amountOut ? (Number(amountOut.toString()) / 1e18).toLocaleString() : '0'} {mode === 'buy' ? token.symbol : 'ETH'}
+                                        You will receive {amountOut && mode === 'buy' ? (Number(amountOut.toString()) / 1e18).toLocaleString() : amountOut && mode === 'sell' ? (Number(amountOut.toString()) / 1e18).toFixed(8) : 0} {mode === 'buy' ? token.symbol : 'ETH'}
                                     </>
                                 )}
                             </div>
+
+                            {/* Show approval info when in sell mode and approval is needed */}
+                            {mode === 'sell' && needsApproval && (
+                                <div className="approval-info">
+                                    <p>⚠️ Approval required to sell tokens</p>
+                                </div>
+                            )}
+
                             <button
                                 type="submit"
                                 className={`submit ${isTransactionPending ? 'loading' : ''}`}
                                 disabled={isTransactionPending || !amount || parseFloat(amount) <= 0}
                             >
-                                {isWritePending ? 'Confirming...' :
-                                    isConfirming ? 'Processing...' :
-                                        'Confirm'}
+                                {getButtonText()}
                                 {isTransactionPending && <span className="button-spinner"></span>}
                             </button>
                         </form>
@@ -298,9 +566,34 @@ export default function Trade() {
                                 Transaction submitted. Waiting for confirmation...
                             </div>
                         )}
-                        {isConfirmed && (
+
+                        {isConfirmed && txHash && (
                             <div className="status-message success">
-                                Transaction confirmed successfully!
+                                <p>
+                                    {lastTxnType === "approval"
+                                        ? "Approval confirmed! You can now sell tokens."
+                                        : lastTxnType === "sell"
+                                            ? "Sell confirmed!"
+                                            : ["startTrading", "addToWhitelist", "disableWhitelist"].includes(lastTxnType!)
+                                                ? getAdminTxnMessage()
+                                                : "Transaction confirmed successfully!"}
+                                </p>
+                                <p className="text-sm text-gray-300">Transaction: {txHash}</p>
+                            </div>
+                        )}
+
+                        {/* Error Messages */}
+                        {errorMsg && (
+                            <div className="status-message error">
+                                {errorMsg}
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="status-message error">
+                                Error: {'shortMessage' in (error as any)
+                                    ? (error as any).shortMessage
+                                    : (error as Error).message}
                             </div>
                         )}
                     </div>

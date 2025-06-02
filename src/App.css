@@ -128,3 +128,75 @@ input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.admin-panel {
+    margin-bottom: 20px;
+    border: 2px solid #4a5568;
+    border-radius: 8px;
+    padding: 16px;
+    background: rgba(26, 32, 44, 0.6);
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.toggle-admin-btn {
+    background: #4299e1;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.admin-controls {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-section h4 {
+    margin-bottom: 8px;
+    color: #e2e8f0;
+}
+
+.admin-btn {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 8px;
+}
+
+.admin-btn:disabled {
+    background: #4a5568;
+    cursor: not-allowed;
+}
+
+.admin-btn.start-trading {
+    background: #ed8936;
+}
+
+.admin-btn.disable-whitelist {
+    background: #f56565;
+}
+
+.whitelist-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.whitelist-input input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    background: #2d3748;
+    color: white;
+}
