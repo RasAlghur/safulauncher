@@ -1,5 +1,4 @@
 // src/pages/Trade.tsx
-
 import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -8,7 +7,7 @@ import {
     useReadContract,
     useWaitForTransactionReceipt,
 } from 'wagmi';
-import { SAFU_LAUNCHER_CA, LAUNCHER_ABI, TOKEN_ABI } from '../web3/config';
+import { SAFU_LAUNCHER_CA, LAUNCHER_ABI, TOKEN_ABI, LAUNCHER_ABI_2, SAFU_LAUNCHER_CA_2 } from '../web3/config';
 import { ethers } from 'ethers';
 import '../App.css';
 
@@ -41,6 +40,19 @@ export default function Trade() {
     const [lastTxnType, setLastTxnType] = useState<"approval" | "sell" | "startTrading" | "addToWhitelist" | "disableWhitelist" | null>(
         null
     );
+
+    // Determine which contract address and ABI to use based on tokenAddress
+    const specialTokens = [
+        '0xBb8731Dfb178c8e39da322aaC24230AED2dE71F8',
+        '0x93E2B230956dC29a3cb09b5649434d647dA087C7'
+    ];
+    
+    const isSpecialToken = tokenAddress && specialTokens.some(
+        addr => addr.toLowerCase() === tokenAddress.toLowerCase()
+    );
+    
+    const LAUNCHER_CONTRACT_ADDRESS = isSpecialToken ? SAFU_LAUNCHER_CA : SAFU_LAUNCHER_CA_2;
+    const LAUNCHER_CONTRACT_ABI = isSpecialToken ? LAUNCHER_ABI : LAUNCHER_ABI_2;
 
     // Check if current user is the token creator
     const isTokenCreator = address && token && address.toLowerCase() === token.tokenCreator.toLowerCase();
@@ -75,7 +87,7 @@ export default function Trade() {
                 ...TOKEN_ABI,
                 address: tokenAddress,
                 functionName: "allowance",
-                args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+                args: [address as `0x${string}`, LAUNCHER_CONTRACT_ADDRESS],
             }
             : undefined
     );
@@ -87,13 +99,13 @@ export default function Trade() {
         setLastTxnType("startTrading");
 
         writeContract({
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA,
+            ...LAUNCHER_CONTRACT_ABI,
+            address: LAUNCHER_CONTRACT_ADDRESS,
             functionName: 'startTrading',
             args: [tokenAddress as `0x${string}`]
         });
         setIsProcessingTxn(true);
-    }, [writeContract, tokenAddress, isTokenCreator]);
+    }, [writeContract, tokenAddress, isTokenCreator, LAUNCHER_CONTRACT_ABI, LAUNCHER_CONTRACT_ADDRESS]);
 
     // Admin function to add addresses to whitelist
     const handleAddToWhitelist = useCallback(() => {
@@ -117,13 +129,13 @@ export default function Trade() {
         setLastTxnType("addToWhitelist");
 
         writeContract({
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA,
+            ...LAUNCHER_CONTRACT_ABI,
+            address: LAUNCHER_CONTRACT_ADDRESS,
             functionName: 'addToWhitelist',
             args: [tokenAddress as `0x${string}`, addresses as `0x${string}`[]]
         });
         setIsProcessingTxn(true);
-    }, [writeContract, tokenAddress, isTokenCreator, whitelistAddresses]);
+    }, [writeContract, tokenAddress, isTokenCreator, whitelistAddresses, LAUNCHER_CONTRACT_ABI, LAUNCHER_CONTRACT_ADDRESS]);
 
     // Admin function to disable whitelist
     const handleDisableWhitelist = useCallback(() => {
@@ -132,13 +144,13 @@ export default function Trade() {
         setLastTxnType("disableWhitelist");
 
         writeContract({
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA,
+            ...LAUNCHER_CONTRACT_ABI,
+            address: LAUNCHER_CONTRACT_ADDRESS,
             functionName: 'disableWhitelist',
             args: [tokenAddress as `0x${string}`]
         });
         setIsProcessingTxn(true);
-    }, [writeContract, tokenAddress, isTokenCreator]);
+    }, [writeContract, tokenAddress, isTokenCreator, LAUNCHER_CONTRACT_ABI, LAUNCHER_CONTRACT_ADDRESS]);
 
     // Function to handle approval.
     const handleApprove = useCallback(() => {
@@ -155,7 +167,7 @@ export default function Trade() {
             ...TOKEN_ABI,
             functionName: "approve",
             address: tokenAddress!,
-            args: [SAFU_LAUNCHER_CA as `0x${string}`, tokenValue], // Use tokenValue (parsed amount)
+            args: [LAUNCHER_CONTRACT_ADDRESS as `0x${string}`, tokenValue], // Use tokenValue (parsed amount)
         });
         setIsProcessingTxn(true);
     }, [
@@ -166,14 +178,15 @@ export default function Trade() {
         writeContract,
         tokenAddress,
         mode,
+        LAUNCHER_CONTRACT_ADDRESS,
     ]);
 
     const { data: amountOut, isLoading: isLoadingAmountOut,
         refetch: refetchAmountOut } = useReadContract(
             tokenAddress
                 ? {
-                    ...LAUNCHER_ABI,
-                    address: SAFU_LAUNCHER_CA,
+                    ...LAUNCHER_CONTRACT_ABI,
+                    address: LAUNCHER_CONTRACT_ADDRESS,
                     functionName: 'getAmountOut',
                     args: [
                         tokenAddress,
@@ -186,8 +199,8 @@ export default function Trade() {
 
     const { data: infoDataRaw, isLoading: isLoadingInfoData,
         refetch: refetchInfoData } = useReadContract({
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA,
+            ...LAUNCHER_CONTRACT_ABI,
+            address: LAUNCHER_CONTRACT_ADDRESS,
             functionName: 'data',
             args: [tokenAddress!],
         });
@@ -234,8 +247,8 @@ export default function Trade() {
         // Mark this txn as a sell txn.
         setLastTxnType("sell");
         writeContract({
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA,
+            ...LAUNCHER_CONTRACT_ABI,
+            address: LAUNCHER_CONTRACT_ADDRESS,
             functionName: mode,
             args: mode === 'sell'
                 ? [tokenAddress, tokenValue]
@@ -243,7 +256,7 @@ export default function Trade() {
             value: mode === 'buy' ? ethValue : undefined,
         });
         setIsProcessingTxn(true);
-    }, [isConfirming, writeContract, tokenAddress, mode, tokenValue, ethValue]);
+    }, [isConfirming, writeContract, tokenAddress, mode, tokenValue, ethValue, LAUNCHER_CONTRACT_ABI, LAUNCHER_CONTRACT_ADDRESS]);
 
     // Check if approval is needed whenever allowance or amount changes.
     useEffect(() => {

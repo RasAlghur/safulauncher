@@ -5,7 +5,7 @@ import {
     useWaitForTransactionReceipt,
     type BaseError,
 } from "wagmi";
-import { LAUNCHER_ABI } from "../web3/config";
+import { LAUNCHER_ABI_2 } from "../web3/config";
 import { ethers } from "ethers";
 
 interface ValidationError {
@@ -293,7 +293,7 @@ export default function Launch() {
 
             try {
                 writeContract({
-                    ...LAUNCHER_ABI,
+                    ...LAUNCHER_ABI_2,
                     functionName: "createToken",
                     args: argArray,
                     value: ethValue,
@@ -313,7 +313,6 @@ export default function Launch() {
             fd.append('description', description);
             fd.append('tokenCreator', result?.from);
 
-            // Target the last log instead of hardcoded index 2
             const lastLog = result?.logs[result.logs.length - 1];
             const topic1 = lastLog?.topics[1];
 
