@@ -5,7 +5,7 @@ import {
     useWaitForTransactionReceipt,
     type BaseError,
 } from "wagmi";
-import { LAUNCHER_ABI_2 } from "../web3/config";
+import { LAUNCHER_ABI } from "../web3/config";
 import { ethers } from "ethers";
 
 interface ValidationError {
@@ -129,6 +129,31 @@ export default function Launch() {
             }
         }
 
+        const calculateBundleTokens = (bundleEth: number, supply: number): number => {
+            // Simulate the smart contract calculation
+            // These values should match your smart contract constants
+            const TRADE_FEE_BPS = 30; // 0.3% - adjust to match your contract
+            const virtualEthReserve = 2; // 2 ETH - from your contract
+
+            if (bundleEth <= 0) return 0;
+
+            // Calculate fees (you'll need to include platform fee if enabled)
+            const tradeFee = (bundleEth * TRADE_FEE_BPS) / 10000;
+            const netEth = bundleEth - tradeFee; // Note: platform fee would also be subtracted
+
+            // Simplified bonding curve calculation
+            // This is a rough approximation - you may need to adjust based on your exact curve
+            const virtualTokenReserve = supply;
+            const k = virtualEthReserve * virtualTokenReserve;
+
+            // Calculate tokens out using the bonding curve formula
+            const newEthReserve = virtualEthReserve + netEth;
+            const newTokenReserve = k / newEthReserve;
+            const tokensOut = virtualTokenReserve - newTokenReserve;
+
+            return tokensOut;
+        };
+
         // Bundle validation
         if (enableBundle) {
             if (bundleList.length > 30) {
@@ -141,6 +166,21 @@ export default function Launch() {
 
             if (bundleList.length === 0) {
                 errors.push({ field: 'bundle', message: 'At least one bundle recipient is required when bundle is enabled' });
+            }
+
+
+            // Calculate estimated tokens that would be purchased
+            if (bundleEth > 0 && supply > 0) {
+                const estimatedTokens = calculateBundleTokens(bundleEth, supply);
+                const maxAllowedTokens = (supply * 25) / 100; // 25% of supply
+
+                if (estimatedTokens > maxAllowedTokens) {
+                    const maxEthForTokens = bundleEth * (maxAllowedTokens / estimatedTokens);
+                    errors.push({
+                        field: 'bundle',
+                        message: `Bundle would exceed 25% of supply. Maximum ETH for this supply: ~${maxEthForTokens.toFixed(4)} ETH`
+                    });
+                }
             }
 
             // Validate bundle addresses and percentages
@@ -293,7 +333,7 @@ export default function Launch() {
 
             try {
                 writeContract({
-                    ...LAUNCHER_ABI_2,
+                    ...LAUNCHER_ABI,
                     functionName: "createToken",
                     args: argArray,
                     value: ethValue,
@@ -327,8 +367,33 @@ export default function Launch() {
             fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
         }
     }, [isConfirmed]);
-    
+
     console.log("createToken args:", argArray, "value:", ethValue.toString());
+
+    function calculateBundleTokens(bundleEth: number, supply: number): number {
+        // Simulate the smart contract calculation
+        // These values should match your smart contract constants
+        const TRADE_FEE_BPS = 30; // 0.3% - adjust to match your contract
+        const virtualEthReserve = 2; // 2 ETH - from your contract
+
+        if (bundleEth <= 0 || supply <= 0) return 0;
+
+        // Calculate fees (you'll need to include platform fee if enabled)
+        const tradeFee = (bundleEth * TRADE_FEE_BPS) / 10000;
+        const netEth = bundleEth - tradeFee; // Note: platform fee would also be subtracted
+
+        // Simplified bonding curve calculation
+        // This is a rough approximation - you may need to adjust based on your exact curve
+        const virtualTokenReserve = supply;
+        const k = virtualEthReserve * virtualTokenReserve;
+
+        // Calculate tokens out using the bonding curve formula
+        const newEthReserve = virtualEthReserve + netEth;
+        const newTokenReserve = k / newEthReserve;
+        const tokensOut = virtualTokenReserve - newTokenReserve;
+
+        return Math.floor(tokensOut);
+    }
 
     return (
         <div className="container">
@@ -540,6 +605,25 @@ export default function Launch() {
                         </label>
                         <div className="help">ETH to spend on initial pre-buy.</div>
 
+                        {/* Bundle calculation display */}
+                        {bundleEth > 0 && supply > 0 && (
+                            <div className="bundle-calc" style={{
+                                background: '#f3f4f6',
+                                padding: '8px 12px',
+                                borderRadius: '4px',
+                                marginBottom: '10px',
+                                fontSize: '14px'
+                            }}>
+                                <div>Estimated tokens: ~{calculateBundleTokens(bundleEth, supply).toLocaleString()}</div>
+                                <div>Percentage of supply: ~{((calculateBundleTokens(bundleEth, supply) / supply) * 100).toFixed(2)}%</div>
+                                <div>Max allowed (25%): {((supply * 25) / 100).toLocaleString()}</div>
+                                {calculateBundleTokens(bundleEth, supply) > (supply * 25) / 100 && (
+                                    <div style={{ color: '#dc2626', fontWeight: 'bold' }}>
+                                        ⚠️ Exceeds 25% limit!
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <div className="help" style={{ marginBottom: '10px' }}>
                             Current total: {bundleList.reduce((sum, b) => sum + (b.pct || 0), 0).toFixed(2)}%
                         </div>
