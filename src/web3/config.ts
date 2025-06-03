@@ -1,6 +1,6 @@
 
 export const SAFU_LAUNCHER_CA = "0x2CB9dc61F2478ad486A21847fc74ACDa4Bd4C2AD";
-export const SAFU_LAUNCHER_CA_2 = "0xc71E608c94370Ca1698306e83ca2bB90916E81f1";
+export const SAFU_LAUNCHER_CA_2 = "0x7079e76E49Ec9426489E6Ae242B5B9949E9b1874";
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 export const testChainID = 11155111;
 export const mainnetID = 1;
@@ -1002,7 +1002,7 @@ export const LAUNCHER_ABI = {
 } as const
 
 export const LAUNCHER_ABI_2 = {
-    address: "0xc71E608c94370Ca1698306e83ca2bB90916E81f1",
+    address: "0x7079e76E49Ec9426489E6Ae242B5B9949E9b1874",
     abi: [
         {
             "type": "constructor",
