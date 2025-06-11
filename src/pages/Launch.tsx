@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
     useWriteContract,
     useWaitForTransactionReceipt,
-    type BaseError,
+    type BaseError
 } from "wagmi";
 import { LAUNCHER_ABI } from "../web3/config";
 import { ethers } from "ethers";
@@ -343,6 +343,10 @@ export default function Launch() {
             }
         }, [validateForm, argArray, ethValue, writeContract]
     );
+
+    // const blockTimestamp = new Date(Number(blockNumber.data) * 1000).toISOString();
+    // console.log("blockTimestamp:", blockTimestamp);
+    // fd.append('createdAt', blockTimestamp);
 
     useEffect(() => {
         if (isConfirmed && result) {

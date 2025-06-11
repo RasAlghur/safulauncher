@@ -1,4 +1,3 @@
-
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import fs from 'fs';
@@ -13,12 +12,13 @@ interface TokenMetadata {
     tokenAddress: string;
     tokenCreator: string;
     logoFilename?: string;
+    createdAt: string;  // Now required - ISO timestamp string
+    volume24h?: number; // Optional, can be used to store 24h volume
 }
 
 const app = express();
 const ALLOWED = process.env.ALLOWED_ORIGINS?.split(',') || [];
 app.use(cors({ origin: ALLOWED }));
-
 
 app.use(express.json());
 
@@ -42,7 +42,6 @@ const upload = multer({
         // accept images only
         if (/image\/.+/.test(file.mimetype)) cb(null, true);
         else cb(null, false);  // not cb(new Error(...))
-
     }
 });
 
@@ -55,7 +54,12 @@ if (!fs.existsSync(jsonFile)) fs.writeFileSync(jsonFile, '[]');
 // GET
 app.get('/api/tokens', (_req: Request, res: Response) => {
     const raw = fs.readFileSync(jsonFile, 'utf8');
-    res.json(JSON.parse(raw) as TokenMetadata[]);
+    const tokens = JSON.parse(raw) as TokenMetadata[];
+    
+    // Sort by creation time (newest first) - optional but useful
+    tokens.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    res.json(tokens);
 });
 
 // POST
@@ -65,7 +69,15 @@ app.post(
     (req: Request, res: Response) => {
         try {
             const { name, symbol, website, description, tokenAddress, tokenCreator } = req.body as Record<string, string>;
-            const newMeta: TokenMetadata = { name, symbol, tokenAddress, tokenCreator };
+            
+            const newMeta: TokenMetadata = { 
+                name, 
+                symbol, 
+                tokenAddress, 
+                tokenCreator,
+                createdAt: new Date().toISOString() // Server sets the timestamp
+            };
+            
             if (website) newMeta.website = website;
             if (description) newMeta.description = description;
             if (req.file) newMeta.logoFilename = req.file.filename;

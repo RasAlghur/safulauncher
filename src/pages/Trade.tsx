@@ -10,6 +10,7 @@ import {
 import { TOKEN_ABI, LAUNCHER_ABI, SAFU_LAUNCHER_CA } from '../web3/config';
 import { ethers } from 'ethers';
 import '../App.css';
+import { pureInfoDataRaw } from '../web3/readContracts';
 
 interface TokenMetadata {
     name: string;
@@ -19,10 +20,12 @@ interface TokenMetadata {
     tokenAddress: string;
     tokenCreator: string;
     logoFilename?: string;
+    createdAt?: number;  // Optional, can be used to store creation timestamp
+    volume24h?: number; // Optional, can be used to store 24h volume
 }
 
 export default function Trade() {
-    const { address } = useAccount();
+    const { address, isConnected } = useAccount();
     const { tokenAddress } = useParams<{ tokenAddress: `0x${string}` }>();
     const [token, setToken] = useState<TokenMetadata | null>(null);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
@@ -31,6 +34,7 @@ export default function Trade() {
     const [needsApproval, setNeedsApproval] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [isProcessingTxn, setIsProcessingTxn] = useState(false);
+    const [fallbackInfoData, setFallbackInfoData] = useState<any[] | null>(null);
 
     // Admin function states
     const [whitelistAddresses, setWhitelistAddresses] = useState<string>('');
@@ -40,7 +44,7 @@ export default function Trade() {
     const [lastTxnType, setLastTxnType] = useState<"approval" | "sell" | "startTrading" | "addToWhitelist" | "disableWhitelist" | null>(
         null
     );
-    
+
     // Check if current user is the token creator
     const isTokenCreator = address && token && address.toLowerCase() === token.tokenCreator.toLowerCase();
 
@@ -192,18 +196,36 @@ export default function Trade() {
             args: [tokenAddress!],
         });
 
-    // Explicitly type infoData as an array of unknowns (or the correct type if known)
-    const infoData = infoDataRaw as unknown[] | undefined;
+    useEffect(() => {
+        if (!isConnected && tokenAddress) {
+            pureInfoDataRaw(tokenAddress).then(data => {
+                if (Array.isArray(data)) {
+                    console.log("Fetched fallback info data:", data);
+                    setFallbackInfoData(data);
+                } else {
+                    console.error("Expected array, got:", data);
+                    setFallbackInfoData([]);
+                }
+            });
+        }
+    }, [isConnected, tokenAddress]);
+
+    const infoData = isConnected ? infoDataRaw : fallbackInfoData;
 
     const tokenSupply = infoData ? Number(infoData[7]) : 0;
+    const MarketCap = infoData ? Number(infoData[9]) : 0;
+    const volume24hrs = MarketCap;
     const tokenSold = infoData ? Number(infoData[10]) : 0;
     const isStartTrading = infoData ? Number(infoData[1]) : 0;
     const isListed = infoData ? Number(infoData[2]) : 0;
     const isWhiteListOngoing = infoData ? Number(infoData[3]) : 0;
 
+
     const curvePercent = infoData
         ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
         : 0;
+
+    const curvePercentClamped = Math.min(Math.max(curvePercent, 0), 100);
 
     // Check if transaction is in progress
     const isTransactionPending = isWritePending || isConfirming;
@@ -474,7 +496,7 @@ export default function Trade() {
 
                 <div className="top-section">
                     <div id="chart-container">
-                        <div className="volume">24 h Volume: TODO</div>
+                        <div className="volume">24 h Volume: {volume24hrs / 1e18}</div>
                         <div id="tv_chart_container" style={{ width: '100%', height: '100%' }} />
                     </div>
 
@@ -606,15 +628,8 @@ export default function Trade() {
                         Bonding Progress: {isLoadingInfoData ? (
                             <span className="loading-text">Loading...</span>
                         ) : (
-                            `${curvePercent.toFixed(0)}%`
+                            `${curvePercentClamped.toFixed(0)}%`
                         )}
-                    </div>
-                    <div className="progress">
-                        <div
-                            className={`progress-bar ${isLoadingInfoData ? 'loading' : ''}`}
-                            style={{ width: isLoadingInfoData ? '0%' : `${curvePercent}%` }}
-                        />
-                        {isLoadingInfoData && <div className="progress-loading"></div>}
                     </div>
                 </div>
 

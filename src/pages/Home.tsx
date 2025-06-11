@@ -1,12 +1,15 @@
 // src/pages/Home.tsx
 import { useEffect } from 'react';
 import {
+    useAccount,
     useReadContract,
 } from 'wagmi';
 import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from '../web3/config';
 import { Link } from 'react-router-dom';
+import { pureMetrics } from '../web3/readContracts';
 
 function Home() {
+    const { isConnected } = useAccount();
     const { data: getMetrics, isLoading: isLoadingMetrics, refetch: refetchMetrics } = useReadContract(
         {
             ...LAUNCHER_ABI,
@@ -79,22 +82,22 @@ function Home() {
                 Launch Token
             </Link>
             <p>
-                totalVolumeETH: {getMetrics && getMetrics[0] !== undefined ? Number(getMetrics[0]) / 1e18: 'Loading...'} ETH
+                totalVolumeETH: {isConnected && getMetrics && getMetrics[0] !== undefined ? Number(getMetrics[0]) / 1e18 : (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0)} ETH
             </p>
             <p>
-                totalFeesETH: {getMetrics && getMetrics[1] !== undefined ? Number(getMetrics[1]) / 1e18 : 'Loading...'} ETH
+                totalFeesETH: {isConnected && getMetrics && getMetrics[1] !== undefined ? Number(getMetrics[1]) / 1e18 : (pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0)} ETH
             </p>
             <p>
-                totalTokensLaunched: {getMetrics?.[2]}
+                totalTokensLaunched: {isConnected ? getMetrics?.[2] : pureMetrics?.[2]}
             </p>
             <p>
-                totalTokensListed: {getMetrics?.[3]}
+                totalTokensListed: {isConnected ? getMetrics?.[3] : pureMetrics?.[3]}
             </p>
             <p>
-                totalTaxedTokens: {getMetrics?.[4]}
+                totalTaxedTokens: {isConnected ? getMetrics?.[4] : pureMetrics?.[4]}
             </p>
             <p>
-                totalZeroTaxTokens: {getMetrics?.[5]}
+                totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
             </p>
         </div>
     )
