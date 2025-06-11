@@ -3,7 +3,7 @@ import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "./config";
 
 export const pureMetrics = await publicClient.readContract(
   {
-    ...LAUNCHER_ABI,
+    ...LAUNCHER_ABI as any,
     address: SAFU_LAUNCHER_CA as `0x${string}`,
     functionName: 'getMetrics'
   }
@@ -12,7 +12,7 @@ export const pureMetrics = await publicClient.readContract(
 export const pureInfoDataRaw = async (tokenAddress: any) => {
   if (!tokenAddress) return;
   return await publicClient.readContract({
-    ...LAUNCHER_ABI,
+    ...LAUNCHER_ABI as any,
     address: SAFU_LAUNCHER_CA,
     functionName: 'data',
     args: [tokenAddress],
