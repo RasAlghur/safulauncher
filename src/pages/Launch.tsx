@@ -344,31 +344,43 @@ export default function Launch() {
         }, [validateForm, argArray, ethValue, writeContract]
     );
 
-    // const blockTimestamp = new Date(Number(blockNumber.data) * 1000).toISOString();
-    // console.log("blockTimestamp:", blockTimestamp);
-    // fd.append('createdAt', blockTimestamp);
-
     useEffect(() => {
         if (isConfirmed && result) {
-            const fd = new FormData();
-            fd.append('name', name);
-            fd.append('symbol', symbol);
-            fd.append('website', website);
-            fd.append('description', description);
-            fd.append('tokenCreator', result?.from);
+            (async () => {
+                // 1. instantiate a provider (here using window.ethereum)
+                const provider = new ethers.BrowserProvider(window.ethereum);
 
-            const lastLog = result?.logs[result.logs.length - 1];
-            const topic1 = lastLog?.topics[1];
+                // 2. fetch the block data by blockNumber
+                const block = await provider.getBlock(result.blockNumber);
 
-            let decodedAddress = "";
-            if (topic1) {
-                decodedAddress = ethers.getAddress("0x" + topic1.slice(-40));
-            }
-            fd.append('tokenAddress', decodedAddress);
-            if (logo) fd.append('logo', logo);
+                // 3. convert UNIX timestamp to ISO string
+                let createdAt = "";
+                if (block && block.timestamp) {
+                    createdAt = new Date(block.timestamp * 1000).toISOString();
+                    console.log("Block time:", createdAt);
+                }
 
-            const API = `https://safulauncher-production.up.railway.app`;
-            fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
+                // 4. build FormData with on-chain timestamp
+                const fd = new FormData();
+                fd.append('name', name);
+                fd.append('symbol', symbol);
+                fd.append('website', website);
+                fd.append('description', description);
+                fd.append('tokenCreator', result.from);
+                fd.append('createdAt', createdAt);      // <–– here you use the block time
+
+                const lastLog = result.logs[result.logs.length - 1];
+                const topic1 = lastLog?.topics[1] ?? "";
+                const tokenAddress =
+                    topic1.length
+                        ? ethers.getAddress("0x" + topic1.slice(-40))
+                        : "";
+                fd.append('tokenAddress', tokenAddress);
+                if (logo) fd.append('logo', logo);
+
+                const API = `https://safulauncher-production.up.railway.app`;
+                await fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
+            })().catch(console.error);
         }
     }, [isConfirmed]);
 

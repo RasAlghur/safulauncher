@@ -68,14 +68,14 @@ app.post(
     upload.single('logo'),
     (req: Request, res: Response) => {
         try {
-            const { name, symbol, website, description, tokenAddress, tokenCreator } = req.body as Record<string, string>;
+            const { name, symbol, website, description, tokenAddress, tokenCreator, createdAt } = req.body as Record<string, string>;
             
             const newMeta: TokenMetadata = { 
                 name, 
                 symbol, 
                 tokenAddress, 
                 tokenCreator,
-                createdAt: new Date().toISOString() // Server sets the timestamp
+                createdAt, // Server sets the timestamp
             };
             
             if (website) newMeta.website = website;
