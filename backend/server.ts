@@ -17,8 +17,10 @@ interface TokenMetadata {
 }
 
 const app = express();
-const ALLOWED = process.env.ALLOWED_ORIGINS?.split(',') || [];
-app.use(cors({ origin: ALLOWED }));
+// const ALLOWED = process.env.ALLOWED_ORIGINS?.split(',') || [];
+// app.use(cors({ origin: ALLOWED }));
+app.use(cors()); // completely open CORS
+
 
 app.use(express.json());
 
