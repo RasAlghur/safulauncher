@@ -9,6 +9,9 @@ lerna-debug.log*
 
 .env
 Addons.tsx
+server1.ts
+trade1.tsx
+trade2.tsx
 
 node_modules
 dist

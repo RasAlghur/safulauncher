@@ -1,4 +1,4 @@
-// src/pages/Trade.tsx
+// safu-dapp/src/pages/Trade.tsx
 import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -7,10 +7,10 @@ import {
     useReadContract,
     useWaitForTransactionReceipt,
 } from 'wagmi';
-import { TOKEN_ABI, LAUNCHER_ABI, SAFU_LAUNCHER_CA } from '../web3/config';
+import { TOKEN_ABI, LAUNCHER_ABI, SAFU_LAUNCHER_CA, ETH_USDT_PRICE_FEED, PRICE_GETTER_ABI } from '../web3/config';
 import { ethers } from 'ethers';
 import '../App.css';
-import { pureInfoDataRaw } from '../web3/readContracts';
+import { pureInfoDataRaw, pureGetLatestETHPrice, pureAmountOutMarketCap } from '../web3/readContracts';
 
 interface TokenMetadata {
     name: string;
@@ -21,13 +21,49 @@ interface TokenMetadata {
     tokenCreator: string;
     logoFilename?: string;
     createdAt?: number;  // Optional, can be used to store creation timestamp
-    volume24h?: number; // Optional, can be used to store 24h volume
+    expiresAt?: number; // Optional, can be used to store expiration timestamp
+}
+
+
+interface TxLog {
+    type: 'buy' | 'sell';
+    wallet: string;
+    ethAmount: string;    // ETH spent (buy) or received (sell)
+    tokenAmount: string;  // tokens received (buy) or sold (sell)
+    txnHash: string;
+    timestamp: string;
+}
+
+// 1. Create a formatter function:
+function formatUTC(isoString: string): string {
+    return new Date(isoString).toLocaleString('en-GB', {
+        timeZone: 'UTC',
+        hour12: true,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
+}
+
+
+function getStartOfCurrentDay(): number {
+    const now = new Date();
+    now.setUTCHours(0, 0, 0, 0);
+    return now.getTime();
+}
+
+function formatVolume(value: number): string {
+    return value >= 1_000_000 ? `${(value / 1_000_000).toFixed(2)}M` : value.toLocaleString();
 }
 
 export default function Trade() {
     const { address, isConnected } = useAccount();
     const { tokenAddress } = useParams<{ tokenAddress: `0x${string}` }>();
     const [token, setToken] = useState<TokenMetadata | null>(null);
+    const [txLogs, setTxLogs] = useState<TxLog[]>([]);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
     const [amount, setAmount] = useState<string>('');
     const [isLoadingToken, setIsLoadingToken] = useState(true);
@@ -35,13 +71,18 @@ export default function Trade() {
     const [errorMsg, setErrorMsg] = useState("");
     const [isProcessingTxn, setIsProcessingTxn] = useState(false);
     const [fallbackInfoData, setFallbackInfoData] = useState<any[] | null>(null);
+    const [fallbackETHPrice, setFallbackETHPrice] = useState<any | null>(null);
+    const [curveProgressMap, setCurveProgressMap] = useState<Record<string, number>>({});
+    const [oneTokenPriceETH, setOneTokenPriceETH] = useState<number | null>(null)
+    const [isLoadingOneTokenPrice, setIsLoadingOneTokenPrice] = useState(false)
+
 
     // Admin function states
     const [whitelistAddresses, setWhitelistAddresses] = useState<string>('');
     const [showAdminPanel, setShowAdminPanel] = useState(false);
 
     // Track the type of the last transaction: 'approval', 'sell', or admin functions
-    const [lastTxnType, setLastTxnType] = useState<"approval" | "sell" | "startTrading" | "addToWhitelist" | "disableWhitelist" | null>(
+    const [lastTxnType, setLastTxnType] = useState<"approval" | "sell" | "buy" | "startTrading" | "addToWhitelist" | "disableWhitelist" | null>(
         null
     );
 
@@ -50,7 +91,7 @@ export default function Trade() {
 
     // Wagmi hooks
     const { data: txHash, writeContract, isPending: isWritePending, error } = useWriteContract();
-    const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    const { data: result, isLoading: isConfirming, isSuccess: isConfirmed } =
         useWaitForTransactionReceipt({ hash: txHash });
 
     // Compute parsed values
@@ -213,8 +254,6 @@ export default function Trade() {
     const infoData = isConnected ? infoDataRaw : fallbackInfoData;
 
     const tokenSupply = infoData ? Number(infoData[7]) : 0;
-    const MarketCap = infoData ? Number(infoData[9]) : 0;
-    const volume24hrs = MarketCap;
     const tokenSold = infoData ? Number(infoData[10]) : 0;
     const isStartTrading = infoData ? Number(infoData[1]) : 0;
     const isListed = infoData ? Number(infoData[2]) : 0;
@@ -227,11 +266,65 @@ export default function Trade() {
 
     const curvePercentClamped = Math.min(Math.max(curvePercent, 0), 100);
 
+    // Update curve progress map in effect
+    useEffect(() => {
+        if (tokenAddress) {
+            setIsLoadingOneTokenPrice(true)
+
+            pureAmountOutMarketCap(tokenAddress)
+                .then(raw => {
+                    // raw is BigInt or a bigint‐style object
+                    if (raw !== undefined && raw !== null) {
+                        const eth = Number(raw.toString()) / 1e18
+                        setOneTokenPriceETH(eth)
+                    } else {
+                        setOneTokenPriceETH(0)
+                    }
+                })
+                .catch(err => {
+                    console.error("failed to fetch single‑token price:", err)
+                    setOneTokenPriceETH(0)
+                })
+                .finally(() => setIsLoadingOneTokenPrice(false))
+            setCurveProgressMap(prev => ({ ...prev, [tokenAddress]: curvePercentClamped }));
+        }
+    }, [tokenAddress, curvePercentClamped]);
     // Check if transaction is in progress
     const isTransactionPending = isWritePending || isConfirming;
 
     // Convert balance to readable format
     const tokenBalance = getBalance ? ethers.formatEther(getBalance.toString()) : '0';
+
+    const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice,
+        refetch: refetchLatestETHPrice } = useReadContract({
+            ...PRICE_GETTER_ABI,
+            functionName: 'getLatestETHPrice',
+            args: [ETH_USDT_PRICE_FEED!],
+        });
+
+    useEffect(() => {
+        if (!isConnected && ETH_USDT_PRICE_FEED) {
+            pureGetLatestETHPrice(ETH_USDT_PRICE_FEED).then(data => {
+                if (data) {
+                    console.log("Fetched fallback info data:", data);
+                    setFallbackETHPrice(data);
+                } else {
+                    console.error("Expected array, got:", data);
+                    setFallbackETHPrice([]);
+                }
+            });
+        }
+    }, [isConnected, ETH_USDT_PRICE_FEED]);
+
+    const infoETHCurrentPrice = isConnected ? (Number(latestETHPrice) / 1e8) : (Number(fallbackETHPrice) / 1e8);
+
+    const totalSupplyTokens = tokenSupply / 1e18
+    const marketCapETH = oneTokenPriceETH !== null
+        ? oneTokenPriceETH * totalSupplyTokens
+        : 0
+    const marketCapUSD = marketCapETH * infoETHCurrentPrice;
+
+    // console.log("Market Cap USD:", marketCapUSD, "ETH Price:", infoETHCurrentPrice, "One Token Price ETH:", oneTokenPriceETH, "Total Supply Tokens:", totalSupplyTokens);
 
     // Handlers
     const handleMode = (m: 'buy' | 'sell') => {
@@ -253,8 +346,8 @@ export default function Trade() {
         setErrorMsg("");
         if (isConfirming) return;
 
-        // Mark this txn as a sell txn.
-        setLastTxnType("sell");
+        // Mark this txn as the actual mode (buy/sell) transaction.
+        setLastTxnType(mode);
         writeContract({
             ...LAUNCHER_ABI,
             address: SAFU_LAUNCHER_CA,
@@ -309,6 +402,7 @@ export default function Trade() {
     useEffect(() => {
         if (isConfirmed && txHash) {
             refetchInfoData();
+            refetchLatestETHPrice();
             refetchAmountOut();
             refetchBalance();
             refetchAllowance(); // Also refetch allowance after approval
@@ -321,9 +415,11 @@ export default function Trade() {
                 setWhitelistAddresses('');
             }
         }
-    }, [isConfirmed, txHash, refetchInfoData, refetchAmountOut, refetchBalance, refetchAllowance, lastTxnType]);
+    }, [isConfirmed, txHash, refetchInfoData, refetchAmountOut, refetchBalance, refetchAllowance, refetchLatestETHPrice, lastTxnType]);
 
-    const API = `https://safulauncher-production.up.railway.app`;
+    // const API = `https://safulauncher-production.up.railway.app`;
+
+    const API = import.meta.env.VITE_API_BASE_URL;
 
     // Load token metadata
     useEffect(() => {
@@ -333,6 +429,114 @@ export default function Trade() {
             .then((all: TokenMetadata[]) => {
                 const match = all.find(
                     t => t.tokenAddress.toLowerCase() === tokenAddress?.toLowerCase()
+                );
+                setToken(match ?? null);
+            })
+            .catch(() => setToken(null))
+            .finally(() => setIsLoadingToken(false));
+    }, [tokenAddress]);
+
+    useEffect(() => {
+        // Only log transactions that are NOT approval transactions
+        if (isConfirmed && result && tokenAddress && (lastTxnType === "buy" || lastTxnType === "sell")) {
+            (async () => {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const block = await provider.getBlock(result.blockNumber);
+                // 2. convert UNIX timestamp to ISO string
+                let timestamp = "";
+                if (block && block.timestamp) {
+                    // timestamp is in seconds, so multiply by 1 000 to get ms
+                    const createdAtMs = block.timestamp * 1_000;
+                    timestamp = new Date(createdAtMs).toISOString();
+                    console.log("Created at: %s", timestamp);
+                }
+                const type = lastTxnType; // Use lastTxnType instead of mode
+                const inputAmountStr = type === 'buy'
+                    ? ethers.formatEther(ethValue)
+                    : ethers.formatEther(tokenValue);
+
+                // 2. What came out of the swap
+                const outputAmountStr = amountOut
+                    ? (Number(amountOut.toString()) / 1e18).toString()
+                    : '0';
+
+                // 3. Build separate ethAmount & tokenAmount
+                const body = {
+                    tokenAddress,
+                    type,
+                    ethAmount: type === 'buy' ? inputAmountStr : outputAmountStr,
+                    tokenAmount: type === 'buy' ? outputAmountStr : inputAmountStr,
+                    timestamp,
+                    txnHash: txHash,
+                    wallet: result.from,
+                };
+
+                await fetch(`${API}/api/transactions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                // fetch updated logs
+                fetchLogs();
+            })().catch(console.error);
+        }
+    }, [isConfirmed, lastTxnType, tokenAddress, txHash, ethValue, tokenValue]);
+
+    const fetchLogs = useCallback(() => {
+        if (!tokenAddress) return;
+        fetch(
+            `${API}/api/transactions/${tokenAddress}`
+        )
+            .then((r) => r.json())
+            .then((all: TxLog[]) => {
+                // exclude non-buy/sell entries
+                const filtered = all.filter(
+                    (tx) => tx.type === 'buy' || tx.type === 'sell'
+                );
+                setTxLogs(filtered);
+            })
+            .catch(console.error);
+    }, [tokenAddress]);
+
+
+    // initial load & after token change
+    useEffect(() => {
+        fetchLogs();
+    }, [fetchLogs]);
+
+    // Compute totals
+    const totals = txLogs.reduce((acc, tx) => {
+        acc.totalEthSpent += parseFloat(tx.ethAmount);
+        acc.totalTokensTraded += parseFloat(tx.tokenAmount);
+        return acc;
+    }, { totalEthSpent: 0, totalTokensTraded: 0 });
+
+    const now = Date.now();
+    const startOfToday = getStartOfCurrentDay();
+    const logs1d = txLogs.filter(tx => new Date(tx.timestamp).getTime() >= startOfToday);
+    const logs7d = txLogs.filter(tx => new Date(tx.timestamp).getTime() >= now - 7 * 24 * 60 * 60 * 1000);
+    const logsAll = txLogs;
+
+    const sumVolume = (logs: TxLog[]) => logs.reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+
+    const volume1dEth = sumVolume(logs1d);
+    const volume7dEth = sumVolume(logs7d);
+    const volumeAllEth = sumVolume(logsAll);
+
+    const volume1dUsd = volume1dEth * infoETHCurrentPrice;
+    const volume7dUsd = volume7dEth * infoETHCurrentPrice;
+    const volumeAllUsd = volumeAllEth * infoETHCurrentPrice;
+
+    // Load token metadata
+    useEffect(() => {
+        if (!tokenAddress) return;
+        setIsLoadingToken(true);
+        fetch(`${API}/api/tokens`)
+            .then((res) => res.json())
+            .then((all: TokenMetadata[]) => {
+                const match = all.find(
+                    (t) =>
+                        t.tokenAddress.toLowerCase() === tokenAddress.toLowerCase()
                 );
                 setToken(match ?? null);
             })
@@ -436,6 +640,13 @@ export default function Trade() {
                 <p>Token whitelist round is ongoing: {isWhiteListOngoing}</p>
                 <p>Token is listed on uniswap: {isListed}</p>
 
+                <div className="tx-summary">
+                    <p>Volume (Today): {volume1dEth.toFixed(4)} ETH (${volume1dUsd.toLocaleString()})</p>
+                    <p>Volume (7d): {volume7dEth.toFixed(4)} ETH (${volume7dUsd.toLocaleString()})</p>
+                    <p>Volume (All Time): {volumeAllEth.toFixed(4)} ETH (${volumeAllUsd.toLocaleString()})</p>
+                </div>
+                <p>Total ETH Traded: {totals.totalEthSpent.toFixed(4)} ETH</p>
+                <p>Total {token.symbol} Traded: {formatVolume(totals.totalTokensTraded)} {token.symbol}</p>
                 {/* Admin Panel - Only show if user is token creator */}
                 {isTokenCreator && (
                     <div className="admin-panel">
@@ -493,10 +704,15 @@ export default function Trade() {
                         )}
                     </div>
                 )}
-
                 <div className="top-section">
                     <div id="chart-container">
-                        <div className="volume">24 h Volume: {volume24hrs / 1e18}</div>
+                        <div className="volume">
+                            Market Cap:{' '}
+                            {isLoadingOneTokenPrice || isLoadingLatestETHPrice
+                                ? <span className="loading-text">Loading...</span>
+                                : `$${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                            }
+                        </div>
                         <div id="tv_chart_container" style={{ width: '100%', height: '100%' }} />
                     </div>
 
@@ -557,7 +773,7 @@ export default function Trade() {
                                     <span className="loading-text">Calculating...</span>
                                 ) : (
                                     <>
-                                        You will receive {amountOut && mode === 'buy' ? (Number(amountOut.toString()) / 1e18).toLocaleString() : amountOut && mode === 'sell' ? (Number(amountOut.toString()) / 1e18).toFixed(8) : 0} {mode === 'buy' ? token.symbol : 'ETH'}
+                                        You will receive {amountOut && mode === 'buy' ? (Number(amountOut.toString()) / 1e18).toLocaleString() : amountOut && mode === 'sell' ? (Number(amountOut.toString()) / 1e18).toFixed(18) : 0} {mode === 'buy' ? token.symbol : 'ETH'}
                                     </>
                                 )}
                             </div>
@@ -597,10 +813,12 @@ export default function Trade() {
                                     {lastTxnType === "approval"
                                         ? "Approval confirmed! You can now sell tokens."
                                         : lastTxnType === "sell"
-                                            ? "Sell confirmed!"
-                                            : ["startTrading", "addToWhitelist", "disableWhitelist"].includes(lastTxnType!)
-                                                ? getAdminTxnMessage()
-                                                : "Transaction confirmed successfully!"}
+                                            ? "Sell transaction confirmed successfully!"
+                                            : lastTxnType === "buy"
+                                                ? "Buy transaction confirmed successfully!"
+                                                : ["startTrading", "addToWhitelist", "disableWhitelist"].includes(lastTxnType!)
+                                                    ? getAdminTxnMessage()
+                                                    : "Transaction confirmed successfully!"}
                                 </p>
                                 <p className="text-sm text-gray-300">Transaction: {txHash}</p>
                             </div>
@@ -631,6 +849,14 @@ export default function Trade() {
                             `${curvePercentClamped.toFixed(0)}%`
                         )}
                     </div>
+
+                    <div style={{ background: '#eee', borderRadius: 4, overflow: 'hidden', height: 10, marginTop: 8 }}>
+                        <div style={{
+                            width: `${curveProgressMap[token.tokenAddress] || 0}%`,
+                            background: '#4caf50',
+                            height: '100%'
+                        }} />
+                    </div>
                 </div>
 
                 <div className="mid-section">
@@ -643,15 +869,30 @@ export default function Trade() {
                                     <th>Wallet</th>
                                     <th>ETH</th>
                                     <th>{token.symbol}</th>
+                                    <th>Txn</th>
                                     <th>Date / Time</th>
                                 </tr>
                             </thead>
-                            <tbody id="txBody">
-                                {/* TODO: map transactions */}
+                            <tbody>
+                                {txLogs.map((tx, i) => (
+                                    <tr key={i}>
+                                        <td className={tx.type === 'buy' ? 'text-green-600' : 'text-red-600'}>
+                                            {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
+                                        </td>
+                                        <td>{tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}</td>
+                                        <td>{Number(tx.ethAmount).toFixed(4)}</td>
+                                        <td>{Number(tx.tokenAmount).toLocaleString()}</td>
+                                        <td>
+                                            <a href={`https://etherscan.io/tx/${tx.txnHash}`} target="_blank" rel="noreferrer">
+                                                {tx.txnHash.slice(0, 8)}…{tx.txnHash.slice(-6)}
+                                            </a>
+                                        </td>
+                                        <td>{formatUTC(tx.timestamp)}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-
                     <div className="chat">
                         <h2 className="chat-header">Community Chat</h2>
                         <div id="chatBody" className="chat-body" />

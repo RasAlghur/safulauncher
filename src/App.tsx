@@ -1,5 +1,4 @@
 // src/App.tsx
-
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Home from './pages/Home'
@@ -43,9 +42,9 @@ const Navigation = () => {
       <NavLink to="/tokens" style={({ isActive }) => isActive ? activeLink : linkBase}>
         Tokens
       </NavLink>
-      <NavLink to="/trade" style={({ isActive }) => isActive ? activeLink : linkBase}>
+      {/* <NavLink to="/trade" style={({ isActive }) => isActive ? activeLink : linkBase}>
         Trade
-      </NavLink>
+      </NavLink> */}
     </nav>
   )
 }

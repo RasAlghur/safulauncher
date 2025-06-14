@@ -1,4 +1,4 @@
-// src/pages/Launch.tsx
+// safu-dapp/src/pages/Launch.tsx
 import React, { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
     useWriteContract,
@@ -347,18 +347,20 @@ export default function Launch() {
     useEffect(() => {
         if (isConfirmed && result) {
             (async () => {
-                // 1. instantiate a provider (here using window.ethereum)
                 const provider = new ethers.BrowserProvider(window.ethereum);
 
-                // 2. fetch the block data by blockNumber
+                // 1. fetch the block data by blockNumber
                 const block = await provider.getBlock(result.blockNumber);
 
-                // 3. convert UNIX timestamp to ISO string
+                // 2. convert UNIX timestamp to ISO string
                 let createdAt = "";
                 if (block && block.timestamp) {
-                    createdAt = new Date(block.timestamp * 1000).toISOString();
-                    console.log("Block time:", createdAt);
+                    // timestamp is in seconds, so multiply by 1 000 to get ms
+                    const createdAtMs = block.timestamp * 1_000;
+                    createdAt = new Date(createdAtMs).toISOString();
+                    console.log("Created at: %s", createdAt);
                 }
+
 
                 // 4. build FormData with on-chain timestamp
                 const fd = new FormData();
@@ -378,7 +380,8 @@ export default function Launch() {
                 fd.append('tokenAddress', tokenAddress);
                 if (logo) fd.append('logo', logo);
 
-                const API = `https://safulauncher-production.up.railway.app`;
+                // const API = `https://safulauncher-production.up.railway.app`;
+                const API = import.meta.env.VITE_API_BASE_URL;
                 await fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
             })().catch(console.error);
         }

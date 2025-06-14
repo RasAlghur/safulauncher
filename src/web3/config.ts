@@ -1,5 +1,6 @@
 export const SAFU_LAUNCHER_CA = "0xFb090E8643414297D32f25af545bF66A3B35E4b0";
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
+export const ETH_USDT_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 export const testChainID = 11155111;
 export const mainnetID = 1;
 
@@ -1409,6 +1410,185 @@ export const TOKEN_ABI = {
                     "internalType": "address"
                 }
             ]
+        }
+    ]
+} as const
+
+export const PRICE_GETTER_ABI = {
+    address: "0x602120373b9de0069D5C950C98b66Adf7ABD8bE9",
+    abi: [
+        {
+            "type": "constructor",
+            "inputs": [
+                {
+                    "name": "_adm",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "receive",
+            "stateMutability": "payable"
+        },
+        {
+            "type": "function",
+            "name": "convertETHToUSD",
+            "inputs": [
+                {
+                    "name": "_ethAmount",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                },
+                {
+                    "name": "_ethUsdPriceFeed",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "usdValue",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "getLatestETHPrice",
+            "inputs": [
+                {
+                    "name": "_priceFeed",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "ETHUSDPrice",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "getTokenPriceFromPair",
+            "inputs": [
+                {
+                    "name": "_pairAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_tokenAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_quoteTokenAddress",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "ETHValue",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "getTokenPriceInUSD",
+            "inputs": [
+                {
+                    "name": "_pairAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_tokenAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_quoteTokenAddress",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_priceFeed",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "usdPrice",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "withdrawNonNativeToken",
+            "inputs": [
+                {
+                    "name": "_token",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "function",
+            "name": "withdrawStuckETH",
+            "inputs": [],
+            "outputs": [],
+            "stateMutability": "nonpayable"
+        },
+        {
+            "type": "event",
+            "name": "nonNativeTokenWithdrawal",
+            "inputs": [
+                {
+                    "name": "_token",
+                    "type": "address",
+                    "indexed": false,
+                    "internalType": "address"
+                },
+                {
+                    "name": "_account",
+                    "type": "address",
+                    "indexed": false,
+                    "internalType": "address"
+                }
+            ],
+            "anonymous": false
+        },
+        {
+            "type": "event",
+            "name": "stuckETHWithdrawal",
+            "inputs": [
+                {
+                    "name": "_account",
+                    "type": "address",
+                    "indexed": false,
+                    "internalType": "address"
+                }
+            ],
+            "anonymous": false
         }
     ]
 } as const
