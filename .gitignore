@@ -12,6 +12,7 @@ Addons.tsx
 server1.ts
 trade1.tsx
 trade2.tsx
+OldLightWeightChart.tsx
 
 node_modules
 dist

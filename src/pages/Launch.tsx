@@ -1,12 +1,15 @@
 // safu-dapp/src/pages/Launch.tsx
 import React, { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  type BaseError,
+    useWriteContract,
+    useReadContract,
+    useWaitForTransactionReceipt,
+    type BaseError,
+    useAccount
 } from "wagmi";
-import { LAUNCHER_ABI } from "../web3/config";
+import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
 import { ethers } from "ethers";
+import { verifyContract } from '../web3/etherscan';
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
 import rocket from "../assets/rocket.png";
@@ -18,13 +21,18 @@ interface ValidationError {
 }
 
 export default function Launch() {
-  // Basic fields
-  const [name, setName] = useState("");
-  const [symbol, setSymbol] = useState("");
-  const [supply, setSupply] = useState<number>(0);
-  const [website, setWebsite] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [logo, setLogo] = useState<File | null>(null);
+    const { isConnected } = useAccount();
+
+    // Basic fields
+    const [name, setName] = useState("");
+    const [symbol, setSymbol] = useState("");
+    const [supply, setSupply] = useState<number>(0);
+    const [website, setWebsite] = useState<string>('');
+    const [description, setDescription] = useState<string>('');
+    const [logo, setLogo] = useState<File | null>(null);
+
+    const [statusMessage, setStatusMessage] = useState('');
+    const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
   const [enableTax, setEnableTax] = useState(false);
@@ -87,23 +95,22 @@ export default function Launch() {
     }
   };
 
-  // Comprehensive validation function
-  const validateForm = useCallback((): ValidationError[] => {
-    const errors: ValidationError[] = [];
-
-    // Basic field validation
-    if (!name.trim()) {
-      errors.push({ field: "name", message: "Token name is required" });
-    }
-    if (!symbol.trim()) {
-      errors.push({ field: "symbol", message: "Token symbol is required" });
-    }
-    if (supply <= 0) {
-      errors.push({
-        field: "supply",
-        message: "Supply must be greater than 0",
-      });
-    }
+    // Comprehensive validation function
+    const validateForm = useCallback((): ValidationError[] => {
+        const errors: ValidationError[] = [];
+        if (!isConnected) {
+            errors.push({ field: 'connection', message: 'Please connect your wallet to launch a token.' });
+        }
+        // Basic field validation
+        if (!name.trim()) {
+            errors.push({ field: 'name', message: 'Token name is required' });
+        }
+        if (!symbol.trim()) {
+            errors.push({ field: 'symbol', message: 'Token symbol is required' });
+        }
+        if (supply <= 0) {
+            errors.push({ field: 'supply', message: 'Supply must be greater than 0' });
+        }
 
     // Tax validation
     if (enableTax) {
@@ -368,7 +375,7 @@ export default function Launch() {
 
     return errors;
   }, [
-    name,
+    isConnected, name,
     symbol,
     supply,
     enableTax,
@@ -456,9 +463,21 @@ export default function Launch() {
     pfPercs,
   ];
 
-  const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
+    const { data: uniV2Router } = useReadContract({
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: '_uniV2Router',
+    });
+
+    const { data: uniV2WETH } = useReadContract({
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: 'WETH',
+    });
+
+    const handleSubmit = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
 
       // Final validation check before submission
       const errors = validateForm();
@@ -467,36 +486,51 @@ export default function Launch() {
         return;
       }
 
-      try {
-        writeContract({
-          ...LAUNCHER_ABI,
-          functionName: "createToken",
-          args: argArray,
-          value: ethValue,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    [validateForm, argArray, ethValue, writeContract]
-  );
+            try {
+                writeContract({
+                    ...LAUNCHER_ABI,
+                    functionName: "createToken",
+                    args: argArray,
+                    value: ethValue,
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }, [validateForm, argArray, ethValue, writeContract]
+    );
 
-  useEffect(() => {
-    if (isConfirmed && result) {
-      (async () => {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-
-        // 1. fetch the block data by blockNumber
-        const block = await provider.getBlock(result.blockNumber);
-
-        // 2. convert UNIX timestamp to ISO string
-        let createdAt = "";
-        if (block && block.timestamp) {
-          // timestamp is in seconds, so multiply by 1 000 to get ms
-          const createdAtMs = block.timestamp * 1_000;
-          createdAt = new Date(createdAtMs).toISOString();
-          console.log("Created at: %s", createdAt);
+    const handleVerify = async (encodedMessageWithoutPrefix: any, tokenAddress: any) => {
+    // const handleVerify = async (tokenAddress: any) => {
+        try {
+            console.log("encodedMessage at handleVerify Func", encodedMessageWithoutPrefix);
+            console.log("deployedAddress at handleVerify Func", tokenAddress);
+            const result = await verifyContract({ encodedMessageWithoutPrefix, tokenAddress });
+            // const result = await verifyContract({ tokenAddress });
+            setStatusMessage('Verification request sent successfully!');
+            console.log(result); // Log the result if needed (status, or further information)
+        } catch (error) {
+            setStatusMessage('Error during verification. Please try again.');
+            console.error(error); // Log the error for debugging
         }
+    };
+
+    useEffect(() => {
+        if (isConfirmed && result) {
+            (async () => {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+
+                // 1. fetch the block data by blockNumber
+                const block = await provider.getBlock(result.blockNumber);
+
+                // 2. convert UNIX timestamp to ISO string
+                let createdAt = "";
+                if (block && block.timestamp) {
+                    // timestamp is in seconds, so multiply by 1 000 to get ms
+                    const createdAtMs = block.timestamp * 1_000;
+                    createdAt = new Date(createdAtMs).toISOString();
+                    console.log("Created at: %s", createdAt);
+                }
+
 
         // 4. build FormData with on-chain timestamp
         const fd = new FormData();
@@ -515,12 +549,36 @@ export default function Launch() {
         fd.append("tokenAddress", tokenAddress);
         if (logo) fd.append("logo", logo);
 
-        // const API = `https://safulauncher-production.up.railway.app`;
-        const API = import.meta.env.VITE_API_BASE_URL;
-        await fetch(`${API}/api/tokens`, { method: "POST", body: fd });
-      })().catch(console.error);
-    }
-  }, [isConfirmed]);
+                // const API = `https://safulauncher-production.up.railway.app`;
+                const API = import.meta.env.VITE_API_BASE_URL;
+                await fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
+
+                const message = [name, symbol, ethers.parseUnits(supply.toString(), 18), uniV2Router, uniV2WETH, taxRecipientsAddrs, taxPercentsArray, SAFU_LAUNCHER_CA];
+                console.log("message", message)
+                const abiCoder = new ethers.AbiCoder();
+
+                const encodedMessage = abiCoder.encode(["string", "string", "uint256", "address", "address", "address[]", "uint16[]", "address"], [...message]);
+                const encodedMessageWithoutPrefix = encodedMessage.slice(2);  // Remove "0x" prefix
+
+                // console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
+
+                // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
+                if (encodedMessageWithoutPrefix) {
+                    setWaitingForVerification(true);  // Show waiting message
+                    setTimeout(async () => {
+                        setWaitingForVerification(false);  // Hide waiting message after delay
+                        await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
+                        // await handleVerify(tokenAddress);
+
+                    }, 120000);  // Wait for 30 seconds before verifying
+                } else {
+                    console.error('Error: Deployed address or encoded message is missing');
+                    setStatusMessage('Error: Deployed address or encoded message is missing');
+                }
+
+            })().catch(console.error);
+        }
+    }, [isConfirmed]);
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());
 
@@ -1211,7 +1269,10 @@ export default function Launch() {
         {error && (
           <p className="text-red-500">Error: {(error as BaseError).message}</p>
         )}
-        {isConfirmed && <p className="text-green-500">Token launched!</p>}
+        {isConfirmed && <p className="text-green-500">Token launched! Deployed Hash: <a href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}>Click Here</a></p>}
+
+            {waitingForVerification && <div>Please wait, we are waiting for the block to finalize...</div>}
+            {statusMessage && <div>{statusMessage}</div>}
       </div>
 
       <div className="mt-auto">
