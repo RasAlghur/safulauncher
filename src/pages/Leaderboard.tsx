@@ -1,10 +1,231 @@
+import { useEffect, useState } from "react";
+import Navbar from "../components/launchintro/Navbar";
+import Footer from "../components/generalcomponents/Footer";
+import DustParticles from "../components/generalcomponents/DustParticles";
 
+interface TxLog {
+  tokenAddress: string;
+  type: "buy" | "sell";
+  ethAmount: string;
+  tokenAmount: string;
+  timestamp: string;
+  txnHash: string;
+  wallet: string;
+}
 
-const Leaderboard = () => (
-    <div>
-        <h1>Leaderboard</h1>
-        <p>Top performers</p>
+interface TokenMetadata {
+  name: string;
+  symbol: string;
+  tokenAddress: string;
+  logoFilename?: string;
+}
+
+interface LeaderboardEntry {
+  wallet: string;
+  volume: number;
+  lastTokenAddress: string;
+  lastPurchaseTs: string;
+}
+
+const ITEMS_PER_PAGE = 25;
+
+export default function Leaderboard() {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [tokensMap, setTokensMap] = useState<Record<string, TokenMetadata>>({});
+  const [page, setPage] = useState(1);
+
+  const API = import.meta.env.VITE_API_BASE_URL;
+
+  useEffect(() => {
+    // Fetch token metadata map
+    async function loadTokens() {
+      const res = await fetch(`${API}/api/tokens`);
+      const tokens: TokenMetadata[] = await res.json();
+      const map: Record<string, TokenMetadata> = {};
+      tokens.forEach((t) => {
+        map[t.tokenAddress.toLowerCase()] = t;
+      });
+      setTokensMap(map);
+    }
+
+    // Fetch all transactions and build leaderboard
+    async function loadLeaderboard() {
+      const res = await fetch(`${API}/api/transactions`);
+      const allTx: TxLog[] = await res.json();
+
+      const map: Record<
+        string,
+        { volume: number; lastTs: string; lastToken: string }
+      > = {};
+      allTx.forEach((tx) => {
+        if (tx.type !== "buy") return;
+        const vol = parseFloat(tx.ethAmount);
+        const key = tx.wallet.toLowerCase();
+        const existing = map[key] || { volume: 0, lastTs: "", lastToken: "" };
+        existing.volume += vol;
+        if (
+          !existing.lastTs ||
+          new Date(tx.timestamp) > new Date(existing.lastTs)
+        ) {
+          existing.lastTs = tx.timestamp;
+          existing.lastToken = tx.tokenAddress.toLowerCase();
+        }
+        map[key] = existing;
+      });
+
+      const arr = Object.entries(map)
+        .map(([wallet, { volume, lastTs, lastToken }]) => ({
+          wallet,
+          volume,
+          lastTokenAddress: lastToken,
+          lastPurchaseTs: lastTs,
+        }))
+        .sort((a, b) => b.volume - a.volume);
+
+      setEntries(arr);
+    }
+
+    loadTokens().catch(console.error);
+    loadLeaderboard().catch(console.error);
+  }, []);
+
+  const totalPages = Math.ceil(entries.length / ITEMS_PER_PAGE);
+  const display = entries.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
+  function formatUTC(iso: string) {
+    return new Date(iso).toLocaleString("en-GB", {
+      timeZone: "UTC",
+      hour12: true,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+
+  return (
+    <div className="px-4 relative min-h-screen text-white">
+      {/* <div className="noise" /> */}
+      <Navbar />
+      <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
+      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+        {[...Array(2)].map((_, i) => (
+          <DustParticles key={i} />
+        ))}
+      </div>
+      <div className="max-w-5xl mx-auto pt-40">
+        <div className="text-center  mb-10">
+          <h1 className="lg:text-4xl font-bold font-raleway text-[#01061C] dark:text-white">
+            Leaderboard
+          </h1>
+          <p className="dark:text-white/50 mt-[10px] text-[#141313]/50">
+            Find the top trades & traders
+          </p>
+        </div>
+
+        <div className="mb-[34px]">
+          <select className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] text-sm px-4 py-4 rounded-md border border-white/10">
+            <option>Featured</option>
+            {/* Add more options as needed */}
+          </select>
+        </div>
+
+        <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left">
+              <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
+                <tr className="uppercase text-lg tracking-wider font-raleway font-semibold ">
+                  <th className="px-6 py-3">S/N</th>
+                  <th className="px-6 py-3">Wallet</th>
+                  <th className="px-6 py-3">Volume</th>
+                  <th className="px-6 py-3">Last Purchase</th>
+                </tr>
+              </thead>
+              <tbody className="text-white/90">
+                {display.map((entry, idx) => {
+                  const tokenMeta = tokensMap[entry.lastTokenAddress];
+                  return (
+                    <tr
+                      key={entry.wallet}
+                      className="hover:bg-white/5 transition border-b dark:border-b-Primary border-b-[#01061C]/8"
+                    >
+                      <td className="px-6 py-4 font-medium text-black dark:text-white">
+                        {(page - 1) * ITEMS_PER_PAGE + idx + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <a
+                          href="#"
+                          className=" hover:underline text-black dark:text-white"
+                        >
+                          {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
+                        $
+                        {entry.volume.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td className="px-6 py-4">
+                        {tokenMeta ? (
+                          <div className="flex items-center gap-3">
+                            {tokenMeta.logoFilename && (
+                              <img
+                                src={`${API}/uploads/${tokenMeta.logoFilename}`}
+                                alt={tokenMeta.symbol}
+                                className="w-6 h-6 rounded-full"
+                              />
+                            )}
+                            <div className="text-lg flex items-center gap-1">
+                              <div className="font-medium text-black dark:text-white">
+                                {tokenMeta.name}
+                                <span className="dark:text-white/80 ml-1 text-sm text-black">
+                                  ({tokenMeta.symbol})
+                                </span>
+                              </div>
+                              <div className="dark:text-white/50 text-black/54 text-sm">
+                                {formatUTC(entry.lastPurchaseTs)}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-start items-center gap-2 py-6 border-t border-white/10">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setPage(i + 1)}
+              className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                i + 1 === page
+                  ? "bg-[#0C8CE0] text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto">
+        <Footer />
+      </div>
     </div>
-)
-
-export default Leaderboard;
+  );
+}

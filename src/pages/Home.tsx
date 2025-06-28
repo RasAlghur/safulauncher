@@ -1,84 +1,119 @@
-// src/pages/Home.tsx
-import { useEffect } from 'react';
-import {
-    useAccount,
-    useReadContract,
-} from 'wagmi';
-import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from '../web3/config';
-import { Link } from 'react-router-dom';
-import { pureMetrics } from '../web3/readContracts';
+import { useEffect, useRef } from "react";
+import { useAccount, useReadContract } from "wagmi";
+import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
+import { pureMetrics } from "../web3/readContracts";
+import Navbar from "../components/landingpage/Navbar";
+import Hero from "../components/landingpage/Hero";
+import KeyBenefits from "../components/landingpage/KeyBenefits";
+import HowItWorks from "../components/generalcomponents/HowItWorks";
+import Tokenomics from "../components/landingpage/Tokenomics";
+import WhySafu from "../components/landingpage/WhySafu";
+import Footer from "../components/generalcomponents/Footer";
+import Roadmap from "../components/landingpage/Roadmap";
+import PlatformStats from "../components/landingpage/PlatformStats";
+
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 function Home() {
-    const { isConnected } = useAccount();
-    const { data: getMetrics, isLoading: isLoadingMetrics, refetch: refetchMetrics } = useReadContract(
-        {
-            ...LAUNCHER_ABI,
-            address: SAFU_LAUNCHER_CA as `0x${string}`,
-            functionName: 'getMetrics'
-        }
-    );
+  const { isConnected } = useAccount();
 
-    useEffect(() => {
-        if (!isLoadingMetrics) {
-            refetchMetrics();
-        }
-    }, [!isLoadingMetrics, refetchMetrics])
+  const {
+    data: getMetrics,
+    isLoading: isLoadingMetrics,
+    refetch: refetchMetrics,
+  } = useReadContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA as `0x${string}`,
+    functionName: "getMetrics",
+  });
 
+  const ringRefs = useRef<HTMLDivElement[]>([]);
 
-    // const { data: totalVolumeETH, isLoading: isLoadingTotalVolumeETH, refetch: refetchTotalVolumeETH } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalVolumeETH'
-    //     }
-    // );
-    // const { data: totalFeesETH, isLoading: isLoadingTotalFeesETH, refetch: refetchTotalFeesETH } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalFeesETH'
-    //     }
-    // );
-    // const { data: totalTokensLaunched, isLoading: isLoadingTotalTokensLaunched, refetch: refetchTotalTokensLaunched } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalTokensLaunched'
-    //     }
-    // );
-    // const { data: totalTokensListed, isLoading: isLoadingTotalTokensListed, refetch: refetchTotalTokensListed } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalTokensListed'
-    //     }
-    // );
-    // const { data: totalTaxedTokens, isLoading: isLoadingTotalTaxedTokens, refetch: refetchTotalTaxedTokens } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalTaxedTokens'
-    //     }
-    // );
-    // const { data: totalZeroTaxTokens, isLoading: isLoadingTotalZeroTaxTokens, refetch: refetchTotalZeroTaxTokens } = useReadContract(
-    //     {
-    //         ...LAUNCHER_ABI,
-    //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-    //         functionName: 'totalZeroTaxTokens'
-    //     }
-    // );
+  useEffect(() => {
+    if (!isLoadingMetrics) {
+      refetchMetrics();
+    }
+  }, [!isLoadingMetrics, refetchMetrics]);
 
-    // console.log(getMetrics);
-    // console.log("totalVolumeETH", totalVolumeETH);
-    // console.log("totalFeesETH", totalFeesETH);
-    // console.log("totalTokensLaunched", totalTokensLaunched);
-    // console.log("totalTokensListed", totalTokensListed);
-    // console.log("totalTaxedTokens", totalTaxedTokens);
-    // console.log("totalZeroTaxTokens", totalZeroTaxTokens);
+  // const { data: totalVolumeETH, isLoading: isLoadingTotalVolumeETH, refetch: refetchTotalVolumeETH } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalVolumeETH'
+  //     }
+  // );
+  // const { data: totalFeesETH, isLoading: isLoadingTotalFeesETH, refetch: refetchTotalFeesETH } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalFeesETH'
+  //     }
+  // );
+  // const { data: totalTokensLaunched, isLoading: isLoadingTotalTokensLaunched, refetch: refetchTotalTokensLaunched } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalTokensLaunched'
+  //     }
+  // );
+  // const { data: totalTokensListed, isLoading: isLoadingTotalTokensListed, refetch: refetchTotalTokensListed } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalTokensListed'
+  //     }
+  // );
+  // const { data: totalTaxedTokens, isLoading: isLoadingTotalTaxedTokens, refetch: refetchTotalTaxedTokens } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalTaxedTokens'
+  //     }
+  // );
+  // const { data: totalZeroTaxTokens, isLoading: isLoadingTotalZeroTaxTokens, refetch: refetchTotalZeroTaxTokens } = useReadContract(
+  //     {
+  //         ...LAUNCHER_ABI,
+  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
+  //         functionName: 'totalZeroTaxTokens'
+  //     }
+  // );
 
-    return (
-        <div>
-            <Link to={`/launch`} style={{ textDecoration: 'none', color: 'inherit' }}>
+  // console.log(getMetrics);
+  // console.log("totalVolumeETH", totalVolumeETH);
+  // console.log("totalFeesETH", totalFeesETH);
+  // console.log("totalTokensLaunched", totalTokensLaunched);
+  // console.log("totalTokensListed", totalTokensListed);
+  // console.log("totalTaxedTokens", totalTaxedTokens);
+  // console.log("totalZeroTaxTokens", totalZeroTaxTokens);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    if (!isDark) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from(ringRefs.current, {
+        scrollTrigger: {
+          trigger: ringRefs.current[0],
+          start: "top 80%",
+          toggleActions: "play none none reverse",
+        },
+        scale: 0.8,
+        opacity: 0,
+        stagger: 0.15,
+        duration: 1.4,
+        ease: "power2.out",
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div>
+      {/* <Link to={`/launch`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 Launch Token
             </Link>
             <p>
@@ -98,9 +133,39 @@ function Home() {
             </p>
             <p>
                 totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
-            </p>
-        </div>
-    )
+            </p> */}
+      <Navbar />
+      <Hero />
+      <PlatformStats />
+
+      <div className="relative z-10">
+        <KeyBenefits />
+
+        {/* Animated rings (dark mode only) */}
+        {[500, 650, 800, 950].map((size, i) => (
+          <div
+            key={i}
+            ref={(el) => {
+              ringRefs.current[i] = el!;
+            }}
+            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden dark:block -z-10"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              top: `${400 - size / 2}px`, // adjust as needed
+            }}
+          />
+        ))}
+
+        <HowItWorks />
+      </div>
+
+      <Tokenomics />
+      <WhySafu />
+      <Roadmap />
+      <Footer />
+    </div>
+  );
 }
 
 export default Home;
