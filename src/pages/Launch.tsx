@@ -1,15 +1,15 @@
 // safu-dapp/src/pages/Launch.tsx
 import React, { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
-    useWriteContract,
-    useReadContract,
-    useWaitForTransactionReceipt,
-    type BaseError,
-    useAccount
+  useWriteContract,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  type BaseError,
+  useAccount,
 } from "wagmi";
 import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
 import { ethers } from "ethers";
-import { verifyContract } from '../web3/etherscan';
+import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
 import rocket from "../assets/rocket.png";
@@ -21,18 +21,18 @@ interface ValidationError {
 }
 
 export default function Launch() {
-    const { isConnected } = useAccount();
+  const { isConnected } = useAccount();
 
-    // Basic fields
-    const [name, setName] = useState("");
-    const [symbol, setSymbol] = useState("");
-    const [supply, setSupply] = useState<number>(0);
-    const [website, setWebsite] = useState<string>('');
-    const [description, setDescription] = useState<string>('');
-    const [logo, setLogo] = useState<File | null>(null);
+  // Basic fields
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [supply, setSupply] = useState<number>(0);
+  const [website, setWebsite] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [logo, setLogo] = useState<File | null>(null);
 
-    const [statusMessage, setStatusMessage] = useState('');
-    const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
+  const [statusMessage, setStatusMessage] = useState("");
+  const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
   const [enableTax, setEnableTax] = useState(false);
@@ -95,22 +95,28 @@ export default function Launch() {
     }
   };
 
-    // Comprehensive validation function
-    const validateForm = useCallback((): ValidationError[] => {
-        const errors: ValidationError[] = [];
-        if (!isConnected) {
-            errors.push({ field: 'connection', message: 'Please connect your wallet to launch a token.' });
-        }
-        // Basic field validation
-        if (!name.trim()) {
-            errors.push({ field: 'name', message: 'Token name is required' });
-        }
-        if (!symbol.trim()) {
-            errors.push({ field: 'symbol', message: 'Token symbol is required' });
-        }
-        if (supply <= 0) {
-            errors.push({ field: 'supply', message: 'Supply must be greater than 0' });
-        }
+  // Comprehensive validation function
+  const validateForm = useCallback((): ValidationError[] => {
+    const errors: ValidationError[] = [];
+    if (!isConnected) {
+      errors.push({
+        field: "connection",
+        message: "Please connect your wallet to launch a token.",
+      });
+    }
+    // Basic field validation
+    if (!name.trim()) {
+      errors.push({ field: "name", message: "Token name is required" });
+    }
+    if (!symbol.trim()) {
+      errors.push({ field: "symbol", message: "Token symbol is required" });
+    }
+    if (supply <= 0) {
+      errors.push({
+        field: "supply",
+        message: "Supply must be greater than 0",
+      });
+    }
 
     // Tax validation
     if (enableTax) {
@@ -375,7 +381,8 @@ export default function Launch() {
 
     return errors;
   }, [
-    isConnected, name,
+    isConnected,
+    name,
     symbol,
     supply,
     enableTax,
@@ -463,21 +470,21 @@ export default function Launch() {
     pfPercs,
   ];
 
-    const { data: uniV2Router } = useReadContract({
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
-        functionName: '_uniV2Router',
-    });
+  const { data: uniV2Router } = useReadContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA,
+    functionName: "_uniV2Router",
+  });
 
-    const { data: uniV2WETH } = useReadContract({
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
-        functionName: 'WETH',
-    });
+  const { data: uniV2WETH } = useReadContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA,
+    functionName: "WETH",
+  });
 
-    const handleSubmit = useCallback(
-        (e: FormEvent) => {
-            e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
 
       // Final validation check before submission
       const errors = validateForm();
@@ -486,51 +493,60 @@ export default function Launch() {
         return;
       }
 
-            try {
-                writeContract({
-                    ...LAUNCHER_ABI,
-                    functionName: "createToken",
-                    args: argArray,
-                    value: ethValue,
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        }, [validateForm, argArray, ethValue, writeContract]
-    );
+      try {
+        writeContract({
+          ...LAUNCHER_ABI,
+          functionName: "createToken",
+          args: argArray,
+          value: ethValue,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [validateForm, argArray, ethValue, writeContract]
+  );
 
-    const handleVerify = async (encodedMessageWithoutPrefix: any, tokenAddress: any) => {
+  const handleVerify = async (
+    encodedMessageWithoutPrefix: any,
+    tokenAddress: any
+  ) => {
     // const handleVerify = async (tokenAddress: any) => {
-        try {
-            console.log("encodedMessage at handleVerify Func", encodedMessageWithoutPrefix);
-            console.log("deployedAddress at handleVerify Func", tokenAddress);
-            const result = await verifyContract({ encodedMessageWithoutPrefix, tokenAddress });
-            // const result = await verifyContract({ tokenAddress });
-            setStatusMessage('Verification request sent successfully!');
-            console.log(result); // Log the result if needed (status, or further information)
-        } catch (error) {
-            setStatusMessage('Error during verification. Please try again.');
-            console.error(error); // Log the error for debugging
+    try {
+      console.log(
+        "encodedMessage at handleVerify Func",
+        encodedMessageWithoutPrefix
+      );
+      console.log("deployedAddress at handleVerify Func", tokenAddress);
+      const result = await verifyContract({
+        encodedMessageWithoutPrefix,
+        tokenAddress,
+      });
+      // const result = await verifyContract({ tokenAddress });
+      setStatusMessage("Verification request sent successfully!");
+      console.log(result); // Log the result if needed (status, or further information)
+    } catch (error) {
+      setStatusMessage("Error during verification. Please try again.");
+      console.error(error); // Log the error for debugging
+    }
+  };
+
+  useEffect(() => {
+    if (isConfirmed && result) {
+      (async () => {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+
+        // 1. fetch the block data by blockNumber
+        const block = await provider.getBlock(result.blockNumber);
+
+        // 2. convert UNIX timestamp to ISO string
+        let createdAt = "";
+        if (block && block.timestamp) {
+          // timestamp is in seconds, so multiply by 1 000 to get ms
+          const createdAtMs = block.timestamp * 1_000;
+          createdAt = new Date(createdAtMs).toISOString();
+          console.log("Created at: %s", createdAt);
         }
-    };
-
-    useEffect(() => {
-        if (isConfirmed && result) {
-            (async () => {
-                const provider = new ethers.BrowserProvider(window.ethereum);
-
-                // 1. fetch the block data by blockNumber
-                const block = await provider.getBlock(result.blockNumber);
-
-                // 2. convert UNIX timestamp to ISO string
-                let createdAt = "";
-                if (block && block.timestamp) {
-                    // timestamp is in seconds, so multiply by 1 000 to get ms
-                    const createdAtMs = block.timestamp * 1_000;
-                    createdAt = new Date(createdAtMs).toISOString();
-                    console.log("Created at: %s", createdAt);
-                }
-
 
         // 4. build FormData with on-chain timestamp
         const fd = new FormData();
@@ -549,36 +565,59 @@ export default function Launch() {
         fd.append("tokenAddress", tokenAddress);
         if (logo) fd.append("logo", logo);
 
-                // const API = `https://safulauncher-production.up.railway.app`;
-                const API = import.meta.env.VITE_API_BASE_URL;
-                await fetch(`${API}/api/tokens`, { method: 'POST', body: fd });
+        // const API = `https://safulauncher-production.up.railway.app`;
+        const API = import.meta.env.VITE_API_BASE_URL;
+        await fetch(`${API}/api/tokens`, { method: "POST", body: fd });
 
-                const message = [name, symbol, ethers.parseUnits(supply.toString(), 18), uniV2Router, uniV2WETH, taxRecipientsAddrs, taxPercentsArray, SAFU_LAUNCHER_CA];
-                console.log("message", message)
-                const abiCoder = new ethers.AbiCoder();
+        const message = [
+          name,
+          symbol,
+          ethers.parseUnits(supply.toString(), 18),
+          uniV2Router,
+          uniV2WETH,
+          taxRecipientsAddrs,
+          taxPercentsArray,
+          SAFU_LAUNCHER_CA,
+        ];
+        console.log("message", message);
+        const abiCoder = new ethers.AbiCoder();
 
-                const encodedMessage = abiCoder.encode(["string", "string", "uint256", "address", "address", "address[]", "uint16[]", "address"], [...message]);
-                const encodedMessageWithoutPrefix = encodedMessage.slice(2);  // Remove "0x" prefix
+        const encodedMessage = abiCoder.encode(
+          [
+            "string",
+            "string",
+            "uint256",
+            "address",
+            "address",
+            "address[]",
+            "uint16[]",
+            "address",
+          ],
+          [...message]
+        );
+        const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
 
-                // console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
+        // console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
 
-                // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
-                if (encodedMessageWithoutPrefix) {
-                    setWaitingForVerification(true);  // Show waiting message
-                    setTimeout(async () => {
-                        setWaitingForVerification(false);  // Hide waiting message after delay
-                        await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
-                        // await handleVerify(tokenAddress);
-
-                    }, 120000);  // Wait for 30 seconds before verifying
-                } else {
-                    console.error('Error: Deployed address or encoded message is missing');
-                    setStatusMessage('Error: Deployed address or encoded message is missing');
-                }
-
-            })().catch(console.error);
+        // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
+        if (encodedMessageWithoutPrefix) {
+          setWaitingForVerification(true); // Show waiting message
+          setTimeout(async () => {
+            setWaitingForVerification(false); // Hide waiting message after delay
+            await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
+            // await handleVerify(tokenAddress);
+          }, 120000); // Wait for 30 seconds before verifying
+        } else {
+          console.error(
+            "Error: Deployed address or encoded message is missing"
+          );
+          setStatusMessage(
+            "Error: Deployed address or encoded message is missing"
+          );
         }
-    }, [isConfirmed]);
+      })().catch(console.error);
+    }
+  }, [isConfirmed]);
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());
 
@@ -617,7 +656,7 @@ export default function Launch() {
       </div>
       {/* <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] opacity-[0.03] pointer-events-none dark:hidden" /> */}
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-      <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto pb-40  dark:bg-[#050A1E]/50 border border-white/10 px-6 lg:px-[117px] lg:py-[92px] rounded-[10px] ">
+      <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto pb-40  dark:bg-[#050A1E]/50 border border-white/10 px-6 lg:px-[100px] lg:py-[92px] rounded-[10px] ">
         {validationErrors.length > 0 && (
           <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5">
             <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
@@ -1269,10 +1308,21 @@ export default function Launch() {
         {error && (
           <p className="text-red-500">Error: {(error as BaseError).message}</p>
         )}
-        {isConfirmed && <p className="text-green-500">Token launched! Deployed Hash: <a href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}>Click Here</a></p>}
+        {isConfirmed && (
+          <p className="text-green-500">
+            Token launched! Deployed Hash:{" "}
+            <a
+              href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}
+            >
+              Click Here
+            </a>
+          </p>
+        )}
 
-            {waitingForVerification && <div>Please wait, we are waiting for the block to finalize...</div>}
-            {statusMessage && <div>{statusMessage}</div>}
+        {waitingForVerification && (
+          <div>Please wait, we are waiting for the block to finalize...</div>
+        )}
+        {statusMessage && <div>{statusMessage}</div>}
       </div>
 
       <div className="mt-auto">

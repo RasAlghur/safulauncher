@@ -259,7 +259,7 @@ export default function Tokens() {
                     <div className="flex justify-between">
                       <Link
                         to={`/trade/${t.tokenAddress}`}
-                        className="flex items-center gap-4"
+                        className="flex items-start gap-4"
                       >
                         {t.logoFilename && (
                           <img
@@ -297,15 +297,17 @@ export default function Tokens() {
                             </p>
                           )}
 
-                          {t.description && (
-                            <p className="mt-1 dark:text-white text-[#141313]">
-                              {t.description}
-                            </p>
-                          )}
+                          <div className="h-[3rem] w-[16rem] mb-2 overflow-hidden">
+                            {t.description && (
+                              <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
+                                {t.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </Link>
                       {/* Stats */}
-                      <div className="mt-4 space-y-1">
+                      <div className="space-y-1">
                         <p className="text-sm dark:text-white text-[#141313]">
                           <strong className="">24h Volume:</strong> $
                           {volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
