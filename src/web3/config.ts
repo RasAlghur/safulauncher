@@ -1,11 +1,11 @@
-export const SAFU_LAUNCHER_CA = "0xFb090E8643414297D32f25af545bF66A3B35E4b0";
+export const SAFU_LAUNCHER_CA = "0x31ea5493a157dfFa0f440335abc12855101286c4";
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 export const ETH_USDT_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 export const testChainID = 11155111;
 export const mainnetID = 1;
 
 export const LAUNCHER_ABI = {
-    address: "0xFb090E8643414297D32f25af545bF66A3B35E4b0",
+    address: "0x31ea5493a157dfFa0f440335abc12855101286c4",
     abi: [
         {
             "type": "constructor",
@@ -374,6 +374,19 @@ export const LAUNCHER_ABI = {
         },
         {
             "type": "function",
+            "name": "devRewardEth",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
             "name": "disableWhitelist",
             "inputs": [
                 {
@@ -499,6 +512,11 @@ export const LAUNCHER_ABI = {
                 },
                 {
                     "name": "_zeroTaxTokens",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                },
+                {
+                    "name": "_devRewardsEth",
                     "type": "uint256",
                     "internalType": "uint256"
                 }

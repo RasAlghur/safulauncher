@@ -99,6 +99,9 @@ function Home() {
             <p>
                 totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
             </p>
+            <p>
+                DevRewardETH: {isConnected && getMetrics && getMetrics[6] !== undefined ? Number(getMetrics[6]) / 1e18 : (pureMetrics[1] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0)} ETH
+            </p>
         </div>
     )
 }

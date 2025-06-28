@@ -43,3 +43,13 @@ export const pureAmountOutMarketCap = async (tokenAddress: any) => {
     ],
   });
 }
+
+export const pureAmountOut = async (tokenAddress: any, a: bigint,  b: boolean) => {
+  if (!tokenAddress) return;
+  return await publicClient.readContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA,
+    functionName: 'getAmountOut',
+    args: [tokenAddress, a, b],
+  });
+}

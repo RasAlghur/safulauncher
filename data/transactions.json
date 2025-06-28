@@ -1,119 +1,29 @@
 [
   {
-    "tokenAddress": "0x33d9b78c6cdbf528c6605e0f374f8d69d30447ce",
-    "type": "buy",
-    "ethAmount": "0.04",
-    "tokenAmount": "19469447.609062146",
-    "timestamp": "2025-06-13T12:52:36.000Z",
-    "txnHash": "0xafc200223fd0f7efa7be8d66bba5a9c3e1594fddf6aa2e9e3d78d65adaca9fd9",
-    "wallet": "0x6fe75a39433906bca84aca704503dbc04ade8657"
-  },
-  {
-    "tokenAddress": "0x33d9b78c6cdbf528c6605e0f374f8d69d30447ce",
-    "type": "sell",
-    "ethAmount": "0.02067747983409895",
-    "tokenAmount": "10000000",
-    "timestamp": "2025-06-13T12:54:12.000Z",
-    "txnHash": "0xc74094e50eb2b6e8db62a29721ae0fb270ab18d86f49db6271955a0f688e40c0",
-    "wallet": "0x6fe75a39433906bca84aca704503dbc04ade8657"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "buy",
-    "ethAmount": "0.1",
-    "tokenAmount": "47619.04761904762",
-    "timestamp": "2025-06-13T13:01:12.000Z",
-    "txnHash": "0x900e56257d497693ca7fc1bee0a78f392d16468dbcef209179db32d3080e3fba",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "sell",
-    "ethAmount": "0.043051192802035655",
-    "tokenAmount": "20000",
-    "timestamp": "2025-06-13T13:03:36.000Z",
-    "txnHash": "0x79f6c65f6745b41f27b47f900281fcb361d3b688efaf48ed00935fb7445364cc",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
+    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
     "type": "buy",
     "ethAmount": "0.01",
-    "tokenAmount": "4616.044311752415",
-    "timestamp": "2025-06-14T04:38:24.000Z",
-    "txnHash": "0x9d0b117f960030bacbea01a1c4b66d7036adb1f08e667f66821a6425199d41f8",
-    "wallet": "0x6fe75a39433906bca84aca704503dbc04ade8657"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "sell",
-    "ethAmount": "0.015081245006471596",
-    "tokenAmount": "7000",
-    "timestamp": "2025-06-14T04:49:24.000Z",
-    "txnHash": "0xe9d131a1c2b599fb91406d595e61be7d0c2d10a426a798cbd04484f130c7f948",
-    "wallet": "0x6fe75a39433906bca84aca704503dbc04ade8657"
-  },
-  {
-    "tokenAddress": "0x33d9b78c6cdbf528c6605e0f374f8d69d30447ce",
-    "type": "buy",
-    "ethAmount": "0.05",
-    "tokenAmount": "23767916.048546452",
-    "timestamp": "2025-06-14T04:51:12.000Z",
-    "txnHash": "0x470e01c18e91f92c62bfc4c4f41b70ed3d6ccb6e98448853cbc549ce3a075b90",
+    "tokenAmount": "4926990.435642826",
+    "timestamp": "2025-06-28T00:38:36.000Z",
+    "txnHash": "0xfb7cf0c352e3e6bb3f9a795b619faf6d687c441ea9e5c44d80d7d1abee069e45",
     "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
   },
   {
-    "tokenAddress": "0x33d9b78c6cdbf528c6605e0f374f8d69d30447ce",
+    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
     "type": "buy",
-    "ethAmount": "0.02",
-    "tokenAmount": "9191052.703748228",
-    "timestamp": "2025-06-14T05:16:12.000Z",
-    "txnHash": "0xc4adeaea7c39e40d29d4698336d1a948e182c1749afdce5cbf20f9c92e9f2239",
-    "wallet": "0x6fe75a39433906bca84aca704503dbc04ade8657"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "buy",
-    "ethAmount": "0.05",
-    "tokenAmount": "22757.16685162113",
-    "timestamp": "2025-06-14T05:17:48.000Z",
-    "txnHash": "0x6c71fecec94227fc1b316dcb33668cb02886a6d8a4dc90a11558400a44002421",
+    "ethAmount": "0.01",
+    "tokenAmount": "4879551.668596172",
+    "timestamp": "2025-06-28T00:39:24.000Z",
+    "txnHash": "0xb77f5eb27d5a40e31084d786bd28c6cd3fb6d657cd3aab8b311f3f1c8a9ea98f",
     "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
   },
   {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "sell",
-    "ethAmount": "0.05462843370493471",
-    "tokenAmount": "25000",
-    "timestamp": "2025-06-14T15:56:24.000Z",
-    "txnHash": "0x287a7875530d96ee759954da5f4a94fd683f6ab9de48d84805dc314bd4f3ff63",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
+    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
     "type": "buy",
-    "ethAmount": "0.05",
-    "tokenAmount": "22863.095287767734",
-    "timestamp": "2025-06-14T15:58:24.000Z",
-    "txnHash": "0x736ffd9191927c760faac9f88af3b462cff0ce5893e94d12be55da5b8617b3bd",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x25a73ba5f6ef6e87123f3766e0e86f0dff73b43f",
-    "type": "buy",
-    "ethAmount": "0.1",
-    "tokenAmount": "42637.88895116701",
-    "timestamp": "2025-06-14T16:37:36.000Z",
-    "txnHash": "0x966b1d30be1dcff5ccebd61e2c8b005f712dd415588b929ee4a5516512023d36",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x33d9b78c6cdbf528c6605e0f374f8d69d30447ce",
-    "type": "sell",
-    "ethAmount": "0.055819739109654376",
-    "tokenAmount": "26184627.088064276",
-    "timestamp": "2025-06-14T16:41:00.000Z",
-    "txnHash": "0x3f00c8886efd41f684fe85a58ad6761c406a35a1987061343dc43761722b8331",
+    "ethAmount": "0.01",
+    "tokenAmount": "4832794.754326039",
+    "timestamp": "2025-06-28T00:40:12.000Z",
+    "txnHash": "0xdb437daf81921a87e24d29c40c7ea1ced23455bb3894405eac508927286bd3bd",
     "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
   }
 ]
