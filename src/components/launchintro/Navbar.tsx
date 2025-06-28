@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FaChevronDown, FaSearch } from "react-icons/fa";
 import logo from "../../assets/logo.png";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTokenContext } from "../../context/TokenContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import type { TokenMetadata } from "../../pages/Tokens";

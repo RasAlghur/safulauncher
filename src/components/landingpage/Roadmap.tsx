@@ -47,9 +47,10 @@ const Roadmap = () => {
 
   useLayoutEffect(() => {
     const path = pathRef.current;
+    if (!path) return;
+
     const pathLength = path.getTotalLength();
 
-    // Draw animation timeline
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: path,
@@ -66,27 +67,27 @@ const Roadmap = () => {
       { strokeDashoffset: 0, ease: "none" }
     );
 
-    // Animate roadmap items in sequence
-    itemsRef.current.forEach((item, i) => {
+    // Animate roadmap items
+    itemsRef.current.forEach((item) => {
       tl.fromTo(
         item,
         { autoAlpha: 0, y: 40 },
         { autoAlpha: 1, y: 0, duration: 0.6, ease: "power2.out" },
-        `+=0.2` // spacing between reveals
+        `+=0.2`
       );
     });
 
-    // Animate orb to move with scroll
+    // ✅ Only run if `path` is not null
     gsap.to("#waterDot", {
       motionPath: {
-        path: pathRef.current,
-        align: pathRef.current,
+        path,
+        align: path,
         autoRotate: false,
         start: 0,
         end: 1,
       },
       scrollTrigger: {
-        trigger: pathRef.current,
+        trigger: path,
         start: "top center",
         end: "bottom center",
         scrub: true,

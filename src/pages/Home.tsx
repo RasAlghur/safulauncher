@@ -113,27 +113,39 @@ function Home() {
 
   return (
     <div>
-      {/* <Link to={`/launch`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                Launch Token
-            </Link>
-            <p>
-                totalVolumeETH: {isConnected && getMetrics && getMetrics[0] !== undefined ? Number(getMetrics[0]) / 1e18 : (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0)} ETH
-            </p>
-            <p>
-                totalFeesETH: {isConnected && getMetrics && getMetrics[1] !== undefined ? Number(getMetrics[1]) / 1e18 : (pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0)} ETH
-            </p>
-            <p>
-                totalTokensLaunched: {isConnected ? getMetrics?.[2] : pureMetrics?.[2]}
-            </p>
-            <p>
-                totalTokensListed: {isConnected ? getMetrics?.[3] : pureMetrics?.[3]}
-            </p>
-            <p>
-                totalTaxedTokens: {isConnected ? getMetrics?.[4] : pureMetrics?.[4]}
-            </p>
-            <p>
-                totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
-            </p> */}
+      <div className="hidden">
+        <p>
+          totalVolumeETH:{" "}
+          {isConnected && getMetrics && getMetrics[0] !== undefined
+            ? Number(getMetrics[0]) / 1e18
+            : pureMetrics[0] !== undefined
+            ? Number(pureMetrics[0]) / 1e18
+            : 0}{" "}
+          ETH
+        </p>
+        <p>
+          totalFeesETH:{" "}
+          {isConnected && getMetrics && getMetrics[1] !== undefined
+            ? Number(getMetrics[1]) / 1e18
+            : pureMetrics[1] !== undefined
+            ? Number(pureMetrics[1]) / 1e18
+            : 0}{" "}
+          ETH
+        </p>
+        <p>
+          totalTokensLaunched:{" "}
+          {isConnected ? getMetrics?.[2] : pureMetrics?.[2]}
+        </p>
+        <p>
+          totalTokensListed: {isConnected ? getMetrics?.[3] : pureMetrics?.[3]}
+        </p>
+        <p>
+          totalTaxedTokens: {isConnected ? getMetrics?.[4] : pureMetrics?.[4]}
+        </p>
+        <p>
+          totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
+        </p>
+      </div>
       <Navbar />
       <Hero />
       <PlatformStats />
@@ -152,7 +164,7 @@ function Home() {
             style={{
               width: `${size}px`,
               height: `${size}px`,
-              top: `${400 - size / 2}px`, // adjust as needed
+              top: `${400 - size / 2}px`,
             }}
           />
         ))}

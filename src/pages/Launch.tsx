@@ -560,6 +560,21 @@ export default function Launch() {
       {/* <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] opacity-[0.03] pointer-events-none dark:hidden" /> */}
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
       <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto pb-40  dark:bg-[#050A1E]/50 border border-white/10 px-6 lg:px-[117px] lg:py-[92px] rounded-[10px] ">
+        {validationErrors.length > 0 && (
+          <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5">
+            <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
+              Please fix the following issues:
+            </h3>
+            <ul className="space-y-1 text-sm md:text-base">
+              {validationErrors.map((error, index) => (
+                <li key={index}>
+                  <span className="font-semibold">{error.field}:</span>{" "}
+                  {error.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="">
           <h1 className="dark:text-white text-[#01061C] text-center lg:text-[24px] font-raleway font-medium mb-[12px]">
             Launch Your Token
@@ -570,32 +585,7 @@ export default function Launch() {
           </p>
         </div>
         {/* Validation Errors Display */}
-        {/* {validationErrors.length > 0 && (
-          <div
-            className="validation-errors"
-            style={{
-              background: "",
-              border: "1px solid #fecaca",
-              borderRadius: "6px",
-              padding: "12px",
-              marginBottom: "20px",
-            }}
-          >
-            <h3 style={{ color: "#ffffff", margin: "0 0 8px 0" }}>
-              Please fix the following issues:
-            </h3>
-            <ul style={{ margin: 0, paddingLeft: "20px" }}>
-              {validationErrors.map((error, index) => (
-                <li
-                  key={index}
-                  style={{ color: "#ffffff", marginBottom: "4px" }}
-                >
-                  <strong>{error.field}:</strong> {error.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )} */}
+
         <form
           id="launch-form"
           className=" mt-[40px] relative z-40 max-h-[80vh] pr-20 overflow-y-auto scrollbar-thin scrollbar-track-[#D9D9D9] scrollbar-thumb-[#0C8CE0]"
