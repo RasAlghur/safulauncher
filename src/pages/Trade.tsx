@@ -253,9 +253,11 @@ export default function Trade() {
 
     // Computed contract data
     const infoData = isConnected ? infoDataRaw : fallbackInfoData;
+    console.log("infoData", infoData);
     const tokenSupply = infoData ? Number(infoData[7]) : 0;
     const tokenSold = infoData ? Number(infoData[10]) : 0;
     const isStartTrading = infoData ? Number(infoData[1]) : 0;
+    const isBundled = infoData ? Number(infoData[17]) : 0;
     const isListed = infoData ? Number(infoData[2]) : 0;
     const isWhiteListOngoing = infoData ? Number(infoData[3]) : 0;
 
@@ -831,6 +833,7 @@ export default function Trade() {
                 <p>Token supply: {formatTokenAmount(tokenSupply / 1e18)}</p>
                 <p>Market Cap: {marketCapUSD > 0 ? `$${formatTokenAmount(marketCapUSD)}` : 'Calculating...'}</p>
                 <p>Trading started: {isStartTrading ? 'Yes' : 'No'}</p>
+                <p>Dev bundled: {isBundled ? 'Yes' : 'No'}</p>
                 <p>Whitelist ongoing: {isWhiteListOngoing ? 'Yes' : 'No'}</p>
                 <p>Listed on Uniswap: {isListed ? 'Yes' : 'No'}</p>
             </div>

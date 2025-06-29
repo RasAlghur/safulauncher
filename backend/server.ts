@@ -35,6 +35,9 @@ interface TxLog {
   timestamp: string;    // ISO
   txnHash: string;
   wallet: string;
+  isBundleTransaction?: boolean; // Optional for bundle transactions
+  originalTxnHash?: string; // Optional for bundle transactions
+  bundleIndex?: number; // Optional for bundle transactions
 }
 
 // ----- Setup -----
@@ -77,7 +80,7 @@ try {
         "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Provides information about the current execution context, including the\n * sender of the transaction and its data. While these are generally available\n * via msg.sender and msg.data, they should not be accessed in such a direct\n * manner, since when dealing with meta-transactions the account sending and\n * paying for execution may not be the actual sender (as far as an application\n * is concerned).\n *\n * This contract is only required for intermediate, library-like contracts.\n */\nabstract contract Context {\n    function _msgSender() internal view virtual returns (address) {\n        return msg.sender;\n    }\n\n    function _msgData() internal view virtual returns (bytes calldata) {\n        return msg.data;\n    }\n\n    function _contextSuffixLength() internal view virtual returns (uint256) {\n        return 0;\n    }\n}\n"
       },
       "src/ERC_PF.sol": {
-        "content": "// src/ERC_PF.sol\n\n// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\n\ninterface IUniswapV2Router02 {\n    function factory() external pure returns (address);\n    function addLiquidityETH(\n        address token,\n        uint amountTokenDesired,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    )\n        external\n        payable\n        returns (uint amountToken, uint amountETH, uint liquidity);\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external;\n}\n\ncontract SafuToken is ERC20 {\n    IUniswapV2Router02 public immutable router;\n    address public immutable WETH;\n    address public uniswapPair;\n\n    address[] public taxRecipients; // ≤5\n    uint16[] public taxBps; // sum ≤1000\n    uint16 public totalTaxBps; // cached sum\n\n    address private _recipient;\n    bool public lpSeeded;\n\n    uint16 public constant TRIGGER_BPS = 2; // 0.02% of totalSupply\n    uint16 public constant MAX_SWAP_MULTIPLIER = 20; // max 20× trigger per swap\n\n    constructor(\n        string memory name_,\n        string memory symbol_,\n        uint256 supply_,\n        address router_,\n        address weth_,\n        address[] memory recipients_,\n        uint16[] memory bps_,\n        address recipient_\n    ) ERC20(name_, symbol_) {\n        uint256 sumB;\n        require(\n            recipients_.length == bps_.length && recipients_.length <= 5,\n            \"Tax array error\"\n        );\n        for (uint i = 0; i < bps_.length; i++) {\n            sumB += bps_[i];\n            taxBps.push(bps_[i]);\n            taxRecipients.push(recipients_[i]);\n        }\n        require(sumB <= 1000, \"Tax >10%\");\n        totalTaxBps = uint16(sumB);\n\n        _recipient = recipient_;\n        router = IUniswapV2Router02(router_);\n        WETH = weth_;\n        _mint(recipient_, supply_);\n    }\n\n    function setUniswapPair(address pair_) external {\n        require(msg.sender == _recipient, \"No Role\");\n        require(uniswapPair == address(0), \"Pair set\");\n        uniswapPair = pair_;\n    }\n\n    function _swapAndDistribute(uint256 tokenAmt) internal {\n        _approve(address(this), address(router), tokenAmt);\n        address[] memory path = new address[](2);\n        path[0] = address(this);\n        path[1] = WETH;\n        for (uint i = 0; i < taxRecipients.length; i++) {\n            uint256 share = (tokenAmt * taxBps[i]) / totalTaxBps;\n            router.swapExactTokensForETHSupportingFeeOnTransferTokens(\n                share,\n                0,\n                path,\n                taxRecipients[i],\n                block.timestamp\n            );\n        }\n    }\n\n    function _update(\n        address from,\n        address to,\n        uint256 amount\n    ) internal override {\n\n        // ─── 1) LP‐SEEDING EXCEPTION ─────────────────────────────────────────────\n        // the very first router‐driven transfer (recipient → pair) \n        // initial LP seed.  Skip ALL tax logic here.\n        if (msg.sender == address(router) && !lpSeeded) {\n            if (from != _recipient && to != _recipient) {\n                revert(\"Only recipient can seed the initial LP\");\n            }\n            lpSeeded = true;\n            // do a clean transfer with no tax\n            super._update(from, to, amount);\n            return;\n        }\n\n        bool isSell = (to == uniswapPair);\n        bool isBuy = (from == uniswapPair);\n\n        uint256 value = amount;\n\n        // ─── 2) BUY TAX ─────────────────────────────────────────────────────────\n        if (isBuy && totalTaxBps > 0) {\n            uint256 buyTax = (value * totalTaxBps) / 10000;\n            if (buyTax > 0) {\n                super._update(from, address(this), buyTax);\n                value -= buyTax;\n            }\n        }\n\n        // ─── 3) SELL TAX ────────────────────────────────────────────────────────\n        if (isSell && totalTaxBps > 0) {\n            uint256 sellTax = (value * totalTaxBps) / 10000;\n            if (sellTax > 0) {\n                super._update(from, address(this), sellTax);\n                value -= sellTax;\n            }\n        }\n\n        // ─── 4) NET TRANSFER ────────────────────────────────────────────────────\n        super._update(from, to, value);\n\n        // ─── 5) AUTO‐SWAP & DISTRIBUTE ON SELL ──────────────────────────────────\n        if (isSell && from != address(this)) {\n            uint256 contractTokens = balanceOf(address(this));\n            if (contractTokens == 0) return;\n\n            uint256 supply = totalSupply();\n            uint256 swapThreshold = (supply * TRIGGER_BPS) / 10000;\n            if (contractTokens < swapThreshold) return;\n\n            uint256 maxSwapAmount = swapThreshold * MAX_SWAP_MULTIPLIER;\n            uint256 toSwap = contractTokens > maxSwapAmount\n                ? maxSwapAmount\n                : contractTokens;\n\n            _swapAndDistribute(toSwap);\n        }\n    }\n}\n"
+        "content": "// src/ERC_PF.sol\n\n// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\nimport {ERC20} from \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\n\ninterface IUniswapV2Router02 {\n    function factory() external pure returns (address);\n    function addLiquidityETH(\n        address token,\n        uint amountTokenDesired,\n        uint amountTokenMin,\n        uint amountETHMin,\n        address to,\n        uint deadline\n    )\n        external\n        payable\n        returns (uint amountToken, uint amountETH, uint liquidity);\n    function swapExactTokensForETHSupportingFeeOnTransferTokens(\n        uint amountIn,\n        uint amountOutMin,\n        address[] calldata path,\n        address to,\n        uint deadline\n    ) external;\n}\n\ncontract SafuToken is ERC20 {\n    IUniswapV2Router02 public immutable router;\n    address public immutable WETH;\n    address public uniswapPair;\n\n    address[] public taxRecipients; // ≤5\n    uint16[] public taxBps; // sum ≤1000\n    uint16 public totalTaxBps; // cached sum\n\n    address private _recipient;\n    bool public lpSeeded;\n\n    uint16 public constant TRIGGER_BPS = 2; // 0.02% of totalSupply\n    uint16 public constant MAX_SWAP_MULTIPLIER = 20; // max 20× trigger per swap\n\n    constructor(\n        string memory name_,\n        string memory symbol_,\n        uint256 supply_,\n        address router_,\n        address weth_,\n        address[] memory recipients_,\n        uint16[] memory bps_,\n        address recipient_\n    ) ERC20(name_, symbol_) {\n        uint256 sumB;\n        require(\n            recipients_.length == bps_.length && recipients_.length <= 5,\n            \"Tax array error\"\n        );\n        for (uint i = 0; i < bps_.length; i++) {\n            sumB += bps_[i];\n            taxBps.push(bps_[i]);\n            taxRecipients.push(recipients_[i]);\n        }\n        require(sumB <= 1000, \"Tax >10%\");\n        totalTaxBps = uint16(sumB);\n\n        _recipient = recipient_;\n        router = IUniswapV2Router02(router_);\n        WETH = weth_;\n        _mint(recipient_, supply_);\n    }\n\n    function setUniswapPair(address pair_) external {\n        require(msg.sender == _recipient, \"No Role\");\n        require(uniswapPair == address(0), \"Pair set\");\n        uniswapPair = pair_;\n    }\n\n    function _swapAndDistribute(uint256 tokenAmt) internal {\n        _approve(address(this), address(router), tokenAmt);\n        address[] memory path = new address[](2);\n        path[0] = address(this);\n        path[1] = WETH;\n        for (uint i = 0; i < taxRecipients.length; i++) {\n            uint256 share = (tokenAmt * taxBps[i]) / totalTaxBps;\n            router.swapExactTokensForETHSupportingFeeOnTransferTokens(\n                share,\n                0,\n                path,\n                taxRecipients[i],\n                block.timestamp\n            );\n        }\n    }\n\n    function _update(\n        address from,\n        address to,\n        uint256 amount\n    ) internal override {\n\n        // ─── 1) LP‐SEEDING EXCEPTION ─────────────────────────────────────────────\n        // the very first router‐driven transfer (recipient → pair) \n        // initial LP seed.  Skip ALL tax logic here.\n        if (msg.sender == address(router) && !lpSeeded) {\n            if (from != _recipient && to != _recipient) {\n                revert(\"Only recipient can seed the initial LP\");\n            }\n            lpSeeded = true;\n            // do a clean transfer with no tax\n            super._update(from, to, amount);\n            return;\n        }\n\n        bool isSell = ((to == uniswapPair && to != address(0)) && lpSeeded);\n        bool isBuy = ((from == uniswapPair && from != address(0)) && lpSeeded);\n\n        uint256 value = amount;\n\n        // ─── 2) BUY TAX ─────────────────────────────────────────────────────────\n        if (isBuy && totalTaxBps > 0) {\n            uint256 buyTax = (value * totalTaxBps) / 10000;\n            if (buyTax > 0) {\n                super._update(from, address(this), buyTax);\n                value -= buyTax;\n            }\n        }\n\n        // ─── 3) SELL TAX ────────────────────────────────────────────────────────\n        if (isSell && totalTaxBps > 0) {\n            uint256 sellTax = (value * totalTaxBps) / 10000;\n            if (sellTax > 0) {\n                super._update(from, address(this), sellTax);\n                value -= sellTax;\n            }\n        }\n\n        // ─── 4) NET TRANSFER ────────────────────────────────────────────────────\n        super._update(from, to, value);\n\n        // ─── 5) AUTO‐SWAP & DISTRIBUTE ON SELL ──────────────────────────────────\n        if (isSell && from != address(this)) {\n            uint256 contractTokens = balanceOf(address(this));\n            if (contractTokens == 0) return;\n\n            uint256 supply = totalSupply();\n            uint256 swapThreshold = (supply * TRIGGER_BPS) / 10000;\n            if (contractTokens < swapThreshold) return;\n\n            uint256 maxSwapAmount = swapThreshold * MAX_SWAP_MULTIPLIER;\n            uint256 toSwap = contractTokens > maxSwapAmount\n                ? maxSwapAmount\n                : contractTokens;\n\n            _swapAndDistribute(toSwap);\n        }\n    }\n}\n"
       }
     },
     "settings": {
@@ -302,7 +305,7 @@ app.post('/api/tokens', upload.single('logo'), (req: Request, res: Response) => 
 
 // Enhanced server-side validation for transactions endpoint
 app.post('/api/transactions', (req: Request, res: Response) => {
-  const { tokenAddress, type, ethAmount, tokenAmount, timestamp, txnHash, wallet } = req.body as TxLog;
+  const { tokenAddress, type, ethAmount, tokenAmount, timestamp, txnHash, wallet, isBundleTransaction, originalTxnHash, bundleIndex } = req.body as TxLog;
 
   // Basic field validation
   if (!tokenAddress || !type || !ethAmount || !tokenAmount || !timestamp || !txnHash || !wallet) {
@@ -340,16 +343,42 @@ app.post('/api/transactions', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid wallet address format' });
   }
 
+  // Validate transaction hash format
   if (!txnHash.match(/^0x[a-fA-F0-9]{64}$/)) {
     return res.status(400).json({ error: 'Invalid transaction hash format' });
   }
 
-  // Check for duplicate transactions
+  // If it's a bundle transaction, validate originalTxnHash format too
+  if (isBundleTransaction && (!originalTxnHash || !originalTxnHash.match(/^0x[a-fA-F0-9]{64}$/))) {
+    return res.status(400).json({ error: 'Invalid original transaction hash format for bundle transaction' });
+  }
+
+  // Check for duplicate transactions based on transaction type
   const txArr = JSON.parse(fs.readFileSync(txFile, 'utf8')) as TxLog[];
-  const duplicate = txArr.find(tx => tx.txnHash === txnHash);
+  let duplicate;
+
+  if (isBundleTransaction) {
+    // For bundle transactions, check for duplicate using originalTxnHash + wallet combination
+    duplicate = txArr.find(tx =>
+      tx.originalTxnHash === originalTxnHash &&
+      tx.wallet.toLowerCase() === wallet.toLowerCase() &&
+      tx.isBundleTransaction === true
+    );
+  } else {
+    // For regular transactions, check using txnHash + wallet combination
+    duplicate = txArr.find(tx =>
+      tx.txnHash === txnHash &&
+      tx.wallet.toLowerCase() === wallet.toLowerCase() &&
+      (tx.isBundleTransaction === false || tx.isBundleTransaction === undefined)
+    );
+  }
 
   if (duplicate) {
-    return res.status(409).json({ error: 'Transaction already exists' });
+    return res.status(409).json({
+      error: isBundleTransaction
+        ? 'Bundle transaction already exists for this wallet and original transaction'
+        : 'Transaction already exists for this wallet'
+    });
   }
 
   // Create the entry with validated data
@@ -360,7 +389,10 @@ app.post('/api/transactions', (req: Request, res: Response) => {
     tokenAmount: tokenAmountNum.toString(),
     timestamp,
     txnHash,
-    wallet: wallet.toLowerCase()
+    wallet: wallet.toLowerCase(),
+    isBundleTransaction,
+    originalTxnHash,
+    bundleIndex
   };
 
   try {
@@ -838,8 +870,10 @@ app.post('/verify', async (req, res) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
-    console.log("Verification response:", response.data);
-    const statusUrl = `${etherscanApiUrl}&module=contract&action=checkverifystatus&apikey=${apikey}&guid=${response.data.result}`;
+    // Type assertion to access .result safely
+    const verificationResponse = response.data as { result: string };
+    console.log("Verification response:", verificationResponse);
+    const statusUrl = `${etherscanApiUrl}&module=contract&action=checkverifystatus&apikey=${apikey}&guid=${verificationResponse.result}`;
     console.log("Check the status here:", statusUrl);
 
     // Return the response to frontend

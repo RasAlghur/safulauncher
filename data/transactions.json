@@ -1,29 +1,26 @@
 [
   {
-    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
+    "tokenAddress": "0xcbc6fe5604280781e3bd2043a27ff34e676e3e8a",
     "type": "buy",
-    "ethAmount": "0.01",
-    "tokenAmount": "4926990.435642826",
-    "timestamp": "2025-06-28T00:38:36.000Z",
-    "txnHash": "0xfb7cf0c352e3e6bb3f9a795b619faf6d687c441ea9e5c44d80d7d1abee069e45",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
+    "ethAmount": "0.005",
+    "tokenAmount": "2480136.5",
+    "timestamp": "2025-06-29T09:25:12.000Z",
+    "txnHash": "0x447fe12109f6fc0b1d1cea778f1d7a8e330b1648fea5d9cb99a2119e1491d380",
+    "wallet": "0x1cf3e73d9a39b04628b724bd94c80ee611083293",
+    "isBundleTransaction": true,
+    "originalTxnHash": "0x447fe12109f6fc0b1d1cea778f1d7a8e330b1648fea5d9cb99a2119e1491d380",
+    "bundleIndex": 0
   },
   {
-    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
+    "tokenAddress": "0xcbc6fe5604280781e3bd2043a27ff34e676e3e8a",
     "type": "buy",
-    "ethAmount": "0.01",
-    "tokenAmount": "4879551.668596172",
-    "timestamp": "2025-06-28T00:39:24.000Z",
-    "txnHash": "0xb77f5eb27d5a40e31084d786bd28c6cd3fb6d657cd3aab8b311f3f1c8a9ea98f",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
-  },
-  {
-    "tokenAddress": "0x66e5791c8a6dc41e6a4641c49cfb8eb874c5f903",
-    "type": "buy",
-    "ethAmount": "0.01",
-    "tokenAmount": "4832794.754326039",
-    "timestamp": "2025-06-28T00:40:12.000Z",
-    "txnHash": "0xdb437daf81921a87e24d29c40c7ea1ced23455bb3894405eac508927286bd3bd",
-    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
+    "ethAmount": "0.005",
+    "tokenAmount": "2480136.5",
+    "timestamp": "2025-06-29T09:25:12.000Z",
+    "txnHash": "0x447fe12109f6fc0b1d1cea778f1d7a8e330b1648fea5d9cb99a2119e1491d380",
+    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf",
+    "isBundleTransaction": true,
+    "originalTxnHash": "0x447fe12109f6fc0b1d1cea778f1d7a8e330b1648fea5d9cb99a2119e1491d380",
+    "bundleIndex": 1
   }
 ]
