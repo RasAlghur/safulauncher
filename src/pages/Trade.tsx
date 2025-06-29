@@ -340,9 +340,11 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
+  console.log("infoData", infoData);
   const tokenSupply = infoData ? Number(infoData[7]) : 0;
   const tokenSold = infoData ? Number(infoData[10]) : 0;
   const isStartTrading = infoData ? Number(infoData[1]) : 0;
+  const isBundled = infoData ? Number(infoData[17]) : 0;
   const isListed = infoData ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = infoData ? Number(infoData[3]) : 0;
 
@@ -1105,6 +1107,20 @@ export default function Trade() {
                     Trading Started:
                   </p>{" "}
                   {isStartTrading ? (
+                    <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                      <FiCheckCircle className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                      <MdOutlineCancel className="text-black" />
+                    </div>
+                  )}
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    Dev Bundled:
+                  </p>{" "}
+                  {isBundled ? (
                     <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
                       <FiCheckCircle className="text-white" />
                     </div>

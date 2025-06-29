@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { gsap } from "gsap";
 import moon from "../../assets/moon.png";
@@ -11,6 +11,8 @@ const Hero = () => {
   const buttonsRef = useRef(null);
   const moonRef = useRef(null);
   const ringsRef = useRef<HTMLDivElement[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
@@ -67,8 +69,15 @@ const Hero = () => {
     return () => ctx.revert();
   }, []);
 
+  useEffect(() => {
+    const updateSize = () => setIsMobile(window.innerWidth < 768);
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
   return (
-    <section className="pt-[150px] lg:pt-[100px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
+    <section className="py-[150px] lg:pt-[100px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(3)].map((_, i) => (
           <DustParticles key={i} />
@@ -80,14 +89,14 @@ const Hero = () => {
         <div className="flex flex-col justify-center items-center lg:items-start text-center lg:text-left">
           <h1
             ref={headlineRef}
-            className="text-[38px] sm:text-[44px] lg:text-[70px] font-black mb-6 dark:text-white text-black leading-tight font-raleway"
+            className="text-[38px] sm:text-[44px] md:text-[60px] xl:text-[70px] font-black mb-6 dark:text-white text-black leading-tight font-raleway"
           >
             Launch Your <span className="text-[#0C8CE0]">Token with</span>{" "}
             Confidence
           </h1>
           <p
             ref={paragraphRef}
-            className="text-base sm:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md lg:max-w-none"
+            className="text-base sm:text-lg md:text-2xl lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md lg:max-w-none"
           >
             Community - powered liquidity, automatic Uniswap listing, and
             built-in safety — no up-front funding needed.
@@ -113,8 +122,8 @@ const Hero = () => {
         <div className="flex justify-center items-center relative mt-10 lg:mt-0">
           {/* Orbit Rings */}
           {[0, 1, 2, 3, 4].map((i) => {
-            const baseSize = 250;
-            const gap = 200; // adjust this to control spacing between rings
+            const baseSize = isMobile ? 100 : 250;
+            const gap = isMobile ? 100 : 200;
             const size = baseSize + i * gap;
 
             return (
@@ -123,7 +132,7 @@ const Hero = () => {
                 ref={(el) => {
                   if (el) ringsRef.current[i] = el;
                 }}
-                className="absolute rounded-full border-l-3 border-[#172654] -z-20 hidden dark:block"
+                className="absolute rounded-full border-2 lg:border-l-2 border-[#172654] -z-20 hidden dark:block"
                 style={{ width: size, height: size }}
               />
             );
@@ -134,7 +143,7 @@ const Hero = () => {
             ref={moonRef}
             src={moon}
             alt="moon"
-            className="rounded-full w-[200px] sm:w-[250px] lg:w-auto pr-[20px] hidden dark:block"
+            className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
             decoding="async"
             loading="eager"
           />

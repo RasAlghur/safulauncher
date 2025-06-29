@@ -13,7 +13,7 @@ const Tokenomics = () => {
         <h2 className="text-3xl font-bold text-center mb-12 text-[#01061C] dark:text-white">
           Tokenomics
         </h2>
-        <div className="flex items-center gap-12 justify-center">
+        <div className="flex flex-col lg:flex-row items-center gap-12 justify-center">
           {/* Left Side */}
           <div className="space-y-4 text-[#141313] dark:text-white">
             <p>
@@ -41,44 +41,51 @@ const Tokenomics = () => {
               <h2 className="text-2xl font-semibold font-raleway mb-6 text-black dark:text-white">
                 Token Distribution
               </h2>
-              <div className="flex items-start gap-2 mb-[34px]">
-                <div className="w-3 h-3 rounded-full mt-1 bg-[#2883A3]" />
-                <div className="text-[#141313] dark:text-white">
-                  <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
-                    Liquidity
-                  </span>
-                  <br />
-                  400,000,000 (40%)
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-3 text-left">
+                <div>
+                  <div className="flex items-start gap-2 mb-[34px]">
+                    <div className="w-3 h-3 rounded-full mt-1 bg-[#2883A3]" />
+                    <div className="text-[#141313] dark:text-white">
+                      <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
+                        Liquidity
+                      </span>
+                      <br />
+                      400,000,000 (40%)
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 mb-[34px]">
+                    <div className="w-3 h-3 rounded-full mt-1 bg-[#BD2624]" />
+                    <div className="text-[#141313] dark:text-white">
+                      <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
+                        Marketing
+                      </span>
+                      <br />
+                      250,000,000 (Vested) (25%)
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-2 mb-[34px]">
-                <div className="w-3 h-3 rounded-full mt-1 bg-[#BD2624]" />
-                <div className="text-[#141313] dark:text-white">
-                  <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
-                    Marketing
-                  </span>
-                  <br />
-                  250,000,000 (Vested) (25%)
-                </div>
-              </div>
-              <div className="flex items-start gap-2 mb-[34px]">
-                <div className="w-3 h-3 rounded-full mt-1 bg-[#2CB54A]" />
-                <div className="text-[#141313] dark:text-white">
-                  <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
-                    Future Plans
-                  </span>
-                  <br />
-                  Such as CEX listing: 250,000,000 (Locked) (25%)
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-3 h-3 rounded-full mt-1 bg-[#631DBE]" />
-                <div className="text-[#141313] dark:text-white">
-                  <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
-                    Team
-                  </span>
-                  <br />
-                  100,000,000 (Locked) (10%)
+
+                <div>
+                  <div className="flex items-start gap-2 mb-[34px]">
+                    <div className="w-3 h-3 rounded-full mt-1 bg-[#2CB54A]" />
+                    <div className="text-[#141313] dark:text-white">
+                      <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
+                        Future Plans
+                      </span>
+                      <br />
+                      Such as CEX listing: 250,000,000 (Locked) (25%)
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-3 h-3 rounded-full mt-1 bg-[#631DBE]" />
+                    <div className="text-[#141313] dark:text-white">
+                      <span className="font-semibold text-xl mb-[10px] text-black dark:text-white">
+                        Team
+                      </span>
+                      <br />
+                      100,000,000 (Locked) (10%)
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

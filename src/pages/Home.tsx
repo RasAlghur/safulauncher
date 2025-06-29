@@ -112,7 +112,7 @@ function Home() {
   }, []);
 
   return (
-    <div>
+    <div className="overflow-x-hidden">
       <div className="hidden">
         <p>
           totalVolumeETH:{" "}
@@ -145,15 +145,21 @@ function Home() {
         <p>
           totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
         </p>
-            <p>
-                DevRewardETH: {isConnected && getMetrics && getMetrics[6] !== undefined ? Number(getMetrics[6]) / 1e18 : (pureMetrics[1] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0)} ETH
-            </p>
+        <p>
+          DevRewardETH:{" "}
+          {isConnected && getMetrics && getMetrics[6] !== undefined
+            ? Number(getMetrics[6]) / 1e18
+            : pureMetrics[1] !== undefined
+            ? Number(pureMetrics[6]) / 1e18
+            : 0}{" "}
+          ETH
+        </p>
       </div>
       <Navbar />
       <Hero />
       <PlatformStats />
 
-      <div className="relative z-10">
+      <div className="relative z-10 overflow-x-hidden">
         <KeyBenefits />
 
         {/* Animated rings (dark mode only) */}
@@ -163,7 +169,7 @@ function Home() {
             ref={(el) => {
               ringRefs.current[i] = el!;
             }}
-            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden dark:block -z-10"
+            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden lg:block dark:block -z-10"
             style={{
               width: `${size}px`,
               height: `${size}px`,

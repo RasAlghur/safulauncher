@@ -62,7 +62,7 @@ const PlatformStats = () => {
   }, []);
 
   return (
-    <section id="stats" className=" mt-16 px-4 relative" ref={containerRef}>
+    <section id="stats" className=" mt-16 px-6 relative" ref={containerRef}>
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />

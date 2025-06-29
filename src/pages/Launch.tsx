@@ -11,9 +11,9 @@ import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
 import { ethers } from "ethers";
 import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
+import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import rocket from "../assets/rocket.png";
-import DustParticles from "../components/generalcomponents/DustParticles";
 
 interface ValidationError {
   field: string;
@@ -95,6 +95,35 @@ export default function Launch() {
     }
   };
 
+  const findDuplicateAddresses = (
+    addresses: string[]
+  ): { duplicates: string[]; positions: number[][] } => {
+    const addressCount = new Map<string, number[]>();
+    const duplicates: string[] = [];
+    const positions: number[][] = [];
+
+    // Count occurrences and track positions
+    addresses.forEach((addr, index) => {
+      if (!addr || !addr.trim()) return; // Skip empty addresses
+
+      const normalizedAddr = addr.toLowerCase().trim();
+      if (!addressCount.has(normalizedAddr)) {
+        addressCount.set(normalizedAddr, []);
+      }
+      addressCount.get(normalizedAddr)!.push(index);
+    });
+
+    // Find duplicates
+    addressCount.forEach((indices, addr) => {
+      if (indices.length > 1) {
+        duplicates.push(addr);
+        positions.push(indices);
+      }
+    });
+
+    return { duplicates, positions };
+  };
+
   // Comprehensive validation function
   const validateForm = useCallback((): ValidationError[] => {
     const errors: ValidationError[] = [];
@@ -163,6 +192,26 @@ export default function Launch() {
             "All tax recipients must have valid addresses and percentages > 0",
         });
       }
+
+      // Check for duplicate tax addresses
+      const taxAddresses = taxList
+        .map((tax) => tax.addr)
+        .filter((addr) => addr && addr.trim());
+      if (taxAddresses.length > 0) {
+        const { duplicates, positions } = findDuplicateAddresses(taxAddresses);
+        duplicates.forEach((duplicateAddr, index) => {
+          const duplicatePositions = positions[index]
+            .map((pos) => pos + 1)
+            .join(", ");
+          errors.push({
+            field: "tax",
+            message: `Duplicate tax recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
+              0,
+              6
+            )}...${duplicateAddr.slice(-4)})`,
+          });
+        });
+      }
     }
 
     // Whitelist validation
@@ -190,6 +239,28 @@ export default function Launch() {
         errors.push({
           field: "whitelist",
           message: "All whitelist entries must have valid addresses",
+        });
+      }
+
+      // Check for duplicate whitelist addresses
+      const validWhitelistAddresses = whitelist.filter(
+        (addr) => addr && addr.trim()
+      );
+      if (validWhitelistAddresses.length > 0) {
+        const { duplicates, positions } = findDuplicateAddresses(
+          validWhitelistAddresses
+        );
+        duplicates.forEach((duplicateAddr, index) => {
+          const duplicatePositions = positions[index]
+            .map((pos) => pos + 1)
+            .join(", ");
+          errors.push({
+            field: "whitelist",
+            message: `Duplicate whitelist address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
+              0,
+              6
+            )}...${duplicateAddr.slice(-4)})`,
+          });
         });
       }
     }
@@ -302,6 +373,27 @@ export default function Launch() {
             "All bundle recipients must have valid addresses and percentages > 0",
         });
       }
+
+      // Check for duplicate bundle addresses
+      const bundleAddresses = bundleList
+        .map((bundle) => bundle.addr)
+        .filter((addr) => addr && addr.trim());
+      if (bundleAddresses.length > 0) {
+        const { duplicates, positions } =
+          findDuplicateAddresses(bundleAddresses);
+        duplicates.forEach((duplicateAddr, index) => {
+          const duplicatePositions = positions[index]
+            .map((pos) => pos + 1)
+            .join(", ");
+          errors.push({
+            field: "bundle",
+            message: `Duplicate bundle recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
+              0,
+              6
+            )}...${duplicateAddr.slice(-4)})`,
+          });
+        });
+      }
     }
 
     // Platform fee validation
@@ -375,6 +467,27 @@ export default function Launch() {
           field: "platformFee",
           message:
             "All platform fee recipients must have valid addresses and percentages > 0",
+        });
+      }
+
+      // Check for duplicate platform fee addresses
+      const platformFeeAddresses = platformFeeList
+        .map((fee) => fee.addr)
+        .filter((addr) => addr && addr.trim());
+      if (platformFeeAddresses.length > 0) {
+        const { duplicates, positions } =
+          findDuplicateAddresses(platformFeeAddresses);
+        duplicates.forEach((duplicateAddr, index) => {
+          const duplicatePositions = positions[index]
+            .map((pos) => pos + 1)
+            .join(", ");
+          errors.push({
+            field: "platformFee",
+            message: `Duplicate platform fee recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
+              0,
+              6
+            )}...${duplicateAddr.slice(-4)})`,
+          });
         });
       }
     }
@@ -568,6 +681,68 @@ export default function Launch() {
         // const API = `https://safulauncher-production.up.railway.app`;
         const API = import.meta.env.VITE_API_BASE_URL;
         await fetch(`${API}/api/tokens`, { method: "POST", body: fd });
+
+        // Log bundle transactions for each wallet if bundling is enabled
+        if (enableBundle && ethValue > 0n && bundleList.length > 0) {
+          const totalBundleEth = Number(ethers.formatEther(ethValue));
+          const totalTokensFromBundle = calculateBundleTokens(
+            totalBundleEth,
+            supply
+          );
+
+          // Create transaction entries for each bundle recipient
+          const bundleTransactions = bundleList.map((bundle, index) => {
+            // Calculate ETH amount for this specific wallet based on their percentage
+            const walletEthAmount = (totalBundleEth * bundle.pct) / 100;
+
+            // Calculate token amount for this specific wallet based on their percentage
+            const walletTokenAmount =
+              (totalTokensFromBundle * bundle.pct) / 100;
+
+            return {
+              tokenAddress,
+              type: "buy",
+              ethAmount: walletEthAmount.toString(),
+              tokenAmount: walletTokenAmount.toString(),
+              timestamp: createdAt,
+              // Use original transaction hash
+              txnHash: txHash,
+              wallet: bundle.addr,
+              // Add metadata to identify this as a bundle transaction
+              isBundleTransaction: true,
+              originalTxnHash: txHash,
+              bundleIndex: index,
+            };
+          });
+
+          // Log each bundle transaction
+          for (const transaction of bundleTransactions) {
+            try {
+              const response = await fetch(`${API}/api/transactions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(transaction),
+              });
+
+              if (!response.ok) {
+                console.error(
+                  `Error logging bundle transaction for ${transaction.wallet}:`,
+                  response.status,
+                  await response.text()
+                );
+              } else {
+                console.log(
+                  `Bundle transaction logged successfully for wallet: ${transaction.wallet}, ETH: ${transaction.ethAmount}, Tokens: ${transaction.tokenAmount}`
+                );
+              }
+            } catch (error) {
+              console.error(
+                `Error logging bundle transaction for ${transaction.wallet}:`,
+                error
+              );
+            }
+          }
+        }
 
         const message = [
           name,

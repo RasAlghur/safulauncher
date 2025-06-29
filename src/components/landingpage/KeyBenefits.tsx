@@ -1,4 +1,3 @@
-import line from "../../assets/Line.png";
 import DustParticles from "../generalcomponents/DustParticles";
 
 const KeyBenefits = () => {
@@ -30,8 +29,9 @@ const KeyBenefits = () => {
                 </li>
               </ul>
             </div>
-            <img src={line} alt="" className="" />
+            <div className="h-full w-[1px] lg:block hidden bg-Primary" />
           </div>
+          <div className="h-[1px] w-full block lg:hidden bg-Primary" />
 
           {/* Developers */}
           <div>
