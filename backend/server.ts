@@ -38,9 +38,6 @@ interface TxLog {
   isBundleTransaction?: boolean; // Optional for bundle transactions
   originalTxnHash?: string; // Optional for bundle transactions
   bundleIndex?: number; // Optional for bundle transactions
-  isBundleTransaction?: boolean; // Optional for bundle transactions
-  originalTxnHash?: string; // Optional for bundle transactions
-  bundleIndex?: number; // Optional for bundle transactions
 }
 
 // ----- Setup -----
@@ -410,12 +407,9 @@ app.post("/api/transactions", (req: Request, res: Response) => {
     isBundleTransaction &&
     (!originalTxnHash || !originalTxnHash.match(/^0x[a-fA-F0-9]{64}$/))
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Invalid original transaction hash format for bundle transaction",
-      });
+    return res.status(400).json({
+      error: "Invalid original transaction hash format for bundle transaction",
+    });
   }
 
   // Check for duplicate transactions based on transaction type
