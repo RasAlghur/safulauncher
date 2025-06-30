@@ -402,6 +402,16 @@ app.post("/api/transactions", (req: Request, res: Response) => {
     });
   }
 
+  // If it's a bundle transaction, validate originalTxnHash format too
+  if (
+    isBundleTransaction &&
+    (!originalTxnHash || !originalTxnHash.match(/^0x[a-fA-F0-9]{64}$/))
+  ) {
+    return res.status(400).json({
+      error: "Invalid original transaction hash format for bundle transaction",
+    });
+  }
+
   // Check for duplicate transactions based on transaction type
   const txArr = JSON.parse(fs.readFileSync(txFile, "utf8")) as TxLog[];
   let duplicate;
