@@ -1,6 +1,8 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { pureMetrics, pureGetLatestETHPrice } from "../../web3/readContracts";
+import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 
 import VolumeIcon from "../svgcomponents/Volume";
 import FeeCollected from "../svgcomponents/FeeCollected";
@@ -14,21 +16,116 @@ import DustParticles from "../generalcomponents/DustParticles";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const stats = [
-  { title: "Total Volume", value: "$1.2M", icon: VolumeIcon },
-  { title: "Fee Collected", value: "$12.3K", icon: FeeCollected },
-  { title: "Tokens Launched", value: "456", icon: TokensLaunched },
-  { title: "Tokens Listed", value: "123", icon: TokensListed },
-  { title: "Avg. Bonding", value: "75%", icon: AverageBonding },
-  { title: "Tax Tokens", value: "89K", icon: TaxTokens },
-  { title: "0% - Tax Token", value: "234", icon: ZeroTaxTokens },
-  { title: "$SAFU Holders", value: "234", icon: SafuHolders },
-];
+interface PlatformStatsProps {
+  ethPriceUSD?: number;
+}
 
-const PlatformStats = () => {
+const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
+  const [currentETHPrice, setCurrentETHPrice] = useState<number>(ethPriceUSD || 0);
+
+  // Fetch ETH price if not provided
+  useEffect(() => {
+    if (!ethPriceUSD) {
+      async function fetchETHPrice() {
+        try {
+          const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+          const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+          setCurrentETHPrice(price);
+        } catch (error) {
+          console.error("Failed to fetch ETH price:", error);
+        }
+      }
+      fetchETHPrice();
+    } else {
+      setCurrentETHPrice(ethPriceUSD);
+    }
+  }, [ethPriceUSD]);
+
+  // Helper function to get USD value as main display
+  const getMainValue = (ethValue: number, fallbackValue: string) => {
+    if (currentETHPrice === 0) return fallbackValue;
+    const usdValue = ethValue * currentETHPrice;
+    return `$${usdValue.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
+  };
+
+  // Helper function to get ETH value for display
+  const getETHDisplay = (ethValue: number) => {
+    if (currentETHPrice === 0) return "";
+    return `(${ethValue.toFixed(4)} ETH)`;
+  };
+
+  // Create stats array with real data from pureMetrics
+  const stats = [
+    { 
+      title: "Total Volume", 
+      mainValue: getMainValue(
+        pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0,
+        `${pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18).toFixed(8) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0),
+      icon: VolumeIcon 
+    },
+    { 
+      title: "Fee Collected", 
+      mainValue: getMainValue(
+        pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0,
+        `${pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18).toFixed(8) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0),
+      icon: FeeCollected 
+    },
+    { 
+      title: "Tokens Launched", 
+      mainValue: `${pureMetrics?.[2] || 0}`,
+      ethValue: "",
+      icon: TokensLaunched 
+    },
+    { 
+      title: "Tokens Listed", 
+      mainValue: `${pureMetrics?.[3] || 0}`,
+      ethValue: "",
+      icon: TokensListed 
+    },
+    { 
+      title: "Avg. Bonding", 
+      mainValue: "75%", // This doesn't seem to have a corresponding pureMetrics value
+      ethValue: "",
+      icon: AverageBonding 
+    },
+    { 
+      title: "Tax Tokens", 
+      mainValue: `${pureMetrics?.[4] || 0}`,
+      ethValue: "",
+      icon: TaxTokens 
+    },
+    { 
+      title: "0% - Tax Token", 
+      mainValue: `${pureMetrics?.[5] || 0}`,
+      ethValue: "",
+      icon: ZeroTaxTokens 
+    },
+    { 
+      title: "$SAFU Holders", 
+      mainValue: "234",
+      ethValue: "",
+      icon: SafuHolders 
+    },
+    { 
+      title: "Dev Reward", 
+      mainValue: getMainValue(
+        pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0,
+        `${pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18).toFixed(4) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0),
+      icon: SafuHolders 
+    },
+  ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -93,12 +190,20 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  <div className="text-lg font-semibold dark:text-white text-black">
-                    {stat.value}
+                  {/* Main value (USD for ETH values, original for others) */}
+                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                    {stat.mainValue}
                   </div>
-                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight">
+                  {/* Title */}
+                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
+                  {/* ETH value in brackets (only for ETH-related stats) */}
+                  {stat.ethValue && (
+                    <div className="text-sm dark:text-white/60 text-black/60 font-medium">
+                      {stat.ethValue}
+                    </div>
+                  )}
                 </div>
               );
             })}

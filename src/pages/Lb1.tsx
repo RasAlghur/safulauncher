@@ -1,3 +1,5 @@
+I also want to add the latestETH value to the total volume, fees collected, dev reward and then their eth vaue to be in a bracket below the title
+
 import { useEffect, useState } from "react";
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
@@ -267,3 +269,4 @@ export default function Leaderboard() {
     </div>
   );
 }
+

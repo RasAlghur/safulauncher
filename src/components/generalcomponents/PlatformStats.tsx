@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TrendingTokens from "./TrendingTokens";
@@ -12,67 +12,128 @@ import TaxTokens from "../svgcomponents/TaxTokens";
 import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "./DustParticles";
+import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { pureGetLatestETHPrice, pureMetrics } from "../../web3/readContracts";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const stats1 = [
-  {
-    id: 1,
-    title: "Total Volume",
-    value: "$1.2M",
-    icon: VolumeIcon,
-  },
-  {
-    id: 2,
-    title: "Fee Collected",
-    value: "$12.3K",
-    icon: FeeCollected,
-  },
-  {
-    id: 3,
-    title: "Tokens Launched",
-    value: "456",
-    icon: TokensLaunched,
-  },
-  {
-    id: 4,
-    title: "Tokens Listed",
-    value: "123",
-    icon: TokensListed,
-  },
-];
-
-const stats2 = [
-  {
-    id: 1,
-    title: "Avg. Bonding",
-    value: "75%",
-    icon: AverageBonding,
-  },
-  {
-    id: 2,
-    title: "Tax Tokens",
-    value: "89K",
-    icon: TaxTokens,
-  },
-  {
-    id: 3,
-    title: "0% - Tax Token",
-    value: "234",
-    icon: ZeroTaxTokens,
-  },
-  {
-    id: 4,
-    title: "$SAFU Holders",
-    value: "234",
-    icon: SafuHolders,
-  },
-];
 
 const PlatformStats = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
+  const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
+
+  // Fetch ETH price if not provided
+  useEffect(() => {
+    async function fetchETHPrice() {
+      try {
+        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setCurrentETHPrice(price);
+      } catch (error) {
+        console.error("Failed to fetch ETH price:", error);
+      }
+    }
+    fetchETHPrice();
+  }, []);
+
+  // Helper function to get USD value as main display
+  const getMainValue = (ethValue: number, fallbackValue: string) => {
+    if (currentETHPrice === 0) return fallbackValue;
+    const usdValue = ethValue * currentETHPrice;
+    return `$${usdValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
+
+  // Helper function to get ETH value for display
+  const getETHDisplay = (ethValue: number) => {
+    if (currentETHPrice === 0) return "";
+    return `(${ethValue.toFixed(4)} ETH)`;
+  };
+
+
+  const stats1 = [
+    {
+      id: 1,
+      title: "Total Volume",
+      mainValue: getMainValue(
+        pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0,
+        `${pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18).toFixed(8) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0),
+      icon: VolumeIcon,
+    },
+    {
+      id: 2,
+      title: "Fee Collected",
+      mainValue: getMainValue(
+        pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0,
+        `${pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18).toFixed(8) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0),
+      icon: FeeCollected,
+    },
+    {
+      id: 3,
+      title: "Tokens Launched",
+      mainValue: `${pureMetrics?.[2] || 0}`,
+      ethValue: "",
+      icon: TokensLaunched,
+    },
+    {
+      id: 4,
+      title: "Tokens Listed",
+      mainValue: `${pureMetrics?.[3] || 0}`,
+      ethValue: "",
+      icon: TokensListed,
+    },
+  ];
+
+  const stats2 = [
+    {
+      id: 1,
+      title: "Avg. Bonding",
+      mainValue: "75%", // This doesn't seem to have a corresponding pureMetrics value
+      ethValue: "",
+      icon: AverageBonding,
+    },
+    {
+      id: 2,
+      title: "Tax Tokens",
+      mainValue: `${pureMetrics?.[4] || 0}`,
+      ethValue: "",
+      icon: TaxTokens,
+    },
+    {
+      id: 3,
+      title: "0% - Tax Token",
+      mainValue: `${pureMetrics?.[5] || 0}`,
+      ethValue: "",
+      icon: ZeroTaxTokens,
+    },
+    {
+      id: 4,
+      mainValue: "234", // This doesn't seem to have a corresponding pureMetrics value
+      ethValue: "",
+      icon: SafuHolders,
+    },
+  ];
+
+
+  const stats3 = [
+    {
+      id: 1,
+      title: "Dev Reward",
+      mainValue: getMainValue(
+        pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0,
+        `${pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18).toFixed(4) : 0} ETH`
+      ),
+      ethValue: getETHDisplay(pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0),
+      icon: SafuHolders,
+    }
+  ]
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -104,6 +165,7 @@ const PlatformStats = () => {
 
     return () => ctx.revert();
   }, []);
+
   return (
     <section
       className="lg:px-[80px] lg:pb-20 lg:pt-24 relative z-20"
@@ -134,12 +196,20 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  <div className="text-lg font-semibold dark:text-white text-black">
-                    {stat.value}
+                  {/* Main value (USD for ETH values, original for others) */}
+                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                    {stat.mainValue}
                   </div>
-                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight">
+                  {/* Title */}
+                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
+                  {/* ETH value in brackets (only for ETH-related stats) */}
+                  {stat.ethValue && (
+                    <div className="text-sm dark:text-white/60 text-black/60 font-medium">
+                      {stat.ethValue}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -158,12 +228,53 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  <div className="text-lg font-semibold dark:text-white text-black">
-                    {stat.value}
+                  {/* Main value (USD for ETH values, original for others) */}
+                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                    {stat.mainValue}
                   </div>
-                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight">
+                  {/* Title */}
+                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
+                  {/* ETH value in brackets (only for ETH-related stats) */}
+                  {stat.ethValue && (
+                    <div className="text-sm dark:text-white/60 text-black/60 font-medium">
+                      {stat.ethValue}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-[#0c8be011] p-[20px] rounded-[20px] grid grid-cols-1 gap-4">
+            {stats3.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
+                  className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
+                >
+                  <div className="w-16 h-16 mb-4">
+                    <Icon className="w-full h-full" />
+                  </div>
+                  {/* Main value (USD for ETH values, original for others) */}
+                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                    {stat.mainValue}
+                  </div>
+                  {/* Title */}
+                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
+                    {stat.title}
+                  </div>
+                  {/* ETH value in brackets (only for ETH-related stats) */}
+                  {stat.ethValue && (
+                    <div className="text-sm dark:text-white/60 text-black/60 font-medium">
+                      {stat.ethValue}
+                    </div>
+                  )}
                 </div>
               );
             })}
