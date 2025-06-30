@@ -8,15 +8,8 @@ import type { TokenMetadata } from "../../pages/Tokens";
 import ThemeToggle from "../../lib/ThemeToggle";
 import { FiMenu, FiX } from "react-icons/fi";
 
-const menuItems = [
-  { label: "Platform Stats", href: "#stats" },
-  { label: "Key Benefit", href: "#benefit" },
-  { label: "How it works", href: "#howitworks" },
-];
-
 const Navbar = () => {
   const [showMenu, setShowMenu] = useState(false);
-  const [activeLink, setActiveLink] = useState("#home");
 
   const { searchTerm, setSearchTerm, tokens } = useTokenContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -92,11 +85,6 @@ const Navbar = () => {
       setShowSuggestions(false);
     }
   }, [searchTerm, tokens]);
-
-  const handleSetActive = (link: string) => {
-    setActiveLink(link);
-    setIsOpen(false);
-  };
 
   return (
     <>

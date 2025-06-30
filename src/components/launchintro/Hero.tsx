@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Link } from "react-router-dom";
 import { gsap } from "gsap";
 import moon from "../../assets/moon.png";
-import rocket from "../../assets/rocket.png";
+
 import DustParticles from "../generalcomponents/DustParticles";
 
 const Hero = () => {

@@ -169,10 +169,10 @@ const PlatformStats = () => {
             })}
           </div>
         </div>
-        {/* <div>
+        <div>
           <TrendingTokens />
           <NotableBuys />
-        </div> */}
+        </div>
       </div>
     </section>
   );

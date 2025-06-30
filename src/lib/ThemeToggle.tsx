@@ -1,7 +1,6 @@
 // src/components/ThemeToggle.tsx
 import { useEffect, useState } from "react";
-import { CiLight } from "react-icons/ci";
-import { FaMoon } from "react-icons/fa";
+
 import moon from "../assets/moon-toggle.png";
 import sun from "../assets/sun.png";
 
