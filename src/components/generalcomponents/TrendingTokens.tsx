@@ -1,53 +1,167 @@
-import native from "../../assets/native.png";
-import fwog from "../../assets/fwog.png";
-import clankfun from "../../assets/clank.png";
-import opsys from "../../assets/opsys.png";
-import bankr from "../../assets/bankr.png";
+// TrendingTokens.tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  pureInfoDataRaw,
+  pureGetLatestETHPrice,
+  pureAmountOutMarketCap,
+} from "../../web3/readContracts";
+import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 
-const trendingTokens = [
-  {
-    name: "$NATIVE",
-    address: "0x3...DD0",
-    marketCap: "$6.8M",
-    change24h: "+10%",
-    volume24h: "$20k",
-    icon: native,
-  },
-  {
-    name: "$FWOG",
-    address: "0x3...DD0",
-    marketCap: "$2.3M",
-    change24h: "+4%",
-    volume24h: "$19k",
-    icon: fwog,
-  },
-  {
-    name: "$CLANKFUN",
-    address: "0x3...DD0",
-    marketCap: "$450k",
-    change24h: "+8%",
-    volume24h: "$80k",
-    icon: clankfun,
-  },
-  {
-    name: "$OPSYS",
-    address: "0x3...DD0",
-    marketCap: "$230k",
-    change24h: "-2%",
-    volume24h: "$20k",
-    icon: opsys,
-  },
-  {
-    name: "$BANKR",
-    address: "0x3...DD0",
-    marketCap: "$18M",
-    change24h: "+11%",
-    volume24h: "$1.4M",
-    icon: bankr,
-  },
-];
+export interface TokenMetadata {
+  name: string;
+  symbol: string;
+  website?: string;
+  description?: string;
+  tokenAddress: string;
+  tokenCreator: string;
+  logoFilename?: string;
+  createdAt?: string;
+  expiresAt?: string;
+}
+
+interface TrendingTokenData {
+  token: TokenMetadata;
+  marketCap: number;
+  volume: number;
+  priceChange: number;
+  holders: number;
+}
+
+type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 const TrendingTokens = () => {
+  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
+  const [selectedRange, setSelectedRange] = useState<TimeRange>("24h");
+  const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  const API = import.meta.env.VITE_API_BASE_URL;
+
+  // Time range in milliseconds
+  const getTimeRangeMs = (range: TimeRange): number => {
+    const now = Date.now();
+    switch (range) {
+      case "1h": return now - 1 * 60 * 60 * 1000;
+      case "6h": return now - 6 * 60 * 60 * 1000;
+      case "24h": return now - 24 * 60 * 60 * 1000;
+      case "7d": return now - 7 * 24 * 60 * 60 * 1000;
+      default: return now - 24 * 60 * 60 * 1000;
+    }
+  };
+
+  // Fetch tokens list
+  useEffect(() => {
+    fetch(`${API}/api/tokens`)
+      .then((res) => res.json())
+      .then((data: TokenMetadata[]) => setTokens(data))
+      .catch(console.error);
+  }, []);
+
+  // Fetch ETH price
+  useEffect(() => {
+    async function fetchEthPrice() {
+      try {
+        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setEthPriceUSD(price);
+      } catch {
+        console.error("Failed to fetch ETH price");
+      }
+    }
+    fetchEthPrice();
+  }, []);
+
+  // Fetch trending data based on selected time range
+  useEffect(() => {
+    if (tokens.length === 0 || ethPriceUSD === 0) return;
+
+    async function fetchTrendingData() {
+      setLoading(true);
+      const sinceTime = getTimeRangeMs(selectedRange);
+      const trendingTokens: TrendingTokenData[] = [];
+
+      await Promise.all(
+        tokens.map(async (token) => {
+          try {
+            // Get market cap
+            const info = await pureInfoDataRaw(token.tokenAddress);
+            let marketCap = 0;
+            if (Array.isArray(info)) {
+              const supply = Number(info[7]);
+              const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
+              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
+            }
+
+            // Get volume and price change data
+            const res = await fetch(`${API}/api/transactions/${token.tokenAddress}`);
+            const logs: { ethAmount: string; timestamp: string; type: string }[] = await res.json();
+            
+            // Filter transactions by time range
+            const filteredLogs = logs.filter(tx => new Date(tx.timestamp).getTime() >= sinceTime);
+            
+            // Calculate volume
+            const volumeEth = filteredLogs.reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+            const volume = volumeEth * ethPriceUSD;
+
+            const currentPrice = marketCap > 0 ? marketCap / (Number(info?.[7] || 0) / 1e18) : 0;
+            
+            // Get price from start of time range for comparison
+            const oldestTx = logs
+              .filter(tx => new Date(tx.timestamp).getTime() >= sinceTime)
+              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0];
+            
+            let priceChange = 0;
+            if (oldestTx && currentPrice > 0) {
+              // This is a simplified calculation - you might need more sophisticated price tracking
+              const oldPrice = parseFloat(oldestTx.ethAmount) * ethPriceUSD;
+              priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
+            }
+
+            const uniqueAddresses = new Set(logs.map(tx => tx.type === 'buy' ? 'buyer' : 'seller'));
+            const holders = uniqueAddresses.size;
+
+            trendingTokens.push({
+              token,
+              marketCap,
+              volume,
+              priceChange,
+              holders,
+            });
+          } catch (e) {
+            console.error(`Error fetching data for ${token.tokenAddress}:`, e);
+          }
+        })
+      );
+
+      // Sort by volume (descending) and take top 10
+      const sortedTrending = trendingTokens
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 10);
+
+      setTrendingData(sortedTrending);
+      setLoading(false);
+    }
+
+    fetchTrendingData();
+  }, [tokens, selectedRange, ethPriceUSD]);
+
+  const formatCurrency = (value: number): string => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(1)}k`;
+    } else {
+      return `$${value.toFixed(2)}`;
+    }
+  };
+
+  const formatPercentage = (value: number): string => {
+    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  };
+
   return (
     <section className="w-full max-w-[1300px] mx-auto px-4 sm:px-6 mt-10">
       {/* Header */}
@@ -56,11 +170,14 @@ const TrendingTokens = () => {
           Trending
         </h2>
         <div className="flex gap-2 text-sm dark:bg-[#141933] bg-white/5 rounded-full p-1">
-          {["1h", "6h", "24h", "7d"].map((range) => (
+          {(["1h", "6h", "24h", "7d"] as TimeRange[]).map((range) => (
             <button
               key={range}
-              className={`px-3 py-1 rounded-full ${
-                range === "24h" ? "bg-[#1D223E] text-white" : "text-gray-400"
+              onClick={() => setSelectedRange(range)}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                range === selectedRange 
+                  ? "bg-[#1D223E] text-white" 
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               {range}
@@ -70,66 +187,94 @@ const TrendingTokens = () => {
       </div>
 
       {/* Table */}
-      <div className="dark:bg-[#0B132B]/50 backdrop-blur-md  rounded-xl shadow-xl">
-        <div className="overflow-x-auto ">
-          <table className="min-w-[600px] md:min-w-full">
-            <thead>
-              <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45]">
-                <th className="p-3">Token</th>
-                <th className="p-3">Market Cap</th>
-                <th className="p-3">24h %</th>
-                <th className="p-3">24h Volume</th>
-                <th className="p-3 text-right">Holders</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trendingTokens.map((token, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base"
-                >
-                  <td className="p-3 flex items-center gap-3">
-                    <img
-                      src={token.icon}
-                      alt={token.name}
-                      className="w-10 h-10 rounded-xl"
-                    />
-                    <div>
-                      <div className="font-medium">{token.name}</div>
-                      <div className="text-xs text-black/50 dark:text-white/50">
-                        {token.address}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3">{token.marketCap}</td>
-                  <td
-                    className={`p-3 font-semibold ${
-                      token.change24h.includes("-")
-                        ? "text-red-500"
-                        : "text-green-400"
-                    }`}
-                  >
-                    {token.change24h}
-                  </td>
-                  <td className="p-3">{token.volume24h}</td>
-                  <td className="p-3 text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
-                        A
-                      </span>
-                      <span>1.2k</span>
-                    </div>
-                  </td>
+      <div className="dark:bg-[#0B132B]/50 backdrop-blur-md rounded-xl shadow-xl">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3BC3DB] mx-auto"></div>
+              <p className="mt-2 text-gray-400">Loading trending tokens...</p>
+            </div>
+          ) : (
+            <table className="min-w-[600px] md:min-w-full">
+              <thead>
+                <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45]">
+                  <th className="p-3">Token</th>
+                  <th className="p-3">Market Cap</th>
+                  <th className="p-3">{selectedRange} %</th>
+                  <th className="p-3">{selectedRange} Volume</th>
+                  <th className="p-3 text-right">Holders</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {trendingData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-400">
+                      No trending tokens found for this time range
+                    </td>
+                  </tr>
+                ) : (
+                  trendingData.map((data, index) => (
+                    <tr
+                      key={data.token.tokenAddress}
+                      className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
+                    >
+                      <td className="p-3">
+                        <Link 
+                          to={`/trade/${data.token.tokenAddress}`}
+                          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        >
+                          {data.token.logoFilename ? (
+                            <img
+                              src={`${API}/uploads/${data.token.logoFilename}`}
+                              alt={data.token.name}
+                              className="w-10 h-10 rounded-xl"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#147ABD] flex items-center justify-center text-white font-bold">
+                              {data.token.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium">
+                              {data.token.name} ({data.token.symbol})
+                            </div>
+                            <div className="text-xs text-black/50 dark:text-white/50">
+                              {data.token.tokenAddress.slice(0, 6)}...{data.token.tokenAddress.slice(-4)}
+                            </div>
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="p-3">{formatCurrency(data.marketCap)}</td>
+                      <td
+                        className={`p-3 font-semibold ${
+                          data.priceChange < 0 ? "text-red-500" : "text-green-400"
+                        }`}
+                      >
+                        {formatPercentage(data.priceChange)}
+                      </td>
+                      <td className="p-3">{formatCurrency(data.volume)}</td>
+                      <td className="p-3 text-right">
+                        <div className="flex justify-end items-center gap-2">
+                          <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
+                            {data.token.symbol.charAt(0)}
+                          </span>
+                          <span>{data.holders > 1000 ? `${(data.holders / 1000).toFixed(1)}k` : data.holders}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
       {/* Footer */}
       <div className="text-right text-sm text-gray-400 mt-4">
-        <button className="hover:underline">Browse All</button>
+        <Link to="/tokens" className="hover:underline">
+          Browse All
+        </Link>
       </div>
     </section>
   );

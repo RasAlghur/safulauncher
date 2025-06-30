@@ -40,5 +40,14 @@
     "timestamp": "2025-06-30T10:32:12.000Z",
     "txnHash": "0x7589f0c063b6ba45436ceeff0b597825f431a183bbfb39bdac9831bbaf4dc3ee",
     "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
+  },
+  {
+    "tokenAddress": "0x22d675fd1a25b2430a4d7414da53a75a1b6423c5",
+    "type": "sell",
+    "ethAmount": "0.000199539015720319",
+    "tokenAmount": "100000",
+    "timestamp": "2025-06-30T22:00:00.000Z",
+    "txnHash": "0x1ec5afe78a893d41e2b22b92bf7edc76f2812b00d4fb4a07d617e0f92c16e702",
+    "wallet": "0x67618cd35f8e066fd4d8bc2e285cc0e0d596c7cf"
   }
 ]

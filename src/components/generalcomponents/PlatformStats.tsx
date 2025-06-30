@@ -13,15 +13,86 @@ import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
-import { pureGetLatestETHPrice, pureMetrics } from "../../web3/readContracts";
+import { pureGetLatestETHPrice, pureMetrics, pureInfoDataRaw } from "../../web3/readContracts";
 
 gsap.registerPlugin(ScrollTrigger);
+
+export interface TokenMetadata {
+  name: string;
+  symbol: string;
+  website?: string;
+  description?: string;
+  tokenAddress: string;
+  tokenCreator: string;
+  logoFilename?: string;
+  createdAt?: string;
+  expiresAt?: string;
+}
 
 const PlatformStats = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
+
+  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  // Add new state for aggregated data
+  const [totalCurveProgress, setTotalCurveProgress] = useState<number>(0);
+  const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
+
+  const API = import.meta.env.VITE_API_BASE_URL;
+
+
+  // Fetch list of tokens
+  useEffect(() => {
+    fetch(`${API}/api/tokens`)
+      .then((res) => res.json())
+      .then((data: TokenMetadata[]) => {
+        setTokens(data);
+        setTotalTokenCount(data.length); // Set total token count
+      })
+      .catch(console.error);
+  }, []);
+
+  // Fetch on-chain and API data for each token when list updates
+  useEffect(() => {
+    if (tokens.length === 0) return;
+
+    async function fetchTokenMetrics() {
+      const newCurve: Record<string, number> = {};
+
+      await Promise.all(
+        tokens.map(async (token) => {
+          try {
+            // Fetch bonding curve data
+            const info = await pureInfoDataRaw(token.tokenAddress);
+            if (Array.isArray(info)) {
+              const supply = Number(info[7]);
+              const sold = Number(info[10]);
+              const percent = (sold / (0.75 * supply)) * 100;
+              newCurve[token.tokenAddress] = Math.min(
+                Math.max(percent, 0),
+                100
+              );
+            }
+          } catch (e) {
+            console.error(`Error for ${token.tokenAddress}:`, e);
+          }
+        })
+      );
+
+      // Calculate total curve progress
+      const totalProgress = Object.values(newCurve).reduce((sum, progress) => sum + progress, 0);
+      setTotalCurveProgress(totalProgress);
+    }
+
+    fetchTokenMetrics();
+  }, [tokens]);
+
+  // Calculate average curve progress
+  const averageCurveProgress = totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
+
+
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -59,10 +130,9 @@ const PlatformStats = () => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${
-          pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[0] !== undefined
+          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -75,10 +145,9 @@ const PlatformStats = () => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${
-          pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[1] !== undefined
+          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -106,7 +175,7 @@ const PlatformStats = () => {
     {
       id: 1,
       title: "Avg. Bonding",
-      mainValue: "75%", // This doesn't seem to have a corresponding pureMetrics value
+      mainValue: `${averageCurveProgress.toFixed(2) || 0}%`, // This doesn't seem to have a corresponding pureMetrics value
       ethValue: "",
       icon: AverageBonding,
     },
@@ -138,10 +207,9 @@ const PlatformStats = () => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${
-          pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-            : 0
+        `${pureMetrics[6] !== undefined
+          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
