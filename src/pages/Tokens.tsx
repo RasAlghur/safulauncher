@@ -255,8 +255,8 @@ export default function Tokens() {
             >
               {sortedTokens.map((t, idx) => (
                 <div key={idx}>
-                  <li className="rounded-xl px-6 py-5 ">
-                    <div className="flex justify-between">
+                  <li className="rounded-xl lg:px-6 px-2 py-5 ">
+                    <div className="grid grid-cols-[.7fr_.3fr] justify-between">
                       <Link
                         to={`/trade/${t.tokenAddress}`}
                         className="flex items-start gap-4"
@@ -297,7 +297,7 @@ export default function Tokens() {
                             </p>
                           )}
 
-                          <div className="h-[3rem] w-[16rem] mb-2 overflow-hidden">
+                          <div className="h-[3rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
                             {t.description && (
                               <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
                                 {t.description}
@@ -307,15 +307,17 @@ export default function Tokens() {
                         </div>
                       </Link>
                       {/* Stats */}
-                      <div className="space-y-1">
-                        <p className="text-sm dark:text-white text-[#141313]">
+                      <div className="flex flex-col space-y-1 items-end">
+                        <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
                           <strong className="">24h Volume:</strong> $
                           {volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
                         </p>
-                        <p className="text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
+                        <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
                           <strong className="text-white">MC</strong> $
-                          {marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
-                        </p>
+                          <p className="">
+                            {marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
+                          </p>
+                        </div>
                         {/* Progress Bar */}
                       </div>
                     </div>
@@ -348,7 +350,7 @@ export default function Tokens() {
                             {Array.from({ length: 20 }).map((_, i) => (
                               <div
                                 key={i}
-                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0"
+                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
                                 style={{ left: `${31 * (i + 1)}px` }}
                               ></div>
                             ))}

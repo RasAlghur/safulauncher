@@ -150,7 +150,7 @@ export default function Leaderboard() {
       </div>
       <div className="max-w-5xl mx-auto pt-40">
         <div className="text-center  mb-10">
-          <h1 className="lg:text-4xl font-bold font-raleway text-[#01061C] dark:text-white">
+          <h1 className="lg:text-4xl text-3xl font-bold font-raleway text-[#01061C] dark:text-white">
             Leaderboard
           </h1>
           <p className="dark:text-white/50 mt-[10px] text-[#141313]/50">
@@ -174,7 +174,7 @@ export default function Leaderboard() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left">
               <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
-                <tr className="uppercase text-lg tracking-wider font-raleway font-semibold ">
+                <tr className="uppercase lg:text-lg tracking-wider font-raleway font-semibold ">
                   <th className="px-6 py-3">S/N</th>
                   <th className="px-6 py-3">Wallet</th>
                   <th className="px-6 py-3">Volume</th>

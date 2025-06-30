@@ -168,7 +168,7 @@ const PlatformStats = () => {
 
   return (
     <section
-      className="lg:px-[80px] lg:pb-20 lg:pt-24 relative z-20"
+      className="lg:px-[80px] lg:pb-20 lg:pt-24 relative z-20 px-4"
       id="stats"
     >
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
@@ -177,11 +177,11 @@ const PlatformStats = () => {
         ))}
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>
-      <h1 className="text-[2rem] font-bold dark:text-[#ECF1F0] text-black mb-[45px]">
+      <h1 className="text-[1.5rem] lg:text-[2rem] font-bold dark:text-[#ECF1F0] text-black mb-[45px] text-center lg:text-left">
         Platform Stats
       </h1>
       <div className="grid lg:grid-cols-[.3fr_.7fr] gap-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#0c8be011] p-[20px] rounded-[10px] grid grid-cols-1 gap-4">
             {stats1.map((stat, index) => {
               const Icon = stat.icon;

@@ -831,7 +831,7 @@ export default function Launch() {
       </div>
       {/* <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] opacity-[0.03] pointer-events-none dark:hidden" /> */}
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-      <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto pb-40  dark:bg-[#050A1E]/50 border border-white/10 px-6 lg:px-[100px] lg:py-[92px] rounded-[10px] ">
+      <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[100px] lg:py-20 rounded-[10px] ">
         {validationErrors.length > 0 && (
           <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5">
             <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
@@ -848,7 +848,7 @@ export default function Launch() {
           </div>
         )}
         <div className="">
-          <h1 className="dark:text-white text-[#01061C] text-center lg:text-[24px] font-raleway font-medium mb-[12px]">
+          <h1 className="dark:text-white text-[#01061C] text-center text-lg lg:text-[24px] font-raleway font-medium mb-[12px]">
             Launch Your Token
           </h1>
           <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
@@ -860,7 +860,7 @@ export default function Launch() {
 
         <form
           id="launch-form"
-          className=" mt-[40px] relative z-40 max-h-[80vh] pr-20 overflow-y-auto scrollbar-thin scrollbar-track-[#D9D9D9] scrollbar-thumb-[#0C8CE0]"
+          className=" mt-[40px] relative z-40 max-h-[80vh] lg:pr-20 overflow-y-auto scrollbar-thin scrollbar-track-[#D9D9D9] scrollbar-thumb-[#0C8CE0]"
           onSubmit={handleSubmit}
         >
           {/* Name */}
@@ -874,7 +874,7 @@ export default function Launch() {
               id="tokenName"
               type="text"
               placeholder="Enter your Token Name, e.g (“MoonCat”)"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -892,7 +892,7 @@ export default function Launch() {
             <input
               type="text"
               placeholder="Enter your Ticker Symbol, e.g (“MCAT”)"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42]"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42] w-[95%] lg:w-full"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
               required
@@ -910,7 +910,7 @@ export default function Launch() {
             <input
               type="number"
               placeholder="100"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
               value={supply}
               onChange={(e) => setSupply(parseInt(e.target.value) || 0)}
               required
@@ -927,7 +927,7 @@ export default function Launch() {
             <input
               type="url"
               placeholder="https://example.com"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
             />
@@ -941,7 +941,7 @@ export default function Launch() {
             <textarea
               placeholder="Enter short description"
               value={description}
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
@@ -954,7 +954,7 @@ export default function Launch() {
             <input
               type="file"
               accept="image/*"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#2c2c2c] file:text-white hover:file:bg-[#3a3a3a]"
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#2c2c2c] file:text-white hover:file:bg-[#3a3a3a] w-[95%] lg:w-full"
               onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
             />
           </div>
@@ -964,9 +964,9 @@ export default function Launch() {
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
               Enable Tax
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
               <div
-                className={`relative w-14 h-8 flex items-center  ${
+                className={`relative w-[54px] h-8 flex items-center  ${
                   enableTax
                     ? "bg-Primary"
                     : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
@@ -985,11 +985,11 @@ export default function Launch() {
                   }`}
                 />
               </div>
-              <span className="dark:text-white text-black text-lg">
+              <span className="dark:text-white text-black lg:text-lg">
                 Toggle to enable or disable tax
               </span>
             </div>
-            <div className=" text-Primary">
+            <div className=" text-Primary lg:text-lg">
               Collect up to 10% tax on Uniswap trades. (Max 5 recipients)
             </div>
           </div>
@@ -1055,9 +1055,9 @@ export default function Launch() {
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
               Whitelist Only
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
               <div
-                className={`relative w-14 h-8 flex items-center ${
+                className={`relative w-[54px] h-8 flex items-center ${
                   enableWhitelist
                     ? "bg-Primary"
                     : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
@@ -1076,11 +1076,11 @@ export default function Launch() {
                   }`}
                 />
               </div>
-              <span className="dark:text-white text-black text-lg">
+              <span className="dark:text-white text-black lg:text-lg">
                 Toggle to restrict to whitelisted addresses
               </span>
             </div>
-            <div className="text-Primary">
+            <div className="text-Primary lg:text-lg">
               Only whitelisted addresses can buy initially. (Max 200 addresses)
             </div>
           </div>
@@ -1137,9 +1137,9 @@ export default function Launch() {
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
               Start Trading Now
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
               <div
-                className={`relative w-14 h-8 flex items-center ${
+                className={`relative w-[54px] h-8 flex items-center ${
                   startNow
                     ? "bg-Primary"
                     : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
@@ -1158,7 +1158,7 @@ export default function Launch() {
                   }`}
                 />
               </div>
-              <span className="dark:text-white text-black text-lg">
+              <span className="dark:text-white text-black lg:text-lg">
                 Toggle to begin trading immediately after launch
               </span>
             </div>
@@ -1192,9 +1192,9 @@ export default function Launch() {
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
               Enable Bundle
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
               <div
-                className={`relative w-14 h-8 flex items-center ${
+                className={`relative w-[54px] h-8 flex items-center ${
                   enableBundle
                     ? "bg-Primary"
                     : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
@@ -1213,7 +1213,7 @@ export default function Launch() {
                   }`}
                 />
               </div>
-              <span className="dark:text-white text-black text-lg">
+              <span className="dark:text-white text-black lg:text-lg">
                 Toggle to allow dev pre-buy bundle
               </span>
             </div>
@@ -1336,9 +1336,9 @@ export default function Launch() {
             <label className="text-[20px] font-semibold  dark:text-white text-black font-raleway">
               Enable Platform Fees
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
               <div
-                className={`relative w-14 h-8 flex items-center ${
+                className={`relative w-[54px] h-8 flex items-center ${
                   enablePlatformFee
                     ? "bg-Primary"
                     : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
@@ -1357,7 +1357,7 @@ export default function Launch() {
                   }`}
                 />
               </div>
-              <span className="dark:text-white text-black text-lg">
+              <span className="dark:text-white text-black lg:text-lg">
                 Toggle to enable dev/platform fee
               </span>
             </div>

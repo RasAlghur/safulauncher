@@ -24,7 +24,9 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
-  const [currentETHPrice, setCurrentETHPrice] = useState<number>(ethPriceUSD || 0);
+  const [currentETHPrice, setCurrentETHPrice] = useState<number>(
+    ethPriceUSD || 0
+  );
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -48,9 +50,9 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
   const getMainValue = (ethValue: number, fallbackValue: string) => {
     if (currentETHPrice === 0) return fallbackValue;
     const usdValue = ethValue * currentETHPrice;
-    return `$${usdValue.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    return `$${usdValue.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     })}`;
   };
 
@@ -62,108 +64,125 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
 
   // Create stats array with real data from pureMetrics
   const stats = [
-    { 
-      title: "Total Volume", 
+    {
+      title: "Total Volume",
       mainValue: getMainValue(
-        pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0,
-        `${pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18).toFixed(8) : 0} ETH`
+        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0),
-      icon: VolumeIcon 
+      ethValue: getETHDisplay(
+        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0
+      ),
+      icon: VolumeIcon,
     },
-    { 
-      title: "Fee Collected", 
+    {
+      title: "Fee Collected",
       mainValue: getMainValue(
-        pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0,
-        `${pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18).toFixed(8) : 0} ETH`
+        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0),
-      icon: FeeCollected 
+      ethValue: getETHDisplay(
+        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0
+      ),
+      icon: FeeCollected,
     },
-    { 
-      title: "Tokens Launched", 
+    {
+      title: "Tokens Launched",
       mainValue: `${pureMetrics?.[2] || 0}`,
       ethValue: "",
-      icon: TokensLaunched 
+      icon: TokensLaunched,
     },
-    { 
-      title: "Tokens Listed", 
+    {
+      title: "Tokens Listed",
       mainValue: `${pureMetrics?.[3] || 0}`,
       ethValue: "",
-      icon: TokensListed 
+      icon: TokensListed,
     },
-    { 
-      title: "Avg. Bonding", 
+    {
+      title: "Avg. Bonding",
       mainValue: "75%", // This doesn't seem to have a corresponding pureMetrics value
       ethValue: "",
-      icon: AverageBonding 
+      icon: AverageBonding,
     },
-    { 
-      title: "Tax Tokens", 
+    {
+      title: "Tax Tokens",
       mainValue: `${pureMetrics?.[4] || 0}`,
       ethValue: "",
-      icon: TaxTokens 
+      icon: TaxTokens,
     },
-    { 
-      title: "0% - Tax Token", 
+    {
+      title: "0% - Tax Token",
       mainValue: `${pureMetrics?.[5] || 0}`,
       ethValue: "",
-      icon: ZeroTaxTokens 
+      icon: ZeroTaxTokens,
     },
-    { 
-      title: "$SAFU Holders", 
+    {
+      title: "$SAFU Holders",
       mainValue: "234",
       ethValue: "",
-      icon: SafuHolders 
+      icon: SafuHolders,
     },
-    { 
-      title: "Dev Reward", 
+    {
+      title: "Dev Reward",
       mainValue: getMainValue(
-        pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0,
-        `${pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18).toFixed(4) : 0} ETH`
+        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0),
-      icon: SafuHolders 
+      ethValue: getETHDisplay(
+        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0
+      ),
+      icon: SafuHolders,
     },
   ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: "power4.out" },
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 80%",
-        },
-      });
-
-      tl.from(cardRefs.current, {
-        opacity: 0,
-        y: 50,
-        stagger: 0.15,
-        duration: 0.8,
-        ease: "power2.out",
-      }).from(
-        headlineRef.current,
-        {
+      gsap
+        .timeline({
+          defaults: { ease: "power4.out" },
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 80%",
+          },
+        })
+        .from(cardRefs.current, {
           opacity: 0,
-          y: 20,
-          duration: 0.6,
+          y: 50,
+          stagger: 0.15,
+          duration: 0.8,
           ease: "power2.out",
-        },
-        "+=0.1"
-      );
+        })
+        .from(
+          headlineRef.current,
+          {
+            opacity: 0,
+            y: 20,
+            duration: 0.6,
+            ease: "power2.out",
+          },
+          "+=0.1"
+        );
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section id="stats" className=" mt-16 px-6 relative" ref={containerRef}>
+    <section id="stats" className="mt-16 px-6 relative" ref={containerRef}>
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
-        {[...Array(1)].map((_, i) => (
-          <DustParticles key={i} />
-        ))}
+        <DustParticles />
       </div>
 
       <div className="max-w-5xl mx-auto">

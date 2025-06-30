@@ -3,7 +3,7 @@ import fwog from "../../assets/fwog.png";
 import clankfun from "../../assets/clank.png";
 import opsys from "../../assets/opsys.png";
 import bankr from "../../assets/bankr.png";
-// Sample data
+
 const trendingTokens = [
   {
     name: "$NATIVE",
@@ -49,12 +49,13 @@ const trendingTokens = [
 
 const TrendingTokens = () => {
   return (
-    <section className="bg-transparent text-white p-6 rounded-xl w-full max-w-5xl mx-auto">
+    <section className="w-full max-w-[1300px] mx-auto px-4 sm:px-6 mt-10">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold dark:text-white text-black">
           Trending
         </h2>
-        <div className="flex gap-2 text-sm dark:bg-[#141933] bg-white/3 rounded-full p-1">
+        <div className="flex gap-2 text-sm dark:bg-[#141933] bg-white/5 rounded-full p-1">
           {["1h", "6h", "24h", "7d"].map((range) => (
             <button
               key={range}
@@ -68,57 +69,65 @@ const TrendingTokens = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-4 text-sm font-semibold text-gray-400 px-2">
-        <div>Token</div>
-        <div>Market Cap</div>
-        <div>24h %</div>
-        <div>24h Vol.</div>
-        <div></div>
+      {/* Table */}
+      <div className="overflow-x-scroll border border-[#2A2F45] rounded-md custom-scrollbar">
+        <table className="w-full border-collapse min-w-[640px]">
+          <thead>
+            <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45]">
+              <th className="p-3">Token</th>
+              <th className="p-3">Market Cap</th>
+              <th className="p-3">24h %</th>
+              <th className="p-3">24h Volume</th>
+              <th className="p-3 text-right">Holders</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trendingTokens.map((token, index) => (
+              <tr
+                key={index}
+                className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base"
+              >
+                <td className="p-3 flex items-center gap-3">
+                  <img
+                    src={token.icon}
+                    alt={token.name}
+                    className="w-10 h-10 rounded-xl"
+                  />
+                  <div>
+                    <div className="font-medium">{token.name}</div>
+                    <div className="text-xs text-black/50 dark:text-white/50">
+                      {token.address}
+                    </div>
+                  </div>
+                </td>
+
+                <td className="p-3">{token.marketCap}</td>
+
+                <td
+                  className={`p-3 font-semibold ${
+                    token.change24h.includes("-")
+                      ? "text-red-500"
+                      : "text-green-400"
+                  }`}
+                >
+                  {token.change24h}
+                </td>
+
+                <td className="p-3">{token.volume24h}</td>
+
+                <td className="p-3 text-right">
+                  <div className="flex justify-end items-center gap-2">
+                    <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
+                      A
+                    </span>
+                    <span>1.2k</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {trendingTokens.map((token, index) => (
-        <div
-          key={index}
-          className="grid grid-cols-5 items-center gap-4 py-4 px-2 border-b border-[#1F253F]"
-        >
-          {/* Token */}
-          <div className="flex items-center gap-3">
-            <img src={token.icon} alt="" className="w-10 h-10 rounded-xl" />
-
-            <div>
-              <div className="font-medium dark:text-white text-black">
-                {token.name}
-              </div>
-              <div className="text-xs dark:text-white/40 text-[#141313]/40">
-                {token.address}
-              </div>
-            </div>
-          </div>
-
-          {/* Market Cap */}
-          <div className="dark:text-white text-black">{token.marketCap}</div>
-
-          {/* 24h % */}
-          <div
-            className={`font-medium ${
-              token.change24h.includes("-") ? "text-red-500" : "text-green-400"
-            }`}
-          >
-            {token.change24h}
-          </div>
-
-          {/* 24h Vol. */}
-          <div className="dark:text-white text-black">{token.volume24h}</div>
-
-          {/* Avatar + Online Count */}
-          <div className="flex items-center gap-1 text-sm justify-end">
-            <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
-              A
-            </span>
-            <span className="text-black dark:text-white">1.2k</span>
-          </div>
-        </div>
-      ))}
 
       {/* Footer */}
       <div className="text-right text-sm text-gray-400 mt-4">

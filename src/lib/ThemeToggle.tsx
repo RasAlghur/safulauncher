@@ -1,7 +1,8 @@
 // src/components/ThemeToggle.tsx
 import { useEffect, useState } from "react";
-import { CiLight } from "react-icons/ci";
-import { FaMoon } from "react-icons/fa";
+
+import moon from "../assets/moon-toggle.png";
+import sun from "../assets/sun.png";
 
 const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(false);
@@ -27,21 +28,17 @@ const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className={`w-16 h-9 flex items-center p-1 rounded-full transition-colors duration-300 cursor-pointer ${
-        isDark ? "bg-Primary" : "bg-Primary"
+      className={`w-[60px] h-8 flex items-center p-1 rounded-full transition-colors duration-300 cursor-pointer ${
+        !isDark ? "bg-[#EDF8FF]" : "bg-[#0A1022]"
       }`}
       aria-label="Toggle Dark Mode"
     >
       <div
-        className={`w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-md transform transition-transform duration-300 ${
-          isDark ? "translate-x-7" : "translate-x-0"
+        className={`w-6 h-6 flex items-center justify-center rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+          isDark ? "translate-x-0" : "translate-x-7"
         }`}
       >
-        {isDark ? (
-          <FaMoon className="text-gray-700 text-sm" />
-        ) : (
-          <CiLight className=" text-sm" />
-        )}
+        {!isDark ? <img src={sun} alt="" /> : <img src={moon} alt="" />}
       </div>
     </button>
   );
