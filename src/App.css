@@ -22,8 +22,6 @@ body {
   overflow-x: hidden;
 }
 
-/*  */
-
 @media (min-width: 768px) {
   .subtract {
     background-image: url("../src/assets/Subtract.png");
@@ -72,6 +70,21 @@ body {
   width: 40%;
   margin: 0 auto;
   height: 80px;
+}
+
+.rounded-tab-inverted-2 {
+  --r: 25px; /* Radius */
+  line-height: 1.8;
+  padding-inline: 0.5em;
+  border-inline: var(--r) solid #0000;
+  border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+    var(--r);
+  mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+      calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+    conic-gradient(#000 0 0) padding-box;
+  background: transparent; /* Adjust to your light or dark mode background */
+  color: #000;
+  position: relative;
 }
 
 @keyframes float {

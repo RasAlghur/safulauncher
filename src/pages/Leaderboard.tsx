@@ -73,7 +73,11 @@ export default function Leaderboard() {
 
           const vol = parseFloat(tx.ethAmount);
           const key = tx.wallet.toLowerCase();
-          const existing = walletMap[key] || { volume: 0, lastTs: "", lastToken: "" };
+          const existing = walletMap[key] || {
+            volume: 0,
+            lastTs: "",
+            lastToken: "",
+          };
           existing.volume += vol;
 
           if (
@@ -202,10 +206,13 @@ export default function Leaderboard() {
                       </td>
                       <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
                         <div className="flex flex-col">
-                          <span>${entry.volumeUSD.toLocaleString('en-US', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}</span>
+                          <span>
+                            $
+                            {entry.volumeUSD.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
                           <span className="text-xs dark:text-white/60 text-black/60">
                             {entry.volume.toFixed(6)} ETH
                           </span>
@@ -250,10 +257,11 @@ export default function Leaderboard() {
             <button
               key={i + 1}
               onClick={() => setPage(i + 1)}
-              className={`w-8 h-8 rounded-full text-sm font-medium transition ${i + 1 === page
-                ? "bg-[#0C8CE0] text-white"
-                : "bg-white/10 text-white/60 hover:bg-white/20"
-                }`}
+              className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                i + 1 === page
+                  ? "bg-[#0C8CE0] text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20"
+              }`}
             >
               {i + 1}
             </button>

@@ -41,9 +41,9 @@ const PlatformStats = () => {
   const getMainValue = (ethValue: number, fallbackValue: string) => {
     if (currentETHPrice === 0) return fallbackValue;
     const usdValue = ethValue * currentETHPrice;
-    return `$${usdValue.toLocaleString('en-US', {
+    return `$${usdValue.toLocaleString("en-US", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     })}`;
   };
 
@@ -53,26 +53,37 @@ const PlatformStats = () => {
     return `(${ethValue.toFixed(4)} ETH)`;
   };
 
-
   const stats1 = [
     {
       id: 1,
       title: "Total Volume",
       mainValue: getMainValue(
-        pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0,
-        `${pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18).toFixed(8) : 0} ETH`
+        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[0] !== undefined ? (Number(pureMetrics[0]) / 1e18) : 0),
+      ethValue: getETHDisplay(
+        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0
+      ),
       icon: VolumeIcon,
     },
     {
       id: 2,
       title: "Fee Collected",
       mainValue: getMainValue(
-        pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0,
-        `${pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18).toFixed(8) : 0} ETH`
+        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[1] !== undefined ? (Number(pureMetrics[1]) / 1e18) : 0),
+      ethValue: getETHDisplay(
+        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0
+      ),
       icon: FeeCollected,
     },
     {
@@ -121,19 +132,24 @@ const PlatformStats = () => {
     },
   ];
 
-
   const stats3 = [
     {
       id: 1,
       title: "Dev Reward",
       mainValue: getMainValue(
-        pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0,
-        `${pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18).toFixed(4) : 0} ETH`
+        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
+        } ETH`
       ),
-      ethValue: getETHDisplay(pureMetrics[6] !== undefined ? (Number(pureMetrics[6]) / 1e18) : 0),
+      ethValue: getETHDisplay(
+        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0
+      ),
       icon: SafuHolders,
-    }
-  ]
+    },
+  ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -170,6 +186,7 @@ const PlatformStats = () => {
     <section
       className="lg:px-[80px] lg:pb-20 lg:pt-24 relative z-20 px-4"
       id="stats"
+      ref={containerRef}
     >
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(1)].map((_, i) => (
@@ -177,10 +194,13 @@ const PlatformStats = () => {
         ))}
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>
-      <h1 className="text-[1.5rem] lg:text-[2rem] font-bold dark:text-[#ECF1F0] text-black mb-[45px] text-center lg:text-left">
+      <h1
+        ref={headlineRef}
+        className="text-[1.5rem] lg:text-[2rem] font-bold dark:text-[#ECF1F0] text-black mb-[45px] text-center lg:text-left"
+      >
         Platform Stats
       </h1>
-      <div className="grid lg:grid-cols-[.3fr_.7fr] gap-4">
+      <div className="flex flex-col lg:grid lg:grid-cols-[.3fr_.7fr] gap-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#0c8be011] p-[20px] rounded-[10px] grid grid-cols-1 gap-4">
             {stats1.map((stat, index) => {
