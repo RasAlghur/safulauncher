@@ -10,7 +10,7 @@ const KeyBenefits = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.utils.toArray(".fade-in-up").forEach((el, index) => {
+      gsap.utils.toArray<HTMLElement>(".fade-in-up").forEach((el, index) => {
         gsap.fromTo(
           el,
           { autoAlpha: 0, y: 50 },

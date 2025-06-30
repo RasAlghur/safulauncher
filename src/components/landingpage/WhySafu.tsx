@@ -37,7 +37,7 @@ const features = [
 
 const WhySafu = () => {
   const sectionRef = useRef(null);
-  const cardsRef = useRef([]);
+  const cardsRef = useRef<HTMLDivElement[]>([]);
   const buttonRef = useRef(null);
 
   useEffect(() => {
@@ -91,7 +91,9 @@ const WhySafu = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              ref={(el) => (cardsRef.current[index] = el)}
+              ref={(el) => {
+                if (el) cardsRef.current[index] = el;
+              }}
               className="bg-[#0F172A] border border-blue-900 rounded-xl p-6 flex flex-col items-center text-center hover:shadow-lg transition duration-300"
             >
               <img
