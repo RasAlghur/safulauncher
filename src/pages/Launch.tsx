@@ -1495,7 +1495,7 @@ export default function Launch() {
         )}
 
         {waitingForVerification && (
-          <div>Please wait, we are waiting for the block to finalize...</div>
+          <div>Please wait, we are waiting for the block to finalize....</div>
         )}
         {statusMessage && <div>{statusMessage}</div>}
       </div>
