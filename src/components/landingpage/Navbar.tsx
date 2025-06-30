@@ -76,20 +76,20 @@ const Navbar = () => {
           </Link>
 
           <div className="flex items-center gap-3">
-            <div className="hidden lg:block">
+            <div className="">
               <ThemeToggle />
             </div>
 
             {/* Mobile menu toggle */}
-            <button className="xl:hidden text-3xl text-white z-[60]">
+            <button className="xl:hidden z-[60]">
               {isOpen ? (
                 <FiX
-                  className="text-white text-4xl cursor-pointer"
+                  className="dark:text-white text-black text-4xl cursor-pointer"
                   onClick={() => setIsOpen(false)}
                 />
               ) : (
                 <FiMenu
-                  className="text-white text-4xl cursor-pointer"
+                  className="dark:text-white text-black text-4xl cursor-pointer"
                   onClick={() => setIsOpen(true)}
                 />
               )}
@@ -121,7 +121,7 @@ const Navbar = () => {
                 <a
                   key={href}
                   href={href}
-                  className="text-lg uppercase tracking-widest text-white"
+                  className="text-lg uppercase tracking-widest dark:text-white text-black"
                   onClick={() => handleSetActive(href)}
                 >
                   {label}

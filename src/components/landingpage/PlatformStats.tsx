@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, memo, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -14,6 +14,7 @@ import DustParticles from "../generalcomponents/DustParticles";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ✅ Move outside component so it's not recreated on every render
 const stats = [
   { title: "Total Volume", value: "$1.2M", icon: VolumeIcon },
   { title: "Fee Collected", value: "$12.3K", icon: FeeCollected },
@@ -32,41 +33,40 @@ const PlatformStats = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: "power4.out" },
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 80%",
-        },
-      });
-
-      tl.from(cardRefs.current, {
-        opacity: 0,
-        y: 50,
-        stagger: 0.15,
-        duration: 0.8,
-        ease: "power2.out",
-      }).from(
-        headlineRef.current,
-        {
+      gsap
+        .timeline({
+          defaults: { ease: "power4.out" },
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 80%",
+          },
+        })
+        .from(cardRefs.current, {
           opacity: 0,
-          y: 20,
-          duration: 0.6,
+          y: 50,
+          stagger: 0.15,
+          duration: 0.8,
           ease: "power2.out",
-        },
-        "+=0.1"
-      );
+        })
+        .from(
+          headlineRef.current,
+          {
+            opacity: 0,
+            y: 20,
+            duration: 0.6,
+            ease: "power2.out",
+          },
+          "+=0.1"
+        );
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section id="stats" className=" mt-16 px-6 relative" ref={containerRef}>
+    <section id="stats" className="mt-16 px-6 relative" ref={containerRef}>
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
-        {[...Array(1)].map((_, i) => (
-          <DustParticles key={i} />
-        ))}
+        <DustParticles />
       </div>
 
       <div className="max-w-5xl mx-auto">
@@ -109,4 +109,4 @@ const PlatformStats = () => {
   );
 };
 
-export default PlatformStats;
+export default memo(PlatformStats);

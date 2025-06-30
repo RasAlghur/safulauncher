@@ -169,7 +169,7 @@ function Home() {
             ref={(el) => {
               ringRefs.current[i] = el!;
             }}
-            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden lg:block dark:block -z-10"
+            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden dark:block -z-10"
             style={{
               width: `${size}px`,
               height: `${size}px`,

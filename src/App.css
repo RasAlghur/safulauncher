@@ -6,22 +6,11 @@
 
 html {
   scroll-behavior: smooth;
+  outline: 1px solid red;
 }
 
 @theme {
   --color-Primary: #1486d4;
-}
-
-.noise {
-  background-image: url("../src/assets/noise-2.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  opacity: 0.11; /* matches Figma 11% */
-  mix-blend-mode: multiply; /* same as Figma */
-  pointer-events: none; /* allows clicks to pass through */
-  position: absolute;
-  inset: 0;
-  z-index: 0;
 }
 
 body {
@@ -40,31 +29,6 @@ body {
     background-image: url("../src/assets/Subtract.png");
     background-repeat: no-repeat;
     background-size: contain;
-  }
-}
-
-.noise-particle {
-  position: absolute;
-  background-color: black;
-  border-radius: 9999px;
-  animation-name: noise-flicker;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-@media (prefers-color-scheme: dark) {
-  .noise-particle {
-    background-color: white;
-  }
-}
-
-@keyframes noise-flicker {
-  0%,
-  100% {
-    transform: translate(0px, 0px);
-  }
-  50% {
-    transform: translate(0.5px, -0.5px);
   }
 }
 
@@ -156,34 +120,6 @@ body {
   }
 }
 
-.animate-stripes {
-  animation: moveStripes 1s linear infinite;
-}
-
-@keyframes stripeMove {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 40px 0;
-  }
-}
-
-.bg-stripe {
-  background-image: repeating-linear-gradient(
-    45deg,
-    #ff3c3c 0,
-    #ff3c3c 10px,
-    #ff9f1c 10px,
-    #ff9f1c 20px
-  );
-  background-size: 40px 40px;
-}
-
-.animate-stripe {
-  animation: stripeMove 1s linear infinite;
-}
-
 .font-raleway {
   font-family: "Raleway", sans-serif;
   font-optical-sizing: auto;
@@ -199,7 +135,7 @@ body {
 }
 
 .hero-white-background {
-  background-image: url("../src/assets/arctic.png");
+  background-image: url("../src/assets/arctic.webp");
   background-repeat: no-repeat;
   background-size: cover;
 }
@@ -542,12 +478,6 @@ input:disabled {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .chart-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
   .auto-update-indicator {
     position: static;
     margin-bottom: 8px;

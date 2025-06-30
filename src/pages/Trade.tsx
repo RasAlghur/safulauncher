@@ -1075,10 +1075,10 @@ export default function Trade() {
             <div className="grid mb-2.5 gap-4 mt-2.5 max-w-[30rem]">
               {/* Token info */}
 
-              <div className="grid lg:grid-cols-2 mb-2.5 gap-4 mt-2.5 max-w-[30rem]">
+              <div className="grid lg:grid-cols-2 mb-2.5 gap-4 mt-2.5 max-w-[30rem] ">
                 <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                   <p className="dark:text-white text-black">
-                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
                       Token Supply:
                     </span>{" "}
                     {(tokenSupply / 1e18).toLocaleString()}
@@ -1492,17 +1492,17 @@ export default function Trade() {
 
           <div>
             <div className="chart-header">
-              <h3 className="text-2xl font-bold dark:text-white text-black font-raleway">
+              <h3 className="text-xl lg:text-2xl font-bold dark:text-white text-black font-raleway">
                 Price Chart
               </h3>
-              <div className="chart-controls">
+              <div className="">
                 <TimeframeSelector
                   selectedTimeframe={selectedTimeframe}
                   onTimeframeChange={handleTimeframeChange}
                   disabled={isLoadingChart}
                 />
                 <button
-                  className={`auto-update-toggle ${
+                  className={`auto-update-toggle ml-2 ${
                     isAutoUpdateEnabled ? "active" : ""
                   }`}
                   onClick={toggleAutoUpdate}
@@ -1550,7 +1550,7 @@ export default function Trade() {
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg text-[20px] font-raleway font-medium ${
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
                     activeTab === "transactions"
                       ? " dark:text-white text-[#141314]"
                       : "dark:text-white/60 text-[#141314]/40"
@@ -1560,7 +1560,7 @@ export default function Trade() {
                 </button>
                 <button
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg text-[20px] font-raleway font-medium ${
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
                     activeTab === "chat"
                       ? "dark:text-white text-[#141314]"
                       : "dark:text-white/60 text-[#141314]/40"
@@ -1633,7 +1633,7 @@ export default function Trade() {
                   </div>
                 ) : (
                   <div className="chat space-y-4">
-                    <h2 className="text-lg font-semibold text-white">
+                    <h2 className="text-lg font-semibold dark:text-white text-black">
                       Community Chat
                     </h2>
                     {/* <div

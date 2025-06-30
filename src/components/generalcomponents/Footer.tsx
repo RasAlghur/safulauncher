@@ -36,7 +36,7 @@ const footerItems = [
 
 const Footer = () => {
   return (
-    <footer className="px-[40px] py-[30px] lg:py-[60px] border-t border-t-[#0C8CE0]/10 relative">
+    <footer className="lg:px-[40px] py-[30px] lg:py-[60px] border-t border-t-[#0C8CE0]/10 relative">
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />
@@ -45,7 +45,7 @@ const Footer = () => {
       <div className="lg:size-[30rem] lg:w-[50rem] lg:h-[15rem] rounded-full bg-[#3BC3DB]/10 absolute top-6 -right-40 blur-3xl hidden dark:block"></div>
       <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start gap-10 max-w-[1300px] mx-auto">
         {/* Left column */}
-        <div className="flex flex-col">
+        <div className="flex flex-col items-center lg:items-start">
           <a href="/" className="flex items-center gap-2 mb-4">
             <img src={logo} alt="Safu Logo" className="" />
             <p className="text-2xl font-bold dark:text-white text-[#01061C]">
@@ -70,13 +70,13 @@ const Footer = () => {
         </div>
 
         {/* Right column */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-20 xl:gap-[150px] w-full lg:justify-end">
+        <div className="flex flex-row gap-4 sm:gap-10 md:gap-14 lg:gap-20 xl:gap-[150px] w-full justify-center lg:justify-end">
           {["About Us", "Services", "Learn"].map((section, idx) => (
             <div key={idx}>
-              <h3 className="font-raleway dark:text-[#ECF1F0] text-black font-semibold mb-5 text-center lg:text-left">
+              <h3 className="font-raleway dark:text-[#ECF1F0] text-black font-semibold mb-5 text-left">
                 {section}
               </h3>
-              <ul className="flex flex-col lg:items-start items-center gap-5 text-white">
+              <ul className="flex flex-col items-start gap-5 text-white">
                 {idx === 0 &&
                   ["About", "Platform Stats", "Legal & Privacy"].map(
                     (item, i) => (

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import chain1 from "../../assets/chain-1.png";
 import chain2 from "../../assets/chain-2.png";
 import DustParticles from "./DustParticles";
@@ -8,34 +9,39 @@ const HowItWorks = () => {
       className="lg:pb-20 lg:pt-28 relative overflow-x-hidden"
       id="howitworks"
     >
+      {/* Background Particles */}
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
-        {[...Array(1)].map((_, i) => (
-          <DustParticles key={i} />
-        ))}
+        <DustParticles />
       </div>
+
+      {/* Chain Backgrounds */}
       <img
         src={chain1}
-        // width={658}
-        // height={658}
         alt=""
-        className="absolute top-0 -left-[25rem] size-[658px]"
+        className="absolute top-0 lg:-left-[25rem] -left-[15rem] size-[300px] md:size-[350px] lg:size-[550px] xl:size-[658px]"
+        loading="lazy"
+        decoding="async"
       />
       <img
         src={chain2}
-        // width={658}
-        // height={658}
         alt=""
-        className="absolute bottom-0 -right-[25rem] size-[658px]"
+        className="absolute bottom-0 lg:-right-[25rem] -right-[15rem] size-[300px] md:size-[350px] lg:size-[550px] xl:size-[658px]"
+        loading="lazy"
+        decoding="async"
       />
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 hidden dark:block blur-3xl"></div>
-      <div className=" text-white px-6 py-12 md:px-20 md:py-10  max-w-[1000px] mx-auto subtract">
+
+      {/* Content */}
+      <div className="text-white px-6 py-12 md:px-20 md:py-10 max-w-[1000px] mx-auto subtract">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl max-w-[20rem] font-bold mb-10 dark:text-[#ECF1F0] text-black font-raleway">
             How It Works in 3 Easy Steps
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10 ">
-            {/* Step 1 */}
+
+          <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
+            {/* Step 1 & 2 */}
             <div className="flex flex-col gap-[34px]">
+              {/* Step 1 */}
               <div>
                 <div className="flex items-center mb-4">
                   <span className="bg-[#0C8CE0] text-white font-bold font-raleway rounded-md px-2 py-1 text-sm mr-3">
@@ -50,6 +56,7 @@ const HowItWorks = () => {
                   whitelist and bundle options.
                 </p>
               </div>
+
               {/* Step 2 */}
               <div>
                 <div className="flex items-center mb-4">
@@ -66,6 +73,7 @@ const HowItWorks = () => {
                 </p>
               </div>
             </div>
+
             {/* Step 3 */}
             <div>
               <div className="flex items-center mb-4">
@@ -93,4 +101,4 @@ const HowItWorks = () => {
   );
 };
 
-export default HowItWorks;
+export default memo(HowItWorks);
