@@ -35,6 +35,7 @@ interface TxLog {
   timestamp: string; // ISO
   txnHash: string;
   wallet: string;
+  oldMarketCap: string;
   isBundleTransaction?: boolean; // Optional for bundle transactions
   originalTxnHash?: string; // Optional for bundle transactions
   bundleIndex?: number; // Optional for bundle transactions
@@ -332,6 +333,7 @@ app.post("/api/transactions", (req: Request, res: Response) => {
     timestamp,
     txnHash,
     wallet,
+    oldMarketCap,
     isBundleTransaction,
     originalTxnHash,
     bundleIndex,
@@ -452,6 +454,7 @@ app.post("/api/transactions", (req: Request, res: Response) => {
     timestamp,
     txnHash,
     wallet: wallet.toLowerCase(),
+    oldMarketCap: oldMarketCap ? parseFloat(oldMarketCap).toString() : "0",
     isBundleTransaction,
     originalTxnHash,
     bundleIndex,

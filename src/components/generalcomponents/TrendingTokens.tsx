@@ -74,6 +74,7 @@ const TrendingTokens = () => {
   }, []);
 
   // Fetch trending data based on selected time range
+  // Fetch trending data based on selected time range
   useEffect(() => {
     if (tokens.length === 0 || ethPriceUSD === 0) return;
 
@@ -91,37 +92,62 @@ const TrendingTokens = () => {
             if (Array.isArray(info)) {
               const supply = Number(info[7]);
               const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
               marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
             }
 
             // Get volume and price change data
-            const res = await fetch(`${API}/api/transactions/${token.tokenAddress}`);
-            const logs: { ethAmount: string; timestamp: string; type: string }[] = await res.json();
-            
-            // Filter transactions by time range
-            const filteredLogs = logs.filter(tx => new Date(tx.timestamp).getTime() >= sinceTime);
-            
+            const res = await fetch(
+              `${API}/api/transactions/${token.tokenAddress}`
+            );
+            const logs: {
+              ethAmount: string;
+              timestamp: string;
+              type: string;
+              oldMarketCap: string;
+              wallet: string;
+              tokenAmount: string;
+            }[] = await res.json();
+
+            // Filter transactions in the window
+            const windowLogs = logs
+              .filter((tx) => new Date(tx.timestamp).getTime() >= sinceTime)
+              .sort(
+                (a, b) =>
+                  new Date(a.timestamp).getTime() -
+                  new Date(b.timestamp).getTime()
+              );
+
             // Calculate volume
-            const volumeEth = filteredLogs.reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+            const volumeEth = windowLogs.reduce(
+              (sum, tx) => sum + parseFloat(tx.ethAmount),
+              0
+            );
             const volume = volumeEth * ethPriceUSD;
 
-            const currentPrice = marketCap > 0 ? marketCap / (Number(info?.[7] || 0) / 1e18) : 0;
-            
-            // Get price from start of time range for comparison
-            const oldestTx = logs
-              .filter(tx => new Date(tx.timestamp).getTime() >= sinceTime)
-              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0];
-            
+            // Compute priceChange using oldMarketCap
             let priceChange = 0;
-            if (oldestTx && currentPrice > 0) {
-              // This is a simplified calculation - you might need more sophisticated price tracking
-              const oldPrice = parseFloat(oldestTx.ethAmount) * ethPriceUSD;
-              priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
+            if (windowLogs.length > 0 && marketCap > 0) {
+              const firstTx = windowLogs[0];
+              const oldMC = parseFloat(firstTx.oldMarketCap);
+              if (oldMC > 0) {
+                priceChange = ((marketCap - oldMC) / oldMC) * 100;
+              }
             }
 
-            const uniqueAddresses = new Set(logs.map(tx => tx.type === 'buy' ? 'buyer' : 'seller'));
-            const holders = uniqueAddresses.size;
+            const balanceMap: Record<string, number> = {};
+            logs.forEach(tx => {
+              const amt = parseFloat(tx.tokenAmount);
+              const w = tx.wallet.toLowerCase();
+              if (!balanceMap[w]) balanceMap[w] = 0;
+              // add on buys, subtract on sells
+              balanceMap[w] += tx.type === 'buy' ? amt : -amt;
+            });
+
+            // Count only those wallets still holding >0 tokens
+            const holders = Object.values(balanceMap).filter(net => net > 0).length;
 
             trendingTokens.push({
               token,
@@ -174,11 +200,10 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange 
-                  ? "bg-[#1D223E] text-white" 
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
+                ? "bg-[#1D223E] text-white"
+                : "text-gray-400 hover:text-white"
+                }`}
             >
               {range}
             </button>
@@ -219,7 +244,7 @@ const TrendingTokens = () => {
                       className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
                     >
                       <td className="p-3">
-                        <Link 
+                        <Link
                           to={`/trade/${data.token.tokenAddress}`}
                           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                         >
@@ -246,9 +271,8 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0 ? "text-red-500" : "text-green-400"
-                        }`}
+                        className={`p-3 font-semibold ${data.priceChange < 0 ? "text-red-500" : "text-green-400"
+                          }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
