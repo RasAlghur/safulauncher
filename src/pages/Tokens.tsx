@@ -213,7 +213,9 @@ export default function Tokens() {
           <select
             value={searchField}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSearchField(e.target.value as any)
+              setSearchField(
+                e.target.value as "name" | "address" | "creator" | "all"
+              )
             }
             className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313]  px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
           >
@@ -225,7 +227,9 @@ export default function Tokens() {
           <select
             value={sortField}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSortField(e.target.value as any)
+              setSortField(
+                e.target.value as "volume" | "createdAt" | "progress"
+              )
             }
             className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
           >
@@ -236,7 +240,7 @@ export default function Tokens() {
           <select
             value={sortOrder}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSortOrder(e.target.value as any)
+              setSortOrder(e.target.value as "asc" | "desc")
             }
             className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
           >

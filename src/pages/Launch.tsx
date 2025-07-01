@@ -533,67 +533,117 @@ export default function Launch() {
   const taxBpsSum: bigint = enableTax
     ? taxList.reduce((sum, t) => sum + BigInt(t.bps || 0), 0n)
     : 0n;
-  const taxRecipientsAddrs = enableTax
-    ? (taxList.map((t) => t.addr) as readonly `0x${string}`[])
-    : ([] as readonly `0x${string}`[]);
-  const taxPercentsArray = enableTax
-    ? (taxList.map((t) => t.bps) as readonly number[])
-    : ([] as readonly number[]);
+  const taxRecipientsAddrs = React.useMemo(
+    () =>
+      enableTax
+        ? (taxList.map((t) => t.addr) as readonly `0x${string}`[])
+        : ([] as readonly `0x${string}`[]),
+    [enableTax, taxList]
+  );
+  const taxPercentsArray = React.useMemo(
+    () =>
+      enableTax
+        ? (taxList.map((t) => t.bps) as readonly number[])
+        : ([] as readonly number[]),
+    [enableTax, taxList]
+  );
 
-  const bundleAddrs = enableBundle
-    ? (bundleList.map((b) => b.addr) as readonly `0x${string}`[])
-    : ([] as readonly `0x${string}`[]);
-  const bundleShares = enableBundle
-    ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
-    : ([] as readonly number[]);
+  const bundleAddrs = React.useMemo(
+    () =>
+      enableBundle
+        ? (bundleList.map((b) => b.addr) as readonly `0x${string}`[])
+        : ([] as readonly `0x${string}`[]),
+    [enableBundle, bundleList]
+  );
+  const bundleShares = React.useMemo(
+    () =>
+      enableBundle
+        ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
+        : ([] as readonly number[]),
+    [enableBundle, bundleList]
+  );
   const ethValue = enableBundle ? ethers.parseEther(bundleEth.toString()) : 0n;
 
-  const wlArray = enableWhitelist
-    ? (whitelist as readonly `0x${string}`[])
-    : ([] as readonly `0x${string}`[]);
+  const wlArray = React.useMemo(
+    () =>
+      enableWhitelist
+        ? (whitelist as readonly `0x${string}`[])
+        : ([] as readonly `0x${string}`[]),
+    [enableWhitelist, whitelist]
+  );
 
   const pfBps = enablePlatformFee ? platformFeeBps : 0;
-  const pfAddrs = enablePlatformFee
-    ? (platformFeeList.map((p) => p.addr) as readonly `0x${string}`[])
-    : ([] as readonly `0x${string}`[]);
-  const pfPercs = enablePlatformFee
-    ? (platformFeeList.map((p) => Math.floor(p.pct * 100)) as readonly number[])
-    : ([] as readonly number[]);
+  const pfAddrs = React.useMemo(
+    () =>
+      enablePlatformFee
+        ? (platformFeeList.map((p) => p.addr) as readonly `0x${string}`[])
+        : ([] as readonly `0x${string}`[]),
+    [enablePlatformFee, platformFeeList]
+  );
+  const pfPercs = React.useMemo(
+    () =>
+      enablePlatformFee
+        ? (platformFeeList.map((p) =>
+            Math.floor(p.pct * 100)
+          ) as readonly number[])
+        : ([] as readonly number[]),
+    [enablePlatformFee, platformFeeList]
+  );
 
   // Build args
-  const argArray: [
-    string,
-    string,
-    bigint,
-    bigint,
-    boolean,
-    boolean,
-    boolean,
-    readonly `0x${string}`[],
-    readonly number[],
-    readonly `0x${string}`[],
-    readonly number[],
-    readonly `0x${string}`[],
-    number,
-    readonly `0x${string}`[],
-    readonly number[]
-  ] = [
-    name,
-    symbol,
-    ethers.parseUnits(supply.toString(), 18),
-    taxBpsSum,
-    lpOption === "lock",
-    enableWhitelist,
-    startNow,
-    bundleAddrs,
-    bundleShares,
-    taxRecipientsAddrs,
-    taxPercentsArray,
-    wlArray,
-    pfBps,
-    pfAddrs,
-    pfPercs,
-  ];
+  const argArray = React.useMemo(
+    () =>
+      [
+        name,
+        symbol,
+        ethers.parseUnits(supply.toString(), 18),
+        taxBpsSum,
+        lpOption === "lock",
+        enableWhitelist,
+        startNow,
+        bundleAddrs,
+        bundleShares,
+        taxRecipientsAddrs,
+        taxPercentsArray,
+        wlArray,
+        pfBps,
+        pfAddrs,
+        pfPercs,
+      ] as [
+        string,
+        string,
+        bigint,
+        bigint,
+        boolean,
+        boolean,
+        boolean,
+        readonly `0x${string}`[],
+        readonly number[],
+        readonly `0x${string}`[],
+        readonly number[],
+        readonly `0x${string}`[],
+        number,
+        readonly `0x${string}`[],
+        readonly number[]
+      ],
+    [
+      name,
+      symbol,
+      supply,
+      taxBpsSum,
+      lpOption,
+      enableWhitelist,
+      startNow,
+      bundleAddrs,
+      bundleShares,
+      taxRecipientsAddrs,
+      taxPercentsArray,
+      wlArray,
+      pfBps,
+      pfAddrs,
+      pfPercs,
+    ]
+  );
 
   const { data: uniV2Router } = useReadContract({
     ...LAUNCHER_ABI,
@@ -633,8 +683,8 @@ export default function Launch() {
   );
 
   const handleVerify = async (
-    encodedMessageWithoutPrefix: any,
-    tokenAddress: any
+    encodedMessageWithoutPrefix: string,
+    tokenAddress: string
   ) => {
     // const handleVerify = async (tokenAddress: any) => {
     try {
@@ -804,7 +854,24 @@ export default function Launch() {
         }
       })().catch(console.error);
     }
-  }, [isConfirmed]);
+  }, [
+    isConfirmed,
+    result,
+    name,
+    symbol,
+    website,
+    description,
+    txHash,
+    logo,
+    enableBundle,
+    ethValue,
+    bundleList,
+    supply,
+    taxRecipientsAddrs,
+    taxPercentsArray,
+    uniV2Router,
+    uniV2WETH,
+  ]);
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());
 
@@ -1186,7 +1253,7 @@ export default function Launch() {
             </label>
             <select
               value={lpOption}
-              onChange={(e) => setLpOption(e.target.value as any)}
+              onChange={(e) => setLpOption(e.target.value as "lock" | "burn")}
               required
               className="dark:bg-[#111] bg-white dark:text-white text-black border border-gray-600 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-Primary transition duration-200"
             >
