@@ -7,6 +7,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { config } from "./config/config.ts";
 import { AuthProvider } from "./lib/AuthContext.tsx";
+import { TokenProvider } from "./context/TokenContext.tsx";
 
 /**
  * Description placeholder
@@ -52,7 +53,9 @@ const root = createRoot(rootElement);
 root.render(
   <StrictMode>
     <AuthProvider>
-      <WalletApp />
+      <TokenProvider>
+        <WalletApp />
+      </TokenProvider>
     </AuthProvider>
   </StrictMode>
 );

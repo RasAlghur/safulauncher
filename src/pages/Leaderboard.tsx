@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { base } from "../lib/api";
+import Navbar from "../components/launchintro/Navbar";
+import Footer from "../components/generalcomponents/Footer";
+import DustParticles from "../components/generalcomponents/DustParticles";
+import { pureGetLatestETHPrice } from "../web3/readContracts";
+import { ETH_USDT_PRICE_FEED } from "../web3/config";
 
 /**
  * Description placeholder
@@ -8,47 +12,12 @@ import { base } from "../lib/api";
  * @typedef {TxLog}
  */
 interface TxLog {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAddress: string;
-  /**
-   * Description placeholder
-   *
-   * @type {('buy' | 'sell')}
-   */
   type: "buy" | "sell";
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   ethAmount: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAmount: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   timestamp: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   txnHash: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   wallet: string;
 }
 
@@ -59,39 +28,10 @@ interface TxLog {
  * @typedef {TokenMetadata}
  */
 interface TokenMetadata {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   name: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   symbol: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAddress: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
-  tokenImageId?: string;
-  image: {
-    id: string;
-    mimetype: string;
-    name: string;
-    path: string;
-    size: string | number;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  logoFilename?: string;
 }
 
 /**
@@ -101,29 +41,10 @@ interface TokenMetadata {
  * @typedef {LeaderboardEntry}
  */
 interface LeaderboardEntry {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   wallet: string;
-  /**
-   * Description placeholder
-   *
-   * @type {number}
-   */
   volume: number;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
+  volumeUSD: number;
   lastTokenAddress: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   lastPurchaseTs: string;
 }
 
@@ -144,58 +65,79 @@ export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [tokensMap, setTokensMap] = useState<Record<string, TokenMetadata>>({});
   const [page, setPage] = useState(1);
+  const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    // Fetch token metadata map
-    async function loadTokens() {
-      const res = await base.get("token/get-many?include=image");
-      const tokens: TokenMetadata[] = await res.data.data.data;
-      const map: Record<string, TokenMetadata> = {};
-      tokens.forEach((t) => {
-        map[t.tokenAddress.toLowerCase()] = t;
-      });
-      setTokensMap(map);
+    async function loadData() {
+      try {
+        // First, fetch ETH price
+        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setEthPriceUSD(price);
+
+        // Fetch token metadata map
+        const tokensRes = await fetch(`${API}/api/tokens`);
+        const tokens: TokenMetadata[] = await tokensRes.json();
+        const map: Record<string, TokenMetadata> = {};
+        tokens.forEach((t) => {
+          map[t.tokenAddress.toLowerCase()] = t;
+        });
+        setTokensMap(map);
+
+        // Fetch all transactions and build leaderboard
+        const txRes = await fetch(`${API}/api/transactions`);
+        const allTx: TxLog[] = await txRes.json();
+
+        const walletMap: Record<
+          string,
+          { volume: number; lastTs: string; lastToken: string }
+        > = {};
+
+        allTx.forEach((tx) => {
+          // Only process buy and sell transactions
+          if (tx.type !== "buy" && tx.type !== "sell") return;
+
+          const vol = parseFloat(tx.ethAmount);
+          const key = tx.wallet.toLowerCase();
+          const existing = walletMap[key] || {
+            volume: 0,
+            lastTs: "",
+            lastToken: "",
+          };
+          existing.volume += vol;
+
+          if (
+            !existing.lastTs ||
+            new Date(tx.timestamp) > new Date(existing.lastTs)
+          ) {
+            existing.lastTs = tx.timestamp;
+            existing.lastToken = tx.tokenAddress.toLowerCase();
+          }
+          walletMap[key] = existing;
+        });
+
+        const arr = Object.entries(walletMap)
+          .map(([wallet, { volume, lastTs, lastToken }]) => ({
+            wallet,
+            volume,
+            volumeUSD: volume * price,
+            lastTokenAddress: lastToken,
+            lastPurchaseTs: lastTs,
+          }))
+          .sort((a, b) => b.volumeUSD - a.volumeUSD);
+
+        setEntries(arr);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+        setLoading(false);
+      }
     }
 
-    // Fetch all transactions and build leaderboard
-    async function loadLeaderboard() {
-      const res = await base.get("transaction/get-many");
-      const allTx: TxLog[] = await res.data.data.data;
-
-      const map: Record<
-        string,
-        { volume: number; lastTs: string; lastToken: string }
-      > = {};
-      allTx.forEach((tx) => {
-        if (tx.type !== "buy") return;
-        const vol = parseFloat(tx.ethAmount);
-        const key = tx.wallet.toLowerCase();
-        const existing = map[key] || { volume: 0, lastTs: "", lastToken: "" };
-        existing.volume += vol;
-        if (
-          !existing.lastTs ||
-          new Date(tx.timestamp) > new Date(existing.lastTs)
-        ) {
-          existing.lastTs = tx.timestamp;
-          existing.lastToken = tx.tokenAddress.toLowerCase();
-        }
-        map[key] = existing;
-      });
-
-      const arr = Object.entries(map)
-        .map(([wallet, { volume, lastTs, lastToken }]) => ({
-          wallet,
-          volume,
-          lastTokenAddress: lastToken,
-          lastPurchaseTs: lastTs,
-        }))
-        .sort((a, b) => b.volume - a.volume);
-
-      setEntries(arr);
-    }
-
-    loadTokens().catch(console.error);
-    loadLeaderboard().catch(console.error);
+    loadData();
   }, []);
 
   const totalPages = Math.ceil(entries.length / ITEMS_PER_PAGE);
@@ -217,78 +159,147 @@ export default function Leaderboard() {
     });
   }
 
+  if (loading) {
+    return (
+      <div className="px-4 relative min-h-screen text-white flex items-center justify-center">
+        <Navbar />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/70">Loading leaderboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container">
-      <h1>Leaderboard</h1>
-      <div className="leaderboard-wrapper">
-        <table className="leaderboard">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Wallet</th>
-              <th>Volume (ETH)</th>
-              <th>Last Purchase</th>
-            </tr>
-          </thead>
-          <tbody>
-            {display.map((entry, idx) => {
-              const tokenMeta = tokensMap[entry.lastTokenAddress];
-              return (
-                <tr key={entry.wallet}>
-                  <td>{(page - 1) * ITEMS_PER_PAGE + idx + 1}</td>
-                  <td>
-                    <a
-                      href="#"
-                      className="wallet-link"
-                      data-wallet={entry.wallet}
+    <div className="px-4 relative min-h-screen text-white">
+      {/* <div className="noise" /> */}
+      <Navbar />
+      <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
+      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+        {[...Array(2)].map((_, i) => (
+          <DustParticles key={i} />
+        ))}
+      </div>
+      <div className="max-w-5xl mx-auto pt-40">
+        <div className="text-center  mb-10">
+          <h1 className="lg:text-4xl text-3xl font-bold font-raleway text-[#01061C] dark:text-white">
+            Leaderboard
+          </h1>
+          <p className="dark:text-white/50 mt-[10px] text-[#141313]/50">
+            Find the top trades & traders
+          </p>
+          {ethPriceUSD > 0 && (
+            <p className="dark:text-white/40 text-[#141313]/40 text-sm mt-2">
+              ETH Price: ${ethPriceUSD.toFixed(2)}
+            </p>
+          )}
+        </div>
+
+        <div className="mb-[34px]">
+          <select className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] text-sm px-4 py-4 rounded-md border border-white/10">
+            <option>Featured</option>
+            {/* Add more options as needed */}
+          </select>
+        </div>
+
+        <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left">
+              <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
+                <tr className="uppercase lg:text-lg tracking-wider font-raleway font-semibold ">
+                  <th className="px-6 py-3">S/N</th>
+                  <th className="px-6 py-3">Wallet</th>
+                  <th className="px-6 py-3">Volume</th>
+                  <th className="px-6 py-3">Last Purchase</th>
+                </tr>
+              </thead>
+              <tbody className="text-white/90">
+                {display.map((entry, idx) => {
+                  const tokenMeta = tokensMap[entry.lastTokenAddress];
+                  return (
+                    <tr
+                      key={entry.wallet}
+                      className="hover:bg-white/5 transition border-b dark:border-b-Primary border-b-[#01061C]/8"
                     >
-                      {entry.wallet}
-                    </a>
-                  </td>
-                  <td>{entry.volume.toFixed(4)}</td>
-                  <td>
-                    {tokenMeta ? (
-                      <div className="token-cell">
-                        {tokenMeta.tokenImageId && (
-                          <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}token/${
-                              tokenMeta.image.path
-                            }`}
-                            alt={tokenMeta.symbol}
-                            crossOrigin="anonymous"
-                            width={20}
-                          />
-                        )}
-                        <div className="token-info">
-                          <span className="token-name">{tokenMeta.name}</span>
-                          <span className="token-ticker">
-                            ({tokenMeta.symbol})
+                      <td className="px-6 py-4 font-medium text-black dark:text-white">
+                        {(page - 1) * ITEMS_PER_PAGE + idx + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <a
+                          href="#"
+                          className=" hover:underline text-black dark:text-white"
+                        >
+                          {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
+                        <div className="flex flex-col">
+                          <span>
+                            $
+                            {entry.volumeUSD.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                          <span className="text-xs dark:text-white/60 text-black/60">
+                            {entry.volume.toFixed(6)} ETH
                           </span>
                         </div>
-                        <div className="purchase-time">
-                          <small>at {formatUTC(entry.lastPurchaseTs)}</small>
-                        </div>
-                      </div>
-                    ) : (
-                      <span>—</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div className="pagination">
+                      </td>
+                      <td className="px-6 py-4">
+                        {tokenMeta ? (
+                          <div className="flex items-center gap-3">
+                            {tokenMeta.logoFilename && (
+                              <img
+                                src={`${API}/uploads/${tokenMeta.logoFilename}`}
+                                alt={tokenMeta.symbol}
+                                className="w-6 h-6 rounded-full"
+                              />
+                            )}
+                            <div className="text-lg flex items-center gap-1">
+                              <div className="font-medium text-black dark:text-white">
+                                {tokenMeta.name}
+                                <span className="dark:text-white/80 ml-1 text-sm text-black">
+                                  ({tokenMeta.symbol})
+                                </span>
+                              </div>
+                              <div className="dark:text-white/50 text-black/54 text-sm">
+                                {formatUTC(entry.lastPurchaseTs)}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-start items-center gap-2 py-6 border-t border-white/10">
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
-              className={i + 1 === page ? "active" : ""}
               onClick={() => setPage(i + 1)}
+              className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                i + 1 === page
+                  ? "bg-[#0C8CE0] text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20"
+              }`}
             >
               {i + 1}
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mt-auto">
+        <Footer />
       </div>
     </div>
   );

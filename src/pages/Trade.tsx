@@ -1,3 +1,4 @@
+
 // safu-dapp/src/pages/Trade.tsx
 import {
   useEffect,
@@ -31,8 +32,13 @@ import {
 } from "../web3/readContracts";
 import LightweightChart from "../web3/lightWeightChart";
 import TimeframeSelector from "../web3/timeframeSelector";
-import { base } from "../lib/api";
-import { socket } from "../lib/socket";
+import Footer from "../components/generalcomponents/Footer";
+import Navbar from "../components/launchintro/Navbar";
+import { FiCheckCircle } from "react-icons/fi";
+import { MdOutlineCancel } from "react-icons/md";
+import { GrSubtractCircle } from "react-icons/gr";
+import { MdAddCircleOutline } from "react-icons/md";
+import DustParticles from "../components/generalcomponents/DustParticles";
 
 /**
  * Description placeholder
@@ -41,59 +47,14 @@ import { socket } from "../lib/socket";
  * @typedef {TokenMetadata}
  */
 interface TokenMetadata {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   name: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   symbol: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   website?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   description?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAddress: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenCreator: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   logoFilename?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   createdAt?: number;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   expiresAt?: number;
 }
 
@@ -104,41 +65,11 @@ interface TokenMetadata {
  * @typedef {TxLog}
  */
 interface TxLog {
-  /**
-   * Description placeholder
-   *
-   * @type {('buy' | 'sell')}
-   */
   type: "buy" | "sell";
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   wallet: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   ethAmount: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAmount: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   txnHash: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   timestamp: string;
 }
 
@@ -149,43 +80,13 @@ interface TxLog {
  * @typedef {CandlestickData}
  */
 interface CandlestickData {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   time: string;
-  /**
-   * Description placeholder
-   *
-   * @type {number}
-   */
   open: number;
-  /**
-   * Description placeholder
-   *
-   * @type {number}
-   */
   high: number;
-  /**
-   * Description placeholder
-   *
-   * @type {number}
-   */
   low: number;
-  /**
-   * Description placeholder
-   *
-   * @type {number}
-   */
   close: number;
 }
 
-/**
- * Description placeholder
- *
- * @typedef {TransactionType}
- */
 type TransactionType =
   | "approval"
   | "sell"
@@ -201,47 +102,12 @@ type TransactionType =
  * @typedef {TimeframeOption}
  */
 interface TimeframeOption {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   label: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   value: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   resolution: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   days?: number;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   hours?: number;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   minutes?: number;
-  /**
-   * Description placeholder
-   *
-   * @type {?number}
-   */
   seconds?: number;
 }
 
@@ -318,13 +184,6 @@ function isValidEthereumAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-/**
- * Description placeholder
- *
- * @param {(string | number)} amount
- * @param {number} [decimals=4]
- * @returns {string}
- */
 function formatTokenAmount(
   amount: string | number,
   decimals: number = 4
@@ -358,14 +217,14 @@ export default function Trade() {
   const [needsApproval, setNeedsApproval] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isProcessingTxn, setIsProcessingTxn] = useState(false);
+  // Tabs for recent transactiona and community chat
+  const [activeTab, setActiveTab] = useState<"transactions" | "chat">(
+    "transactions"
+  );
 
   // Fallback data for non-connected users
-  const [fallbackInfoData, setFallbackInfoData] = useState<unknown[] | null>(
-    null
-  );
-  const [fallbackETHPrice, setFallbackETHPrice] = useState<
-    bigint | null | undefined
-  >(null);
+  const [fallbackInfoData, setFallbackInfoData] = useState<any[] | null>(null);
+  const [fallbackETHPrice, setFallbackETHPrice] = useState<any | null>(null);
 
   // UI state
   const [curveProgressMap, setCurveProgressMap] = useState<
@@ -390,50 +249,9 @@ export default function Trade() {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isLoadingChartRef = useRef(false);
-  const [message, setMessage] = useState("");
-
-  const sendMessage = async () => {
-    const response = await base.post("community-chat", {
-      text: message,
-      userId: "me",
-      groupId: "message",
-    });
-    console.log({ response: response.data });
-    socket.emit("sendMessage", {
-      text: message,
-      userId: "me",
-      groupId: "message",
-    });
-    setMessage("");
-  };
-
-  useEffect(() => {
-    socket.connect();
-    socket.on("recMessage", (data) => {
-      console.log("Received message:", data);
-      // Update state here if needed
-    });
-    return () => {
-      socket.off("recMessage");
-      socket.disconnect();
-    };
-  }, []);
-
-  //   useEffect(() => {
-  //     // Listen for a custom event from the server
-  //     socket.on("recMessage", (data) => {
-  //       console.log("Received message:", data);
-  //       // Update state or perform actions based on received data
-  //     });
-
-  //     // Clean up the event listener when the component unmounts
-  //     return () => {
-  //       socket.off("recMessage");
-  //     };
-  //   }, []);
 
   // Memoized values
-  //   const API = useMemo(() => import.meta.env.VITE_API_BASE_URL, []);
+  const API = useMemo(() => import.meta.env.VITE_API_BASE_URL, []);
   const isTokenCreator = useMemo(
     () =>
       address &&
@@ -480,11 +298,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress as `0x${string}`,
-          functionName: "balanceOf",
-          args: [address as `0x${string}`],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      }
       : undefined
   );
 
@@ -495,11 +313,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress,
-          functionName: "allowance",
-          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress,
+        functionName: "allowance",
+        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+      }
       : undefined
   );
 
@@ -510,15 +328,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-          ...LAUNCHER_ABI,
-          address: SAFU_LAUNCHER_CA,
-          functionName: "getAmountOut",
-          args: [
-            tokenAddress,
-            mode === "buy" ? ethValue : tokenValue,
-            mode === "buy" ? true : false,
-          ],
-        }
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: "getAmountOut",
+        args: [
+          tokenAddress,
+          mode === "buy" ? ethValue : tokenValue,
+          mode === "buy" ? true : false,
+        ],
+      }
       : undefined
   );
 
@@ -575,9 +393,11 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
+  console.log("infoData", infoData);
   const tokenSupply = infoData ? Number(infoData[7]) : 0;
   const tokenSold = infoData ? Number(infoData[10]) : 0;
   const isStartTrading = infoData ? Number(infoData[1]) : 0;
+  const isBundled = infoData ? Number(infoData[17]) : 0;
   const isListed = infoData ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = infoData ? Number(infoData[3]) : 0;
 
@@ -657,22 +477,19 @@ export default function Trade() {
 
       try {
         console.log(
-          `${
-            isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
-            selectedTimeframe.value
+          `${isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
           }`
         );
 
         const period = calculatePeriod(selectedTimeframe);
         const timestamp = Date.now();
 
-        const ohlcResponse = await base.get(
-          `ohlc?tokenAddress=${tokenAddress}&resolution=${selectedTimeframe.resolution}&period=${period}&t=${timestamp}`
+        const ohlcResponse = await fetch(
+          `${API}/api/ohlc/${tokenAddress}?resolution=${selectedTimeframe.resolution}&period=${period}&t=${timestamp}`
         );
-        const ohlcData = await ohlcResponse.data.data.data;
+        const ohlcData = await ohlcResponse.json();
 
-        console.log(ohlcData);
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
           const formattedData = ohlcData
             .map((d) => ({
@@ -720,7 +537,7 @@ export default function Trade() {
         }
       }
     },
-    [tokenAddress, selectedTimeframe]
+    [tokenAddress, selectedTimeframe, API]
   );
 
   // Setup auto-update interval
@@ -819,19 +636,17 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     setIsLoadingToken(true);
-    (async () => {
-      try {
-        const response = await base.get(`token?tokenAddress=${tokenAddress}`);
-        const data = response.data.data.data;
-        setToken(data);
-      } catch (error) {
-        console.log(error);
-        setToken(null);
-      } finally {
-        setIsLoadingToken(false);
-      }
-    })();
-  }, [tokenAddress]);
+    fetch(`${API}/api/tokens`)
+      .then((res) => res.json())
+      .then((all: TokenMetadata[]) => {
+        const match = all.find(
+          (t) => t.tokenAddress.toLowerCase() === tokenAddress.toLowerCase()
+        );
+        setToken(match ?? null);
+      })
+      .catch(() => setToken(null))
+      .finally(() => setIsLoadingToken(false));
+  }, [tokenAddress, API]);
 
   // Check approval needs
   useEffect(() => {
@@ -899,6 +714,7 @@ export default function Trade() {
     refetchBalance,
     refetchAllowance,
     refetchLatestETHPrice,
+    lastTxnType,
   ]);
 
   // Log transactions
@@ -937,19 +753,24 @@ export default function Trade() {
             timestamp,
             txnHash: txHash,
             wallet: result.from,
+            oldMarketCap: marketCapUSD
           };
 
-          //   TODO change to base
-          const response = await base.post("transaction", body);
-
-          if (response.status === 409) {
-            console.warn("Transaction already logged; skipping duplicate.");
-          } else {
-            console.error(
-              "Error logging transaction:",
-              response.status,
-              response.data
-            );
+          const response = await fetch(`${API}/api/transactions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!response.ok) {
+            if (response.status === 409) {
+              console.warn("Transaction already logged; skipping duplicate.");
+            } else {
+              console.error(
+                "Error logging transaction:",
+                response.status,
+                await response.text()
+              );
+            }
           }
         } catch (error) {
           console.error("Error logging transaction:", error);
@@ -963,6 +784,7 @@ export default function Trade() {
     txHash,
     ethValue,
     tokenValue,
+    API,
     amountOut,
     result,
   ]);
@@ -972,10 +794,8 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     try {
-      const response = await base.get(
-        `transaction?tokenAddress=${tokenAddress}`
-      );
-      const all: TxLog[] = await response.data.data.data;
+      const response = await fetch(`${API}/api/transactions/${tokenAddress}`);
+      const all: TxLog[] = await response.json();
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
@@ -992,7 +812,7 @@ export default function Trade() {
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
-  }, [tokenAddress, txLogs.length, isAutoUpdateEnabled, loadChartData]);
+  }, [tokenAddress, API, txLogs.length, isAutoUpdateEnabled, loadChartData]);
 
   // Replace the existing fetchLogs effect
   useEffect(() => {
@@ -1111,13 +931,13 @@ export default function Trade() {
   ]);
 
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
+    (e?: FormEvent) => {
+      if (e) e.preventDefault();
       if (!tokenAddress || isConfirming) return;
-
+  
       setErrorMsg("");
       setLastTxnType(mode);
-
+  
       writeContract({
         ...LAUNCHER_ABI,
         address: SAFU_LAUNCHER_CA,
@@ -1134,7 +954,7 @@ export default function Trade() {
     if (needsApproval) {
       handleApprove();
     } else {
-      handleSubmit({ preventDefault: () => {} } as FormEvent);
+      handleSubmit();
     }
   }, [needsApproval, handleApprove, handleSubmit]);
 
@@ -1200,7 +1020,7 @@ export default function Trade() {
     (e: FormEvent) => {
       e.preventDefault();
       if (mode === "buy") {
-        handleSubmit(e);
+        handleSubmit();
       } else {
         handleSellProcess();
       }
@@ -1231,11 +1051,23 @@ export default function Trade() {
   // Loading state
   if (isLoadingToken) {
     return (
-      <div className="container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading token data...</p>
+      <div className="min-h-screen flex flex-col ">
+        <Navbar />
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center relative px-4">
+          {/* Background glow effect */}
+          <div className="absolute lg:size-[30rem] lg:w-[55rem] rounded-full bg-[#3BC3DB]/10 blur-3xl top-1/3 left-1/2 -translate-x-1/2 -z-10" />
+
+          {/* Loading Spinner */}
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#0C8CE0] border-opacity-70 mb-6" />
+
+          {/* Text */}
+          <p className="text-white text-lg lg:text-xl font-medium font-raleway drop-shadow-md">
+            Loading token data...
+          </p>
         </div>
+
+        <Footer />
       </div>
     );
   }
@@ -1243,405 +1075,648 @@ export default function Trade() {
   // Token not found
   if (!token) {
     return (
-      <div className="container">
-        <div className="error-message">
-          <h2>Token not found</h2>
-          <p>The requested token could not be loaded.</p>
+      <div className="min-h-screen flex flex-col ">
+        <Navbar />
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center relative px-4">
+          {/* Glowing background effect */}
+          <div className="absolute lg:size-[30rem] lg:w-[55rem] rounded-full bg-[#3BC3DB]/10 blur-3xl top-1/3 left-1/2 -translate-x-1/2 -z-10" />
+
+          {/* Message */}
+          <h2 className="font-raleway text-white text-3xl lg:text-5xl font-bold mb-4 drop-shadow-md mt-10">
+            Token Not Found!
+          </h2>
+          <p className="text-red-400 text-lg lg:text-xl mb-6">
+            The requested token could not be loaded or doesn't exist.
+          </p>
+
+          <a
+            href="/tokens"
+            className="mt-4 inline-block bg-[#0C8CE0] hover:bg-[#117ac2] transition px-6 py-3 text-white rounded-full shadow-lg font-medium"
+          >
+            Return to Tokens
+          </a>
         </div>
+
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <h1>
-        Trade • {token.name} ({token.symbol})
-      </h1>
-
-      <div className="token-info">
-        <p>
-          Token Price:{" "}
-          {tokenPriceUSD > 0 ? `$${tokenPriceUSD}` : "Calculating..."}
-        </p>
-        <p>Token supply: {formatTokenAmount(tokenSupply / 1e18)}</p>
-        <p>
-          Market Cap:{" "}
-          {marketCapUSD > 0
-            ? `$${formatTokenAmount(marketCapUSD)}`
-            : "Calculating..."}
-        </p>
-        <p>Trading started: {isStartTrading ? "Yes" : "No"}</p>
-        <p>Whitelist ongoing: {isWhiteListOngoing ? "Yes" : "No"}</p>
-        <p>Listed on Uniswap: {isListed ? "Yes" : "No"}</p>
+    <div className="relative">
+      <Navbar />
+      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+        {[...Array(3)].map((_, i) => (
+          <DustParticles key={i} />
+        ))}
       </div>
+      <div className="lg:size-[30rem] lg:w-[55rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
+      <div className="lg:size-[30rem] lg:w-[40rem] rounded-full bg-[#3BC3DB]/10 absolute top-[800px] -left-40 blur-3xl hidden dark:block"></div>
 
-      <div className="tx-summary">
-        <p>
-          Volume (Today): {volume1dEth.toFixed(4)} ETH ($
-          {volume1dUsd.toLocaleString()})
-        </p>
-        <p>
-          Volume (7d): {volume7dEth.toFixed(4)} ETH ($
-          {volume7dUsd.toLocaleString()})
-        </p>
-        <p>
-          Volume (All Time): {volumeAllEth.toFixed(4)} ETH ($
-          {volumeAllUsd.toLocaleString()})
-        </p>
-      </div>
+      <div className="mx-auto pt-40 mb-20 px-4 lg:px-0 relative text-white max-w-[85rem]">
+        <div className="grid lg:grid-cols-[.4fr_.6fr] gap-10">
+          {/* Left section */}
+          <div>
+            <h1 className="text-2xl font-bold dark:text-white text-black font-raleway">
+              Trade {token.name}{" "}
+              <span className="dark:text-white/60 text-black/80">
+                ({token.symbol})
+              </span>
+            </h1>
+            <div className="grid mb-2.5 gap-4 mt-2.5 max-w-[30rem]">
+              {/* Token info */}
 
-      {/* Admin Panel */}
-      {isTokenCreator && (
-        <div className="admin-panel">
-          <div className="admin-header">
-            <h3>🔧 Admin Controls</h3>
-            <button
-              className="toggle-admin-btn"
-              onClick={() => setShowAdminPanel(!showAdminPanel)}
-              disabled={isTransactionPending}
-            >
-              {showAdminPanel ? "Hide" : "Show"} Controls
-            </button>
-          </div>
-
-          {showAdminPanel && (
-            <div className="admin-controls">
-              <div className="admin-section">
-                <h4>Trading Control</h4>
-                <button
-                  className="admin-btn start-trading"
-                  onClick={handleStartTrading}
-                  disabled={
-                    isTransactionPending ||
-                    isStartTrading === 1 ||
-                    isProcessingTxn
-                  }
-                >
-                  {isStartTrading === 1 ? "Trading Started" : "Start Trading"}
-                </button>
+              <div className="grid lg:grid-cols-2 mb-2.5 gap-4 mt-2.5 max-w-[30rem] ">
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-white text-black">
+                    <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                      Token Supply:
+                    </span>{" "}
+                    {(tokenSupply / 1e18).toLocaleString()}
+                  </p>
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-white text-black">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      Token Price:
+                    </span>{" "}
+                    {tokenPriceUSD > 0 ? `$${tokenPriceUSD}` : "Calculating..."}
+                  </p>
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-white text-black">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      Market Cap:
+                    </span>{" "}
+                    {marketCapUSD > 0
+                      ? `$${formatTokenAmount(marketCapUSD)}`
+                      : "Calculating..."}
+                  </p>
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    Trading Started:
+                  </p>{" "}
+                  {isStartTrading ? (
+                    <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                      <FiCheckCircle className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                      <MdOutlineCancel className="text-black" />
+                    </div>
+                  )}
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    Dev Bundled:
+                  </p>{" "}
+                  {isBundled ? (
+                    <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                      <FiCheckCircle className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                      <MdOutlineCancel className="text-black" />
+                    </div>
+                  )}
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    Whitelist Ongoing:
+                  </p>{" "}
+                  {isWhiteListOngoing ? (
+                    <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                      <FiCheckCircle className="text-black" />
+                    </div>
+                  ) : (
+                    <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                      <MdOutlineCancel className="text-black" />
+                    </div>
+                  )}
+                </div>
+                <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                  <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                    Listed on Uniswap:
+                  </p>{" "}
+                  {isListed ? (
+                    <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                      <FiCheckCircle className="text-black" />
+                    </div>
+                  ) : (
+                    <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                      <MdOutlineCancel className="text-black" />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="admin-section">
-                <h4>Whitelist Management</h4>
-                <div className="whitelist-input">
-                  <input
-                    type="text"
-                    value={whitelistAddresses}
-                    onChange={(e) => setWhitelistAddresses(e.target.value)}
-                    placeholder="Enter addresses separated by commas"
-                    disabled={isTransactionPending || isProcessingTxn}
-                  />
+              <div className="max-w-[30rem] rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3">
+                <h2 className="text-xl font-semibold dark:text-white text-black flex items-center font-raleway">
+                  Volume Summary
+                </h2>
+                <div className="space-y-1 ">
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      Today
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volume1dEth.toFixed(4)} ETH ($
+                      {volume1dUsd.toLocaleString()})
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      7 Days
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volume7dEth.toFixed(4)} ETH ($
+                      {volume7dUsd.toLocaleString()})
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      All Time
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volumeAllEth.toFixed(4)} ETH ($
+                      {volumeAllUsd.toLocaleString()})
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Panel */}
+            {!isTokenCreator && (
+              <div className="rounded-xl max-w-[30rem] p-5 mt-6 space-y-4 dark:bg-white/5 bg-[#141313]/4 border border-white/10">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold dark:text-white text-black font-raleway">
+                    Admin Controls
+                  </h3>
                   <button
-                    className="admin-btn add-whitelist"
-                    onClick={handleAddToWhitelist}
-                    disabled={
-                      isTransactionPending ||
-                      !whitelistAddresses.trim() ||
-                      isProcessingTxn
-                    }
+                    type="button"
+                    onClick={() => setShowAdminPanel(!showAdminPanel)}
+                    disabled={isTransactionPending}
+                    className="text-sm px-4 py-2 bg-[#0C8CE0] hover:bg-[#1b95e0] text-white rounded-lg disabled:opacity-50 cursor-pointer"
                   >
-                    Add to Whitelist
+                    {showAdminPanel ? "Hide" : "Show"} Controls
                   </button>
                 </div>
-                <button
-                  className="admin-btn disable-whitelist"
-                  onClick={handleDisableWhitelist}
-                  disabled={isTransactionPending || isProcessingTxn}
-                >
-                  Disable Whitelist
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="top-section">
-        <div className="chart-header">
-          <h3>Price Chart</h3>
-          <div className="chart-controls">
-            <TimeframeSelector
-              selectedTimeframe={selectedTimeframe}
-              onTimeframeChange={handleTimeframeChange}
-              disabled={isLoadingChart}
-            />
-            <button
-              className={`auto-update-toggle ${
-                isAutoUpdateEnabled ? "active" : ""
-              }`}
-              onClick={toggleAutoUpdate}
-              title={
-                isAutoUpdateEnabled
-                  ? "Disable auto-update"
-                  : "Enable auto-update"
-              }
-            >
-              {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
-            </button>
-            <div className="last-update">
-              Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
-            </div>
-          </div>
-        </div>
-
-        <div className="chart-container">
-          {isLoadingChart ? (
-            <div className="chart-loading">
-              <div className="spinner"></div>
-              <p>Loading chart data...</p>
-            </div>
-          ) : (
-            <LightweightChart
-              data={ohlc}
-              timeframe={selectedTimeframe.resolution}
-              height={500}
-              ethToUsdRate={infoETHCurrentPrice}
-              totalSupply={tokenSupply / 1e18}
-              symbol={token.symbol}
-            />
-          )}
-
-          {/* Auto-update indicator */}
-          {isAutoUpdateEnabled && (
-            <div className="auto-update-indicator">
-              <span className="pulse-dot"></span>
-              Live
-            </div>
-          )}
-        </div>
-
-        <div className="trade-widget">
-          <div className="action-toggle">
-            <button
-              className={mode === "buy" ? "active" : ""}
-              onClick={() => handleMode("buy")}
-              disabled={isTransactionPending}
-            >
-              Buy
-            </button>
-            <button
-              className={mode === "sell" ? "active" : ""}
-              onClick={() => handleMode("sell")}
-              disabled={isTransactionPending}
-            >
-              Sell
-            </button>
-          </div>
-
-          {mode === "sell" && (
-            <div className="balance-display">
-              Balance:{" "}
-              {isLoadingBalance ? (
-                <span className="loading-text">Loading...</span>
-              ) : (
-                `${formatTokenAmount(tokenBalance)} ${token.symbol}`
-              )}
-            </div>
-          )}
-
-          <form className="trade-form" onSubmit={handleButtonClick}>
-            <label htmlFor="amount-input">
-              Amount ({mode === "buy" ? "ETH" : token.symbol})
-            </label>
-            <div className="input-container">
-              <input
-                id="amount-input"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.0"
-                min="0"
-                step="any"
-                autoComplete="off"
-                disabled={isTransactionPending}
-              />
-              {mode === "sell" && (
-                <button
-                  type="button"
-                  className="max-btn"
-                  onClick={handleMaxClick}
-                  disabled={
-                    isTransactionPending || isLoadingBalance || !getBalance
-                  }
-                >
-                  {isLoadingBalance ? "Loading..." : "Max"}
-                </button>
-              )}
-            </div>
-
-            <div className="output">
-              {isLoadingAmountOutSelect ? (
-                <span className="loading-text">Calculating...</span>
-              ) : (
-                <>
-                  You will receive{" "}
-                  {amountOutSelect
-                    ? formatTokenAmount(
-                        Number(amountOutSelect.toString()) / 1e18,
-                        mode === "sell" ? 8 : 2
-                      )
-                    : "0"}{" "}
-                  {mode === "buy" ? token.symbol : "ETH"}
-                </>
-              )}
-            </div>
-
-            {mode === "sell" && needsApproval && (
-              <div className="approval-info">
-                <p>⚠️ Approval required to sell tokens</p>
+                {showAdminPanel && (
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="dark:text-white text-black font-medium mb-2">
+                        Trading Control
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={handleStartTrading}
+                        disabled={
+                          isTransactionPending ||
+                          isStartTrading === 1 ||
+                          isProcessingTxn
+                        }
+                        className="w-full px-4 py-2 bg-[#27AE60] hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
+                      >
+                        {isStartTrading === 1
+                          ? "Trading Started"
+                          : "Start Trading"}
+                      </button>
+                    </div>
+                    <div>
+                      <h4 className="dark:text-white text-black font-medium mb-2">
+                        Whitelist Management
+                      </h4>
+                      <div className="flex gap-2 mb-3">
+                        <input
+                          type="text"
+                          value={whitelistAddresses}
+                          onChange={(e) =>
+                            setWhitelistAddresses(e.target.value)
+                          }
+                          placeholder="Enter addresses separated by commas"
+                          disabled={isTransactionPending || isProcessingTxn}
+                          className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddToWhitelist}
+                          disabled={
+                            isTransactionPending ||
+                            !whitelistAddresses.trim() ||
+                            isProcessingTxn
+                          }
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDisableWhitelist}
+                        disabled={isTransactionPending || isProcessingTxn}
+                        className="w-full px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
+                      >
+                        Disable Whitelist
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            <button
-              type="submit"
-              className={`submit ${isTransactionPending ? "loading" : ""}`}
-              disabled={
-                isTransactionPending || !amount || parseFloat(amount) <= 0
-              }
-            >
-              {getButtonText()}
-              {isTransactionPending && <span className="button-spinner"></span>}
-            </button>
-          </form>
+            <div className="top-section mt-4">
+              <div className="trade-widget dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-2xl p-6 border border-white/10 max-w-[30rem] text-white space-y-4">
+                {/* Tabs */}
+                <div className="flex space-x-6 text-lg font-medium border-b border-white/10 pb-2">
+                  <button
+                    type="button"
+                    className={`${mode === "buy"
+                      ? "dark:text-white text-[#0C8CE0]"
+                      : "dark:text-white/50 text-[#141313]/75 font-normal"
+                      } transition cursor-pointer`}
+                    onClick={() => handleMode("buy")}
+                    disabled={isTransactionPending}
+                  >
+                    Buy
+                  </button>
+                  <button
+                    type="button"
+                    className={`${mode === "sell"
+                      ? "dark:text-white text-[#0C8CE0]"
+                      : "dark:text-white/50 text-[#141313]/75 font-normal"
+                      } transition cursor-pointer`}
+                    onClick={() => handleMode("sell")}
+                    disabled={isTransactionPending}
+                  >
+                    Sell
+                  </button>
+                </div>
 
-          {/* Transaction Status Messages */}
-          {isWritePending && (
-            <div className="status-message pending">
-              Please confirm the transaction in your wallet
-            </div>
-          )}
+                {/* Balance */}
+                {mode === "sell" && (
+                  <div className="text-sm dark:text-white/70 text-black">
+                    Balance:{" "}
+                    {isLoadingBalance ? (
+                      <span className="italic text-white/50">Loading...</span>
+                    ) : (
+                      `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                      }`
+                    )}
+                  </div>
+                )}
 
-          {isConfirming && (
-            <div className="status-message confirming">
-              Transaction submitted. Waiting for confirmation...
-            </div>
-          )}
+                {/* Form */}
+                <div className="space-y-4">
+                  <label className="block text-sm dark:text-white/70 text-black font-medium">
+                    Amount ({mode === "buy" ? "ETH" : token.symbol})
+                  </label>
 
-          {isConfirmed && txHash && (
-            <div className="status-message success">
-              <p>
-                {lastTxnType === "approval"
-                  ? "Approval confirmed! You can now sell tokens."
-                  : lastTxnType === "sell"
-                  ? "Sell transaction confirmed successfully!"
-                  : lastTxnType === "buy"
-                  ? "Buy transaction confirmed successfully!"
-                  : [
-                      "startTrading",
-                      "addToWhitelist",
-                      "disableWhitelist",
-                    ].includes(lastTxnType!)
-                  ? getAdminTxnMessage()
-                  : "Transaction confirmed successfully!"}
-              </p>
-              <p className="text-sm text-gray-300">Transaction: {txHash}</p>
-            </div>
-          )}
+                  <input
+                    type="number"
+                    id="amount-input"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.0"
+                    min="0"
+                    step="any"
+                    autoComplete="off"
+                    disabled={isTransactionPending}
+                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                  />
+                  {mode === "sell" && (
+                    <button
+                      type="button"
+                      onClick={handleMaxClick}
+                      disabled={
+                        isTransactionPending || isLoadingBalance || !getBalance
+                      }
+                      className="text-xs text-blue-400 font-medium"
+                    >
+                      {isLoadingBalance ? "..." : "Max"}
+                    </button>
+                  )}
 
-          {/* Error Messages */}
-          {errorMsg && <div className="status-message error">{errorMsg}</div>}
+                  {/* Output */}
+                  <div className="text-sm dark:text-white text-[#141313]">
+                    {isLoadingAmountOutSelect ? (
+                      <span className="italic dark:text-white/50 text-black/50">
+                        Calculating...
+                      </span>
+                    ) : (
+                      <>
+                        You will receive{" "}
+                        {amountOutSelect
+                          ? formatTokenAmount(
+                            Number(amountOutSelect.toString()) / 1e18,
+                            mode === "sell" ? 8 : 2
+                          )
+                          : "0"}{" "}
+                        {mode === "buy" ? token.symbol : "ETH"}
+                      </>
+                    )}
+                  </div>
 
-          {error && (
-            <div className="status-message error">
-              Error:{" "}
-              {"shortMessage" in (error as any)
-                ? (error as any).shortMessage
-                : (error as Error).message}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="progress-section">
-        <div className="progress-label">
-          Bonding Progress:{" "}
-          {isLoadingInfoData ? (
-            <span className="loading-text">Loading...</span>
-          ) : (
-            `${curvePercentClamped.toFixed(0)}%`
-          )}
-        </div>
-
-        <div
-          style={{
-            background: "#eee",
-            borderRadius: 4,
-            overflow: "hidden",
-            height: 10,
-            marginTop: 8,
-          }}
-        >
-          <div
-            style={{
-              width: `${curveProgressMap[token.tokenAddress] || 0}%`,
-              background: "#4caf50",
-              height: "100%",
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="mid-section">
-        <div className="tx-table">
-          <h2>Recent Transactions</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Wallet</th>
-                <th>ETH</th>
-                <th>{token.symbol}</th>
-                <th>Txn</th>
-                <th>Date / Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {txLogs.map((tx, i) => (
-                <tr key={i}>
-                  <td
-                    className={
-                      tx.type === "buy" ? "text-green-600" : "text-red-600"
+                  {/* Approval warning */}
+                  {mode === "sell" && needsApproval && (
+                    <div className="text-xs text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                      ⚠️ Approval required to sell tokens
+                    </div>
+                  )}
+                  {/* Submit Button */}
+                  <button
+                    type="button"
+                    onClick={handleButtonClick}
+                    className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-blue-500 hover:bg-blue-600 transition ${isTransactionPending
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
+                      }`}
+                    disabled={
+                      isTransactionPending || !amount || parseFloat(amount) <= 0
                     }
                   >
-                    {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
-                  </td>
-                  <td>
-                    {tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}
-                  </td>
-                  <td>{Number(tx.ethAmount).toFixed(4)}</td>
-                  <td>{Number(tx.tokenAmount).toLocaleString()}</td>
-                  <td>
-                    <a
-                      href={`https://etherscan.io/tx/${tx.txnHash}`}
-                      target="_blank"
-                      rel="noreferrer"
+                    {getButtonText()}
+                    {isTransactionPending && (
+                      <span className="ml-2 animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Messages */}
+                {isWritePending && (
+                  <div className="text-sm text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                    Please confirm the transaction in your wallet
+                  </div>
+                )}
+                {isConfirming && (
+                  <div className="text-sm text-blue-400 bg-blue-500/10 p-2 rounded-md">
+                    Transaction submitted. Waiting for confirmation...
+                  </div>
+                )}
+                {isConfirmed && txHash && (
+                  <div className="status-message success">
+                    <p>
+                      {lastTxnType === "approval"
+                        ? "Approval confirmed! You can now sell tokens."
+                        : lastTxnType === "sell"
+                          ? "Sell transaction confirmed successfully!"
+                          : lastTxnType === "buy"
+                            ? "Buy transaction confirmed successfully!"
+                            : [
+                              "startTrading",
+                              "addToWhitelist",
+                              "disableWhitelist",
+                            ].includes(lastTxnType!)
+                              ? getAdminTxnMessage()
+                              : "Transaction confirmed successfully!"}
+                    </p>
+                    <p className="text-sm text-gray-300">
+                      Transaction: {txHash}
+                    </p>
+                  </div>
+                )}
+                {errorMsg && (
+                  <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-md">
+                    {errorMsg}
+                  </div>
+                )}
+                {error && (
+                  <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-md">
+                    Error:{" "}
+                    {"shortMessage" in (error as any)
+                      ? (error as any).shortMessage
+                      : (error as Error).message}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+            {/* Progress Bar */}
+            <div className="progress-section mt-6">
+              <div className="progress-label dark:text-white text-[#141313]/90 font-medium text-lg font-raleway mb-2">
+                Bonding Curve Progress:{" "}
+                {isLoadingInfoData ? (
+                  <span className="loading-text text-gray-400">Loading...</span>
+                ) : (
+                  `${curvePercentClamped.toFixed(0)}%`
+                )}
+              </div>
+
+              {/* Styled progress bar with dynamic gradient */}
+              <div className="bg-[#031E51] h-10 rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden">
+                {(() => {
+                  const progress = curveProgressMap[token.tokenAddress] || 0;
+
+                  // Choose gradient style based on progress
+                  let gradientClass = "bg-orange-700";
+
+                  if (progress >= 70) {
+                    gradientClass =
+                      "bg-gradient-to-r from-green-500 to-green-300";
+                  } else if (progress >= 40) {
+                    gradientClass =
+                      "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                  }
+
+                  return (
+                    <div
+                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      style={{ width: `${progress}%` }}
                     >
-                      {tx.txnHash.slice(0, 8)}…{tx.txnHash.slice(-6)}
-                    </a>
-                  </td>
-                  <td>{formatUTC(tx.timestamp)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {/* Decorative vertical bars */}
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0"
+                          style={{ left: `${31 * (i + 1)}px` }}
+                        ></div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Right section */}
+
+          <div>
+            <div className="chart-header">
+              <h3 className="text-xl lg:text-2xl font-bold dark:text-white text-black font-raleway">
+                Price Chart
+              </h3>
+              <div className="">
+                <TimeframeSelector
+                  selectedTimeframe={selectedTimeframe}
+                  onTimeframeChange={handleTimeframeChange}
+                  disabled={isLoadingChart}
+                />
+                <button
+                  type="button"
+                  className={`auto-update-toggle ml-2 ${isAutoUpdateEnabled ? "active" : ""
+                    }`}
+                  onClick={toggleAutoUpdate}
+                  title={
+                    isAutoUpdateEnabled
+                      ? "Disable auto-update"
+                      : "Enable auto-update"
+                  }
+                >
+                  {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
+                </button>
+                <div className="last-update">
+                  Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
+                </div>
+              </div>
+            </div>
+            <div className="chart-container">
+              {isLoadingChart ? (
+                <div className="chart-loading">
+                  <div className="spinner"></div>
+                  <p>Loading chart data...</p>
+                </div>
+              ) : (
+                <LightweightChart
+                  data={ohlc}
+                  timeframe={selectedTimeframe.resolution}
+                  height={500}
+                  ethToUsdRate={infoETHCurrentPrice}
+                  totalSupply={tokenSupply / 1e18}
+                  symbol={token.symbol}
+                />
+              )}
+
+              {/* Auto-update indicator */}
+              {isAutoUpdateEnabled && (
+                <div className="auto-update-indicator">
+                  <span className="pulse-dot"></span>
+                  Live
+                </div>
+              )}
+            </div>
+          )}
+
+            <div className="mt-[34px]">
+              {/* Tabs Header */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("transactions")}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
+                    ? " dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
+                >
+                  Recent Transactions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("chat")}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
+                    ? "dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
+                >
+                  Community Chat
+                </button>
+              </div>
+
+              {/* Tabs Content */}
+              <div className=" backdrop-blur-md p-4">
+                {activeTab === "transactions" ? (
+                  <div className="tx-table overflow-x-auto">
+                    <table className="min-w-full text-sm dark:text-white/80">
+                      <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-white/10">
+                        <tr>
+                          <th>Type</th>
+                          <th>Wallet</th>
+                          <th>ETH</th>
+                          <th>{token.symbol}</th>
+                          <th>Txn</th>
+                          <th>Date / Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {txLogs.map((tx, i) => (
+                          <tr key={i} className="mb-4">
+                            <td
+                              className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
+                                ? "text-green-500"
+                                : "text-red-500"
+                                }`}
+                            >
+                              {tx.type === "buy" ? (
+                                <MdAddCircleOutline className="text-[22px]" />
+                              ) : (
+                                <GrSubtractCircle className="text-xl" />
+                              )}
+                              {tx.type.charAt(0).toUpperCase() +
+                                tx.type.slice(1)}
+                            </td>
+
+                            <td className="dark:text-white/80 text-[#141313] font-semibold">
+                              {tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}
+                            </td>
+                            <td className="dark:text-white/80 text-[#141313] font-semibold">
+                              {Number(tx.ethAmount).toFixed(4)}
+                            </td>
+                            <td className="dark:text-white/80 text-[#141313] font-semibold">
+                              {Number(tx.tokenAmount).toLocaleString()}
+                            </td>
+                            <td>
+                              <a
+                                href={`https://etherscan.io/tx/${tx.txnHash}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-400 hover:underline"
+                              >
+                                {tx.txnHash.slice(0, 8)}…{tx.txnHash.slice(-6)}
+                              </a>
+                            </td>
+                            <td className="dark:text-white/80 text-[#141313] font-semibold">
+                              {formatUTC(tx.timestamp)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="chat space-y-4">
+                    <h2 className="text-lg font-semibold dark:text-white text-black">
+                      Community Chat
+                    </h2>
+                    {/* <div
+                      id="chatBody"
+                      className="chat-body max-h-[300px] overflow-y-auto bg-[#0B132B]/30 p-3 rounded-lg border border-white/10"
+                    /> */}
+                    <div className="chat-input flex items-center gap-2 max-w-[30rem]">
+                      <input
+                        id="chatInput"
+                        placeholder="Type a message…"
+                        className="flex-1 bg-[#0B132B] text-white placeholder-white/40 px-4 py-2 rounded-lg border border-white/10"
+                      />
+                      <button
+                        type="button"
+                        id="sendBtn"
+                        className="bg-[#0C8CE0] hover:bg-[#0C8CE0]/80 text-white px-4 py-2 rounded-lg"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="chat">
-        <h2 className="chat-header">Community Chat</h2>
-        <div id="chatBody" className="chat-body" />
-        <div className="chat-input">
-          <input
-            id="chatInput"
-            placeholder="Type a message…"
-            onChange={(e) => setMessage(e.target.value)}
-            value={message}
-          />
-          <button id="sendBtn" onClick={sendMessage}>
-            Send
-          </button>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }

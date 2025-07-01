@@ -9,77 +9,19 @@ import {
   pureAmountOutMarketCap,
 } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
-import { base } from "../lib/api";
+import Navbar from "../components/launchintro/Navbar";
+import Footer from "../components/generalcomponents/Footer";
+import DustParticles from "../components/generalcomponents/DustParticles";
 
-/**
- * Description placeholder
- *
- * @interface TokenMetadata
- * @typedef {TokenMetadata}
- */
-interface TokenMetadata {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
+export interface TokenMetadata {
   name: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   symbol: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   website?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   description?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAddress: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenCreator: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
-  tokenImageId?: string;
-  image: {
-    id: string;
-    mimetype: string;
-    name: string;
-    path: string;
-    size: string | number;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
+  logoFilename?: string;
   createdAt?: string;
-  /**
-   * Description placeholder
-   *
-   * @type {?string}
-   */
   expiresAt?: string;
 }
 
@@ -108,14 +50,14 @@ export default function Tokens() {
   >("volume");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  const API = import.meta.env.VITE_API_BASE_URL;
+
   // Fetch list of tokens
   useEffect(() => {
-    (async () => {
-      const response = await base.get("token/get-many?include=image");
-      const { data: data } = await response.data;
-      console.log(data);
-      setTokens(data.data);
-    })();
+    fetch(`${API}/api/tokens`)
+      .then((res) => res.json())
+      .then((data: TokenMetadata[]) => setTokens(data))
+      .catch(console.error);
   }, []);
 
   // Fetch on-chain and API data for each token when list updates
@@ -163,13 +105,11 @@ export default function Tokens() {
             }
 
             // Fetch transaction logs
-            const res = await base.get(
-              `transaction/get-many?tokenAddress=${token.tokenAddress}`
+            const res = await fetch(
+              `${API}/api/transactions/${token.tokenAddress}`
             );
-
             const logs: { ethAmount: string; timestamp: string }[] =
-              res.data.data.data;
-
+              await res.json();
             const volEth = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= since24h)
               .reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
@@ -238,14 +178,21 @@ export default function Tokens() {
   });
 
   return (
-    <div className="tokens-list">
-      <h2>Launched Tokens</h2>
+    <div className=" text-white">
+      <Navbar />
+      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+        {[...Array(2)].map((_, i) => (
+          <DustParticles key={i} />
+        ))}
+      </div>
+      <div className="pt-40 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+        {/* Background Glow */}
+        <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-      {/* Search & Sort Controls */}
-      <div
-        className="controls"
-        style={{ marginBottom: "1em", display: "flex", gap: "1em" }}
-      >
+        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center mb-10 z-10 relative">
+          Launched Tokens
+        </h2>
+
         <input
           type="text"
           placeholder="Search tokens..."
@@ -253,111 +200,179 @@ export default function Tokens() {
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setSearchTerm(e.target.value)
           }
+          className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20 
+             border border-[#E5E7EB] flex justify-center
+             px-4 py-2 rounded-full 
+             w-full max-w-4xl mx-auto mb-[34px] 
+             focus:outline-none focus:ring-2 focus:ring-[#0C8CE0] 
+             transition-all duration-200"
         />
-        <select
-          value={searchField}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-            setSearchField(
-              e.target.value as "all" | "address" | "creator" | "name"
-            )
-          }
-        >
-          <option value="all">All</option>
-          <option value="address">Address</option>
-          <option value="creator">Creator</option>
-          <option value="name">Name/Symbol</option>
-        </select>
-        <select
-          value={sortField}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-            setSortField(e.target.value as "volume" | "createdAt" | "progress")
-          }
-        >
-          <option value="volume">24h Volume (USD)</option>
-          <option value="progress">Curve Progress</option>
-          <option value="createdAt">Date Created</option>
-        </select>
-        <select
-          value={sortOrder}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-            setSortOrder(e.target.value as "asc" | "desc")
-          }
-        >
-          <option value="desc">High → Low / New → Old</option>
-          <option value="asc">Low → High / Old → New</option>
-        </select>
+
+        {/* Controls */}
+        <div className="flex flex-wrap gap-4 justify-center mb-10 z-10 relative">
+          <select
+            value={searchField}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSearchField(e.target.value as any)
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313]  px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+          >
+            <option value="all">All</option>
+            <option value="address">Address</option>
+            <option value="creator">Creator</option>
+            <option value="name">Name/Symbol</option>
+          </select>
+          <select
+            value={sortField}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSortField(e.target.value as any)
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+          >
+            <option value="volume">24h Volume (USD)</option>
+            <option value="progress">Curve Progress</option>
+            <option value="createdAt">Date Created</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSortOrder(e.target.value as any)
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+          >
+            <option value="desc">High → Low / New → Old</option>
+            <option value="asc">Low → High / Old → New</option>
+          </select>
+        </div>
+
+        {/* Token Grid */}
+        {sortedTokens.length === 0 ? (
+          <p className="text-center text-gray-400">No tokens found.</p>
+        ) : (
+          <div
+            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+              sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+            } px-2 py-5 border border-white/10`}
+          >
+            <ul
+              className={`grid gap-6 z-10 relative ${
+                sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+              }`}
+            >
+              {sortedTokens.map((t, idx) => (
+                <div key={idx}>
+                  <li className="rounded-xl lg:px-6 px-2 py-5 ">
+                    <div className="grid grid-cols-[.7fr_.3fr] justify-between">
+                      <Link
+                        to={`/trade/${t.tokenAddress}`}
+                        className="flex items-start gap-4"
+                      >
+                        {t.logoFilename && (
+                          <img
+                            src={`${API}/uploads/${t.logoFilename}`}
+                            alt={`${t.symbol} logo`}
+                            className="w-14 h-14 rounded-lg"
+                          />
+                        )}
+                        <div>
+                          <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                            {t.name} ({t.symbol})
+                          </h3>
+                          <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
+                            Created by:{" "}
+                            <span className="text-[#147ABD]">
+                              {t.tokenCreator.slice(0, 6)}...
+                              {t.tokenCreator.slice(-4)}
+                            </span>
+                          </p>
+                          <p className="dark:text-gray-500 text-[#141313] mb-2.5">
+                            Address: {t.tokenAddress.slice(0, 6)}...
+                            {t.tokenAddress.slice(-4)}
+                          </p>
+                          {t.website && (
+                            <p className="dark:text-white text-[#141313]/60">
+                              Website:{" "}
+                              <a
+                                href={t.website}
+                                className="underline break-all"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {t.website}
+                              </a>
+                            </p>
+                          )}
+
+                          <div className="h-[3rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
+                            {t.description && (
+                              <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
+                                {t.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                      {/* Stats */}
+                      <div className="flex flex-col space-y-1 items-end">
+                        <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
+                          <strong className="">24h Volume:</strong> $
+                          {volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
+                        </p>
+                        <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
+                          <strong className="text-white">MC</strong> $
+                          <p className="">
+                            {marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
+                          </p>
+                        </div>
+                        {/* Progress Bar */}
+                      </div>
+                    </div>
+
+                    <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-5 p-1.5">
+                      <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
+                        {curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"}%
+                      </p>
+
+                      {(() => {
+                        const progress = curveProgressMap[t.tokenAddress] || 0;
+
+                        let gradientClass = "bg-orange-700";
+
+                        if (progress >= 70) {
+                          gradientClass =
+                            "bg-gradient-to-r from-green-500 to-green-300";
+                        } else if (progress >= 40) {
+                          gradientClass =
+                            "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                        }
+
+                        return (
+                          <div
+                            className={`h-full ${
+                              progress < 100 ? "rounded-l-full" : "rounded-full"
+                            }  relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                            style={{ width: `${progress}%` }}
+                          >
+                            {Array.from({ length: 20 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                                style={{ left: `${31 * (i + 1)}px` }}
+                              ></div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </li>
+                </div>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
-      {sortedTokens.length === 0 ? (
-        <p>No tokens found.</p>
-      ) : (
-        <ul>
-          {sortedTokens.map((t, idx) => {
-            return (
-              <li key={idx} className="token-item">
-                <Link to={`/trade/${t.tokenAddress}`} className="token-link">
-                  {t.tokenImageId && (
-                    <img
-                      src={`${import.meta.env.VITE_API_BASE_URL}token/${
-                        t.image.path
-                      }`}
-                      width={64}
-                      alt={`${t.symbol} logo`}
-                    />
-                  )}
-                  <div className="token-info">
-                    <h3>
-                      {t.name} ({t.symbol})
-                    </h3>
-                    <p>Address: {t.tokenAddress}</p>
-                    {t.website && (
-                      <p>
-                        Website: <a href={t.website}>{t.website}</a>
-                      </p>
-                    )}
-                    {t.description && <p>{t.description}</p>}
-                    <p>Creator: {t.tokenCreator}</p>
-                    {t.createdAt && <p>Created At: {t.createdAt}</p>}
-                  </div>
-                </Link>
-                <div className="token-stats">
-                  <p>
-                    24h Volume (USD): $
-                    {volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
-                  </p>
-                  <p>
-                    Market Cap (USD): $
-                    {marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
-                  </p>
-                  <p>
-                    Bonding Curve Progress:{" "}
-                    {curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"}%
-                  </p>
-                  <div className="progress-bar">
-                    <div
-                      style={{
-                        background: "#eee",
-                        borderRadius: 4,
-                        overflow: "hidden",
-                        height: 10,
-                        marginTop: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${curveProgressMap[t.tokenAddress] || 0}%`,
-                          background: "#4caf50",
-                          height: "100%",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <Footer />
     </div>
   );
 }

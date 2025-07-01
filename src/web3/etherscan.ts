@@ -1,35 +1,10 @@
 import axios from "axios";
 
-/**
- * Description placeholder
- *
- * @interface VerifyContractParams
- * @typedef {VerifyContractParams}
- */
 interface VerifyContractParams {
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   encodedMessageWithoutPrefix: string;
-  /**
-   * Description placeholder
-   *
-   * @type {string}
-   */
   tokenAddress: string;
 }
 
-/**
- * Description placeholder
- *
- * @async
- * @param {VerifyContractParams} param0
- * @param {string} param0.encodedMessageWithoutPrefix
- * @param {string} param0.tokenAddress
- * @returns {unknown}
- */
 export const verifyContract = async ({
   encodedMessageWithoutPrefix,
   tokenAddress,
