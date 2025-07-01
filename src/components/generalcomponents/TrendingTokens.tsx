@@ -39,7 +39,7 @@ const TrendingTokens = () => {
 
   const API = import.meta.env.VITE_API_BASE_URL;
 
-  // Time range in milliseconds
+  // Time range in milliseconds.
   const getTimeRangeMs = (range: TimeRange): number => {
     const now = Date.now();
     switch (range) {
