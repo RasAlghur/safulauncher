@@ -213,7 +213,7 @@ const TrendingTokens = () => {
                     </td>
                   </tr>
                 ) : (
-                  trendingData.map((data, index) => (
+                  trendingData.map((data) => (
                     <tr
                       key={data.token.tokenAddress}
                       className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
