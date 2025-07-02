@@ -11,12 +11,16 @@ import WhySafu from "../components/landingpage/WhySafu";
 import Footer from "../components/generalcomponents/Footer";
 import Roadmap from "../components/landingpage/Roadmap";
 import PlatformStats from "../components/landingpage/PlatformStats";
-
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/**
+ * Description placeholder
+ *
+ * @returns {*}
+ */
 function Home() {
   const { isConnected } = useAccount();
 

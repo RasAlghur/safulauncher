@@ -1,10 +1,31 @@
 export const SAFU_LAUNCHER_CA = "0x680b144cd22696001bE95707FE2c24D7B190b232";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
+
+/**
+ * Description placeholder
+ *
+ * @type {"0x694AA1769357215DE4FAC081bf1f309aDC325306"}
+ */
 export const ETH_USDT_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
+/**
+ * Description placeholder
+ *
+ * @type {11155111}
+ */
 export const testChainID = 11155111;
+/**
+ * Description placeholder
+ *
+ * @type {1}
+ */
 export const mainnetID = 1;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
+ */
 export const LAUNCHER_ABI = {
   address: "0x680b144cd22696001bE95707FE2c24D7B190b232",
   abi: [
@@ -1024,6 +1045,11 @@ export const LAUNCHER_ABI = {
   ],
 } as const;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ readonly address: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "initialOwner"; readonly type: "address"; readonly internalType: "address"; }, { ...; }, { ...; }, { ...; }]; readonly stateMutability: "nonpayable"; }...}
+ */
 export const TOKEN_ABI = {
   address: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8",
   abi: [
@@ -1438,6 +1464,11 @@ export const TOKEN_ABI = {
   ],
 } as const;
 
+/**
+ * Description placeholder
+ *
+ * @type {{ readonly address: "0x602120373b9de0069D5C950C98b66Adf7ABD8bE9"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "_adm"; readonly type: "address"; readonly internalType: "address"; }]; readonly stateMutability: "nonpayable"; }, ... 8 more ..., { ...; }]; }}
+ */
 export const PRICE_GETTER_ABI = {
   address: "0x602120373b9de0069D5C950C98b66Adf7ABD8bE9",
   abi: [

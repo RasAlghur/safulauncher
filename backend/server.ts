@@ -15,25 +15,82 @@ dotenv.config();
 console.log("✅ [env] Loaded environment variables. PORT =", process.env.PORT);
 
 // ----- Interfaces -----
+/**
+ * Description placeholder
+ *
+ * @interface TokenMetadata
+ * @typedef {TokenMetadata}
+ */
 interface TokenMetadata {
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   name: string;
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   symbol: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   website?: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   description?: string;
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   tokenAddress: string;
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   tokenCreator: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   logoFilename?: string;
   createdAt: string; // ISO timestamp
   expiresAt?: string;
 }
 
+/**
+ * Description placeholder
+ *
+ * @interface TxLog
+ * @typedef {TxLog}
+ */
 interface TxLog {
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   tokenAddress: string;
   type: "buy" | "sell";
   ethAmount: string; // ETH spent (buy) or received (sell)
   tokenAmount: string; // tokens received (buy) or sold (sell)
   timestamp: string; // ISO
   txnHash: string;
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   wallet: string;
   oldMarketCap: string;
   isBundleTransaction?: boolean; // Optional for bundle transactions
@@ -42,6 +99,11 @@ interface TxLog {
 }
 
 // ----- Setup -----
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const app = express();
 app.use(cors());
 // // Use CORS middleware to allow requests from your frontend
@@ -261,6 +323,11 @@ const storage = multer.diskStorage({
   filename: (_req, file, cb) =>
     cb(null, `${Date.now()}_${file.originalname.replace(/[^a-z0-9.]/gi, "_")}`),
 });
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -535,12 +602,38 @@ app.get("/api/volume/:tokenAddress", async (req: Request, res: Response) => {
 
 // Enhanced OHLC endpoint for server.ts
 
+/**
+ * Description placeholder
+ *
+ * @interface TimeframeConfig
+ * @typedef {TimeframeConfig}
+ */
 interface TimeframeConfig {
+  /**
+   * Description placeholder
+   *
+   * @type {number}
+   */
   bucketSize: number; // in milliseconds
+  /**
+   * Description placeholder
+   *
+   * @type {number}
+   */
   maxDataPoints: number;
+  /**
+   * Description placeholder
+   *
+   * @type {string}
+   */
   defaultPeriod: string;
 }
 
+/**
+ * Description placeholder
+ *
+ * @type {Record<string, TimeframeConfig>}
+ */
 const TIMEFRAME_CONFIGS: Record<string, TimeframeConfig> = {
   "1s": { bucketSize: 1000, maxDataPoints: 300, defaultPeriod: "5m" },
   "1m": { bucketSize: 60000, maxDataPoints: 240, defaultPeriod: "4h" },
@@ -557,6 +650,12 @@ const TIMEFRAME_CONFIGS: Record<string, TimeframeConfig> = {
   "1M": { bucketSize: 2592000000, maxDataPoints: 60, defaultPeriod: "5y" },
 };
 
+/**
+ * Description placeholder
+ *
+ * @param {string} period
+ * @returns {number}
+ */
 function parsePeriod(period: string): number {
   const match = period.match(/^(\d+)([smhdwMy])$/);
   if (!match) return 30 * 24 * 60 * 60 * 1000; // Default 30 days
@@ -749,6 +848,12 @@ app.get("/api/ohlc/:tokenAddress", (req, res) => {
   }
 });
 
+/**
+ * Description placeholder
+ *
+ * @param {string} resolution
+ * @returns {boolean}
+ */
 function shouldFillGaps(resolution: string): boolean {
   // Fill gaps for longer timeframes to ensure smooth charts
   return ["1h", "2h", "4h", "8h", "12h", "1D", "3D", "1W", "1M"].includes(
@@ -756,6 +861,13 @@ function shouldFillGaps(resolution: string): boolean {
   );
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {any[]} bars
+ * @param {number} bucketSize
+ * @returns {{}}
+ */
 function fillTimeGaps(bars: any[], bucketSize: number) {
   if (bars.length === 0) return bars;
 
@@ -1011,5 +1123,10 @@ app.post("/verify", async (req, res) => {
 });
 
 // Start server
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`API server running on port ${PORT}`));

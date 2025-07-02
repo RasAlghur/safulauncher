@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 import {
   createChart,
   CandlestickSeries,
@@ -12,25 +12,121 @@ import {
   CrosshairMode,
   LineStyle,
   PriceScaleMode,
-} from 'lightweight-charts';
+} from "lightweight-charts";
 
+/**
+ * Description placeholder
+ *
+ * @interface ChartProps
+ * @typedef {ChartProps}
+ */
 interface ChartProps {
+  /**
+   * Description placeholder
+   *
+   * @type {CandlestickData[]}
+   */
   data: CandlestickData[];
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   timeframe?: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   height?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   width?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   ethToUsdRate?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   totalSupply?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   barSpacing?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   rightOffset?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   minBarSpacing?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   symbol?: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   currentPrice?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   priceChange?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?number}
+   */
   priceChangePercent?: number;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
   volume?: string;
 }
 
+/**
+ * Description placeholder
+ *
+ * @export
+ * @param {ChartProps} param0
+ * @param {{}} param0.data
+ * @param {number} [param0.height=500]
+ * @param {number} param0.width
+ * @param {number} [param0.ethToUsdRate=1]
+ * @param {number} [param0.totalSupply=1]
+ * @param {number} [param0.barSpacing=6]
+ * @param {number} [param0.rightOffset=20]
+ * @param {number} [param0.minBarSpacing=6]
+ * @param {string} param0.symbol
+ * @param {number} param0.currentPrice
+ * @param {number} param0.priceChange
+ * @param {number} param0.priceChangePercent
+ * @param {string} [param0.volume='0%']
+ * @returns {*}
+ */
 export default function LightweightChart({
   data,
   height = 500,
@@ -44,17 +140,19 @@ export default function LightweightChart({
   currentPrice,
   priceChange,
   priceChangePercent,
-  volume = '0%',
+  volume = "0%",
 }: ChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  const [currency, setCurrency] = useState<'ETH' | 'USD'>('USD');
-  const [metric, setMetric] = useState<'price' | 'marketcap'>('price');
+  const [currency, setCurrency] = useState<"ETH" | "USD">("USD");
+  const [metric, setMetric] = useState<"price" | "marketcap">("price");
 
   // Function to ensure candle continuity
-  const ensureCandleContinuity = (candleData: CandlestickData[]): CandlestickData[] => {
+  const ensureCandleContinuity = (
+    candleData: CandlestickData[]
+  ): CandlestickData[] => {
     if (!candleData || candleData.length <= 1) return candleData;
 
     const continuousData = [...candleData];
@@ -64,13 +162,14 @@ export default function LightweightChart({
       const currentCandle = continuousData[i];
 
       // If there's a gap between the previous close and current open, adjust the current open
-      if (Math.abs(currentCandle.open - prevCandle.close) > 0.000001) { // Small tolerance for floating point
+      if (Math.abs(currentCandle.open - prevCandle.close) > 0.000001) {
+        // Small tolerance for floating point
         continuousData[i] = {
           ...currentCandle,
           open: prevCandle.close,
           // Ensure high and low accommodate the new open price
           high: Math.max(currentCandle.high, prevCandle.close),
-          low: Math.min(currentCandle.low, prevCandle.close)
+          low: Math.min(currentCandle.low, prevCandle.close),
         };
       }
     }
@@ -85,20 +184,21 @@ export default function LightweightChart({
       width: width || containerRef.current.clientWidth,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: '#0A0E17' },
-        textColor: '#D4D4D8',
+        background: { type: ColorType.Solid, color: "#0A0E17" },
+        textColor: "#D4D4D8",
         fontSize: 12,
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       },
       grid: {
         vertLines: {
           visible: true,
-          color: '#1E293B',
+          color: "#1E293B",
           style: LineStyle.Dotted,
         },
         horzLines: {
           visible: true,
-          color: '#1E293B',
+          color: "#1E293B",
           style: LineStyle.Dotted,
         },
       },
@@ -106,17 +206,17 @@ export default function LightweightChart({
         mode: CrosshairMode.Normal,
         vertLine: {
           width: 1,
-          color: '#64748B',
+          color: "#64748B",
           style: LineStyle.Solid,
           labelVisible: true,
-          labelBackgroundColor: '#1E293B',
+          labelBackgroundColor: "#1E293B",
         },
         horzLine: {
           width: 1,
-          color: '#64748B',
+          color: "#64748B",
           style: LineStyle.Solid,
           labelVisible: true,
-          labelBackgroundColor: '#1E293B',
+          labelBackgroundColor: "#1E293B",
         },
       },
       rightPriceScale: {
@@ -126,7 +226,7 @@ export default function LightweightChart({
         autoScale: true,
         scaleMargins: { top: 0.08, bottom: 0.08 },
         // scaleMargins: { top: 0.01, bottom: 0.01 },
-        textColor: '#9CA3AF',
+        textColor: "#9CA3AF",
         entireTextOnly: false,
       },
       leftPriceScale: {
@@ -142,7 +242,7 @@ export default function LightweightChart({
         fixRightEdge: false,
         timeVisible: true,
         secondsVisible: false,
-        borderColor: '#1E293B',
+        borderColor: "#1E293B",
         ticksVisible: true,
       },
       handleScroll: {
@@ -161,51 +261,51 @@ export default function LightweightChart({
     chartRef.current = createChart(containerRef.current, chartOptions);
 
     const seriesOptions: DeepPartial<CandlestickSeriesOptions> = {
-      upColor: '#10B981',
-      downColor: '#EF4444',
-      wickUpColor: '#10B981',
+      upColor: "#10B981",
+      downColor: "#EF4444",
+      wickUpColor: "#10B981",
       borderVisible: true,
-      borderUpColor: '#10B981',
-      borderDownColor: '#EF4444',
-      wickDownColor: '#EF4444',
+      borderUpColor: "#10B981",
+      borderDownColor: "#EF4444",
+      wickDownColor: "#EF4444",
       priceFormat: {
-        type: 'price',
+        type: "price",
         precision: 8,
-        minMove: 0.00000001
+        minMove: 0.00000001,
       },
     };
-    seriesRef.current = chartRef.current.addSeries(CandlestickSeries, seriesOptions);
+    seriesRef.current = chartRef.current.addSeries(
+      CandlestickSeries,
+      seriesOptions
+    );
 
     const handleResize = () => {
       if (containerRef.current && chartRef.current) {
         chartRef.current.applyOptions({
-          width: width || containerRef.current.clientWidth
+          width: width || containerRef.current.clientWidth,
         });
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       chartRef.current?.remove();
       chartRef.current = null;
     };
   }, [height, width, barSpacing]);
 
-
-
-
   useEffect(() => {
     if (!seriesRef.current || !data || data.length === 0) return;
 
     const transformed = data
-      .map(d => {
+      .map((d) => {
         const { open: o, high: h, low: l, close: c } = d;
         let open: number, high: number, low: number, close: number;
 
-        if (metric === 'price') {
-          if (currency === 'USD') {
+        if (metric === "price") {
+          if (currency === "USD") {
             open = o * ethToUsdRate;
             high = h * ethToUsdRate;
             low = l * ethToUsdRate;
@@ -217,7 +317,8 @@ export default function LightweightChart({
             close = c;
           }
         } else {
-          const multiplier = currency === 'USD' ? ethToUsdRate * totalSupply : totalSupply;
+          const multiplier =
+            currency === "USD" ? ethToUsdRate * totalSupply : totalSupply;
           open = o * multiplier;
           high = h * multiplier;
           low = l * multiplier;
@@ -226,7 +327,11 @@ export default function LightweightChart({
 
         return { time: d.time, open, high, low, close };
       })
-      .filter(pt => [pt.open, pt.high, pt.low, pt.close].every(v => Number.isFinite(v) && v > 0))
+      .filter((pt) =>
+        [pt.open, pt.high, pt.low, pt.close].every(
+          (v) => Number.isFinite(v) && v > 0
+        )
+      )
       .sort((a, b) => (a.time as number) - (b.time as number));
 
     // Ensure candle continuity before setting data
@@ -238,7 +343,7 @@ export default function LightweightChart({
   }, [data, currency, metric, ethToUsdRate, totalSupply]);
 
   const formatPrice = (price: number) => {
-    if (currency === 'USD') {
+    if (currency === "USD") {
       return price < 0.01 ? `$${price.toFixed(6)}` : `$${price.toFixed(4)}`;
     }
     return `${price.toFixed(6)} ETH`;
@@ -263,12 +368,24 @@ export default function LightweightChart({
           {currentPrice && (
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold">
-                {metric === 'price' ? formatPrice(currentPrice) : formatMarketCap(currentPrice * totalSupply)}
+                {metric === "price"
+                  ? formatPrice(currentPrice)
+                  : formatMarketCap(currentPrice * totalSupply)}
               </span>
               {priceChange && priceChangePercent && (
-                <div className={`flex items-center space-x-1 ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  <span>{priceChange >= 0 ? '+' : ''}{formatPrice(priceChange)}</span>
-                  <span>({priceChange >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)</span>
+                <div
+                  className={`flex items-center space-x-1 ${
+                    priceChange >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  <span>
+                    {priceChange >= 0 ? "+" : ""}
+                    {formatPrice(priceChange)}
+                  </span>
+                  <span>
+                    ({priceChange >= 0 ? "+" : ""}
+                    {priceChangePercent.toFixed(2)}%)
+                  </span>
                 </div>
               )}
             </div>
@@ -285,13 +402,15 @@ export default function LightweightChart({
       <div className="flex items-center justify-between p-2 border-b border-gray-800">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setMetric(m => m === 'price' ? 'marketcap' : 'price')}
+            onClick={() =>
+              setMetric((m) => (m === "price" ? "marketcap" : "price"))
+            }
             className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
           >
-            {metric === 'price' ? 'Price' : 'MCap'}
+            {metric === "price" ? "Price" : "MCap"}
           </button>
           <button
-            onClick={() => setCurrency(c => c === 'ETH' ? 'USD' : 'ETH')}
+            onClick={() => setCurrency((c) => (c === "ETH" ? "USD" : "ETH"))}
             className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
           >
             {currency}
@@ -304,7 +423,10 @@ export default function LightweightChart({
 
       {/* Chart */}
       <div className="relative">
-        <div ref={containerRef} style={{ width: '100%', height: `${height}px` }} />
+        <div
+          ref={containerRef}
+          style={{ width: "100%", height: `${height}px` }}
+        />
         {(!data || data.length === 0) && (
           <div className="absolute inset-0 flex items-center justify-center text-gray-500">
             <div className="text-center">

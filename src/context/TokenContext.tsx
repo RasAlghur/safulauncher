@@ -1,5 +1,6 @@
 // src/context/TokenContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { base } from "../lib/api";
 
 interface TokenMetadata {
   name: string;
@@ -8,7 +9,11 @@ interface TokenMetadata {
   description?: string;
   tokenAddress: string;
   tokenCreator: string;
-  logoFilename?: string;
+  tokenImageId?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
   createdAt?: string;
   expiresAt?: string;
 }
@@ -29,13 +34,16 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
-      .then((res) => res.json())
-      .then((data: TokenMetadata[]) => setTokens(data))
-      .catch(console.error);
+    (async () => {
+      try {
+        const res = await base.get("/tokens?includes=image");
+        const data = res.data as { data: TokenMetadata[] };
+        setTokens(data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
   }, []);
 
   return (
