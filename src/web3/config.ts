@@ -1,6 +1,7 @@
 export const SAFU_LAUNCHER_CA = "0x680b144cd22696001bE95707FE2c24D7B190b232";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
+
 /**
  * Description placeholder
  *
