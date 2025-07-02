@@ -10,12 +10,6 @@ export const base = axios.create({
 
 base.interceptors.request.use(
   (config) => {
-    // getFromStore().then((data) => {
-    //   if (data) {
-    //     const { token } = data;
-    //     config.headers["Authorization"] = `Bearer ${token}`;
-    //   }
-    // });
     return config;
   },
   (error) => {
@@ -34,7 +28,6 @@ base.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // deleteFromStore();
         return Promise.reject(error);
       } catch (refreshError) {
         return Promise.reject(refreshError);

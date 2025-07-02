@@ -4,6 +4,7 @@ import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
+import { base } from "../lib/api";
 
 /**
  * Description placeholder
@@ -31,7 +32,11 @@ interface TokenMetadata {
   name: string;
   symbol: string;
   tokenAddress: string;
-  logoFilename?: string;
+  tokenImageId?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
 }
 
 /**
@@ -68,8 +73,6 @@ export default function Leaderboard() {
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
   useEffect(() => {
     async function loadData() {
       try {
@@ -79,8 +82,9 @@ export default function Leaderboard() {
         setEthPriceUSD(price);
 
         // Fetch token metadata map
-        const tokensRes = await fetch(`${API}/api/tokens`);
-        const tokens: TokenMetadata[] = await tokensRes.json();
+        const tokensRes = await base.get("tokens?include=image");
+
+        const tokens: TokenMetadata[] = await tokensRes.data.data.data;
         const map: Record<string, TokenMetadata> = {};
         tokens.forEach((t) => {
           map[t.tokenAddress.toLowerCase()] = t;
@@ -88,8 +92,8 @@ export default function Leaderboard() {
         setTokensMap(map);
 
         // Fetch all transactions and build leaderboard
-        const txRes = await fetch(`${API}/api/transactions`);
-        const allTx: TxLog[] = await txRes.json();
+        const txRes = await base.get("transactions");
+        const allTx: TxLog[] = await txRes.data.data.data;
 
         const walletMap: Record<
           string,
@@ -250,11 +254,14 @@ export default function Leaderboard() {
                       <td className="px-6 py-4">
                         {tokenMeta ? (
                           <div className="flex items-center gap-3">
-                            {tokenMeta.logoFilename && (
+                            {tokenMeta.tokenImageId && (
                               <img
-                                src={`${API}/uploads/${tokenMeta.logoFilename}`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}${
+                                  tokenMeta.image?.path
+                                }`}
                                 alt={tokenMeta.symbol}
                                 className="w-6 h-6 rounded-full"
+                                crossOrigin="anonymous"
                               />
                             )}
                             <div className="text-lg flex items-center gap-1">

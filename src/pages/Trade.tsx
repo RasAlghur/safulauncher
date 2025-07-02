@@ -38,6 +38,7 @@ import { MdOutlineCancel } from "react-icons/md";
 import { GrSubtractCircle } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
+import { base } from "../lib/api";
 
 /**
  * Description placeholder
@@ -254,7 +255,6 @@ export default function Trade() {
   const isLoadingChartRef = useRef(false);
 
   // Memoized values
-  const API = useMemo(() => import.meta.env.VITE_API_BASE_URL, []);
   const isTokenCreator = useMemo(
     () =>
       address &&
@@ -490,10 +490,10 @@ export default function Trade() {
         const period = calculatePeriod(selectedTimeframe);
         const timestamp = Date.now();
 
-        const ohlcResponse = await fetch(
-          `${API}/api/ohlc/${tokenAddress}?resolution=${selectedTimeframe.resolution}&period=${period}&t=${timestamp}`
+        const ohlcResponse = await base.get(
+          `ohlc?tokenAddress=${tokenAddress}&resolution=${selectedTimeframe.resolution}&period=${period}&t=${timestamp}`
         );
-        const ohlcData = await ohlcResponse.json();
+        const ohlcData = await ohlcResponse.data.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
           const formattedData = ohlcData
@@ -542,7 +542,7 @@ export default function Trade() {
         }
       }
     },
-    [tokenAddress, selectedTimeframe, API]
+    [tokenAddress, selectedTimeframe]
   );
 
   // Setup auto-update interval
@@ -641,17 +641,24 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     setIsLoadingToken(true);
-    fetch(`${API}/api/tokens`)
-      .then((res) => res.json())
-      .then((all: TokenMetadata[]) => {
-        const match = all.find(
-          (t) => t.tokenAddress.toLowerCase() === tokenAddress.toLowerCase()
-        );
-        setToken(match ?? null);
-      })
-      .catch(() => setToken(null))
-      .finally(() => setIsLoadingToken(false));
-  }, [tokenAddress, API]);
+    (async () => {
+      try {
+        const res = await base.get(`token?tokenAddress=${tokenAddress}`);
+        const all: TokenMetadata = res.data.data.data;
+        console.log({ all });
+
+        if (!all) {
+          setToken(null);
+          setIsLoadingToken(false);
+          return;
+        }
+        setToken(all);
+      } catch (error) {
+        console.error("Error loading token metadata:", error);
+        setToken(null);
+      }
+    })();
+  }, [tokenAddress]);
 
   // Check approval needs
   useEffect(() => {
@@ -719,7 +726,6 @@ export default function Trade() {
     refetchBalance,
     refetchAllowance,
     refetchLatestETHPrice,
-    lastTxnType,
   ]);
 
   // Log transactions
@@ -761,21 +767,18 @@ export default function Trade() {
             oldMarketCap: marketCapUSD,
           };
 
-          const response = await fetch(`${API}/api/transactions`, {
-            method: "POST",
+          const response = await base.post(`transactions`, body, {
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
           });
-          if (!response.ok) {
-            if (response.status === 409) {
-              console.warn("Transaction already logged; skipping duplicate.");
-            } else {
-              console.error(
-                "Error logging transaction:",
-                response.status,
-                await response.text()
-              );
-            }
+
+          if (response.status === 409) {
+            console.warn("Transaction already logged; skipping duplicate.");
+          } else {
+            console.error(
+              "Error logging transaction:",
+              response.status,
+              await response.data
+            );
           }
         } catch (error) {
           console.error("Error logging transaction:", error);
@@ -789,9 +792,9 @@ export default function Trade() {
     txHash,
     ethValue,
     tokenValue,
-    API,
     amountOut,
     result,
+    marketCapUSD,
   ]);
 
   // Enhanced fetchLogs with callback for chart update
@@ -799,8 +802,10 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     try {
-      const response = await fetch(`${API}/api/transactions/${tokenAddress}`);
-      const all: TxLog[] = await response.json();
+      const response = await base.get(
+        `transactions?tokenAddress=${tokenAddress}`
+      );
+      const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
@@ -817,7 +822,7 @@ export default function Trade() {
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
-  }, [tokenAddress, API, txLogs.length, isAutoUpdateEnabled, loadChartData]);
+  }, [tokenAddress, txLogs.length, isAutoUpdateEnabled, loadChartData]);
 
   // Replace the existing fetchLogs effect
   useEffect(() => {

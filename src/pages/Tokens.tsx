@@ -12,6 +12,7 @@ import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
+import { base } from "../lib/api";
 
 export interface TokenMetadata {
   name: string;
@@ -20,7 +21,11 @@ export interface TokenMetadata {
   description?: string;
   tokenAddress: string;
   tokenCreator: string;
-  logoFilename?: string;
+  tokenImageId?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
   createdAt?: string;
   expiresAt?: string;
 }
@@ -50,14 +55,19 @@ export default function Tokens() {
   >("volume");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const API = import.meta.env.VITE_API_BASE_URL;
+  // const API = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch list of tokens
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
-      .then((res) => res.json())
-      .then((data: TokenMetadata[]) => setTokens(data))
-      .catch(console.error);
+    (async () => {
+      try {
+        const res = await base.get("tokens?include=image");
+        console.log(res.data.data.data);
+        setTokens(res.data.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
   }, []);
 
   // Fetch on-chain and API data for each token when list updates
@@ -105,11 +115,15 @@ export default function Tokens() {
             }
 
             // Fetch transaction logs
-            const res = await fetch(
-              `${API}/api/transactions/${token.tokenAddress}`
+
+            const res = await base.get(
+              `transactions?tokenAddress=${token.tokenAddress}`
             );
             const logs: { ethAmount: string; timestamp: string }[] =
-              await res.json();
+              res.data.data.data;
+
+            console.log({ logs });
+
             const volEth = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= since24h)
               .reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
@@ -271,11 +285,14 @@ export default function Tokens() {
                         to={`/trade/${t.tokenAddress}`}
                         className="flex items-start gap-4"
                       >
-                        {t.logoFilename && (
+                        {t.tokenImageId && (
                           <img
-                            src={`${API}/uploads/${t.logoFilename}`}
+                            src={`${import.meta.env.VITE_API_BASE_URL}${
+                              t.image?.path
+                            }`}
                             alt={`${t.symbol} logo`}
                             className="w-14 h-14 rounded-lg"
+                            crossOrigin=""
                           />
                         )}
                         <div>
