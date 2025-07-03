@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-backend
 .env
 Addons.tsx
 server1.ts
