@@ -490,9 +490,14 @@ export default function Trade() {
         const period = calculatePeriod(selectedTimeframe);
         const timestamp = Date.now();
 
-        const ohlcResponse = await base.get(
-          `ohlc?tokenAddress=${tokenAddress}&resolution=${selectedTimeframe.resolution}&period=${period}&t=${timestamp}`
-        );
+        const ohlcResponse = await base.get("ohlc", {
+          params: {
+            tokenAddress,
+            resolution: selectedTimeframe.resolution,
+            period,
+            t: timestamp,
+          },
+        });
         const ohlcData = await ohlcResponse.data.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
@@ -643,7 +648,7 @@ export default function Trade() {
     setIsLoadingToken(true);
     (async () => {
       try {
-        const res = await base.get(`token?tokenAddress=${tokenAddress}`);
+        const res = await base.get("token", { params: { tokenAddress } });
         const all: TokenMetadata = res.data.data.data;
         console.log({ all });
 
@@ -802,9 +807,9 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     try {
-      const response = await base.get(
-        `transactions?tokenAddress=${tokenAddress}`
-      );
+      const response = await base.get("transactions", {
+        params: { tokenAddress },
+      });
       const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"

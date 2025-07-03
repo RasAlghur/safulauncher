@@ -8,6 +8,7 @@ import Profile from "./pages/Profile";
 import Tokens from "./pages/Tokens";
 import Trade from "./pages/Trade";
 import LaunchIntro from "./pages/Launchintro";
+import Chat from "./pages/chat";
 
 function App() {
   return (
@@ -31,7 +32,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/trade" element={<Trade />} />
-            + <Route path="/trade/:tokenAddress" element={<Trade />} />
+            <Route path="/trade/:tokenAddress" element={<Trade />} />
+            <Route path="chat" element={<Chat />} />
           </Routes>
         </div>
       </main>

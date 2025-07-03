@@ -61,7 +61,9 @@ export default function Tokens() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await base.get("tokens?include=image");
+        const res = await await base.get("tokens", {
+          params: { include: "image" },
+        });
         console.log(res.data.data.data);
         setTokens(res.data.data.data);
       } catch (error) {
@@ -116,9 +118,9 @@ export default function Tokens() {
 
             // Fetch transaction logs
 
-            const res = await base.get(
-              `transactions?tokenAddress=${token.tokenAddress}`
-            );
+            const res = await base.get("transactions", {
+              params: { tokenAddress: token.tokenAddress },
+            });
             const logs: { ethAmount: string; timestamp: string }[] =
               res.data.data.data;
 

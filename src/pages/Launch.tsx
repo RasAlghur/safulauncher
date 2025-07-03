@@ -1,5 +1,11 @@
 // safu-dapp/src/pages/Launch.tsx
-import React, { useCallback, useEffect, useState, type FormEvent } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+  type JSX,
+} from "react";
 import {
   useWriteContract,
   useReadContract,
@@ -14,6 +20,7 @@ import Navbar from "../components/launchintro/Navbar";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import rocket from "../assets/rocket.png";
+import { base } from "../lib/api";
 
 /**
  * Description placeholder
@@ -32,7 +39,7 @@ interface ValidationError {
  * @export
  * @returns {*}
  */
-export default function Launch() {
+export default function Launch(): JSX.Element {
   const { isConnected } = useAccount();
 
   // Basic fields
@@ -724,25 +731,25 @@ export default function Launch() {
         }
 
         // 4. build FormData with on-chain timestamp
-        const fd = new FormData();
-        fd.append("name", name);
-        fd.append("symbol", symbol);
-        fd.append("website", website);
-        fd.append("description", description);
-        fd.append("tokenCreator", result.from);
-        fd.append("createdAt", createdAt); // <–– here you use the block time
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("symbol", symbol);
+        formData.append("website", website);
+        formData.append("description", description);
+        formData.append("tokenCreator", result.from);
+        formData.append("createdAt", createdAt); // <–– here you use the block time
 
         const lastLog = result.logs[result.logs.length - 1];
         const topic1 = lastLog?.topics[1] ?? "";
         const tokenAddress = topic1.length
           ? ethers.getAddress("0x" + topic1.slice(-40))
           : "";
-        fd.append("tokenAddress", tokenAddress);
-        if (logo) fd.append("logo", logo);
+        formData.append("tokenAddress", tokenAddress);
+        if (logo) formData.append("logo", logo);
 
         // const API = `https://safulauncher-production.up.railway.app`;
-        const API = import.meta.env.VITE_API_BASE_URL;
-        await fetch(`${API}/api/tokens`, { method: "POST", body: fd });
+        // const API = import.meta.env.VITE_API_BASE_URL;
+        await base.post("token", formData);
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {
@@ -780,17 +787,13 @@ export default function Launch() {
           // Log each bundle transaction
           for (const transaction of bundleTransactions) {
             try {
-              const response = await fetch(`${API}/api/transactions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(transaction),
-              });
+              const response = await base.post("transaction", transaction);
 
-              if (!response.ok) {
+              if (response.status !== 201) {
                 console.error(
                   `Error logging bundle transaction for ${transaction.wallet}:`,
                   response.status,
-                  await response.text()
+                  await response.data
                 );
               } else {
                 console.log(
