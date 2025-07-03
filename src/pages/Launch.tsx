@@ -61,7 +61,7 @@ export default function Launch(): JSX.Element {
   const [enableBundle, setEnableBundle] = useState(false);
   const [enablePlatformFee, setEnablePlatformFee] = useState(false);
 
-  // Dynamic groups
+  // Dynamic groups...
   const [taxList, setTaxList] = useState<{ addr: string; bps: number }[]>([]);
   const [whitelist, setWhitelist] = useState<string[]>([]);
   const [bundleList, setBundleList] = useState<{ addr: string; pct: number }[]>(
