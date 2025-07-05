@@ -75,7 +75,7 @@ const HowItWorks = () => {
   return (
     <section
       ref={sectionRef}
-      className="lg:pb-20 lg:pt-28 relative overflow-x-hidden"
+      className="lg:pb-20 lg:pt-28 relative overflow-hidden"
       id="howitworks"
     >
       {/* Dust */}

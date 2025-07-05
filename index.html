@@ -3,16 +3,18 @@
   <head>
     <meta charset="UTF-8" />
 
-  
-    <script>
-      // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-      document.documentElement.classList.toggle(
-        "dark",
-        localStorage.theme === "dark" ||
-          (!("theme" in localStorage) &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches)
-      );
-    </script>
+<script>
+  const userTheme = localStorage.getItem("theme");
+  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const useDark = userTheme === "dark" || (!userTheme && systemPrefersDark);
+
+  if (useDark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+</script>
+
 
     <link rel="icon" type="image/svg+xml" href="/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

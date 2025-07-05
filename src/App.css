@@ -6,7 +6,30 @@
 
 html {
   scroll-behavior: smooth;
-  outline: 1px solid red;
+}
+
+.mountain {
+  background-image: url("../src/assets/cloudy-mountain.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.dark .mountain {
+  background-image: none;
+}
+
+.footer-snow {
+  background-image: url("../src/assets/footer-snow.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.dark .footer-snow {
+  background-image: none;
+}
+
+.custom-shadow {
+  box-shadow: rgba(0, 0, 0, 0.56) 0px 22px 70px 4px;
 }
 
 @theme {

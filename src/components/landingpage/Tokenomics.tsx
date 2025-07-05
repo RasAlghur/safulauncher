@@ -123,7 +123,9 @@ const Tokenomics = () => {
                         Liquidity
                       </span>
                       <br />
-                      400,000,000 (40%)
+                      <p className="text-black dark:text-white">
+                        400,000,000 (40%)
+                      </p>
                     </div>
                   </div>
 
@@ -134,7 +136,9 @@ const Tokenomics = () => {
                         Marketing
                       </span>
                       <br />
-                      250,000,000 (Vested) (25%)
+                      <p className="text-black dark:text-white">
+                        250,000,000 (Vested) (25%)
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -148,7 +152,9 @@ const Tokenomics = () => {
                         Future Plans
                       </span>
                       <br />
-                      Such as CEX listing: 250,000,000 (Locked) (25%)
+                      <p className="text-black dark:text-white">
+                        Such as CEX listing: 250,000,000 (Locked) (25%)
+                      </p>
                     </div>
                   </div>
 
@@ -159,7 +165,9 @@ const Tokenomics = () => {
                         Team
                       </span>
                       <br />
-                      100,000,000 (Locked) (10%)
+                      <p className="text-black dark:text-white">
+                        100,000,000 (Locked) (10%)
+                      </p>
                     </div>
                   </div>
                 </div>

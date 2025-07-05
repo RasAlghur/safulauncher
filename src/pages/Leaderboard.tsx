@@ -167,18 +167,20 @@ export default function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="px-4 relative min-h-screen text-white flex items-center justify-center">
+      <div className="px-4 relative min-h-screen dark:text-white text-black flex items-center justify-center mountain">
         <Navbar />
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white/70">Loading leaderboard...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black dark:border-white mx-auto mb-4"></div>
+          <p className="dark:text-white/70 text-black">
+            Loading leaderboard...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 relative min-h-screen text-white">
+    <div className="px-4 relative min-h-screen mountain">
       {/* <div className="noise" /> */}
       <Navbar />
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>

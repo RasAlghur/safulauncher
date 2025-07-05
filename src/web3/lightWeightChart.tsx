@@ -294,7 +294,7 @@ export default function LightweightChart({
       chartRef.current?.remove();
       chartRef.current = null;
     };
-  }, [height, width, barSpacing]);
+  }, [height, width, barSpacing, minBarSpacing, rightOffset]);
 
   useEffect(() => {
     if (!seriesRef.current || !data || data.length === 0) return;

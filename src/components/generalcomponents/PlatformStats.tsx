@@ -13,7 +13,12 @@ import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
-import { pureGetLatestETHPrice, pureMetrics, pureInfoDataRaw } from "../../web3/readContracts";
+import {
+  pureGetLatestETHPrice,
+  pureMetrics,
+  pureInfoDataRaw,
+} from "../../web3/readContracts";
+import cloudRight from "../../assets/cloud-right.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -42,17 +47,16 @@ const PlatformStats = () => {
 
   const API = import.meta.env.VITE_API_BASE_URL;
 
-
   // Fetch list of tokens
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
+    fetch(`${API}/tokens`)
       .then((res) => res.json())
       .then((data: TokenMetadata[]) => {
         setTokens(data);
         setTotalTokenCount(data.length); // Set total token count
       })
       .catch(console.error);
-  }, []);
+  }, [API]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -82,7 +86,10 @@ const PlatformStats = () => {
       );
 
       // Calculate total curve progress
-      const totalProgress = Object.values(newCurve).reduce((sum, progress) => sum + progress, 0);
+      const totalProgress = Object.values(newCurve).reduce(
+        (sum, progress) => sum + progress,
+        0
+      );
       setTotalCurveProgress(totalProgress);
     }
 
@@ -90,9 +97,8 @@ const PlatformStats = () => {
   }, [tokens]);
 
   // Calculate average curve progress
-  const averageCurveProgress = totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
-
-
+  const averageCurveProgress =
+    totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -130,9 +136,10 @@ const PlatformStats = () => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${pureMetrics[0] !== undefined
-          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -145,9 +152,10 @@ const PlatformStats = () => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${pureMetrics[1] !== undefined
-          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -207,9 +215,10 @@ const PlatformStats = () => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${pureMetrics[6] !== undefined
-          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-          : 0
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -260,6 +269,13 @@ const PlatformStats = () => {
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />
         ))}
+      </div>
+      <div className="dark:hidden block">
+        <img
+          src={cloudRight}
+          alt="This is the cloud on the right"
+          className="absolute -top-[15rem] -right-[1rem] "
+        />
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>
       <h1

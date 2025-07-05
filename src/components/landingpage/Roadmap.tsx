@@ -1,202 +1,132 @@
-import { useLayoutEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import DustParticles from "../generalcomponents/DustParticles";
-
-gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
-
-const roadmap = [
-  {
-    quarter: "Q2 2025",
-    items: [
-      "Launch mainnet v1 with core bonding-curve AMM and automatic Uniswap integration",
-      "Introduce whitelist tiers & presale bundle features",
-    ],
-    side: "left",
-  },
-  {
-    quarter: "Q3 2025",
-    items: [
-      "Deploy $SAFU token with tiered launch-access benefits",
-      "Add real-time analytics dashboard for fees/volume/trader counts",
-    ],
-    side: "right",
-  },
-  {
-    quarter: "Q4 2025",
-    items: [
-      "Multi-chain support (BSC, Polygon, Avalanche)",
-      "Governance portal for $SAFU holders to vote on protocol parameters",
-    ],
-    side: "left",
-  },
-  {
-    quarter: "2026 and Beyond",
-    items: [
-      "Yield-farming vaults for platform fee reinvestment",
-      "SDK & APIs for third-party dApp integrations",
-    ],
-    side: "right",
-  },
-];
+import cloudRight from "../../assets/cloud-right.png";
+import cloudLeft from "../../assets/cloud-left.png";
+import topCloud from "../../assets/why-safu-cloud-top.png";
 
 const Roadmap = () => {
-  const pathRef = useRef<SVGPathElement>(null);
-  const itemsRef = useRef<HTMLDivElement[]>([]);
-
-  useLayoutEffect(() => {
-    const path = pathRef.current;
-    if (!path) return;
-
-    const pathLength = path.getTotalLength();
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: path,
-        start: "top center",
-        end: "bottom center",
-        scrub: true,
-      },
-    });
-
-    // Animate path drawing
-    tl.fromTo(
-      path,
-      { strokeDasharray: pathLength, strokeDashoffset: pathLength },
-      { strokeDashoffset: 0, ease: "none" }
-    );
-
-    // Animate roadmap items
-    itemsRef.current.forEach((item) => {
-      tl.fromTo(
-        item,
-        { autoAlpha: 0, y: 40 },
-        { autoAlpha: 1, y: 0, duration: 0.6, ease: "power2.out" },
-        `+=0.2`
-      );
-    });
-
-    // ✅ Only run if `path` is not null
-    gsap.to("#waterDot", {
-      motionPath: {
-        path,
-        align: path,
-        autoRotate: false,
-        start: 0,
-        end: 1,
-      },
-      scrollTrigger: {
-        trigger: path,
-        start: "top center",
-        end: "bottom center",
-        scrub: true,
-      },
-      ease: "none",
-    });
-  }, []);
-
   return (
     <section
       id="roadmap"
-      className="relative px-6 py-20 lg:px-32 lg:py-20 overflow-hidden"
+      className="relative px-4 sm:px-6 py-20 lg:px-32  lg:pb-40 overflow-hidden"
     >
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(3)].map((_, i) => (
           <DustParticles key={i} />
         ))}
       </div>
+
+      <div className="dark:hidden block">
+        <img
+          src={cloudLeft}
+          alt="This is the cloud on the left"
+          className="absolute bottom-0 -left-[1rem]"
+        />
+        <img
+          src={cloudRight}
+          alt="This is the cloud on the right"
+          className="absolute top-[5rem] -right-[1rem] "
+        />
+        <img
+          src={topCloud}
+          alt=""
+          className="absolute -top-[27rem] left-0 right-0 mx-auto -z-10"
+        />
+      </div>
       <h2 className="text-3xl font-bold text-center mb-20 font-raleway text-black dark:text-white">
         Roadmap
       </h2>
 
-      {/* SVG Path */}
-      <svg
-        className="absolute left-1/2 transform -translate-x-1/2 top-[7rem] z-0 pointer-events-none"
-        width="400"
-        height="1000"
-        viewBox="0 0 300 900"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Stream Glow Background */}
-        <path
-          d="M150 0
-             C150 100, 100 100, 100 200
-             C100 300, 150 300, 150 400
-             C150 500, 200 500, 200 600
-             C200 700, 150 700, 150 800"
-          stroke="#3B82F6"
-          strokeWidth="100"
-          fill="none"
-          strokeLinecap="round"
-          style={{
-            filter: "blur(20px)",
-            opacity: 0.2,
-          }}
-        />
-        {/* Main Stream Path */}
-        <path
-          ref={pathRef}
-          d="M150 0
-             C150 100, 100 100, 100 200
-             C100 300, 150 300, 150 400
-             C150 500, 200 500, 200 600
-             C200 700, 150 700, 150 800"
-          stroke="#3B82F6"
-          strokeWidth="30"
-          fill="none"
-          strokeLinecap="round"
-        />
-        {/* Orb */}
-        <circle id="waterDot" r="7" fill="#60A5FA" filter="url(#glow)" />
-        <defs>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Roadmap Items */}
-      <div className="relative z-10 flex flex-col items-center justify-center">
-        {roadmap.map((phase, index) => (
-          <div
-            key={index}
-            ref={(el) => {
-              if (el) itemsRef.current[index] = el;
-            }}
-            className={`w-full flex ${
-              phase.side === "left"
-                ? "justify-start text-left"
-                : "justify-end text-right"
-            } mb-20 opacity-0`} // hidden by default
-          >
-            <div className="w-full max-w-md">
-              <h3
-                className={`text-blue-400 font-semibold text-lg mb-2 font-raleway ${
-                  phase.side === "left" ? "text-right" : "text-left"
-                }`}
-              >
-                {phase.quarter}
-              </h3>
-              <ul className=" dark:text-white text-[#141313] space-y-2">
-                {phase.items.map((item, i) => (
-                  <li
-                    className={`${
-                      phase.side === "left" ? "text-right" : "text-left"
-                    }`}
-                    key={i}
-                  >
-                    {item}
-                  </li>
-                ))}
+      <div className="relative max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-3 grid-cols-[.4fr_.2fr_.4fr] gap-2 sm:gap-0">
+          {/* Left Side */}
+          <div className="flex flex-col space-y-16 sm:space-y-32 xl:mt-40 mt-[60px] sm:mt-[60px]">
+            <div>
+              <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
+                Q2 2025
+              </h2>
+              <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
+                <li className="list-disc ">
+                  Launch mainnet v1 with core bonding-curve AMM and automatic
+                  Uniswap integration
+                </li>
+                <li className="list-disc">
+                  Introduce whitelist tiers & presale bundle features
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
+                Q4 2025
+              </h2>
+              <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
+                <li className="list-disc">
+                  Multi-chain support (BSC, Polygon, Avalanche)
+                </li>
+                <li className="list-disc">
+                  Governance portal for $SAFU holders to vote on protocol
+                  parameters
+                </li>
               </ul>
             </div>
           </div>
-        ))}
+          <div>
+            {/* Top vertical line */}
+            <div className="relative mx-auto  w-2 bg-[#0C8CE0] h-[100%] lg:h-[85%]">
+              {/* Left curve for Q2 */}
+              <div className="relative w-full h-[80px]">
+                <div className="absolute top-[4rem] xl:top-[10rem] right-0 w-[35px] sm:w-[70px] lg:w-[120px] xl:w-40 h-full border-r-8 border-b-8 border-[#0C8CE0] rounded-br-full"></div>
+              </div>
+
+              {/* Right curve for Q3 */}
+              <div className="relative w-full h-[80px]">
+                <div className="absolute top-[4.5rem] xl:top-[12rem] left-0 w-[35px] sm:w-[70px] lg:w-[120px] xl:w-40 h-full border-l-8 border-b-8 border-[#0C8CE0] rounded-bl-full"></div>
+              </div>
+
+              {/* Left curve for Q4 */}
+              <div className="relative w-full h-[80px]">
+                <div className="absolute top-[9rem] xl:top-[15rem] right-0 w-[35px] sm:w-[70px] lg:w-[120px] xl:w-40 h-full border-r-8 border-b-8 border-[#0C8CE0] rounded-br-full"></div>
+              </div>
+
+              {/* Right curve for 2026+ */}
+              <div className="relative w-full h-[80px]">
+                <div className="absolute top-[10rem] lg:top-[10.5rem] xl:top-[18rem] left-0 w-[35px] sm:w-[70px] lg:w-[120px] xl:w-40 h-full border-l-8 border-b-8 border-[#0C8CE0] rounded-bl-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side */}
+          <div className="mt-[180px] sm:mt-[180px] md:mt-[200px] xl:mt-72">
+            <div className="flex flex-col space-y-20 sm:space-y-32">
+              <div>
+                <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
+                  Q3 2025
+                </h2>
+                <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
+                  <li className="list-disc">
+                    Deploy $SAFU token with tiered launch-access benefits
+                  </li>
+                  <li className="list-disc">
+                    Add real-time analytics dashboard for fees/volume/trader
+                    counts
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
+                  2026 and Beyond
+                </h2>
+                <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
+                  <li className="list-disc">
+                    Yield-farming vaults for platform fee reinvestment
+                  </li>
+                  <li className="list-disc">
+                    SDK & APIs for third-party dApp integrations
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

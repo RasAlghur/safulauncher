@@ -43,21 +43,26 @@ const TrendingTokens = () => {
   const getTimeRangeMs = (range: TimeRange): number => {
     const now = Date.now();
     switch (range) {
-      case "1h": return now - 1 * 60 * 60 * 1000;
-      case "6h": return now - 6 * 60 * 60 * 1000;
-      case "24h": return now - 24 * 60 * 60 * 1000;
-      case "7d": return now - 7 * 24 * 60 * 60 * 1000;
-      default: return now - 24 * 60 * 60 * 1000;
+      case "1h":
+        return now - 1 * 60 * 60 * 1000;
+      case "6h":
+        return now - 6 * 60 * 60 * 1000;
+      case "24h":
+        return now - 24 * 60 * 60 * 1000;
+      case "7d":
+        return now - 7 * 24 * 60 * 60 * 1000;
+      default:
+        return now - 24 * 60 * 60 * 1000;
     }
   };
 
   // Fetch tokens list
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
+    fetch(`${API}/tokens`)
       .then((res) => res.json())
       .then((data: TokenMetadata[]) => setTokens(data))
       .catch(console.error);
-  }, []);
+  }, [API]);
 
   // Fetch ETH price
   useEffect(() => {
@@ -138,16 +143,18 @@ const TrendingTokens = () => {
             }
 
             const balanceMap: Record<string, number> = {};
-            logs.forEach(tx => {
+            logs.forEach((tx) => {
               const amt = parseFloat(tx.tokenAmount);
               const w = tx.wallet.toLowerCase();
               if (!balanceMap[w]) balanceMap[w] = 0;
               // add on buys, subtract on sells
-              balanceMap[w] += tx.type === 'buy' ? amt : -amt;
+              balanceMap[w] += tx.type === "buy" ? amt : -amt;
             });
 
             // Count only those wallets still holding >0 tokens
-            const holders = Object.values(balanceMap).filter(net => net > 0).length;
+            const holders = Object.values(balanceMap).filter(
+              (net) => net > 0
+            ).length;
 
             trendingTokens.push({
               token,
@@ -172,7 +179,7 @@ const TrendingTokens = () => {
     }
 
     fetchTrendingData();
-  }, [tokens, selectedRange, ethPriceUSD]);
+  }, [tokens, selectedRange, ethPriceUSD, API]);
 
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
@@ -185,7 +192,7 @@ const TrendingTokens = () => {
   };
 
   const formatPercentage = (value: number): string => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+    return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
   };
 
   return (
@@ -200,10 +207,11 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
-                ? "bg-[#1D223E] text-white"
-                : "text-gray-400 hover:text-white"
-                }`}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                range === selectedRange
+                  ? "bg-[#1D223E] text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
               {range}
             </button>
@@ -264,15 +272,19 @@ const TrendingTokens = () => {
                               {data.token.name} ({data.token.symbol})
                             </div>
                             <div className="text-xs text-black/50 dark:text-white/50">
-                              {data.token.tokenAddress.slice(0, 6)}...{data.token.tokenAddress.slice(-4)}
+                              {data.token.tokenAddress.slice(0, 6)}...
+                              {data.token.tokenAddress.slice(-4)}
                             </div>
                           </div>
                         </Link>
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${data.priceChange < 0 ? "text-red-500" : "text-green-400"
-                          }`}
+                        className={`p-3 font-semibold ${
+                          data.priceChange < 0
+                            ? "text-red-500"
+                            : "text-green-400"
+                        }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
@@ -282,7 +294,11 @@ const TrendingTokens = () => {
                           <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
                             {data.token.symbol.charAt(0)}
                           </span>
-                          <span>{data.holders > 1000 ? `${(data.holders / 1000).toFixed(1)}k` : data.holders}</span>
+                          <span>
+                            {data.holders > 1000
+                              ? `${(data.holders / 1000).toFixed(1)}k`
+                              : data.holders}
+                          </span>
                         </div>
                       </td>
                     </tr>

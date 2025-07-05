@@ -2,17 +2,14 @@
 import { useEffect, useState } from "react";
 
 import moon from "../assets/moon-toggle.png";
-import sun from "../assets/sun.png";
+import { IoSunny } from "react-icons/io5";
 
 const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-    const shouldUseDark = stored === "dark" || (!stored && prefersDark);
+    const shouldUseDark = stored !== "light"; // default to dark unless explicitly light
 
     document.documentElement.classList.toggle("dark", shouldUseDark);
     setIsDark(shouldUseDark);
@@ -28,17 +25,31 @@ const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className={`w-[60px] h-8 flex items-center p-1 rounded-full transition-colors duration-300 cursor-pointer ${
-        !isDark ? "bg-[#EDF8FF]" : "bg-[#0A1022]"
-      }`}
+      className={`relative group w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 
+    ${isDark ? "bg-[#0A1022]" : "bg-[#EDF8FF]"} shadow-inner`}
       aria-label="Toggle Dark Mode"
     >
+      {/* Sliding knob */}
       <div
-        className={`w-6 h-6 flex items-center justify-center rounded-full bg-white shadow-md transform transition-transform duration-300 ${
-          isDark ? "translate-x-0" : "translate-x-7"
-        }`}
+        className={`absolute z-20 left-1 w-[28px] h-[28px] rounded-full flex items-center justify-center
+      transition-transform duration-300 ease-in-out
+      ${isDark ? "translate-x-0 bg-[#D9D9D9]" : "translate-x-[32px] bg-white"}`}
       >
-        {!isDark ? <img src={sun} alt="" /> : <img src={moon} alt="" />}
+        {isDark ? (
+          <img src={moon} alt="Moon" className="w-3 h-3" />
+        ) : (
+          <IoSunny className="text-black text-lg" />
+        )}
+      </div>
+
+      {/* Static sun icon on left */}
+      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10">
+        <img src={moon} alt="MOon" className="w-3 h-3" />
+      </div>
+
+      {/* Static moon icon on right */}
+      <div className="absolute right-[10px] z-10">
+        <IoSunny className="text-white text-lg" />
       </div>
     </button>
   );

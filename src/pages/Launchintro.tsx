@@ -9,8 +9,10 @@ const LaunchIntro = () => {
     <div>
       <Navbar />
       <Hero />
-      <PlatformStats />
-      <HowItWorks />
+      <div className="mountain dark:bg-none">
+        <PlatformStats />
+        <HowItWorks />
+      </div>
       <Footer />
     </div>
   );
