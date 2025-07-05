@@ -48,6 +48,7 @@ interface AuthContextType {
  *
  * @type {*}
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
@@ -79,6 +80,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
  *
  * @returns {*}
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

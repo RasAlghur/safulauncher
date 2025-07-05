@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/web3/readContracts.ts
 import { publicClient } from "../config/publicConfig";
 import { LAUNCHER_ABI, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA } from "./config";

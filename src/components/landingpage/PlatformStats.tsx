@@ -1,8 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { pureMetrics, pureGetLatestETHPrice, pureInfoDataRaw } from "../../web3/readContracts";
+import {
+  pureMetrics,
+  pureGetLatestETHPrice,
+  pureInfoDataRaw,
+} from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import cloudRight from "../../assets/cloud-right.png";
+import cloudLeft from "../../assets/cloud-left.png";
 
 import VolumeIcon from "../svgcomponents/Volume";
 import FeeCollected from "../svgcomponents/FeeCollected";
@@ -56,8 +62,7 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
         setTotalTokenCount(data.length); // Set total token count
       })
       .catch(console.error);
-  }, []);
-
+  }, [API]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -87,7 +92,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       );
 
       // Calculate total curve progress
-      const totalProgress = Object.values(newCurve).reduce((sum, progress) => sum + progress, 0);
+      const totalProgress = Object.values(newCurve).reduce(
+        (sum, progress) => sum + progress,
+        0
+      );
       setTotalCurveProgress(totalProgress);
     }
 
@@ -95,8 +103,8 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
   }, [tokens]);
 
   // Calculate average curve progress
-  const averageCurveProgress = totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
-
+  const averageCurveProgress =
+    totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -138,9 +146,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${pureMetrics[0] !== undefined
-          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -152,9 +161,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${pureMetrics[1] !== undefined
-          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -202,9 +212,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${pureMetrics[6] !== undefined
-          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-          : 0
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -247,9 +258,22 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
   }, []);
 
   return (
-    <section id="stats" className="mt-16 px-6 relative" ref={containerRef}>
+    <section id="stats" className="mt-28 px-6 relative" ref={containerRef}>
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         <DustParticles />
+      </div>
+
+      <div className="dark:hidden block">
+        <img
+          src={cloudLeft}
+          alt="This is the cloud on the left"
+          className="absolute bottom-0 -left-[1rem]"
+        />
+        <img
+          src={cloudRight}
+          alt="This is the cloud on the right"
+          className="absolute -top-[15rem] -right-[1rem] "
+        />
       </div>
 
       <div className="max-w-5xl mx-auto">

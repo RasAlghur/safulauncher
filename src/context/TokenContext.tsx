@@ -26,6 +26,7 @@ interface TokenContextType {
 
 const TokenContext = createContext<TokenContextType | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTokenContext = () => useContext(TokenContext)!;
 
 export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({

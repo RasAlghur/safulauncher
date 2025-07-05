@@ -1,6 +1,7 @@
 // safu-dapp/src/pages/Launch.tsx
 import React, {
   useCallback,
+  useRef,
   useEffect,
   useState,
   type FormEvent,
@@ -21,6 +22,9 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import rocket from "../assets/rocket.png";
 import { base } from "../lib/api";
+import { CircleCheckBig, UploadCloud } from "lucide-react";
+import { X } from "lucide-react";
+import { BsChevronDown } from "react-icons/bs";
 
 /**
  * Description placeholder
@@ -49,6 +53,34 @@ export default function Launch(): JSX.Element {
   const [website, setWebsite] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setLogo(file);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setLogo(file);
+    }
+  };
+
+  const openFilePicker = () => inputRef.current?.click();
 
   const [statusMessage, setStatusMessage] = useState("");
   const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
@@ -905,8 +937,17 @@ export default function Launch(): JSX.Element {
     return Math.floor(tokensOut);
   }
 
+  type LPOption = "lock" | "burn";
+
+  const options: { value: LPOption; label: string }[] = [
+    { value: "lock", label: "Lock" },
+    { value: "burn", label: "Burn" },
+  ];
+
+  const selectedOption = options.find((opt) => opt.value === lpOption)?.label;
+
   return (
-    <div className="px-4 relative flex flex-col justify-center min-h-screen">
+    <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(2)].map((_, i) => (
@@ -915,7 +956,7 @@ export default function Launch(): JSX.Element {
       </div>
       {/* <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] opacity-[0.03] pointer-events-none dark:hidden" /> */}
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-      <div className="my-40 bg-[#01061C]/2 max-w-4xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[100px] lg:py-20 rounded-[10px] ">
+      <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
         {validationErrors.length > 0 && (
           <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5">
             <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
@@ -1033,521 +1074,660 @@ export default function Launch(): JSX.Element {
           {/* Input file and tax toggle */}
           <div className="flex flex-col gap-[10px] mt-[34px]">
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-              Logo
+              Add Logo{" "}
+              <span className="text-Primary font-medium">(Optional)</span>
             </label>
+
+            <div
+              className={`border-2 border-dashed ${
+                dragActive ? "border-[#3BC3DB]" : "border-Primary"
+              } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
+        flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
+        transition duration-200 hover:opacity-80 w-[95%] lg:w-full`}
+              onClick={openFilePicker}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+            >
+              <div className="bg-gray-600 p-4 rounded-lg mb-4">
+                <UploadCloud className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-white font-medium">
+                <span className="">Click to upload</span> or drag and drop
+              </p>
+              <p className="text-sm text-white/60 mt-1">SVG, PNG, JPG or GIF</p>
+              {logo && (
+                <p className="text-sm mt-2 text-[#3BC3DB] font-semibold">
+                  Selected: {logo.name}
+                </p>
+              )}
+            </div>
+
             <input
+              ref={inputRef}
               type="file"
               accept="image/*"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#2c2c2c] file:text-white hover:file:bg-[#3a3a3a] w-[95%] lg:w-full"
-              onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
+              className="hidden"
+              onChange={handleChange}
             />
           </div>
 
-          {/* Enable Tax Toggle Styled Similarly */}
-          <div className="flex flex-col gap-[10px] mt-[34px]">
-            <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-              Enable Tax
-            </label>
-            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
-              <div
-                className={`relative w-[54px] h-8 flex items-center  ${
-                  enableTax
-                    ? "bg-Primary"
-                    : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
-                } rounded-full p-1 cursor-pointer`}
-                onClick={() => setEnableTax(!enableTax)}
-              >
-                <input
-                  type="checkbox"
-                  checked={enableTax}
-                  readOnly
-                  className="hidden"
-                />
-                <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                    enableTax ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="dark:text-white text-black lg:text-lg">
-                Toggle to enable or disable tax
-              </span>
-            </div>
-            <div className=" text-Primary lg:text-lg">
-              Collect up to 10% tax on Uniswap trades. (Max 5 recipients)
-            </div>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* enable tax, whitelist only and enable platform fees */}
+            <div className="">
+              {/* Enable Tax Toggle Styled Similarly */}
+              <div className="flex flex-col gap-2 mt-[34px]">
+                <div className="flex justify-between items-center">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Enable Tax
+                  </label>
 
-          {/* Tax Section */}
-          {enableTax && (
-            <div
-              id="tax-section"
-              className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-            >
-              <div className="dark:text-white text-black font-medium mb-2">
-                Current total:{" "}
-                <span className="text-green-400">
-                  {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS (
-                  {(
-                    taxList.reduce((sum, t) => sum + (t.bps || 0), 0) / 100
-                  ).toFixed(1)}
-                  %)
-                </span>
-              </div>
+                  {/* Hover Group */}
+                  <div className="relative group">
+                    <div
+                      onClick={() => setEnableTax(!enableTax)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+        ${enableTax ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              enableTax
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
+                      >
+                        {enableTax ? (
+                          <CircleCheckBig className="text-Primary w-3 h-3" />
+                        ) : (
+                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                            <X className="text-Primary w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
 
-              {taxList.map((t, i) => (
-                <div
-                  key={i}
-                  className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg border border-gray-700"
-                >
-                  <input
-                    placeholder="0x..."
-                    value={t.addr}
-                    onChange={(e) => {
-                      const list = [...taxList];
-                      list[i].addr = e.target.value;
-                      setTaxList(list);
-                    }}
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
-                  <input
-                    placeholder="BPS (e.g. 200 = 2%)"
-                    type="number"
-                    value={t.bps}
-                    onChange={(e) => {
-                      const list = [...taxList];
-                      list[i].bps = parseInt(e.target.value) || 0;
-                      setTaxList(list);
-                    }}
-                    min="0"
-                    max="1000"
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(taxList, setTaxList, i)}
-                    className="text-red-400 hover:text-red-500 text-sm font-medium"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Whitelist Toggle */}
-          <div className="flex flex-col gap-[10px] mt-[34px]">
-            <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-              Whitelist Only
-            </label>
-            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
-              <div
-                className={`relative w-[54px] h-8 flex items-center ${
-                  enableWhitelist
-                    ? "bg-Primary"
-                    : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
-                }  rounded-full p-1 cursor-pointer`}
-                onClick={() => setEnableWhitelist(!enableWhitelist)}
-              >
-                <input
-                  type="checkbox"
-                  checked={enableWhitelist}
-                  readOnly
-                  className="hidden"
-                />
-                <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                    enableWhitelist ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="dark:text-white text-black lg:text-lg">
-                Toggle to restrict to whitelisted addresses
-              </span>
-            </div>
-            <div className="text-Primary lg:text-lg">
-              Only whitelisted addresses can buy initially. (Max 200 addresses)
-            </div>
-          </div>
-
-          {/* Whitelist Section */}
-          {enableWhitelist && (
-            <div
-              id="wl-section"
-              className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-            >
-              <div className="dark:text-white text-black font-medium mb-2">
-                Whitelisted Addresses:{" "}
-                <span className="text-green-400">{whitelist.length} / 200</span>
-              </div>
-
-              {whitelist.map((addr, i) => (
-                <div
-                  key={i}
-                  className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
-                >
-                  <input
-                    placeholder="0x..."
-                    value={addr}
-                    onChange={(e) => {
-                      const list = [...whitelist];
-                      list[i] = e.target.value;
-                      setWhitelist(list);
-                    }}
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(whitelist, setWhitelist, i)}
-                    className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => addItem(whitelist, setWhitelist, "", 200)}
-                disabled={whitelist.length >= 200}
-                className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
-              >
-                + Add Whitelist Address ({whitelist.length}/200)
-              </button>
-            </div>
-          )}
-
-          {/* Start Now Toggle */}
-          <div className="flex flex-col gap-[10px] mt-[34px]">
-            <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-              Start Trading Now
-            </label>
-            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
-              <div
-                className={`relative w-[54px] h-8 flex items-center ${
-                  startNow
-                    ? "bg-Primary"
-                    : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
-                } rounded-full p-1 cursor-pointer`}
-                onClick={() => setStartNow(!startNow)}
-              >
-                <input
-                  type="checkbox"
-                  checked={startNow}
-                  readOnly
-                  className="hidden"
-                />
-                <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                    startNow ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="dark:text-white text-black lg:text-lg">
-                Toggle to begin trading immediately after launch
-              </span>
-            </div>
-          </div>
-
-          <div className="dark:text-gray-400 text-gray-700 text-sm mt-2">
-            ON = live immediately; OFF = start later.
-          </div>
-          {/* LP Option */}
-          <div className="flex flex-col gap-2 mt-[34px]">
-            <label className="text-[20px] font-semibold dark:text-white text-black font-ralewaye">
-              LP Option <span className="text-red-400">*</span>
-            </label>
-            <select
-              value={lpOption}
-              onChange={(e) => setLpOption(e.target.value as "lock" | "burn")}
-              required
-              className="dark:bg-[#111] bg-white dark:text-white text-black border border-gray-600 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-Primary transition duration-200"
-            >
-              <option value="lock">Lock LP (3 months)</option>
-              <option value="burn">Burn LP</option>
-            </select>
-          </div>
-
-          <div className="text-Primary mt-2">
-            Lock or burn liquidity after bonding.
-          </div>
-          {/* Bundle Toggle */}
-
-          <div className="flex flex-col gap-[10px] mt-[34px]">
-            <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-              Enable Bundle
-            </label>
-            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
-              <div
-                className={`relative w-[54px] h-8 flex items-center ${
-                  enableBundle
-                    ? "bg-Primary"
-                    : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
-                } rounded-full p-1 cursor-pointer`}
-                onClick={() => setEnableBundle(!enableBundle)}
-              >
-                <input
-                  type="checkbox"
-                  checked={enableBundle}
-                  readOnly
-                  className="hidden"
-                />
-                <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                    enableBundle ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="dark:text-white text-black lg:text-lg">
-                Toggle to allow dev pre-buy bundle
-              </span>
-            </div>
-            <div className="dark:text-gray-400 text-gray-700 text-sm">
-              Dev pre-buy (max 15% of supply, max 30 recipients).
-            </div>
-          </div>
-
-          {/* Bundle Section */}
-          {enableBundle && (
-            <div
-              id="bundle-section"
-              className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-            >
-              <label className="flex flex-col gap-1 font-medium">
-                <span className="dark:text-white text-black">Bundle ETH</span>
-                <input
-                  type="number"
-                  value={bundleEth}
-                  onChange={(e) =>
-                    setBundleEth(parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="10"
-                  min="0"
-                  step="0.001"
-                  className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                />
-              </label>
-
-              <div className="dark:text-gray-400 text-gray-700 text-sm">
-                ETH to spend on initial pre-buy.
-              </div>
-              {bundleEth > 0 && supply > 0 && (
-                <div className="space-y-1 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-4 rounded-md dark:border border-gray-700">
-                  <div className="dark:text-white text-black">
-                    Estimated tokens: ~{" "}
-                    {calculateBundleTokens(bundleEth, supply).toLocaleString()}
-                  </div>
-                  <div className="dark:text-white text-black">
-                    Percentage of supply: ~{" "}
-                    {(
-                      (calculateBundleTokens(bundleEth, supply) / supply) *
-                      100
-                    ).toFixed(2)}
-                    %
-                  </div>
-                  <div className="dark:text-white text-black">
-                    Max allowed (25%): {((supply * 25) / 100).toLocaleString()}
-                  </div>
-                  {calculateBundleTokens(bundleEth, supply) >
-                    (supply * 25) / 100 && (
-                    <div className="text-red-400 font-semibold">
-                      ⚠️ Exceeds 25% limit!
+                      {/* Static x icon on left */}
+                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                        <X className="text-white w-3 h-3" />
+                      </div>
+                      {/* Static check icon on right */}
+                      <div className="absolute right-[10px] z-10">
+                        <CircleCheckBig className="text-black w-3 h-3" />
+                      </div>
                     </div>
-                  )}
+
+                    {/* Tooltip-like div shown on hover */}
+                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Collect up to 10% tax on Uniswap trades. (Max 5
+                      recipients)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tax Section */}
+              {enableTax && (
+                <div
+                  id="tax-section"
+                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
+                >
+                  <div className="dark:text-white text-black font-medium mb-2">
+                    Current total:{" "}
+                    <span className="text-green-400">
+                      {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS (
+                      {(
+                        taxList.reduce((sum, t) => sum + (t.bps || 0), 0) / 100
+                      ).toFixed(1)}
+                      %)
+                    </span>
+                  </div>
+                  {taxList.map((t, i) => (
+                    <div
+                      key={i}
+                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg border border-gray-700"
+                    >
+                      <input
+                        placeholder="0x..."
+                        value={t.addr}
+                        onChange={(e) => {
+                          const list = [...taxList];
+                          list[i].addr = e.target.value;
+                          setTaxList(list);
+                        }}
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <input
+                        placeholder="BPS (e.g. 200 = 2%)"
+                        type="number"
+                        value={t.bps}
+                        onChange={(e) => {
+                          const list = [...taxList];
+                          list[i].bps = parseInt(e.target.value) || 0;
+                          setTaxList(list);
+                        }}
+                        min="0"
+                        max="1000"
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(taxList, setTaxList, i)}
+                        className="text-red-400 hover:text-red-500 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
-              <div className="text-gray-400 text-sm mb-2">
-                Current total:{" "}
-                {bundleList
-                  .reduce((sum, b) => sum + (b.pct || 0), 0)
-                  .toFixed(2)}
-                %
+              {/* Whitelist Toggle */}
+              <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
+                <div className="flex justify-between items-center">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Whitelist Only
+                  </label>
+
+                  {/* Hover group for toggle + tooltip */}
+                  <div className="relative group">
+                    <div
+                      onClick={() => setEnableWhitelist(!enableWhitelist)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${enableWhitelist ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
+                      >
+                        {enableWhitelist ? (
+                          <CircleCheckBig className="text-Primary w-3 h-3" />
+                        ) : (
+                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                            <X className="text-Primary w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Static x icon on left */}
+                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                        <X className="text-white w-3 h-3" />
+                      </div>
+                      {/* Static check icon on right */}
+                      <div className="absolute right-[10px] z-10">
+                        <CircleCheckBig className="text-black w-3 h-3" />
+                      </div>
+                    </div>
+
+                    {/* Tooltip shown on hover */}
+                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Only whitelisted addresses can buy initially. (Max 200
+                      addresses)
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {bundleList.map((b, i) => (
+              {/* Whitelist Section */}
+              {enableWhitelist && (
                 <div
-                  key={i}
-                  className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                  id="wl-section"
+                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
                 >
-                  <input
-                    placeholder="0x..."
-                    value={b.addr}
-                    onChange={(e) => {
-                      const list = [...bundleList];
-                      list[i].addr = e.target.value;
-                      setBundleList(list);
-                    }}
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
-                  <input
-                    placeholder="Percentage (e.g. 50)"
-                    type="number"
-                    value={b.pct}
-                    onChange={(e) => {
-                      const list = [...bundleList];
-                      list[i].pct = parseFloat(e.target.value) || 0;
-                      setBundleList(list);
-                    }}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
+                  <div className="dark:text-white text-black font-medium mb-2">
+                    Whitelisted Addresses:{" "}
+                    <span className="text-green-400">
+                      {whitelist.length} / 200
+                    </span>
+                  </div>
+                  {whitelist.map((addr, i) => (
+                    <div
+                      key={i}
+                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                    >
+                      <input
+                        placeholder="0x..."
+                        value={addr}
+                        onChange={(e) => {
+                          const list = [...whitelist];
+                          list[i] = e.target.value;
+                          setWhitelist(list);
+                        }}
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(whitelist, setWhitelist, i)}
+                        className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
-                    onClick={() => removeItem(bundleList, setBundleList, i)}
-                    className="text-red-400 hover:text-red-500 text-sm font-medium"
+                    onClick={() => addItem(whitelist, setWhitelist, "", 200)}
+                    disabled={whitelist.length >= 200}
+                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
                   >
-                    Remove
+                    + Add Whitelist Address ({whitelist.length}/200)
                   </button>
                 </div>
-              ))}
+              )}
+              {/* Platform Fee Toggle */}
+              <div className="flex flex-col gap-2 mt-[34px] md:mt-[80px]">
+                <div className="flex justify-between items-center">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Enable Platform Fees
+                  </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  addItem(bundleList, setBundleList, { addr: "", pct: 0 }, 30)
-                }
-                disabled={bundleList.length >= 30}
-                className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
-              >
-                + Add Bundle Entry ({bundleList.length}/30)
-              </button>
-            </div>
-          )}
+                  {/* Toggle + Tooltip Group */}
+                  <div className="relative group">
+                    <div
+                      onClick={() => setEnablePlatformFee(!enablePlatformFee)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${
+            enablePlatformFee ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              enablePlatformFee
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
+                      >
+                        {enablePlatformFee ? (
+                          <CircleCheckBig className="text-Primary w-3 h-3" />
+                        ) : (
+                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                            <X className="text-Primary w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
 
-          {/* Platform Fee Toggle */}
-          <div className="flex flex-col gap-[10px] mt-[34px]">
-            <label className="text-[20px] font-semibold  dark:text-white text-black font-raleway">
-              Enable Platform Fees
-            </label>
-            <div className="grid grid-cols-[.2fr_.8fr] lg:flex items-center gap-2">
-              <div
-                className={`relative w-[54px] h-8 flex items-center ${
-                  enablePlatformFee
-                    ? "bg-Primary"
-                    : " dark:bg-[#d5f2f80a] bg-[#01061c0d]"
-                } rounded-full p-1 cursor-pointer`}
-                onClick={() => setEnablePlatformFee(!enablePlatformFee)}
-              >
-                <input
-                  type="checkbox"
-                  checked={enablePlatformFee}
-                  readOnly
-                  className="hidden"
-                />
+                      {/* Static icons */}
+                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                        <X className="text-white w-3 h-3" />
+                      </div>
+                      <div className="absolute right-[10px] z-10">
+                        <CircleCheckBig className="text-black w-3 h-3" />
+                      </div>
+                    </div>
+
+                    {/* Tooltip shown on hover */}
+                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Dev/platform fee (max 5%, max 5 recipients).
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform Fee Section */}
+              {enablePlatformFee && (
                 <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                    enablePlatformFee ? "translate-x-6" : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="dark:text-white text-black lg:text-lg">
-                Toggle to enable dev/platform fee
-              </span>
-            </div>
-            <div className="dark:text-gray-400 text-gray-700 text-sm">
-              Dev/platform fee (max 5%, max 5 recipients).
-            </div>
-          </div>
-
-          {/* Platform Fee Section */}
-          {enablePlatformFee && (
-            <div
-              id="pf-section"
-              className="space-y-4 bg-[#d5f2f80a] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-            >
-              <label className="flex flex-col gap-1 font-medium">
-                <span className="dark:text-white text-black">
-                  Platform Fee BPS
-                </span>
-                <input
-                  type="number"
-                  value={platformFeeBps}
-                  onChange={(e) =>
-                    setPlatformFeeBps(parseInt(e.target.value) || 0)
-                  }
-                  placeholder="e.g. 250 (2.5%)"
-                  min="0"
-                  max="500"
-                  className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                />
-              </label>
-
-              <div className="dark:text-gray-400 text-gray-700 text-sm">
-                Max 500 BPS (5%).
-              </div>
-
-              <div className="dark:text-gray-400 text-gray-700 text-sm mb-2">
-                Current total:{" "}
-                {platformFeeList
-                  .reduce((sum, p) => sum + (p.pct || 0), 0)
-                  .toFixed(2)}
-                %
-              </div>
-
-              {platformFeeList.map((p, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                  id="pf-section"
+                  className="space-y-4 bg-[#d5f2f80a] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
                 >
-                  <input
-                    placeholder="0x..."
-                    value={p.addr}
-                    onChange={(e) => {
-                      const list = [...platformFeeList];
-                      list[i].addr = e.target.value;
-                      setPlatformFeeList(list);
-                    }}
-                    className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
-                  <input
-                    placeholder="Percentage (e.g. 50)"
-                    type="number"
-                    value={p.pct}
-                    onChange={(e) => {
-                      const list = [...platformFeeList];
-                      list[i].pct = parseFloat(e.target.value) || 0;
-                      setPlatformFeeList(list);
-                    }}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    className="w-full md:w-40 dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                  />
+                  <label className="flex flex-col gap-1 font-medium">
+                    <span className="dark:text-white text-black">
+                      Platform Fee BPS
+                    </span>
+                    <input
+                      type="number"
+                      value={platformFeeBps}
+                      onChange={(e) =>
+                        setPlatformFeeBps(parseInt(e.target.value) || 0)
+                      }
+                      placeholder="e.g. 250 (2.5%)"
+                      min="0"
+                      max="500"
+                      className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                    />
+                  </label>
+                  <div className="dark:text-gray-400 text-gray-700 text-sm">
+                    Max 500 BPS (5%).
+                  </div>
+                  <div className="dark:text-gray-400 text-gray-700 text-sm mb-2">
+                    Current total:{" "}
+                    {platformFeeList
+                      .reduce((sum, p) => sum + (p.pct || 0), 0)
+                      .toFixed(2)}
+                    %
+                  </div>
+                  {platformFeeList.map((p, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                    >
+                      <input
+                        placeholder="0x..."
+                        value={p.addr}
+                        onChange={(e) => {
+                          const list = [...platformFeeList];
+                          list[i].addr = e.target.value;
+                          setPlatformFeeList(list);
+                        }}
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <input
+                        placeholder="Percentage (e.g. 50)"
+                        type="number"
+                        value={p.pct}
+                        onChange={(e) => {
+                          const list = [...platformFeeList];
+                          list[i].pct = parseFloat(e.target.value) || 0;
+                          setPlatformFeeList(list);
+                        }}
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className="w-full md:w-40 dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeItem(platformFeeList, setPlatformFeeList, i)
+                        }
+                        className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
                     onClick={() =>
-                      removeItem(platformFeeList, setPlatformFeeList, i)
+                      addItem(
+                        platformFeeList,
+                        setPlatformFeeList,
+                        { addr: "", pct: 0 },
+                        5
+                      )
                     }
-                    className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
+                    disabled={platformFeeList.length >= 5}
+                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
                   >
-                    Remove
+                    + Add Platform Fee Recipient ({platformFeeList.length}/5)
                   </button>
                 </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() =>
-                  addItem(
-                    platformFeeList,
-                    setPlatformFeeList,
-                    { addr: "", pct: 0 },
-                    5
-                  )
-                }
-                disabled={platformFeeList.length >= 5}
-                className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
-              >
-                + Add Platform Fee Recipient ({platformFeeList.length}/5)
-              </button>
+              )}
             </div>
-          )}
+            {/* LP option, start trading and enable bundle */}
+            <div>
+              {/* LP Option */}
+              <div className="flex flex-col gap-2 mt-[34px] relative w-full max-w-xs group">
+                <label className="text-[18px] font-semibold dark:text-white text-black font-ralewaye">
+                  LP Option <span className="text-white">*</span>
+                </label>
+
+                {/* Trigger */}
+                <div
+                  onClick={() => setIsOpen((prev) => !prev)}
+                  className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-3 py-3 rounded-md cursor-pointer flex justify-between items-center"
+                >
+                  <span className="text-lg">{selectedOption}</span>
+                  <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                    <BsChevronDown className="text-white text-2xl" />
+                  </div>
+                </div>
+
+                {/* Dropdown */}
+                {isOpen && (
+                  <div className="absolute top-[110px] z-60 w-full dark:bg-[#1a2a7f] bg-white dark:text-white rounded-xl shadow-md">
+                    {options.map((option) => (
+                      <div
+                        key={option.value}
+                        onClick={() => {
+                          setLpOption(option.value);
+                          setIsOpen(false);
+                        }}
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                          option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                        }`}
+                      >
+                        {option.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tooltip on hover */}
+                <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                  Lock or burn liquidity after bonding.
+                </div>
+              </div>
+
+              {/* Start Now Toggle */}
+              <div className="flex justify-between items-center mt-[34px] md:mt-[42px] group relative">
+                <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                  Start Trading Now
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <div
+                    onClick={() => setStartNow(!startNow)}
+                    className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+        ${startNow ? " bg-Primary" : "bg-white"} shadow-inner relative`}
+                  >
+                    <div
+                      className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+          transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
+                    >
+                      {startNow ? (
+                        <CircleCheckBig className="text-Primary w-3 h-3" />
+                      ) : (
+                        <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                          <X className="text-Primary w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Static check icon on right */}
+                    <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                      <X className="text-white w-3 h-3" />
+                    </div>
+
+                    {/* Static x icon on left */}
+                    <div className="absolute right-[10px] z-10">
+                      <CircleCheckBig className="text-black w-3 h-3" />
+                    </div>
+                  </div>
+
+                  {/* Hover-only tooltip */}
+                  <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                    ON = live immediately; OFF = start later.
+                  </div>
+                </div>
+              </div>
+
+              {/*
+              
+              {/* Bundle Toggle */}
+              <div className="flex justify-between items-center mt-[34px] md:mt-[80px] group relative">
+                <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                  Enable Bundle
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <div
+                    onClick={() => setEnableBundle(!enableBundle)}
+                    className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+        ${enableBundle ? " bg-Primary" : "bg-white"} shadow-inner relative`}
+                  >
+                    <div
+                      className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+          transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+          ${
+            enableBundle
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
+                    >
+                      {enableBundle ? (
+                        <CircleCheckBig className="text-Primary w-3 h-3" />
+                      ) : (
+                        <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                          <X className="text-Primary w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Static check icon on right */}
+                    <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                      <X className="text-white w-3 h-3" />
+                    </div>
+
+                    {/* Static x icon on left */}
+                    <div className="absolute right-[10px] z-10">
+                      <CircleCheckBig className="text-black w-3 h-3" />
+                    </div>
+                  </div>
+
+                  {/* Hover-only explanation */}
+                  <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                    Dev pre-buy (max 15% of supply, max 30 recipients).
+                  </div>
+                </div>
+              </div>
+
+              {/* Bundle Section */}
+              {enableBundle && (
+                <div
+                  id="bundle-section"
+                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
+                >
+                  <label className="flex flex-col gap-1 font-medium">
+                    <span className="dark:text-white text-black">
+                      Bundle ETH
+                    </span>
+                    <input
+                      type="number"
+                      value={bundleEth}
+                      onChange={(e) =>
+                        setBundleEth(parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="10"
+                      min="0"
+                      step="0.001"
+                      className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                    />
+                  </label>
+                  <div className="dark:text-gray-400 text-gray-700 text-sm">
+                    ETH to spend on initial pre-buy.
+                  </div>
+                  {bundleEth > 0 && supply > 0 && (
+                    <div className="space-y-1 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-4 rounded-md dark:border border-gray-700">
+                      <div className="dark:text-white text-black">
+                        Estimated tokens: ~{" "}
+                        {calculateBundleTokens(
+                          bundleEth,
+                          supply
+                        ).toLocaleString()}
+                      </div>
+                      <div className="dark:text-white text-black">
+                        Percentage of supply: ~{" "}
+                        {(
+                          (calculateBundleTokens(bundleEth, supply) / supply) *
+                          100
+                        ).toFixed(2)}
+                        %
+                      </div>
+                      <div className="dark:text-white text-black">
+                        Max allowed (25%):{" "}
+                        {((supply * 25) / 100).toLocaleString()}
+                      </div>
+                      {calculateBundleTokens(bundleEth, supply) >
+                        (supply * 25) / 100 && (
+                        <div className="text-red-400 font-semibold">
+                          ⚠️ Exceeds 25% limit!
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="text-gray-400 text-sm mb-2">
+                    Current total:{" "}
+                    {bundleList
+                      .reduce((sum, b) => sum + (b.pct || 0), 0)
+                      .toFixed(2)}
+                    %
+                  </div>
+                  {bundleList.map((b, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                    >
+                      <input
+                        placeholder="0x..."
+                        value={b.addr}
+                        onChange={(e) => {
+                          const list = [...bundleList];
+                          list[i].addr = e.target.value;
+                          setBundleList(list);
+                        }}
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <input
+                        placeholder="Percentage (e.g. 50)"
+                        type="number"
+                        value={b.pct}
+                        onChange={(e) => {
+                          const list = [...bundleList];
+                          list[i].pct = parseFloat(e.target.value) || 0;
+                          setBundleList(list);
+                        }}
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(bundleList, setBundleList, i)}
+                        className="text-red-400 hover:text-red-500 text-sm font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addItem(
+                        bundleList,
+                        setBundleList,
+                        { addr: "", pct: 0 },
+                        30
+                      )
+                    }
+                    disabled={bundleList.length >= 30}
+                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
+                  >
+                    + Add Bundle Entry ({bundleList.length}/30)
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] px-6 py-4 text-white font-semibold mx-auto mt-4 flex items-center justify-center gap-2"
+            className="w-full rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] px-6 py-4 text-white font-semibold mx-auto mt-10 flex items-center justify-center gap-2"
             disabled={isPending || isConfirming || !isFormValid}
             style={{
               opacity: !isFormValid ? 0.5 : 1,

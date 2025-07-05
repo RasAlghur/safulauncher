@@ -77,7 +77,7 @@ const WhySafu = () => {
   return (
     <section
       id="whysafu"
-      className="lg:py-20 relative overflow-x-hidden"
+      className="lg:pt-20 relative overflow-x-hidden"
       ref={sectionRef}
     >
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">

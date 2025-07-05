@@ -36,11 +36,13 @@ function Home() {
 
   const ringRefs = useRef<HTMLDivElement[]>([]);
 
+  const shouldRefetch = !isLoadingMetrics;
+
   useEffect(() => {
-    if (!isLoadingMetrics) {
+    if (shouldRefetch) {
       refetchMetrics();
     }
-  }, [!isLoadingMetrics, refetchMetrics]);
+  }, [shouldRefetch, refetchMetrics]);
 
   // const { data: totalVolumeETH, isLoading: isLoadingTotalVolumeETH, refetch: refetchTotalVolumeETH } = useReadContract(
   //     {
@@ -163,29 +165,28 @@ function Home() {
       <Hero />
       <PlatformStats />
 
-      <div className="relative z-10 overflow-x-hidden">
-        <KeyBenefits />
-
-        {/* Animated rings (dark mode only) */}
-        {[500, 650, 800, 950].map((size, i) => (
-          <div
-            key={i}
-            ref={(el) => {
-              ringRefs.current[i] = el!;
-            }}
-            className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden dark:block -z-10"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              top: `${400 - size / 2}px`,
-            }}
-          />
-        ))}
-
-        <HowItWorks />
+      <div className="mountain dark:bg-none">
+        <div className="relative z-10 overflow-x-hidden">
+          <KeyBenefits />
+          {/* Animated rings (dark mode only) */}
+          {[500, 650, 800, 950].map((size, i) => (
+            <div
+              key={i}
+              ref={(el) => {
+                ringRefs.current[i] = el!;
+              }}
+              className="absolute left-0 rounded-full border-r-3 border-[#172654] hidden dark:block -z-10"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                top: `${400 - size / 2}px`,
+              }}
+            />
+          ))}
+          <HowItWorks />
+        </div>
+        <Tokenomics />
       </div>
-
-      <Tokenomics />
       <WhySafu />
       <Roadmap />
       <Footer />
