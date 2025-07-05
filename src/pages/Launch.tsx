@@ -749,7 +749,9 @@ export default function Launch(): JSX.Element {
 
         // const API = `https://safulauncher-production.up.railway.app`;
         // const API = import.meta.env.VITE_API_BASE_URL;
+        console.log("posting...")
         await base.post("token", formData);
+        console.log("posting completed...")
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {

@@ -37,7 +37,7 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     (async () => {
       try {
-        const res = await base.get("/tokens?includes=image");
+        const res = await base.get("/token?includes=image");
         const data = res.data as { data: TokenMetadata[] };
         setTokens(data.data);
       } catch (error) {

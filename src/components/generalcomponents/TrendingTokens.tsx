@@ -53,7 +53,7 @@ const TrendingTokens = () => {
 
   // Fetch tokens list
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
+    fetch(`${API}/api/token`)
       .then((res) => res.json())
       .then((data: TokenMetadata[]) => setTokens(data))
       .catch(console.error);

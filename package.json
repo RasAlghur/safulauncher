@@ -27,6 +27,7 @@
     "recharts": "^3.0.0",
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.10",
+    "valtio": "^2.1.5",
     "viem": "^2.30.5",
     "wagmi": "^2.15.4"
   },

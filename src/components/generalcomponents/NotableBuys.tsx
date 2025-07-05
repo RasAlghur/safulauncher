@@ -43,7 +43,7 @@ const NotableBuys = () => {
 
   // 2) load token list
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
+    fetch(`${API}/api/token`)
       .then(r => r.json())
       .then((data: TokenMetadata[]) => setTokens(data))
       .catch(console.error);
