@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 import { pureGetLatestETHPrice } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
-
-const API = import.meta.env.VITE_API_BASE_URL;
+import { base } from "../../lib/api";
 
 export interface TokenMetadata {
   name: string;
@@ -36,17 +35,22 @@ const NotableBuys = () => {
   // 1) load ETH price
   useEffect(() => {
     pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
-      .then(raw => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
+      .then((raw) => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
       .then(setEthPriceUSD)
       .catch(() => console.error("Failed to fetch ETH price"));
   }, []);
 
   // 2) load token list
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
-      .then(r => r.json())
-      .then((data: TokenMetadata[]) => setTokens(data))
-      .catch(console.error);
+    (async () => {
+      const response = await base.get("token", {
+        params: { includes: "image" },
+      });
+      const data = response.data.data.data;
+      // setTotalTokenCount(data.length);
+      setTokens(data);
+      console.log(data);
+    })();
   }, []);
 
   // 3) once we have tokens + ETH price, pull all buys
@@ -58,20 +62,20 @@ const NotableBuys = () => {
       const buys: BuyTx[] = [];
 
       await Promise.all(
-        tokens.map(async tk => {
+        tokens.map(async (tk) => {
           try {
-            const res = await fetch(`${API}/api/transactions/${tk.tokenAddress}`);
+            const res = await base.get(`/transactions/${tk.tokenAddress}`);
             const logs: {
               type: string;
               wallet: string;
               timestamp: string;
               tokenAmount: string;
               ethAmount: string;
-            }[] = await res.json();
+            }[] = res.data.data.data;
 
             logs
-              .filter(tx => tx.type === "buy")
-              .forEach(tx => {
+              .filter((tx) => tx.type === "buy")
+              .forEach((tx) => {
                 const ethAmt = parseFloat(tx.ethAmount);
                 buys.push({
                   wallet: tx.wallet,
@@ -84,6 +88,8 @@ const NotableBuys = () => {
               });
           } catch (e) {
             console.error(`Failed to load txs for ${tk.symbol}`, e);
+          } finally {
+            setLoading(false);
           }
         })
       );
@@ -97,23 +103,25 @@ const NotableBuys = () => {
   // - recent: top 4 by timestamp
   // - wins:   top 4 by usdValue
   const recent = [...allBuys]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
     .slice(0, 4);
 
   const wins = [...allBuys]
-    .filter(tx => tx.usdValue >= 1000)                                  // only buys ≥ $1k
-    .sort((a, b) => new Date(b.timestamp).getTime()                      // most recent first
-      - new Date(a.timestamp).getTime())
+    .filter((tx) => tx.usdValue >= 1000) // only buys ≥ $1k
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - // most recent first
+        new Date(a.timestamp).getTime()
+    )
     .slice(0, 4);
 
   const activeData = activeTab === "buys" ? recent : wins;
 
   if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-400">
-        Loading trades…
-      </div>
-    );
+    return <div className="p-6 text-center text-gray-400">Loading trades…</div>;
   }
 
   return (
@@ -123,19 +131,21 @@ const NotableBuys = () => {
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${activeTab === "buys"
+            className={`transition ${
+              activeTab === "buys"
                 ? "text-white border-b-2 border-[#1D223E]"
                 : "text-white/30"
-              }`}
+            }`}
           >
             Notable Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${activeTab === "wins"
+            className={`transition ${
+              activeTab === "wins"
                 ? "text-white border-b-2 border-[#1D223E]"
                 : "text-white/30"
-              }`}
+            }`}
           >
             Big Wins
           </button>
@@ -169,7 +179,9 @@ const NotableBuys = () => {
                 <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
                   {tx.tokenSymbol}
                 </span>
-                <span className="dark:text-white text-[#141313]/50"> with{" "}
+                <span className="dark:text-white text-[#141313]/50">
+                  {" "}
+                  with{" "}
                   <span className="dark:text-white text-[#141313] font-medium">
                     ${tx.usdValue.toFixed(0)}
                   </span>

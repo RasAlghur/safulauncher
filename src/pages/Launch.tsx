@@ -747,9 +747,8 @@ export default function Launch(): JSX.Element {
         formData.append("tokenAddress", tokenAddress);
         if (logo) formData.append("logo", logo);
 
-        // const API = `https://safulauncher-production.up.railway.app`;
-        // const API = import.meta.env.VITE_API_BASE_URL;
-        await base.post("token", formData);
+        const response = await base.post("token", formData);
+        console.log(response.data);
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {

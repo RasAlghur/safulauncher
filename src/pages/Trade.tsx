@@ -396,7 +396,8 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
-  console.log("infoData", infoData);
+  // console.log("infoData", infoData);
+
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[7]) : 0;
   const tokenSold = Array.isArray(infoData) ? Number(infoData[10]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
@@ -498,6 +499,9 @@ export default function Trade() {
             t: timestamp,
           },
         });
+
+        console.log(ohlcResponse.data);
+
         const ohlcData = await ohlcResponse.data.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
@@ -661,6 +665,8 @@ export default function Trade() {
       } catch (error) {
         console.error("Error loading token metadata:", error);
         setToken(null);
+      } finally {
+        setIsLoadingToken(false);
       }
     })();
   }, [tokenAddress]);
@@ -734,73 +740,73 @@ export default function Trade() {
   ]);
 
   // Log transactions
-  useEffect(() => {
-    if (
-      isConfirmed &&
-      result &&
-      tokenAddress &&
-      (lastTxnType === "buy" || lastTxnType === "sell")
-    ) {
-      (async () => {
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const block = await provider.getBlock(result.blockNumber);
+  // useEffect(() => {
+  //   if (
+  //     isConfirmed &&
+  //     result &&
+  //     tokenAddress &&
+  //     (lastTxnType === "buy" || lastTxnType === "sell")
+  //   ) {
+  //     (async () => {
+  //       try {
+  //         const provider = new ethers.BrowserProvider(window.ethereum);
+  //         const block = await provider.getBlock(result.blockNumber);
 
-          let timestamp = "";
-          if (block?.timestamp) {
-            timestamp = new Date(block.timestamp * 1000).toISOString();
-          }
+  //         let timestamp = "";
+  //         if (block?.timestamp) {
+  //           timestamp = new Date(block.timestamp * 1000).toISOString();
+  //         }
 
-          const type = lastTxnType;
-          const inputAmountStr =
-            type === "buy"
-              ? ethers.formatEther(ethValue)
-              : ethers.formatEther(tokenValue);
+  //         const type = lastTxnType;
+  //         const inputAmountStr =
+  //           type === "buy"
+  //             ? ethers.formatEther(ethValue)
+  //             : ethers.formatEther(tokenValue);
 
-          const outputAmountStr = amountOut
-            ? (Number(amountOut.toString()) / 1e18).toString()
-            : "0";
+  //         const outputAmountStr = amountOut
+  //           ? (Number(amountOut.toString()) / 1e18).toString()
+  //           : "0";
 
-          const body = {
-            tokenAddress,
-            type,
-            ethAmount: type === "buy" ? inputAmountStr : outputAmountStr,
-            tokenAmount: type === "buy" ? outputAmountStr : inputAmountStr,
-            timestamp,
-            txnHash: txHash,
-            wallet: result.from,
-            oldMarketCap: marketCapUSD,
-          };
+  //         const body = {
+  //           tokenAddress,
+  //           type,
+  //           ethAmount: type === "buy" ? inputAmountStr : outputAmountStr,
+  //           tokenAmount: type === "buy" ? outputAmountStr : inputAmountStr,
+  //           timestamp,
+  //           txnHash: txHash,
+  //           wallet: result.from,
+  //           oldMarketCap: marketCapUSD,
+  //         };
 
-          const response = await base.post(`transactions`, body, {
-            headers: { "Content-Type": "application/json" },
-          });
+  //         const response = await base.post(`transaction`, body, {
+  //           headers: { "Content-Type": "application/json" },
+  //         });
 
-          if (response.status === 409) {
-            console.warn("Transaction already logged; skipping duplicate.");
-          } else {
-            console.error(
-              "Error logging transaction:",
-              response.status,
-              await response.data
-            );
-          }
-        } catch (error) {
-          console.error("Error logging transaction:", error);
-        }
-      })();
-    }
-  }, [
-    isConfirmed,
-    lastTxnType,
-    tokenAddress,
-    txHash,
-    ethValue,
-    tokenValue,
-    amountOut,
-    result,
-    marketCapUSD,
-  ]);
+  //         if (response.status === 409) {
+  //           console.warn("Transaction already logged; skipping duplicate.");
+  //         } else {
+  //           console.error(
+  //             "Error logging transaction:",
+  //             response.status,
+  //             await response.data
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error("Error logging transaction:", error);
+  //       }
+  //     })();
+  //   }
+  // }, [
+  //   isConfirmed,
+  //   lastTxnType,
+  //   tokenAddress,
+  //   txHash,
+  //   ethValue,
+  //   tokenValue,
+  //   amountOut,
+  //   result,
+  //   marketCapUSD,
+  // ]);
 
   // Enhanced fetchLogs with callback for chart update
   const fetchLogsWithCallback = useCallback(async () => {
@@ -830,14 +836,14 @@ export default function Trade() {
   }, [tokenAddress, txLogs.length, isAutoUpdateEnabled, loadChartData]);
 
   // Replace the existing fetchLogs effect
-  useEffect(() => {
-    fetchLogsWithCallback();
+  // useEffect(() => {
+  //   fetchLogsWithCallback();
 
-    // Set up periodic log fetching to catch external transactions
-    const logInterval = setInterval(fetchLogsWithCallback, 15000); // Check every 15 seconds
+  //   // Set up periodic log fetching to catch external transactions
+  //   const logInterval = setInterval(fetchLogsWithCallback, 15000); // Check every 15 seconds
 
-    return () => clearInterval(logInterval);
-  }, [fetchLogsWithCallback]);
+  //   return () => clearInterval(logInterval);
+  // }, [fetchLogsWithCallback]);
 
   // Cleanup on unmount
   useEffect(() => {
