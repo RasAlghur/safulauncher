@@ -61,7 +61,7 @@ const NotableBuys = () => {
         tokens.map(async (tk) => {
           try {
             const res = await fetch(
-              `${API}/api/transactions/${tk.tokenAddress}`
+              `${API}/transactions/${tk.tokenAddress}`
             );
             const logs: {
               type: string;

@@ -58,7 +58,7 @@ const TrendingTokens = () => {
 
   // Fetch tokens list
   useEffect(() => {
-    fetch(`${API}/api/tokens`)
+    fetch(`${API}/tokens`)
       .then((res) => res.json())
       .then((data: TokenMetadata[]) => setTokens(data))
       .catch(console.error);
@@ -105,7 +105,7 @@ const TrendingTokens = () => {
 
             // Get volume and price change data
             const res = await fetch(
-              `${API}/api/transactions/${token.tokenAddress}`
+              `${API}/transactions/${token.tokenAddress}`
             );
             const logs: {
               ethAmount: string;

@@ -55,7 +55,7 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
 
   // Fetch list of tokens
   useEffect(() => {
-    fetch(`${API}/api/token`)
+    fetch(`${API}/token`)
       .then((res) => res.json())
       .then((data: TokenMetadata[]) => {
         setTokens(data);
