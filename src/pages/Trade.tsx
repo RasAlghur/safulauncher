@@ -740,73 +740,73 @@ export default function Trade() {
   ]);
 
   // Log transactions
-  // useEffect(() => {
-  //   if (
-  //     isConfirmed &&
-  //     result &&
-  //     tokenAddress &&
-  //     (lastTxnType === "buy" || lastTxnType === "sell")
-  //   ) {
-  //     (async () => {
-  //       try {
-  //         const provider = new ethers.BrowserProvider(window.ethereum);
-  //         const block = await provider.getBlock(result.blockNumber);
+  useEffect(() => {
+    if (
+      isConfirmed &&
+      result &&
+      tokenAddress &&
+      (lastTxnType === "buy" || lastTxnType === "sell")
+    ) {
+      (async () => {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const block = await provider.getBlock(result.blockNumber);
 
-  //         let timestamp = "";
-  //         if (block?.timestamp) {
-  //           timestamp = new Date(block.timestamp * 1000).toISOString();
-  //         }
+          let timestamp = "";
+          if (block?.timestamp) {
+            timestamp = new Date(block.timestamp * 1000).toISOString();
+          }
 
-  //         const type = lastTxnType;
-  //         const inputAmountStr =
-  //           type === "buy"
-  //             ? ethers.formatEther(ethValue)
-  //             : ethers.formatEther(tokenValue);
+          const type = lastTxnType;
+          const inputAmountStr =
+            type === "buy"
+              ? ethers.formatEther(ethValue)
+              : ethers.formatEther(tokenValue);
 
-  //         const outputAmountStr = amountOut
-  //           ? (Number(amountOut.toString()) / 1e18).toString()
-  //           : "0";
+          const outputAmountStr = amountOut
+            ? (Number(amountOut.toString()) / 1e18).toString()
+            : "0";
 
-  //         const body = {
-  //           tokenAddress,
-  //           type,
-  //           ethAmount: type === "buy" ? inputAmountStr : outputAmountStr,
-  //           tokenAmount: type === "buy" ? outputAmountStr : inputAmountStr,
-  //           timestamp,
-  //           txnHash: txHash,
-  //           wallet: result.from,
-  //           oldMarketCap: marketCapUSD,
-  //         };
+          const body = {
+            tokenAddress,
+            type,
+            ethAmount: type === "buy" ? inputAmountStr : outputAmountStr,
+            tokenAmount: type === "buy" ? outputAmountStr : inputAmountStr,
+            timestamp,
+            txnHash: txHash,
+            wallet: result.from,
+            oldMarketCap: marketCapUSD,
+          };
 
-  //         const response = await base.post(`transaction`, body, {
-  //           headers: { "Content-Type": "application/json" },
-  //         });
+          const response = await base.post(`transaction`, body, {
+            headers: { "Content-Type": "application/json" },
+          });
 
-  //         if (response.status === 409) {
-  //           console.warn("Transaction already logged; skipping duplicate.");
-  //         } else {
-  //           console.error(
-  //             "Error logging transaction:",
-  //             response.status,
-  //             await response.data
-  //           );
-  //         }
-  //       } catch (error) {
-  //         console.error("Error logging transaction:", error);
-  //       }
-  //     })();
-  //   }
-  // }, [
-  //   isConfirmed,
-  //   lastTxnType,
-  //   tokenAddress,
-  //   txHash,
-  //   ethValue,
-  //   tokenValue,
-  //   amountOut,
-  //   result,
-  //   marketCapUSD,
-  // ]);
+          if (response.status === 409) {
+            console.warn("Transaction already logged; skipping duplicate.");
+          } else {
+            console.error(
+              "Error logging transaction:",
+              response.status,
+              await response.data
+            );
+          }
+        } catch (error) {
+          console.error("Error logging transaction:", error);
+        }
+      })();
+    }
+  }, [
+    isConfirmed,
+    lastTxnType,
+    tokenAddress,
+    txHash,
+    ethValue,
+    tokenValue,
+    amountOut,
+    result,
+    marketCapUSD,
+  ]);
 
   // Enhanced fetchLogs with callback for chart update
   const fetchLogsWithCallback = useCallback(async () => {
