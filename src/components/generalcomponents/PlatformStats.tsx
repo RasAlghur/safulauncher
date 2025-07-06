@@ -18,7 +18,7 @@ import {
   pureMetrics,
   pureInfoDataRaw,
 } from "../../web3/readContracts";
-import cloudRight from "../../assets/cloud-right.png";
+import { base } from "../../lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,18 +45,19 @@ const PlatformStats = () => {
   const [totalCurveProgress, setTotalCurveProgress] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
+  //import.meta.env.VITE_API_BASE_URL;
 
   // Fetch list of tokens
   useEffect(() => {
-    fetch(`${API}/tokens`)
-      .then((res) => res.json())
-      .then((data: TokenMetadata[]) => {
-        setTokens(data);
-        setTotalTokenCount(data.length); // Set total token count
-      })
-      .catch(console.error);
-  }, [API]);
+    (async () => {
+      const response = await base.get("token", {
+        params: { includes: "image" },
+      });
+      const data = response.data.data.data;
+      // setTotalTokenCount(data.length);
+      console.log(data);
+    })();
+  }, []);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -269,13 +270,6 @@ const PlatformStats = () => {
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />
         ))}
-      </div>
-      <div className="dark:hidden block">
-        <img
-          src={cloudRight}
-          alt="This is the cloud on the right"
-          className="absolute -top-[15rem] -right-[1rem] "
-        />
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>
       <h1

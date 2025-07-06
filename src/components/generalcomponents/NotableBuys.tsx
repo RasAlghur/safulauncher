@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 import { pureGetLatestETHPrice } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
-
-const API = import.meta.env.VITE_API_BASE_URL;
+import { base } from "../../lib/api";
 
 export interface TokenMetadata {
   name: string;
@@ -43,16 +42,32 @@ const NotableBuys = () => {
 
   // 2) load token list
   useEffect(() => {
-    fetch(`${API}/tokens`)
-      .then((r) => r.json())
-      .then((data: TokenMetadata[]) => setTokens(data))
-      .catch(console.error);
+    (async () => {
+      try {
+        const response = await base.get("token", {
+          params: { includes: "image" },
+        });
+        const data = response.data.data.data;
+        setTokens(Array.isArray(data) ? data : []);
+        console.log(data);
+      } catch (error) {
+        console.error("Failed to fetch tokens:", error);
+        setTokens([]);
+      }
+    })();
   }, []);
 
   // 3) once we have tokens + ETH price, pull all buys
   useEffect(() => {
-    if (!ethPriceUSD || tokens.length === 0) return;
-    setLoading(true);
+    if (!ethPriceUSD) {
+      setLoading(true);
+      return;
+    }
+
+    if (tokens.length === 0) {
+      setLoading(false);
+      return;
+    }
 
     (async () => {
       const buys: BuyTx[] = [];
@@ -60,16 +75,14 @@ const NotableBuys = () => {
       await Promise.all(
         tokens.map(async (tk) => {
           try {
-            const res = await fetch(
-              `${API}/transactions/${tk.tokenAddress}`
-            );
+            const res = await base.get(`/transactions/${tk.tokenAddress}`);
             const logs: {
               type: string;
               wallet: string;
               timestamp: string;
               tokenAmount: string;
               ethAmount: string;
-            }[] = await res.json();
+            }[] = res.data.data.data;
 
             logs
               .filter((tx) => tx.type === "buy")
@@ -127,21 +140,19 @@ const NotableBuys = () => {
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${
-              activeTab === "buys"
+            className={`transition ${activeTab === "buys"
                 ? "text-white border-b-2 border-[#1D223E]"
                 : "text-white/30"
-            }`}
+              }`}
           >
             Notable Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${
-              activeTab === "wins"
+            className={`transition ${activeTab === "wins"
                 ? "text-white border-b-2 border-[#1D223E]"
                 : "text-white/30"
-            }`}
+              }`}
           >
             Big Wins
           </button>

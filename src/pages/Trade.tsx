@@ -39,6 +39,7 @@ import { GrSubtractCircle } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
+import { socket } from "../lib/socket";
 
 /**
  * Description placeholder
@@ -396,7 +397,8 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
-  console.log("infoData", infoData);
+  // console.log("infoData", infoData);
+
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[7]) : 0;
   const tokenSold = Array.isArray(infoData) ? Number(infoData[10]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
@@ -498,7 +500,10 @@ export default function Trade() {
             t: timestamp,
           },
         });
-        const ohlcData = await ohlcResponse.data.data.data;
+
+        console.log("OHLC", ohlcResponse.data);
+
+        const ohlcData = ohlcResponse.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
           const formattedData = ohlcData
@@ -661,6 +666,8 @@ export default function Trade() {
       } catch (error) {
         console.error("Error loading token metadata:", error);
         setToken(null);
+      } finally {
+        setIsLoadingToken(false);
       }
     })();
   }, [tokenAddress]);
@@ -733,14 +740,19 @@ export default function Trade() {
     refetchLatestETHPrice,
   ]);
 
+  const loggedTxns = useRef<Set<string>>(new Set());
   // Log transactions
   useEffect(() => {
     if (
       isConfirmed &&
       result &&
       tokenAddress &&
-      (lastTxnType === "buy" || lastTxnType === "sell")
+      (lastTxnType === "buy" || lastTxnType === "sell") &&
+      txHash &&
+      !loggedTxns.current.has(txHash)
     ) {
+      loggedTxns.current.add(txHash);
+
       (async () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
@@ -772,14 +784,16 @@ export default function Trade() {
             oldMarketCap: marketCapUSD,
           };
 
-          const response = await base.post(`transactions`, body, {
+          const response = await base.post(`transaction`, body, {
             headers: { "Content-Type": "application/json" },
           });
+
+          socket.emit("newTransaction", body);
 
           if (response.status === 409) {
             console.warn("Transaction already logged; skipping duplicate.");
           } else {
-            console.error(
+            console.log(
               "Error logging transaction:",
               response.status,
               await response.data
@@ -814,39 +828,39 @@ export default function Trade() {
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
-
-      // Check if we have new transactions
-      const hasNewTransactions = filtered.length > txLogs.length;
       setTxLogs(filtered);
-
-      // If we have new transactions and auto-update is enabled, refresh chart
-      if (hasNewTransactions && isAutoUpdateEnabled && filtered.length > 0) {
-        console.log("New transactions detected, updating chart");
-        setTimeout(() => loadChartData(true), 1000);
-      }
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
-  }, [tokenAddress, txLogs.length, isAutoUpdateEnabled, loadChartData]);
+  }, [tokenAddress]);
 
   // Replace the existing fetchLogs effect
   useEffect(() => {
     fetchLogsWithCallback();
 
-    // Set up periodic log fetching to catch external transactions
-    const logInterval = setInterval(fetchLogsWithCallback, 15000); // Check every 15 seconds
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    return () => clearInterval(logInterval);
-  }, [fetchLogsWithCallback]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+    const handleReceiveTransaction = (tx: TxLog) => {
+      console.log("called");
+      if (tx.type === "buy" || tx.type === "sell") {
+        setTxLogs((prevLogs) => {
+          const updated = [...prevLogs, tx];
+          if (isAutoUpdateEnabled) {
+            setTimeout(() => loadChartData(true), 100);
+          }
+          return updated.reverse();
+        });
       }
     };
-  }, []);
+    socket.on("recTransaction", handleReceiveTransaction);
+
+    return () => {
+      socket.off("recTransaction", handleReceiveTransaction);
+      socket.disconnect();
+    };
+  }, [fetchLogsWithCallback, isAutoUpdateEnabled, loadChartData]);
 
   // Volume calculations
   const now = Date.now();
