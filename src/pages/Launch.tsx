@@ -82,6 +82,9 @@ export default function Launch(): JSX.Element {
 
   const openFilePicker = () => inputRef.current?.click();
 
+  const increase = () => setSupply((prev) => prev + 1);
+  const decrease = () => setSupply((prev) => Math.max(1, prev - 1)); // Minimum 1
+
   const [statusMessage, setStatusMessage] = useState("");
   const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
@@ -781,9 +784,9 @@ export default function Launch(): JSX.Element {
 
         // const API = `https://safulauncher-production.up.railway.app`;
         // const API = import.meta.env.VITE_API_BASE_URL;
-        console.log("posting...")
+        console.log("posting...");
         await base.post("token", formData);
-        console.log("posting completed...")
+        console.log("posting completed...");
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {
@@ -1026,21 +1029,43 @@ export default function Launch(): JSX.Element {
 
           {/* <div className="help">Ticker symbol (e.g. "MCAT")</div> */}
           {/* Supply */}
-          <div className="flex flex-col gap-[10px] mt-[34px]">
+          {/* Supply */}
+          <div className="flex flex-col gap-[10px] mt-[34px] w-full ">
             <label>
               <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
                 Supply
               </span>
             </label>
-            <input
-              type="number"
-              placeholder="100"
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
-              value={supply}
-              onChange={(e) => setSupply(parseInt(e.target.value) || 0)}
-              required
-              min="1"
-            />
+
+            <div className="relative flex w-full">
+              <input
+                type="number"
+                value={supply}
+                onChange={(e) => setSupply(parseInt(e.target.value) || 0)}
+                min="1"
+                required
+                className="w-full py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none"
+              />
+
+              {/* Buttons container */}
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-[30px] bg-[#0C8CE0] rounded-full overflow-hidden">
+                <button
+                  type="button"
+                  onClick={decrease}
+                  className="text-white px-4 text-lg cursor-pointer transition"
+                >
+                  –
+                </button>
+                <div className="w-[1px] h-[60%] bg-white/50"></div>
+                <button
+                  type="button"
+                  onClick={increase}
+                  className="text-white px-4 text-lg cursor-pointer transition"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* <div className="help">Total supply (e.g. 1,000,000,000)</div> */}
@@ -1083,24 +1108,48 @@ export default function Launch(): JSX.Element {
                 dragActive ? "border-[#3BC3DB]" : "border-Primary"
               } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
-        transition duration-200 hover:opacity-80 w-[95%] lg:w-full`}
+        transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
               onClick={openFilePicker}
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
               onDragLeave={() => setDragActive(false)}
               onDrop={handleDrop}
             >
-              <div className="bg-gray-600 p-4 rounded-lg mb-4">
-                <UploadCloud className="w-8 h-8 text-white" />
-              </div>
-              <p className="text-white font-medium">
-                <span className="">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-sm text-white/60 mt-1">SVG, PNG, JPG or GIF</p>
+              {!logo && (
+                <>
+                  <div className="bg-gray-600 p-4 rounded-lg mb-4">
+                    <UploadCloud className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="dark:text-white text-black font-medium">
+                    <span className="">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-sm dark:text-white/60 text-black mt-1">
+                    SVG, PNG, JPG or GIF
+                  </p>
+                </>
+              )}
+
               {logo && (
-                <p className="text-sm mt-2 text-[#3BC3DB] font-semibold">
-                  Selected: {logo.name}
-                </p>
+                <div className="flex flex-col items-center gap-2">
+                  <img
+                    src={URL.createObjectURL(logo)}
+                    alt="Selected Logo"
+                    className="max-h-32 object-contain rounded-lg"
+                  />
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-[#3BC3DB] font-semibold truncate max-w-[180px]">
+                      {logo.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setLogo(null)}
+                      className="text-red-400 hover:text-red-500 "
+                      aria-label="Remove selected logo"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1167,14 +1216,13 @@ export default function Launch(): JSX.Element {
                 </div>
               </div>
 
-              {/* Tax Section */}
               {enableTax && (
                 <div
                   id="tax-section"
                   className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
                 >
                   <div className="dark:text-white text-black font-medium mb-2">
-                    Current total:{" "}
+                    Current Tax total:{" "}
                     <span className="text-green-400">
                       {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS (
                       {(
@@ -1183,43 +1231,84 @@ export default function Launch(): JSX.Element {
                       %)
                     </span>
                   </div>
+
+                  {/* Add Tax Recipient Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)
+                    }
+                    className="w-full bg-Primary hover:bg-Primary/80 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={taxList.length >= 5}
+                  >
+                    Add Tax Recipient ({taxList.length}/5)
+                  </button>
+
+                  {/* Tax Recipients List */}
                   {taxList.map((t, i) => (
                     <div
                       key={i}
-                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg border border-gray-700"
+                      className="group-item flex flex-col gap-4 bg-[#d5f2f80a] dark:bg-[#0a0f20] p-6 rounded-xl border border-gray-700 shadow-md transition-all duration-300"
                     >
-                      <input
-                        placeholder="0x..."
-                        value={t.addr}
-                        onChange={(e) => {
-                          const list = [...taxList];
-                          list[i].addr = e.target.value;
-                          setTaxList(list);
-                        }}
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                      />
-                      <input
-                        placeholder="BPS (e.g. 200 = 2%)"
-                        type="number"
-                        value={t.bps}
-                        onChange={(e) => {
-                          const list = [...taxList];
-                          list[i].bps = parseInt(e.target.value) || 0;
-                          setTaxList(list);
-                        }}
-                        min="0"
-                        max="1000"
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeItem(taxList, setTaxList, i)}
-                        className="text-red-400 hover:text-red-500 text-sm font-medium"
-                      >
-                        Remove
-                      </button>
+                      {/* Address Input */}
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-semibold text-black dark:text-white mb-2">
+                          Recipient Address
+                        </label>
+                        <input
+                          placeholder="0x..."
+                          value={t.addr}
+                          onChange={(e) => {
+                            const list = [...taxList];
+                            list[i].addr = e.target.value;
+                            setTaxList(list);
+                          }}
+                          className="w-full px-4 py-2 rounded-md border dark:border-gray-600 border-gray-300 bg-[#f9f9f9] dark:bg-[#ffffff0a] text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        />
+                      </div>
+
+                      {/* BPS Input */}
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-semibold text-black dark:text-white mb-2">
+                          Tax Amount (BPS)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={t.bps || ""}
+                          onChange={(e) => {
+                            const list = [...taxList];
+                            list[i].bps = parseInt(e.target.value) || 0;
+                            setTaxList(list);
+                          }}
+                          placeholder="BPS (e.g. 200 = 2%)"
+                          className="w-full px-4 py-2 rounded-md border dark:border-gray-600 border-gray-300 bg-[#f9f9f9] dark:bg-[#ffffff0a] text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {t.bps ? `${(t.bps / 100).toFixed(1)}%` : "0%"}
+                        </p>
+                      </div>
+
+                      {/* Remove Button */}
+                      <div className="flex items-end md:items-center">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(taxList, setTaxList, i)}
+                          className="text-white hover:text-red-600 text-sm font-semibold px-4 py-2 rounded-md bg-red-500 hover:bg-red-500/10 transition duration-200"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   ))}
+
+                  {/* Help Text */}
+                  <div className="text-xs dark:text-gray-400 text-black/80 mt-2">
+                    <p>• Maximum 5 tax recipients allowed</p>
+                    <p>• Total tax cannot exceed 10% (1000 BPS)</p>
+                    <p>• BPS = Basis Points (100 BPS = 1%)</p>
+                  </div>
                 </div>
               )}
               {/* Whitelist Toggle */}

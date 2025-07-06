@@ -8,6 +8,21 @@ html {
   scroll-behavior: smooth;
 }
 
+button {
+  cursor: pointer;
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
 .mountain {
   background-image: url("../src/assets/cloudy-mountain.png");
   background-repeat: no-repeat;
@@ -70,10 +85,11 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  width: 40%;
+  width: 80%;
   margin: 0 auto;
-  height: 80px;
+  height: 60px;
 }
+
 .dark .rounded-tab-inverted {
   --r: 25px; /* control the radius */
 
@@ -90,24 +106,139 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  width: 40%;
+  width: 80%;
   margin: 0 auto;
-  height: 80px;
+  height: 60px;
 }
 
-.rounded-tab-inverted-2 {
-  --r: 25px; /* Radius */
-  line-height: 1.8;
-  padding-inline: 0.5em;
-  border-inline: var(--r) solid #0000;
-  border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
-    var(--r);
-  mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
-      calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
-    conic-gradient(#000 0 0) padding-box;
-  background: transparent; /* Adjust to your light or dark mode background */
-  color: #000;
-  position: relative;
+@media (min-width: 500px) {
+  /* HTML: <div class="rounded-tab"></div> */
+  .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #edf8ff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 60%;
+    margin: 0 auto;
+    height: 80px;
+  }
+  .dark .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #040a1a;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 60%;
+    margin: 0 auto;
+    height: 80px;
+  }
+}
+@media (min-width: 768px) {
+  /* HTML: <div class="rounded-tab"></div> */
+  .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #edf8ff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 50%;
+    margin: 0 auto;
+    height: 80px;
+  }
+  .dark .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #040a1a;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 50%;
+    margin: 0 auto;
+    height: 80px;
+  }
+}
+@media (min-width: 1024px) {
+  /* HTML: <div class="rounded-tab"></div> */
+  .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #edf8ff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 40%;
+    margin: 0 auto;
+    height: 80px;
+  }
+  .dark .rounded-tab-inverted {
+    --r: 25px; /* control the radius */
+
+    line-height: 1.8;
+    padding-inline: 0.5em;
+    border-inline: var(--r) solid #0000;
+    border-radius: 0 0 calc(2 * var(--r)) calc(2 * var(--r)) / 0 0 var(--r)
+      var(--r);
+    mask: radial-gradient(var(--r) at var(--r) 100%, #0000 98%, #000 101%)
+        calc(-1 * var(--r)) 0/100% var(--r) repeat-x,
+      conic-gradient(#000 0 0) padding-box;
+    background: #040a1a;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 50%;
+    margin: 0 auto;
+    height: 80px;
+  }
 }
 
 @keyframes float {
