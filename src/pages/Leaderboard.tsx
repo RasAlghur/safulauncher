@@ -5,6 +5,9 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
+import { BsChevronDown } from "react-icons/bs";
+
+const options = ["Featured", "Trending", "New", "Top Rated"];
 
 /**
  * Description placeholder
@@ -72,6 +75,8 @@ export default function Leaderboard() {
   const [page, setPage] = useState(1);
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState(options[0]);
 
   useEffect(() => {
     async function loadData() {
@@ -204,11 +209,39 @@ export default function Leaderboard() {
           )}
         </div>
 
-        <div className="mb-[34px]">
-          <select className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] text-sm px-4 py-4 rounded-md border border-white/10">
-            <option>Featured</option>
-            {/* Add more options as needed */}
-          </select>
+        <div className="mb-[34px] relative w-full sm:w-[200px]">
+          <div
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+          >
+            <span className="text-sm capitalize">{selected}</span>
+            <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+              <BsChevronDown className="text-white text-xl" />
+            </div>
+          </div>
+
+          {isOpen && (
+            <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              {options.map((option, idx) => (
+                <div
+                  key={option}
+                  onClick={() => {
+                    setSelected(option);
+                    setIsOpen(false);
+                  }}
+                  className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                    idx === 0
+                      ? "rounded-t-xl"
+                      : idx === options.length - 1
+                      ? "rounded-b-xl"
+                      : ""
+                  }`}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
