@@ -61,10 +61,10 @@ export default function Tokens() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await await base.get("tokens", {
+        const res = await base.get("tokens", {
           params: { include: "image" },
         });
-        console.log(res.data.data.data);
+        console.log(res.data);
         setTokens(res.data.data.data);
       } catch (error) {
         console.log(error);
