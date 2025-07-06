@@ -281,7 +281,7 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
           <div className="rounded-tab-inverted">
             <h2
               ref={headlineRef}
-              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold dark:text-white text-black text-center mt-4"
+              className="text-2xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold dark:text-white text-black text-center mt-4"
             >
               Platform Stats
             </h2>
