@@ -168,7 +168,7 @@ function Home() {
       <div className="mountain dark:bg-none">
         <div className="relative z-10 overflow-x-hidden">
           <KeyBenefits />
-          {/* Animated rings (dark mode only) */}
+          {/* Animated orbital rings (dark mode only) */}
           {[500, 650, 800, 950].map((size, i) => (
             <div
               key={i}
