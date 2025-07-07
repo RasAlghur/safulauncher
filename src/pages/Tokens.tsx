@@ -15,6 +15,7 @@ import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
+import Advertisement from "../components/generalcomponents/Advertisement";
 
 export interface TokenMetadata {
   name: string;
@@ -231,18 +232,20 @@ export default function Tokens() {
   );
 
   return (
-    <div className=" text-white">
+    <div className=" ">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
           <DustParticles key={i} />
         ))}
       </div>
-      <div className="pt-40 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+
+      <div className="pt-24 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+        <Advertisement />
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center mb-10 z-10 relative">
+        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
           Launched Tokens
           {isLoadingMetrics && (
             <span className="ml-2 text-sm text-gray-500">

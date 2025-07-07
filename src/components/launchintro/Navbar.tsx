@@ -169,13 +169,13 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`py-3 lg:px-6 px-3 md:px-[79px] ${
+        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${
           navBg
             ? "bg-Dark-Purple"
             : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
         } fixed w-full top-0 left-0 z-50 transition-all duration-300 backdrop-blur-[20px]`}
       >
-        <nav className="flex items-center justify-between">
+        <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
             <img src={logo} alt="Safu Logo" width={40} height={40} />

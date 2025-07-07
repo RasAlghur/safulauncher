@@ -79,7 +79,7 @@ const HowItWorks = () => {
       id="howitworks"
     >
       {/* Dust */}
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />
         ))}
@@ -90,13 +90,13 @@ const HowItWorks = () => {
         id="chain-left"
         src={chain1}
         alt=""
-        className="absolute top-0 -left-[25rem] size-[658px] -z-40"
+        className="absolute top-0 -left-[23rem] size-[500px] lg:size-[658px] z-10"
       />
       <img
         id="chain-right"
         src={chain2}
         alt=""
-        className="absolute bottom-0 -right-[25rem] size-[658px] -z-40"
+        className="absolute bottom-0 -right-[23rem] size-[500px] lg:size-[658px] z-10"
       />
 
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 hidden dark:block blur-3xl"></div>
