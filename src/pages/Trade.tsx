@@ -39,6 +39,7 @@ import { GrSubtractCircle } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
+import { socket } from "../lib/socket";
 
 /**
  * Description placeholder
@@ -301,11 +302,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress as `0x${string}`,
-          functionName: "balanceOf",
-          args: [address as `0x${string}`],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      }
       : undefined
   );
 
@@ -316,11 +317,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress,
-          functionName: "allowance",
-          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress,
+        functionName: "allowance",
+        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+      }
       : undefined
   );
 
@@ -331,15 +332,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-          ...LAUNCHER_ABI,
-          address: SAFU_LAUNCHER_CA,
-          functionName: "getAmountOut",
-          args: [
-            tokenAddress,
-            mode === "buy" ? ethValue : tokenValue,
-            mode === "buy" ? true : false,
-          ],
-        }
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: "getAmountOut",
+        args: [
+          tokenAddress,
+          mode === "buy" ? ethValue : tokenValue,
+          mode === "buy" ? true : false,
+        ],
+      }
       : undefined
   );
 
@@ -480,10 +481,8 @@ export default function Trade() {
 
       try {
         console.log(
-          `${
-            isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
-            selectedTimeframe.value
+          `${isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
           }`
         );
 
@@ -661,6 +660,8 @@ export default function Trade() {
       } catch (error) {
         console.error("Error loading token metadata:", error);
         setToken(null);
+      } finally {
+        setIsLoadingToken(false);
       }
     })();
   }, [tokenAddress]);
@@ -733,14 +734,19 @@ export default function Trade() {
     refetchLatestETHPrice,
   ]);
 
+  const loggedTxns = useRef<Set<string>>(new Set());
   // Log transactions
   useEffect(() => {
     if (
       isConfirmed &&
       result &&
       tokenAddress &&
-      (lastTxnType === "buy" || lastTxnType === "sell")
+      (lastTxnType === "buy" || lastTxnType === "sell") &&
+      txHash &&
+      !loggedTxns.current.has(txHash)
     ) {
+      loggedTxns.current.add(txHash);
+
       (async () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
@@ -772,14 +778,16 @@ export default function Trade() {
             oldMarketCap: marketCapUSD,
           };
 
-          const response = await base.post(`transactions`, body, {
+          const response = await base.post(`transaction`, body, {
             headers: { "Content-Type": "application/json" },
           });
+
+          socket.emit("newTransaction", body);
 
           if (response.status === 409) {
             console.warn("Transaction already logged; skipping duplicate.");
           } else {
-            console.error(
+            console.log(
               "Error logging transaction:",
               response.status,
               await response.data
@@ -814,39 +822,39 @@ export default function Trade() {
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
-
-      // Check if we have new transactions
-      const hasNewTransactions = filtered.length > txLogs.length;
       setTxLogs(filtered);
-
-      // If we have new transactions and auto-update is enabled, refresh chart
-      if (hasNewTransactions && isAutoUpdateEnabled && filtered.length > 0) {
-        console.log("New transactions detected, updating chart");
-        setTimeout(() => loadChartData(true), 1000);
-      }
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
-  }, [tokenAddress, txLogs.length, isAutoUpdateEnabled, loadChartData]);
+  }, [tokenAddress]);
 
   // Replace the existing fetchLogs effect
   useEffect(() => {
     fetchLogsWithCallback();
 
-    // Set up periodic log fetching to catch external transactions
-    const logInterval = setInterval(fetchLogsWithCallback, 15000); // Check every 15 seconds
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    return () => clearInterval(logInterval);
-  }, [fetchLogsWithCallback]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+    const handleReceiveTransaction = (tx: TxLog) => {
+      console.log("called");
+      if (tx.type === "buy" || tx.type === "sell") {
+        setTxLogs((prevLogs) => {
+          const updated = [...prevLogs, tx];
+          if (isAutoUpdateEnabled) {
+            setTimeout(() => loadChartData(true), 100);
+          }
+          return updated.reverse();
+        });
       }
     };
-  }, []);
+    socket.on("recTransaction", handleReceiveTransaction);
+
+    return () => {
+      socket.off("recTransaction", handleReceiveTransaction);
+      socket.disconnect();
+    };
+  }, [fetchLogsWithCallback, isAutoUpdateEnabled, loadChartData]);
 
   // Volume calculations
   const now = Date.now();
@@ -1348,11 +1356,10 @@ export default function Trade() {
                 <div className="flex space-x-6 text-lg font-medium border-b border-white/10 pb-2">
                   <button
                     type="button"
-                    className={`${
-                      mode === "buy"
-                        ? "dark:text-white text-[#0C8CE0]"
-                        : "dark:text-white/50 text-[#141313]/75 font-normal"
-                    } transition cursor-pointer`}
+                    className={`${mode === "buy"
+                      ? "dark:text-white text-[#0C8CE0]"
+                      : "dark:text-white/50 text-[#141313]/75 font-normal"
+                      } transition cursor-pointer`}
                     onClick={() => handleMode("buy")}
                     disabled={isTransactionPending}
                   >
@@ -1360,11 +1367,10 @@ export default function Trade() {
                   </button>
                   <button
                     type="button"
-                    className={`${
-                      mode === "sell"
-                        ? "dark:text-white text-[#0C8CE0]"
-                        : "dark:text-white/50 text-[#141313]/75 font-normal"
-                    } transition cursor-pointer`}
+                    className={`${mode === "sell"
+                      ? "dark:text-white text-[#0C8CE0]"
+                      : "dark:text-white/50 text-[#141313]/75 font-normal"
+                      } transition cursor-pointer`}
                     onClick={() => handleMode("sell")}
                     disabled={isTransactionPending}
                   >
@@ -1379,8 +1385,7 @@ export default function Trade() {
                     {isLoadingBalance ? (
                       <span className="italic text-white/50">Loading...</span>
                     ) : (
-                      `${parseFloat(tokenBalance).toLocaleString()} ${
-                        token.symbol
+                      `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
                       }`
                     )}
                   </div>
@@ -1428,9 +1433,9 @@ export default function Trade() {
                         You will receive{" "}
                         {amountOutSelect
                           ? formatTokenAmount(
-                              Number(amountOutSelect.toString()) / 1e18,
-                              mode === "sell" ? 8 : 2
-                            )
+                            Number(amountOutSelect.toString()) / 1e18,
+                            mode === "sell" ? 8 : 2
+                          )
                           : "0"}{" "}
                         {mode === "buy" ? token.symbol : "ETH"}
                       </>
@@ -1447,11 +1452,10 @@ export default function Trade() {
                   <button
                     type="button"
                     onClick={handleButtonClick}
-                    className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-blue-500 hover:bg-blue-600 transition ${
-                      isTransactionPending
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
-                    }`}
+                    className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-blue-500 hover:bg-blue-600 transition ${isTransactionPending
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
+                      }`}
                     disabled={
                       isTransactionPending || !amount || parseFloat(amount) <= 0
                     }
@@ -1480,16 +1484,16 @@ export default function Trade() {
                       {lastTxnType === "approval"
                         ? "Approval confirmed! You can now sell tokens."
                         : lastTxnType === "sell"
-                        ? "Sell transaction confirmed successfully!"
-                        : lastTxnType === "buy"
-                        ? "Buy transaction confirmed successfully!"
-                        : [
-                            "startTrading",
-                            "addToWhitelist",
-                            "disableWhitelist",
-                          ].includes(lastTxnType!)
-                        ? getAdminTxnMessage()
-                        : "Transaction confirmed successfully!"}
+                          ? "Sell transaction confirmed successfully!"
+                          : lastTxnType === "buy"
+                            ? "Buy transaction confirmed successfully!"
+                            : [
+                              "startTrading",
+                              "addToWhitelist",
+                              "disableWhitelist",
+                            ].includes(lastTxnType!)
+                              ? getAdminTxnMessage()
+                              : "Transaction confirmed successfully!"}
                     </p>
                     <p className="text-sm text-gray-300">
                       Transaction: {txHash}
@@ -1542,9 +1546,8 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${
-                        progress < 100 ? "rounded-l-full" : "rounded-full"
-                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1577,9 +1580,8 @@ export default function Trade() {
                 />
                 <button
                   type="button"
-                  className={`auto-update-toggle ml-2 ${
-                    isAutoUpdateEnabled ? "active" : ""
-                  }`}
+                  className={`auto-update-toggle ml-2 ${isAutoUpdateEnabled ? "active" : ""
+                    }`}
                   onClick={toggleAutoUpdate}
                   title={
                     isAutoUpdateEnabled
@@ -1627,22 +1629,20 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
-                    activeTab === "transactions"
-                      ? " dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
-                  } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
+                    ? " dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
-                    activeTab === "chat"
-                      ? "dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
-                  } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
+                    ? "dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
                 >
                   Community Chat
                 </button>
@@ -1667,11 +1667,10 @@ export default function Trade() {
                         {txLogs.map((tx, i) => (
                           <tr key={i} className="mb-4">
                             <td
-                              className={`font-medium py-3 flex items-center gap-2 ${
-                                tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
-                              }`}
+                              className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
+                                ? "text-green-500"
+                                : "text-red-500"
+                                }`}
                             >
                               {tx.type === "buy" ? (
                                 <MdAddCircleOutline className="text-[22px]" />

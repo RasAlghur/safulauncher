@@ -19,6 +19,7 @@ import {
   pureInfoDataRaw,
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
+import { base } from "../../lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,18 +46,18 @@ const PlatformStats = () => {
   const [totalCurveProgress, setTotalCurveProgress] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch list of tokens
   useEffect(() => {
-    fetch(`${API}/tokens`)
-      .then((res) => res.json())
-      .then((data: TokenMetadata[]) => {
-        setTokens(data);
-        setTotalTokenCount(data.length); // Set total token count
-      })
-      .catch(console.error);
-  }, [API]);
+    (async () => {
+      const response = await base.get("token", {
+        params: { includes: "image" },
+      });
+      const data = response.data.data.data;
+      setTotalTokenCount([data]?.length);
+      setTokens([data] as TokenMetadata[]);
+    })();
+  }, []);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -136,10 +137,9 @@ const PlatformStats = () => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${
-          pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[0] !== undefined
+          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -152,10 +152,9 @@ const PlatformStats = () => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${
-          pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[1] !== undefined
+          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -215,10 +214,9 @@ const PlatformStats = () => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${
-          pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-            : 0
+        `${pureMetrics[6] !== undefined
+          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(

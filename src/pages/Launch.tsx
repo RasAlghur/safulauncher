@@ -26,6 +26,7 @@ import { CircleCheckBig, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
 
+
 /**
  * Description placeholder
  *
@@ -1227,46 +1228,80 @@ export default function Launch(): JSX.Element {
                       %)
                     </span>
                   </div>
+
+                  {/* Add Tax Recipient Button */}
+                  <button
+                    type="button"
+                    onClick={() => addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)}
+                    className="w-full bg-Primary hover:bg-Primary/80 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={taxList.length >= 5}
+                  >
+                    Add Tax Recipient ({taxList.length}/5)
+                  </button>
+
+                  {/* Tax Recipients List */}
                   {taxList.map((t, i) => (
                     <div
                       key={i}
-                      className="group-item flex flex-col gap-4 bg-[#d5f2f80a] dark:bg-[#0a0f20] p-6 rounded-xl border border-gray-700 shadow-md transition-all duration-300"
+                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg border border-gray-700"
                     >
-                      <input
-                        placeholder="0x..."
-                        value={t.addr}
-                        onChange={(e) => {
-                          const list = [...taxList];
-                          list[i].addr = e.target.value;
-                          setTaxList(list);
-                        }}
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                      />
-                      <input
-                        placeholder="BPS (e.g. 200 = 2%)"
-                        type="number"
-                        value={t.bps}
-                        onChange={(e) => {
-                          const list = [...taxList];
-                          list[i].bps = parseInt(e.target.value) || 0;
-                          setTaxList(list);
-                        }}
-                        min="0"
-                        max="1000"
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                      />
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-medium dark:text-white text-black mb-1">
+                          Recipient Address
+                        </label>
+                        <input
+                          placeholder="0x..."
+                          value={t.addr}
+                          onChange={(e) => {
+                            const list = [...taxList];
+                            list[i].addr = e.target.value;
+                            setTaxList(list);
+                          }}
+                          className="w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        />
+                      </div>
+
+                      <div className="flex-1 w-full">
+                        <label className="block text-sm font-medium dark:text-white text-black mb-1">
+                          Tax Amount (BPS)
+                        </label>
+                        <input
+                          placeholder="BPS (e.g. 200 = 2%)"
+                          type="number"
+                          value={t.bps || ""}
+                          onChange={(e) => {
+                            const list = [...taxList];
+                            list[i].bps = parseInt(e.target.value) || 0;
+                            setTaxList(list);
+                          }}
+                          min="0"
+                          max="1000"
+                          className="w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          {t.bps ? `${(t.bps / 100).toFixed(1)}%` : "0%"}
+                        </p>
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => removeItem(taxList, setTaxList, i)}
-                        className="text-red-400 hover:text-red-500 text-sm font-medium"
+                        className="text-red-400 hover:text-red-500 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-500/10 transition-colors duration-200"
                       >
                         Remove
                       </button>
                     </div>
                   ))}
+
+                  {/* Help Text */}
+                  <div className="text-xs text-gray-400 mt-2">
+                    <p>• Maximum 5 tax recipients allowed</p>
+                    <p>• Total tax cannot exceed 10% (1000 BPS)</p>
+                    <p>• BPS = Basis Points (100 BPS = 1%)</p>
+                  </div>
                 </div>
               )}
-
+              
               {/* Whitelist Toggle */}
               <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
                 <div className="flex justify-between items-center">

@@ -47,6 +47,10 @@ export default function Tokens() {
   const [volume24hMap, setVolume24hMap] = useState<Record<string, number>>({});
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
 
+  // Loading states
+  const [isLoadingTokens, setIsLoadingTokens] = useState<boolean>(true);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState<boolean>(false);
+
   // Filter & sort state
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchField, setSearchField] = useState<
@@ -66,6 +70,7 @@ export default function Tokens() {
   useEffect(() => {
     (async () => {
       try {
+        setIsLoadingTokens(true);
         const res = await await base.get("tokens", {
           params: { include: "image" },
         });
@@ -73,6 +78,8 @@ export default function Tokens() {
         setTokens(res.data.data.data);
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoadingTokens(false);
       }
     })();
   }, []);
@@ -82,6 +89,8 @@ export default function Tokens() {
     if (tokens.length === 0) return;
 
     async function fetchTokenMetrics() {
+      setIsLoadingMetrics(true);
+      
       // Get ETH price
       try {
         const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
@@ -144,6 +153,7 @@ export default function Tokens() {
       setCurveProgressMap(newCurve);
       setMarketCapMap(newMarketCap);
       setVolume24hMap(newVolume);
+      setIsLoadingMetrics(false);
     }
 
     fetchTokenMetrics();
@@ -198,6 +208,28 @@ export default function Tokens() {
       : (bVal as number) - (aVal as number);
   });
 
+  // Loading skeleton component
+  const TokenSkeleton = () => (
+    <div className="rounded-xl lg:px-6 px-2 py-5 animate-pulse">
+      <div className="grid grid-cols-[.7fr_.3fr] justify-between">
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-lg bg-gray-300 dark:bg-gray-700"></div>
+          <div>
+            <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded mb-2.5 w-40"></div>
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-2.5 w-32"></div>
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-2.5 w-28"></div>
+            <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded w-64"></div>
+          </div>
+        </div>
+        <div className="flex flex-col space-y-1 items-end">
+          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-24"></div>
+          <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-20"></div>
+        </div>
+      </div>
+      <div className="w-full max-w-[40rem] bg-gray-300 dark:bg-gray-700 h-10 rounded-full mt-5"></div>
+    </div>
+  );
+
   return (
     <div className=" text-white">
       <Navbar />
@@ -212,6 +244,9 @@ export default function Tokens() {
 
         <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center mb-10 z-10 relative">
           Launched Tokens
+          {isLoadingMetrics && (
+            <span className="ml-2 text-sm text-gray-500">(Loading metrics...)</span>
+          )}
         </h2>
 
         <input
@@ -227,6 +262,7 @@ export default function Tokens() {
              w-full max-w-4xl mx-auto mb-[34px] 
              focus:outline-none focus:ring-2 focus:ring-[#0C8CE0] 
              transition-all duration-200"
+          disabled={isLoadingTokens}
         />
 
         {/* Controls */}
@@ -343,10 +379,60 @@ export default function Tokens() {
               </div>
             )}
           </div>
+          <select
+            value={searchField}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSearchField(
+                e.target.value as "name" | "address" | "creator" | "all"
+              )
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313]  px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+            disabled={isLoadingTokens}
+          >
+            <option value="all">All</option>
+            <option value="address">Address</option>
+            <option value="creator">Creator</option>
+            <option value="name">Name/Symbol</option>
+          </select>
+          <select
+            value={sortField}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSortField(
+                e.target.value as "volume" | "createdAt" | "progress"
+              )
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+            disabled={isLoadingTokens}
+          >
+            <option value="volume">24h Volume (USD)</option>
+            <option value="progress">Curve Progress</option>
+            <option value="createdAt">Date Created</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setSortOrder(e.target.value as "asc" | "desc")
+            }
+            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
+            disabled={isLoadingTokens}
+          >
+            <option value="desc">High → Low / New → Old</option>
+            <option value="asc">Low → High / Old → New</option>
+          </select>
         </div>
 
         {/* Token Grid */}
-        {sortedTokens.length === 0 ? (
+        {isLoadingTokens ? (
+          <div
+            className="dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl w-full px-2 py-5 border border-white/10"
+          >
+            <div className="grid gap-6 z-10 relative md:grid-cols-2">
+              {[...Array(4)].map((_, idx) => (
+                <TokenSkeleton key={idx} />
+              ))}
+            </div>
+          </div>
+        ) : sortedTokens.length === 0 ? (
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
@@ -418,14 +504,22 @@ export default function Tokens() {
                       {/* Stats */}
                       <div className="flex flex-col space-y-1 items-end">
                         <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
-                          <strong className="">24h Volume:</strong> $
-                          {volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
+                          <strong className="">24h Volume:</strong> 
+                          {isLoadingMetrics ? (
+                            <span className="ml-1 text-gray-500">Loading...</span>
+                          ) : (
+                            ` $${volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}`
+                          )}
                         </p>
                         <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
-                          <strong className="text-white">MC</strong> $
-                          <p className="">
-                            {marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
-                          </p>
+                          <strong className="text-white">MC</strong>
+                          {isLoadingMetrics ? (
+                            <span className="text-gray-300">Loading...</span>
+                          ) : (
+                            <p className="">
+                              ${marketCapMap[t.tokenAddress]?.toFixed(2) ?? "0.00"}
+                            </p>
+                          )}
                         </div>
                         {/* Progress Bar */}
                       </div>
@@ -433,7 +527,11 @@ export default function Tokens() {
 
                     <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-5 p-1.5">
                       <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
-                        {curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"}%
+                        {isLoadingMetrics ? (
+                          "Loading..."
+                        ) : (
+                          `${curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"}%`
+                        )}
                       </p>
 
                       {(() => {
@@ -453,10 +551,12 @@ export default function Tokens() {
                           <div
                             className={`h-full ${
                               progress < 100 ? "rounded-l-full" : "rounded-full"
-                            }  relative transition-all duration-500 ease-in-out ${gradientClass}`}
-                            style={{ width: `${progress}%` }}
+                            } relative transition-all duration-500 ease-in-out ${
+                              isLoadingMetrics ? "bg-gray-600" : gradientClass
+                            }`}
+                            style={{ width: `${isLoadingMetrics ? 0 : progress}%` }}
                           >
-                            {Array.from({ length: 20 }).map((_, i) => (
+                            {!isLoadingMetrics && Array.from({ length: 20 }).map((_, i) => (
                               <div
                                 key={i}
                                 className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
