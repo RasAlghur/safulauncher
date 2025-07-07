@@ -7,6 +7,7 @@ import {
   pureAmountOutMarketCap,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { base } from "../../lib/api";
 
 export interface TokenMetadata {
   name: string;
@@ -15,7 +16,11 @@ export interface TokenMetadata {
   description?: string;
   tokenAddress: string;
   tokenCreator: string;
-  logoFilename?: string;
+  tokenImageId?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
   createdAt?: string;
   expiresAt?: string;
 }
@@ -37,8 +42,6 @@ const TrendingTokens = () => {
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
   // Time range in milliseconds.
   const getTimeRangeMs = (range: TimeRange): number => {
     const now = Date.now();
@@ -58,11 +61,15 @@ const TrendingTokens = () => {
 
   // Fetch tokens list
   useEffect(() => {
-    fetch(`${API}/tokens`)
-      .then((res) => res.json())
-      .then((data: TokenMetadata[]) => setTokens(data))
-      .catch(console.error);
-  }, [API]);
+    (async () => {
+      const response = await base.get("/tokens", {
+        params: { includes: "image" },
+      });
+      const data = response.data.data.data;
+      console.log(data);
+      setTokens(data as TokenMetadata[]);
+    })();
+  }, []);
 
   // Fetch ETH price
   useEffect(() => {
@@ -81,10 +88,12 @@ const TrendingTokens = () => {
   // Fetch trending data based on selected time range
   // Fetch trending data based on selected time range
   useEffect(() => {
-    if (tokens.length === 0 || ethPriceUSD === 0) return;
+    if (tokens.length === 0 || ethPriceUSD === 0) {
+      setLoading(false);
+      return;
+    }
 
     async function fetchTrendingData() {
-      setLoading(true);
       const sinceTime = getTimeRangeMs(selectedRange);
       const trendingTokens: TrendingTokenData[] = [];
 
@@ -104,9 +113,9 @@ const TrendingTokens = () => {
             }
 
             // Get volume and price change data
-            const res = await fetch(
-              `${API}/transactions/${token.tokenAddress}`
-            );
+            const res = await base.get(`transaction/${token.tokenAddress}`);
+            console.log({ insideMap: res.data.data });
+
             const logs: {
               ethAmount: string;
               timestamp: string;
@@ -114,9 +123,23 @@ const TrendingTokens = () => {
               oldMarketCap: string;
               wallet: string;
               tokenAmount: string;
-            }[] = await res.json();
+            }[] = res.data?.data || [];
+
+            // Early return if no logs available
+            if (!Array.isArray(logs) || logs.length === 0) {
+              console.warn(`No transaction logs found for ${token.tokenAddress}`);
+              trendingTokens.push({
+                token,
+                marketCap,
+                volume: 0,
+                priceChange: 0,
+                holders: 0,
+              });
+              return;
+            }
 
             // Filter transactions in the window
+            console.log('logs', logs)
             const windowLogs = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= sinceTime)
               .sort(
@@ -124,6 +147,8 @@ const TrendingTokens = () => {
                   new Date(a.timestamp).getTime() -
                   new Date(b.timestamp).getTime()
               );
+
+            console.log('windowLogs', windowLogs)
 
             // Calculate volume
             const volumeEth = windowLogs.reduce(
@@ -165,6 +190,15 @@ const TrendingTokens = () => {
             });
           } catch (e) {
             console.error(`Error fetching data for ${token.tokenAddress}:`, e);
+
+            // Add token with zero values on error to avoid breaking the flow
+            trendingTokens.push({
+              token,
+              marketCap: 0,
+              volume: 0,
+              priceChange: 0,
+              holders: 0,
+            });
           }
         })
       );
@@ -179,7 +213,7 @@ const TrendingTokens = () => {
     }
 
     fetchTrendingData();
-  }, [tokens, selectedRange, ethPriceUSD, API]);
+  }, [tokens, selectedRange, ethPriceUSD]);
 
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
@@ -207,11 +241,10 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange
-                  ? "bg-[#1D223E] text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
+                ? "bg-[#1D223E] text-white"
+                : "text-gray-400 hover:text-white"
+                }`}
             >
               {range}
             </button>
@@ -256,9 +289,10 @@ const TrendingTokens = () => {
                           to={`/trade/${data.token.tokenAddress}`}
                           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                         >
-                          {data.token.logoFilename ? (
+                          {data.token.tokenImageId ? (
                             <img
-                              src={`${API}/uploads/${data.token.logoFilename}`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
+                                }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -280,11 +314,10 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0
-                            ? "text-red-500"
-                            : "text-green-400"
-                        }`}
+                        className={`p-3 font-semibold ${data.priceChange < 0
+                          ? "text-red-500"
+                          : "text-green-400"
+                          }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
