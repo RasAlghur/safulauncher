@@ -221,7 +221,7 @@ export default function Leaderboard() {
           </div>
 
           {isOpen && (
-            <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+            <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
               {options.map((option, idx) => (
                 <div
                   key={option}
@@ -229,7 +229,7 @@ export default function Leaderboard() {
                     setSelected(option);
                     setIsOpen(false);
                   }}
-                  className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                  className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
                     idx === 0
                       ? "rounded-t-xl"
                       : idx === options.length - 1

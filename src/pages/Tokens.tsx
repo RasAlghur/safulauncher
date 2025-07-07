@@ -268,7 +268,7 @@ export default function Tokens() {
         />
 
         {/* Controls */}
-        <div className="flex flex-wrap gap-4 justify-center mb-10 z-10 relative">
+        <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
           {/* Search Field Dropdown */}
           <div className="relative w-full sm:w-[250px]">
             <div
@@ -281,7 +281,7 @@ export default function Tokens() {
               </div>
             </div>
             {searchDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                 {["all", "address", "creator", "name"].map((field) => (
                   <div
                     key={field}
@@ -289,7 +289,7 @@ export default function Tokens() {
                       setSearchField(field as any);
                       setSearchDropdownOpen(false);
                     }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 capitalize ${
                       field === "all"
                         ? "rounded-t-xl"
                         : field === "name"
@@ -316,7 +316,7 @@ export default function Tokens() {
               </div>
             </div>
             {sortDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                 {[
                   { value: "volume", label: "24h Volume (USD)" },
                   { value: "progress", label: "Curve Progress" },
@@ -328,7 +328,7 @@ export default function Tokens() {
                       setSortField(value as any);
                       setSortDropdownOpen(false);
                     }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
                       value === "volume"
                         ? "rounded-t-xl"
                         : value === "createdAt"
@@ -359,13 +359,13 @@ export default function Tokens() {
               </div>
             </div>
             {orderDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                 <div
                   onClick={() => {
                     setSortOrder("desc");
                     setOrderDropdownOpen(false);
                   }}
-                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-t-xl"
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
                 >
                   High → Low / New → Old
                 </div>
@@ -374,7 +374,7 @@ export default function Tokens() {
                     setSortOrder("asc");
                     setOrderDropdownOpen(false);
                   }}
-                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-b-xl"
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
                 >
                   Low → High / Old → New
                 </div>
