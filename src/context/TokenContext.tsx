@@ -27,7 +27,12 @@ interface TokenContextType {
 const TokenContext = createContext<TokenContextType | null>(null);
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useTokenContext = () => useContext(TokenContext)!;
+export const useTokenContext = () => {
+  const ctx = useContext(TokenContext);
+  if (!ctx)
+    throw new Error("useTokenContext must be used within TokenProvider");
+  return ctx;
+};
 
 export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -38,8 +43,11 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     (async () => {
       try {
-        const res = await base.get("/token?includes=image");
+        const res = await base.get("/token", {
+          params: { include: "image" },
+        });
         const data = res.data as { data: TokenMetadata[] };
+        console.log("TOKEN RESPONSE:", data); // <-- log this
         setTokens(data.data);
       } catch (error) {
         console.log(error);

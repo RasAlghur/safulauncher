@@ -145,9 +145,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${pureMetrics[0] !== undefined
-          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -159,9 +160,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${pureMetrics[1] !== undefined
-          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -209,9 +211,10 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${pureMetrics[6] !== undefined
-          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-          : 0
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -282,7 +285,7 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
               Platform Stats
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-20 py-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pt-24 pb-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (

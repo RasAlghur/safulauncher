@@ -406,7 +406,7 @@ export default function Tokens() {
               }`}
             >
               {sortedTokens.map((t, idx) => (
-                <div key={idx}>
+                <div key={idx} className="flex flex-col">
                   <li className="rounded-xl lg:px-6 px-2 py-5 ">
                     <div className="grid grid-cols-[.7fr_.3fr] justify-between">
                       <Link
@@ -490,54 +490,53 @@ export default function Tokens() {
                         {/* Progress Bar */}
                       </div>
                     </div>
-
-                    <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-5 p-1.5">
-                      <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
-                        {isLoadingMetrics
-                          ? "Loading..."
-                          : `${
-                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
-                              "0"
-                            }%`}
-                      </p>
-
-                      {(() => {
-                        const progress = curveProgressMap[t.tokenAddress] || 0;
-
-                        let gradientClass = "bg-orange-700";
-
-                        if (progress >= 70) {
-                          gradientClass =
-                            "bg-gradient-to-r from-green-500 to-green-300";
-                        } else if (progress >= 40) {
-                          gradientClass =
-                            "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
-                        }
-
-                        return (
-                          <div
-                            className={`h-full ${
-                              progress < 100 ? "rounded-l-full" : "rounded-full"
-                            } relative transition-all duration-500 ease-in-out ${
-                              isLoadingMetrics ? "bg-gray-600" : gradientClass
-                            }`}
-                            style={{
-                              width: `${isLoadingMetrics ? 0 : progress}%`,
-                            }}
-                          >
-                            {!isLoadingMetrics &&
-                              Array.from({ length: 20 }).map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
-                                  style={{ left: `${31 * (i + 1)}px` }}
-                                ></div>
-                              ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
                   </li>
+
+                  <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-auto p-1.5">
+                    <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
+                      {isLoadingMetrics
+                        ? "Loading..."
+                        : `${
+                            curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
+                          }%`}
+                    </p>
+
+                    {(() => {
+                      const progress = curveProgressMap[t.tokenAddress] || 0;
+
+                      let gradientClass = "bg-orange-700";
+
+                      if (progress >= 70) {
+                        gradientClass =
+                          "bg-gradient-to-r from-green-500 to-green-300";
+                      } else if (progress >= 40) {
+                        gradientClass =
+                          "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                      }
+
+                      return (
+                        <div
+                          className={`h-full ${
+                            progress < 100 ? "rounded-l-full" : "rounded-full"
+                          } relative transition-all duration-500 ease-in-out ${
+                            isLoadingMetrics ? "bg-gray-600" : gradientClass
+                          }`}
+                          style={{
+                            width: `${isLoadingMetrics ? 0 : progress}%`,
+                          }}
+                        >
+                          {!isLoadingMetrics &&
+                            Array.from({ length: 20 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                                style={{ left: `${31 * (i + 1)}px` }}
+                              ></div>
+                            ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               ))}
             </ul>

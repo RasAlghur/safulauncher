@@ -2,24 +2,40 @@ import { useState, useEffect, useRef } from "react";
 import { FaChevronDown, FaSearch } from "react-icons/fa";
 import logo from "../../assets/logo.png";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTokenContext } from "../../context/TokenContext";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import type { TokenMetadata } from "../../pages/Tokens";
 import ThemeToggle from "../../lib/ThemeToggle";
 import { FiMenu, FiX } from "react-icons/fi";
+import { base } from "../../lib/api";
+
+interface TokenMetadata {
+  name: string;
+  symbol: string;
+  website?: string;
+  description?: string;
+  tokenAddress: string;
+  tokenCreator: string;
+  tokenImageId?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
+  createdAt?: string;
+  expiresAt?: string;
+}
 
 const Navbar = () => {
   const [showMenu, setShowMenu] = useState(false);
-
-  const { searchTerm, setSearchTerm, tokens } = useTokenContext();
   const [isOpen, setIsOpen] = useState(false);
   const [navBg, setNavBg] = useState(false);
+
+  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filteredResults, setFilteredResults] = useState<TokenMetadata[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const selectedMenu = (() => {
@@ -38,6 +54,12 @@ const Navbar = () => {
   })();
 
   useEffect(() => {
+    const handler = () => setNavBg(window.scrollY >= 90);
+    window.addEventListener("scroll", handler);
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -45,7 +67,6 @@ const Navbar = () => {
       ) {
         setShowMenu(false);
       }
-
       if (
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node)
@@ -53,29 +74,31 @@ const Navbar = () => {
         setShowSuggestions(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
-    const handler = () => {
-      if (window.scrollY >= 90) {
-        setNavBg(true);
-      } else {
-        setNavBg(false);
+    const fetchTokens = async () => {
+      try {
+        const res = await base.get("/tokens", {
+          params: { includes: "image" },
+        });
+        setTokens(res.data.data.data); // Adjust based on API response
+      } catch (error) {
+        console.error("Failed to fetch tokens:", error);
       }
     };
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    fetchTokens();
   }, []);
 
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-    if (term) {
+
+    if (term && Array.isArray(tokens)) {
       const results = tokens.filter((token) =>
         [token.name, token.symbol, token.tokenCreator, token.tokenAddress].some(
-          (field) => field.toLowerCase().includes(term)
+          (field) => field?.toLowerCase().includes(term)
         )
       );
       setFilteredResults(results.slice(0, 5));
@@ -101,9 +124,9 @@ const Navbar = () => {
             <img src={logo} alt="Safu Logo" width={40} height={40} />
           </a>
 
-          {/* Main Controls */}
+          {/* Dropdown & Search */}
           <div className="flex items-center w-full max-w-[10rem] lg:max-w-[700px] mx-2 lg:mx-6">
-            {/* Dropdown Button */}
+            {/* Dropdown */}
             <div className="relative z-50" ref={dropdownRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -113,7 +136,6 @@ const Navbar = () => {
               </button>
               {showMenu && (
                 <div className="absolute z-60 top-full bg-white/80 shadow-2xl backdrop-blur-[40px] mt-3 w-64 dark:border border-white/20 rounded-2xl space-y-1 text-black dark:bg-[#02071E]/95 dark:backdrop-blur-none dark:text-white overflow-hidden">
-                  {/* Menu content */}
                   <div className="relative z-10">
                     {[
                       {
@@ -126,7 +148,6 @@ const Navbar = () => {
                         title: "Token",
                         desc: "Discover tokens through lists",
                       },
-
                       {
                         to: "/launch",
                         title: "Launch",
@@ -164,7 +185,7 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Search Bar */}
+            {/* Search */}
             <div
               className="relative lg:flex-1 max-w-[10rem] lg:max-w-none"
               ref={suggestionsRef}
@@ -179,7 +200,6 @@ const Navbar = () => {
                   onFocus={() => setShowSuggestions(true)}
                   className="ml-2 bg-transparent text-sm dark:text-white text-black dark:placeholder-gray-400 placeholder-[#141313]/40 outline-none w-full"
                 />
-                {/* <FaTh className="dark:text-gray-400 text-white ml-2" /> */}
               </div>
 
               {showSuggestions && filteredResults.length > 0 && (
@@ -208,6 +228,7 @@ const Navbar = () => {
             </div>
           </div>
 
+          {/* Connect & Theme */}
           <div className="flex items-center gap-2">
             <div className="hidden lg:block">
               <ConnectButton />
@@ -230,9 +251,10 @@ const Navbar = () => {
         </nav>
       </header>
 
+      {/* Mobile Menu */}
       {isOpen && (
         <div
-          className={`block xl:hidden fixed inset-0 z-20 transition-all duration-300 `}
+          className="block xl:hidden fixed inset-0 z-30 transition-all duration-300"
           onClick={() => setIsOpen(false)}
         >
           <div
@@ -249,32 +271,11 @@ const Navbar = () => {
             </div>
             <div className="flex flex-col px-6 gap-6 mt-20">
               {[
-                {
-                  to: "/launchintro",
-                  title: "Home",
-                  desc: "Launch tokens with confidence",
-                },
-                {
-                  to: "/tokens",
-                  title: "Token",
-                  desc: "Discover tokens through lists",
-                },
-
-                {
-                  to: "/launch",
-                  title: "Launch",
-                  desc: "Create tokens to the moon with confidence!",
-                },
-                {
-                  to: "/leaderboard",
-                  title: "Leaderboard",
-                  desc: "Find the top trades & traders",
-                },
-                {
-                  to: "/profile",
-                  title: "Profile",
-                  desc: "Keep a pulse on Safu to the World",
-                },
+                { to: "/launchintro", title: "Home" },
+                { to: "/tokens", title: "Token" },
+                { to: "/launch", title: "Launch" },
+                { to: "/leaderboard", title: "Leaderboard" },
+                { to: "/profile", title: "Profile" },
               ].map(({ to, title }) => (
                 <a
                   key={title}
