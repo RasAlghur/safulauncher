@@ -1,4 +1,4 @@
-import axios from "axios";
+import { base } from "../lib/api";
 
 interface VerifyContractParams {
   encodedMessageWithoutPrefix: string;
@@ -16,9 +16,8 @@ export const verifyContract = async ({
       encodedMessageWithoutPrefix,
       tokenAddress,
     };
-    const API = import.meta.env.VITE_API_BASE_URL;
     // Call the /verify endpoint on the backend
-    const response = await axios.post(`${API}/verify`, data);
+    const response = await base.post(`verify`, data);
 
     // Handle the response (you can customize this to return relevant data)
     return response.data; // Return data for further use in the component
