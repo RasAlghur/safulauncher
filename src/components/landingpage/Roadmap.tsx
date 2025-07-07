@@ -9,7 +9,7 @@ const Roadmap = () => {
       id="roadmap"
       className="relative px-4 sm:px-6 py-20 lg:px-32  lg:pb-40 overflow-hidden"
     >
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(3)].map((_, i) => (
           <DustParticles key={i} />
         ))}

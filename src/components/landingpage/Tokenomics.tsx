@@ -60,7 +60,7 @@ const Tokenomics = () => {
       className="lg:py-20 relative overflow-x-hidden"
     >
       {/* Dust particles */}
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         <DustParticles />
       </div>
 

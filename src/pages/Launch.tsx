@@ -26,7 +26,6 @@ import { CircleCheckBig, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
 
-
 /**
  * Description placeholder
  *
@@ -401,8 +400,9 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -493,8 +493,9 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -625,8 +626,8 @@ export default function Launch(): JSX.Element {
     () =>
       enablePlatformFee
         ? (platformFeeList.map((p) =>
-          Math.floor(p.pct * 100)
-        ) as readonly number[])
+            Math.floor(p.pct * 100)
+          ) as readonly number[])
         : ([] as readonly number[]),
     [enablePlatformFee, platformFeeList]
   );
@@ -783,7 +784,7 @@ export default function Launch(): JSX.Element {
 
         // const API = `https://safulauncher-production.up.railway.app`;
         // const API = import.meta.env.VITE_API_BASE_URL;
-        console.log("posting...")
+        console.log("posting...");
         await base.post("token", formData);
         console.log("posting completed...");
 
@@ -951,12 +952,12 @@ export default function Launch(): JSX.Element {
   return (
     <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
       <Navbar />
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
           <DustParticles key={i} />
         ))}
       </div>
-      {/* <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] opacity-[0.03] pointer-events-none dark:hidden" /> */}
+
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
       <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
         {validationErrors.length > 0 && (
@@ -1103,8 +1104,9 @@ export default function Launch(): JSX.Element {
             </label>
 
             <div
-              className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
+              className={`border-2 border-dashed ${
+                dragActive ? "border-[#3BC3DB]" : "border-Primary"
+              } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
         transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
               onClick={openFilePicker}
@@ -1180,10 +1182,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableTax
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableTax
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableTax ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1232,7 +1235,9 @@ export default function Launch(): JSX.Element {
                   {/* Add Tax Recipient Button */}
                   <button
                     type="button"
-                    onClick={() => addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)}
+                    onClick={() =>
+                      addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)
+                    }
                     className="w-full bg-Primary hover:bg-Primary/80 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={taxList.length >= 5}
                   >
@@ -1301,7 +1306,7 @@ export default function Launch(): JSX.Element {
                   </div>
                 </div>
               )}
-              
+
               {/* Whitelist Toggle */}
               <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
                 <div className="flex justify-between items-center">
@@ -1319,10 +1324,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableWhitelist
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableWhitelist ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1410,16 +1416,18 @@ export default function Launch(): JSX.Element {
                     <div
                       onClick={() => setEnablePlatformFee(!enablePlatformFee)}
                       className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enablePlatformFee ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+          ${
+            enablePlatformFee ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
                     >
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enablePlatformFee
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enablePlatformFee
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enablePlatformFee ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1566,10 +1574,11 @@ export default function Launch(): JSX.Element {
                           setLpOption(option.value);
                           setIsOpen(false);
                         }}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
-                          ? "rounded-t-xl"
-                          : "rounded-b-xl"
-                          }`}
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                          option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                        }`}
                       >
                         {option.label}
                       </div>
@@ -1598,10 +1607,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${startNow
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {startNow ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1647,10 +1657,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${enableBundle
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            enableBundle
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {enableBundle ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1727,10 +1738,10 @@ export default function Launch(): JSX.Element {
                       </div>
                       {calculateBundleTokens(bundleEth, supply) >
                         (supply * 25) / 100 && (
-                          <div className="text-red-400 font-semibold">
-                            ⚠️ Exceeds 25% limit!
-                          </div>
-                        )}
+                        <div className="text-red-400 font-semibold">
+                          ⚠️ Exceeds 25% limit!
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="text-gray-400 text-sm mb-2">

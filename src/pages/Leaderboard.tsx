@@ -189,7 +189,7 @@ export default function Leaderboard() {
       {/* <div className="noise" /> */}
       <Navbar />
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
           <DustParticles key={i} />
         ))}
