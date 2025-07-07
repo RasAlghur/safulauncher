@@ -14,7 +14,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
+import { ETH_USDT_PRICE_FEED, LAUNCHER_ABI, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
 import { ethers } from "ethers";
 import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -698,6 +698,20 @@ export default function Launch(): JSX.Element {
     functionName: "WETH",
   });
 
+  const {
+    data: latestETHPrice,
+    isLoading: isLoadingLatestETHPrice
+  } = useReadContract({
+    ...PRICE_GETTER_ABI,
+    functionName: "getLatestETHPrice",
+    args: [ETH_USDT_PRICE_FEED!],
+  });
+
+  const infoETHCurrentPrice =
+    isConnected && !isLoadingLatestETHPrice
+      ? Number(latestETHPrice) / 1e8
+      : 0;
+
   const handleSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
@@ -804,6 +818,8 @@ export default function Launch(): JSX.Element {
             const walletTokenAmount =
               (totalTokensFromBundle * bundle.pct) / 100;
 
+            const initialMarketCap = 2 * infoETHCurrentPrice;
+
             return {
               tokenAddress,
               type: "buy",
@@ -813,6 +829,7 @@ export default function Launch(): JSX.Element {
               // Use original transaction hash
               txnHash: txHash,
               wallet: bundle.addr,
+              oldMarketCap: initialMarketCap,
               // Add metadata to identify this as a bundle transaction
               isBundleTransaction: true,
               originalTxnHash: txHash,
@@ -1301,7 +1318,7 @@ export default function Launch(): JSX.Element {
                   </div>
                 </div>
               )}
-              
+
               {/* Whitelist Toggle */}
               <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
                 <div className="flex justify-between items-center">
