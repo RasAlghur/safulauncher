@@ -26,9 +26,11 @@ interface BuyTx {
 }
 
 const NotableBuys = () => {
-  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
-  const [allBuys, setAllBuys] = useState<BuyTx[]>([]);
+  const [allBuys, setAllBuys] = useState<{ recent: BuyTx[]; wins: BuyTx[] }>({
+    recent: [],
+    wins: [],
+  });
   const [activeTab, setActiveTab] = useState<"buys" | "wins">("buys");
   const [loading, setLoading] = useState(true);
 
@@ -40,97 +42,30 @@ const NotableBuys = () => {
       .catch(() => console.error("Failed to fetch ETH price"));
   }, []);
 
-  // 2) load token list
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await base.get("token", {
-          params: { includes: "image" },
-        });
-        const data = response.data.data.data;
-        setTokens([data] as TokenMetadata[]);
-        console.log(data);
-      } catch (error) {
-        console.error("Failed to fetch tokens:", error);
-        setTokens([]);
-      }
-    })();
-  }, []);
-
-  // 3) once we have tokens + ETH price, pull all buys
   useEffect(() => {
     if (!ethPriceUSD) {
-      console.log("here 1");
       setLoading(true);
       return;
     }
 
-    if (tokens.length === 0) {
-      console.log("here 2");
-      setLoading(false);
-      return;
-    }
-
     (async () => {
-      const buys: BuyTx[] = [];
+      try {
+        setLoading(true);
+        const request = await base.get("recent-and-win", {
+          params: { ethAmt: ethPriceUSD },
+        });
 
-      await Promise.all(
-        tokens.map(async (tk) => {
-          try {
-            const res = await base.get(`/transaction/${tk.tokenAddress}`);
-            console.log("res notablebuys", res);
-            const logs: {
-              type: string;
-              wallet: string;
-              timestamp: string;
-              tokenAmount: string;
-              ethAmount: string;
-            }[] = res.data?.data;
-            console.log("logs notablebuy", logs);
-            logs
-              .filter((tx) => tx.type === "buy")
-              .forEach((tx) => {
-                const ethAmt = parseFloat(tx.ethAmount);
-                buys.push({
-                  wallet: tx.wallet,
-                  timestamp: tx.timestamp,
-                  tokenAmount: tx.tokenAmount,
-                  ethAmount: tx.ethAmount,
-                  usdValue: ethAmt * ethPriceUSD,
-                  tokenSymbol: tk.symbol,
-                });
-              });
-          } catch (e) {
-            console.error(`Failed to load txs for ${tk.symbol}`, e);
-          }
-        })
-      );
-
-      setAllBuys(buys);
-      setLoading(false);
+        const response = request.data.data;
+        setAllBuys({ recent: response.recent, wins: response.win });
+      } catch (error) {
+        if (error) setAllBuys({ recent: [], wins: [] });
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [ethPriceUSD, tokens]);
+  }, [ethPriceUSD]);
 
-  // prepare the two views:
-  // - recent: top 4 by timestamp
-  // - wins:   top 4 by usdValue
-  const recent = [...allBuys]
-    .sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
-    .slice(0, 4);
-
-  const wins = [...allBuys]
-    .filter((tx) => tx.usdValue >= 1000) // only buys ≥ $1k
-    .sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - // most recent first
-        new Date(a.timestamp).getTime()
-    )
-    .slice(0, 4);
-
-  const activeData = activeTab === "buys" ? recent : wins;
+  const activeData = activeTab === "buys" ? allBuys.recent : allBuys.wins;
 
   if (loading) {
     return <div className="p-6 text-center text-gray-400">Loading trades…</div>;
@@ -195,7 +130,7 @@ const NotableBuys = () => {
                   {" "}
                   with{" "}
                   <span className="dark:text-white text-[#141313] font-medium">
-                    ${tx.usdValue.toFixed(0)}
+                    ${tx?.usdValue.toFixed(0)}
                   </span>
                 </span>
               </div>

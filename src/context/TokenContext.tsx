@@ -1,6 +1,5 @@
 // src/context/TokenContext.tsx
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { base } from "../lib/api";
+import React, { createContext, useContext, useState } from "react";
 
 interface TokenMetadata {
   name: string;
@@ -37,23 +36,23 @@ export const useTokenContext = () => {
 export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [tokens] = useState<TokenMetadata[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await base.get("/token", {
-          params: { include: "image" },
-        });
-        const data = res.data as { data: TokenMetadata[] };
-        console.log("TOKEN RESPONSE:", data); // <-- log this
-        setTokens(data.data);
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res = await base.get("/tokens", {
+  //         params: { include: "image" },
+  //       });
+  //       const data = res.data as { data: TokenMetadata[] };
+  //       console.log("TOKEN RESPONSE:", data.data.data);
+  //       setTokens(data.data);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   })();
+  // }, []);
 
   return (
     <TokenContext.Provider value={{ tokens, searchTerm, setSearchTerm }}>

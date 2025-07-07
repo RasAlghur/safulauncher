@@ -36,7 +36,6 @@ interface TrendingTokenData {
 type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 const TrendingTokens = () => {
-  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [selectedRange, setSelectedRange] = useState<TimeRange>("24h");
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
@@ -59,18 +58,6 @@ const TrendingTokens = () => {
     }
   };
 
-  // Fetch tokens list
-  useEffect(() => {
-    (async () => {
-      const response = await base.get("/tokens", {
-        params: { includes: "image" },
-      });
-      const data = response.data.data.data;
-      console.log(data);
-      setTokens(data as TokenMetadata[]);
-    })();
-  }, []);
-
   // Fetch ETH price
   useEffect(() => {
     async function fetchEthPrice() {
@@ -85,125 +72,122 @@ const TrendingTokens = () => {
     fetchEthPrice();
   }, []);
 
-  // Fetch trending data based on selected time range
-  // Fetch trending data based on selected time range
+  interface logs {
+    ethAmount: string;
+    timestamp: string;
+    type: string;
+    oldMarketCap: string;
+    wallet: string;
+    tokenAmount: string;
+    tokenAddress: string;
+    token: TokenMetadata;
+  }
   useEffect(() => {
-    if (tokens.length === 0 || ethPriceUSD === 0) {
+    if (ethPriceUSD === 0) {
       setLoading(false);
       return;
     }
 
-    async function fetchTrendingData() {
+    const transactionByTime = async () => {
       const sinceTime = getTimeRangeMs(selectedRange);
+      try {
+        // Get volume and price change data
+        const res = await base.get(`find-by-time`, {
+          params: { timestamp: sinceTime },
+        });
+        return res.data?.data || [];
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    async function fetchTrendingData() {
       const trendingTokens: TrendingTokenData[] = [];
+      const logs: logs[] = await transactionByTime();
+      try {
+        // Early return if no logs available
+        if (!Array.isArray(logs) || logs.length === 0) {
+          console.warn(`No transaction logs found for `);
+          trendingTokens.push({
+            token: {} as TokenMetadata,
+            marketCap: 0,
+            volume: 0,
+            priceChange: 0,
+            holders: 0,
+          });
+          return;
+        }
 
-      await Promise.all(
-        tokens.map(async (token) => {
-          try {
-            // Get market cap
-            const info = await pureInfoDataRaw(token.tokenAddress);
-            let marketCap = 0;
-            if (Array.isArray(info)) {
-              const supply = Number(info[7]);
-              const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
-              const pricePerToken = rawAmt
-                ? Number(rawAmt.toString()) / 1e18
-                : 0;
-              marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
-            }
+        // Filter transactions in the window
+        console.log("logs", logs);
 
-            // Get volume and price change data
-            const res = await base.get(`transaction/${token.tokenAddress}`);
-            console.log({ insideMap: res.data.data });
-
-            const logs: {
-              ethAmount: string;
-              timestamp: string;
-              type: string;
-              oldMarketCap: string;
-              wallet: string;
-              tokenAmount: string;
-            }[] = res.data?.data || [];
-
-            // Early return if no logs available
-            if (!Array.isArray(logs) || logs.length === 0) {
-              console.warn(
-                `No transaction logs found for ${token.tokenAddress}`
-              );
-              trendingTokens.push({
-                token,
-                marketCap,
-                volume: 0,
-                priceChange: 0,
-                holders: 0,
-              });
-              return;
-            }
-
-            // Filter transactions in the window
-            console.log("logs", logs);
-            const windowLogs = logs
-              .filter((tx) => new Date(tx.timestamp).getTime() >= sinceTime)
-              .sort(
-                (a, b) =>
-                  new Date(a.timestamp).getTime() -
-                  new Date(b.timestamp).getTime()
-              );
-
-            console.log("windowLogs", windowLogs);
-
-            // Calculate volume
-            const volumeEth = windowLogs.reduce(
-              (sum, tx) => sum + parseFloat(tx.ethAmount),
-              0
-            );
-            const volume = volumeEth * ethPriceUSD;
-
-            // Compute priceChange using oldMarketCap
-            let priceChange = 0;
-            if (windowLogs.length > 0 && marketCap > 0) {
-              const firstTx = windowLogs[0];
-              const oldMC = parseFloat(firstTx.oldMarketCap);
-              if (oldMC > 0) {
-                priceChange = ((marketCap - oldMC) / oldMC) * 100;
-              }
-            }
-
-            const balanceMap: Record<string, number> = {};
-            logs.forEach((tx) => {
-              const amt = parseFloat(tx.tokenAmount);
-              const w = tx.wallet.toLowerCase();
-              if (!balanceMap[w]) balanceMap[w] = 0;
-              // add on buys, subtract on sells
-              balanceMap[w] += tx.type === "buy" ? amt : -amt;
-            });
-
-            // Count only those wallets still holding >0 tokens
-            const holders = Object.values(balanceMap).filter(
-              (net) => net > 0
-            ).length;
-
-            trendingTokens.push({
-              token,
-              marketCap,
-              volume,
-              priceChange,
-              holders,
-            });
-          } catch (e) {
-            console.error(`Error fetching data for ${token.tokenAddress}:`, e);
-
-            // Add token with zero values on error to avoid breaking the flow
-            trendingTokens.push({
-              token,
-              marketCap: 0,
-              volume: 0,
-              priceChange: 0,
-              holders: 0,
-            });
+        // Get market cap
+        const marketCapPromises = logs.map(async (token) => {
+          const info = await pureInfoDataRaw(token.tokenAddress);
+          let marketCap = 0;
+          if (Array.isArray(info)) {
+            const supply = Number(info[7]);
+            const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
+            const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+            marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
           }
-        })
-      );
+          return marketCap;
+        });
+        const marketCaps = await Promise.all(marketCapPromises);
+        const totalMarketCap = marketCaps.reduce((sum, mc) => sum + mc, 0);
+
+        // Calculate volume
+        const volumeEth = logs.reduce(
+          (sum, tx) => sum + parseFloat(tx.ethAmount),
+          0
+        );
+        const volume = volumeEth * ethPriceUSD;
+
+        // Compute priceChange using oldMarketCap
+        let priceChange = 0;
+        if (logs.length > 0 && totalMarketCap > 0) {
+          const firstTx = logs[0];
+          const oldMC = parseFloat(firstTx.oldMarketCap);
+          if (oldMC > 0) {
+            priceChange = ((totalMarketCap - oldMC) / oldMC) * 100;
+          }
+        }
+
+        const balanceMap: Record<string, number> = {};
+        logs.forEach((tx) => {
+          const amt = parseFloat(tx.tokenAmount);
+          const w = tx.wallet.toLowerCase();
+          if (!balanceMap[w]) balanceMap[w] = 0;
+          // add on buys, subtract on sells
+          balanceMap[w] += tx.type === "buy" ? amt : -amt;
+        });
+
+        // Count only those wallets still holding >0 tokens
+        const holders = Object.values(balanceMap).filter(
+          (net) => net > 0
+        ).length;
+
+        logs.map((token) =>
+          trendingTokens.push({
+            token: token.token,
+            marketCap: totalMarketCap,
+            volume,
+            priceChange,
+            holders,
+          })
+        );
+      } catch (e) {
+        console.error(`Error fetching data for:`, e);
+
+        // Add token with zero values on error to avoid breaking the flow
+        trendingTokens.push({
+          token,
+          marketCap: 0,
+          volume: 0,
+          priceChange: 0,
+          holders: 0,
+        });
+      }
 
       // Sort by volume (descending) and take top 10
       const sortedTrending = trendingTokens
@@ -215,7 +199,7 @@ const TrendingTokens = () => {
     }
 
     fetchTrendingData();
-  }, [tokens, selectedRange, ethPriceUSD]);
+  }, [selectedRange, ethPriceUSD]);
 
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
