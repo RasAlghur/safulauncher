@@ -1087,7 +1087,7 @@ export default function Trade() {
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#0C8CE0] border-opacity-70 mb-6" />
 
           {/* Text */}
-          <p className="text-white text-lg lg:text-xl font-medium font-raleway drop-shadow-md">
+          <p className="dark:text-white text-black text-lg lg:text-xl font-medium font-raleway drop-shadow-md">
             Loading token data...
           </p>
         </div>

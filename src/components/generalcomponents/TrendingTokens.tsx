@@ -127,7 +127,9 @@ const TrendingTokens = () => {
 
             // Early return if no logs available
             if (!Array.isArray(logs) || logs.length === 0) {
-              console.warn(`No transaction logs found for ${token.tokenAddress}`);
+              console.warn(
+                `No transaction logs found for ${token.tokenAddress}`
+              );
               trendingTokens.push({
                 token,
                 marketCap,
@@ -139,7 +141,7 @@ const TrendingTokens = () => {
             }
 
             // Filter transactions in the window
-            console.log('logs', logs)
+            console.log("logs", logs);
             const windowLogs = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= sinceTime)
               .sort(
@@ -148,7 +150,7 @@ const TrendingTokens = () => {
                   new Date(b.timestamp).getTime()
               );
 
-            console.log('windowLogs', windowLogs)
+            console.log("windowLogs", windowLogs);
 
             // Calculate volume
             const volumeEth = windowLogs.reduce(
@@ -241,10 +243,11 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
-                ? "bg-[#1D223E] text-white"
-                : "text-gray-400 hover:text-white"
-                }`}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                range === selectedRange
+                  ? "bg-[#1D223E] text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
               {range}
             </button>
@@ -263,7 +266,7 @@ const TrendingTokens = () => {
           ) : (
             <table className="min-w-[600px] md:min-w-full">
               <thead>
-                <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45]">
+                <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45] ">
                   <th className="p-3">Token</th>
                   <th className="p-3">Market Cap</th>
                   <th className="p-3">{selectedRange} %</th>
@@ -282,7 +285,7 @@ const TrendingTokens = () => {
                   trendingData.map((data) => (
                     <tr
                       key={data.token.tokenAddress}
-                      className="border-b border-[#2A2F45] text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
+                      className="border-b border-[#2A2F45] last-of-type:border-b-0 text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
                     >
                       <td className="p-3">
                         <Link
@@ -291,8 +294,9 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
-                                }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                data.token.image?.path
+                              }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -314,10 +318,11 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${data.priceChange < 0
-                          ? "text-red-500"
-                          : "text-green-400"
-                          }`}
+                        className={`p-3 font-semibold ${
+                          data.priceChange < 0
+                            ? "text-red-500"
+                            : "text-green-400"
+                        }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
