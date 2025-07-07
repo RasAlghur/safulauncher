@@ -181,7 +181,7 @@ const TrendingTokens = () => {
 
         // Add token with zero values on error to avoid breaking the flow
         trendingTokens.push({
-          token,
+          token: {} as TokenMetadata,
           marketCap: 0,
           volume: 0,
           priceChange: 0,
