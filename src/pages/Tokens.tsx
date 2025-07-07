@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/pages/Tokens.tsx
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -13,6 +14,7 @@ import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
+import { BsChevronDown } from "react-icons/bs";
 
 export interface TokenMetadata {
   name: string;
@@ -54,6 +56,9 @@ export default function Tokens() {
     "volume" | "createdAt" | "progress"
   >("volume");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
 
   // const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -226,43 +231,118 @@ export default function Tokens() {
 
         {/* Controls */}
         <div className="flex flex-wrap gap-4 justify-center mb-10 z-10 relative">
-          <select
-            value={searchField}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSearchField(
-                e.target.value as "name" | "address" | "creator" | "all"
-              )
-            }
-            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313]  px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
-          >
-            <option value="all">All</option>
-            <option value="address">Address</option>
-            <option value="creator">Creator</option>
-            <option value="name">Name/Symbol</option>
-          </select>
-          <select
-            value={sortField}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSortField(
-                e.target.value as "volume" | "createdAt" | "progress"
-              )
-            }
-            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
-          >
-            <option value="volume">24h Volume (USD)</option>
-            <option value="progress">Curve Progress</option>
-            <option value="createdAt">Date Created</option>
-          </select>
-          <select
-            value={sortOrder}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setSortOrder(e.target.value as "asc" | "desc")
-            }
-            className="dark:bg-[#101B3B] bg-[#141313]/4 dark:text-white text-[#141313] px-4 py-2 rounded-md border border-white/10 w-full sm:w-[200px]"
-          >
-            <option value="desc">High → Low / New → Old</option>
-            <option value="asc">Low → High / Old → New</option>
-          </select>
+          {/* Search Field Dropdown */}
+          <div className="relative w-full sm:w-[250px]">
+            <div
+              onClick={() => setSearchDropdownOpen((prev) => !prev)}
+              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            >
+              <span className="text-sm capitalize">{searchField}</span>
+              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                <BsChevronDown className="text-white text-xl" />
+              </div>
+            </div>
+            {searchDropdownOpen && (
+              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+                {["all", "address", "creator", "name"].map((field) => (
+                  <div
+                    key={field}
+                    onClick={() => {
+                      setSearchField(field as any);
+                      setSearchDropdownOpen(false);
+                    }}
+                    className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                      field === "all"
+                        ? "rounded-t-xl"
+                        : field === "name"
+                        ? "rounded-b-xl"
+                        : ""
+                    }`}
+                  >
+                    {field === "name" ? "Name/Symbol" : field}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Field Dropdown */}
+          <div className="relative w-full sm:w-[250px]">
+            <div
+              onClick={() => setSortDropdownOpen((prev) => !prev)}
+              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            >
+              <span className="text-sm capitalize">{sortField}</span>
+              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                <BsChevronDown className="text-white text-xl" />
+              </div>
+            </div>
+            {sortDropdownOpen && (
+              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+                {[
+                  { value: "volume", label: "24h Volume (USD)" },
+                  { value: "progress", label: "Curve Progress" },
+                  { value: "createdAt", label: "Date Created" },
+                ].map(({ value, label }) => (
+                  <div
+                    key={value}
+                    onClick={() => {
+                      setSortField(value as any);
+                      setSortDropdownOpen(false);
+                    }}
+                    className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                      value === "volume"
+                        ? "rounded-t-xl"
+                        : value === "createdAt"
+                        ? "rounded-b-xl"
+                        : ""
+                    }`}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Order Dropdown */}
+          <div className="relative w-full sm:w-[250px]">
+            <div
+              onClick={() => setOrderDropdownOpen((prev) => !prev)}
+              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            >
+              <span className="text-sm">
+                {sortOrder === "desc"
+                  ? "High → Low / New → Old"
+                  : "Low → High / Old → New"}
+              </span>
+              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                <BsChevronDown className="text-white text-xl" />
+              </div>
+            </div>
+            {orderDropdownOpen && (
+              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+                <div
+                  onClick={() => {
+                    setSortOrder("desc");
+                    setOrderDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-t-xl"
+                >
+                  High → Low / New → Old
+                </div>
+                <div
+                  onClick={() => {
+                    setSortOrder("asc");
+                    setOrderDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-b-xl"
+                >
+                  Low → High / Old → New
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Token Grid */}

@@ -274,7 +274,7 @@ const PlatformStats = () => {
         <img
           src={cloudRight}
           alt="This is the cloud on the right"
-          className="absolute -top-[15rem] -right-[1rem] "
+          className="absolute -top-[7rem] md:-top-[15rem] -right-[1rem] -z-[100px]"
         />
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>

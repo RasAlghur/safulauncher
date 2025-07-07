@@ -9,7 +9,7 @@ const LaunchIntro = () => {
     <div>
       <Navbar />
       <Hero />
-      <div className="mountain dark:bg-none">
+      <div className="mountain dark:bg-none relative">
         <PlatformStats />
         <HowItWorks />
       </div>
