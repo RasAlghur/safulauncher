@@ -22,17 +22,20 @@ interface BuyTx {
   tokenAmount: string;
   ethAmount: string;
   usdValue: number;
+  tokenAddress: string;
   tokenSymbol: string;
 }
 
 const NotableBuys = () => {
-  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
-  const [allBuys, setAllBuys] = useState<BuyTx[]>([]);
+  const [allBuys, setAllBuys] = useState<{ recent: BuyTx[]; wins: BuyTx[] }>({
+    recent: [],
+    wins: [],
+  });
   const [activeTab, setActiveTab] = useState<"buys" | "wins">("buys");
   const [loading, setLoading] = useState(true);
 
-  // 1) load ETH price
+  // Load ETH price
   useEffect(() => {
     pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
       .then((raw) => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
@@ -40,97 +43,78 @@ const NotableBuys = () => {
       .catch(() => console.error("Failed to fetch ETH price"));
   }, []);
 
-  // 2) load token list
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await base.get("token", {
-          params: { includes: "image" },
-        });
-        const data = response.data.data.data;
-        setTokens([data] as TokenMetadata[]);
-        console.log(data);
-      } catch (error) {
-        console.error("Failed to fetch tokens:", error);
-        setTokens([]);
-      }
-    })();
-  }, []);
-
-  // 3) once we have tokens + ETH price, pull all buys
+  // Fetch recent buys & wins, then fetch unique token symbols
   useEffect(() => {
     if (!ethPriceUSD) {
-      console.log("here 1");
       setLoading(true);
       return;
     }
 
-    if (tokens.length === 0) {
-      console.log("here 2");
-      setLoading(false);
-      return;
-    }
-
     (async () => {
-      const buys: BuyTx[] = [];
+      try {
+        setLoading(true);
+        const request = await base.get("recent-and-win", {
+          params: { ethAmt: ethPriceUSD },
+        });
+        const { recent, win } = request.data.data;
 
-      await Promise.all(
-        tokens.map(async (tk) => {
-          try {
-            const res = await base.get(`/transaction/${tk.tokenAddress}`);
-            console.log("res notablebuys", res);
-            const logs: {
-              type: string;
-              wallet: string;
-              timestamp: string;
-              tokenAmount: string;
-              ethAmount: string;
-            }[] = res.data?.data;
-            console.log("logs notablebuy", logs);
-            logs
-              .filter((tx) => tx.type === "buy")
-              .forEach((tx) => {
-                const ethAmt = parseFloat(tx.ethAmount);
-                buys.push({
-                  wallet: tx.wallet,
-                  timestamp: tx.timestamp,
-                  tokenAmount: tx.tokenAmount,
-                  ethAmount: tx.ethAmount,
-                  usdValue: ethAmt * ethPriceUSD,
-                  tokenSymbol: tk.symbol,
-                });
+        // Get unique token addresses to avoid duplicate calls
+        const uniqueAddresses = Array.from(
+          new Set(
+            [...recent, ...win]
+              .map((tx: any) => tx.tokenAddress)
+              .filter((addr: string) => !!addr)
+          )
+        );
+
+        // Fetch symbol for each unique address
+        const symbolMap: Record<string, string> = {};
+        await Promise.all(
+          uniqueAddresses.map(async (addr) => {
+            try {
+              const res = await base.get("token", {
+                params: { tokenAddress: addr },
               });
-          } catch (e) {
-            console.error(`Failed to load txs for ${tk.symbol}`, e);
-          }
-        })
-      );
+              symbolMap[addr] = res.data.data.data.symbol;
+            } catch (e) {
+              console.error(`Error fetching symbol for ${addr}:`, e);
+              symbolMap[addr] = addr.slice(0, 6);
+            }
+          })
+        );
 
-      setAllBuys(buys);
-      setLoading(false);
+        // Map transactions to include tokenSymbol
+        const recentWithSymbol: BuyTx[] = recent.map((tx: any) => ({
+          wallet: tx.wallet,
+          timestamp: tx.timestamp,
+          tokenAmount: tx.tokenAmount,
+          ethAmount: tx.ethAmount,
+          usdValue: tx.ethAmount * ethPriceUSD,
+          tokenAddress: tx.tokenAddress,
+          tokenSymbol: symbolMap[tx.tokenAddress],
+        }));
+
+        const winsWithSymbol: BuyTx[] = win.map((tx: any) => ({
+          wallet: tx.wallet,
+          timestamp: tx.timestamp,
+          tokenAmount: tx.tokenAmount,
+          ethAmount: tx.ethAmount,
+          usdValue: tx.ethAmount * ethPriceUSD,
+          tokenAddress: tx.tokenAddress,
+          tokenSymbol: symbolMap[tx.tokenAddress],
+        }));
+
+        setAllBuys({ recent: recentWithSymbol, wins: winsWithSymbol });
+      } catch (error) {
+        console.error("Failed to load notable buys:", error);
+        setAllBuys({ recent: [], wins: [] });
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [ethPriceUSD, tokens]);
+  }, [ethPriceUSD]);
 
-  // prepare the two views:
-  // - recent: top 4 by timestamp
-  // - wins:   top 4 by usdValue
-  const recent = [...allBuys]
-    .sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
-    .slice(0, 4);
-
-  const wins = [...allBuys]
-    .filter((tx) => tx.usdValue >= 1000) // only buys ≥ $1k
-    .sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - // most recent first
-        new Date(a.timestamp).getTime()
-    )
-    .slice(0, 4);
-
-  const activeData = activeTab === "buys" ? recent : wins;
+  const activeData = activeTab === "buys" ? allBuys.recent : allBuys.wins;
 
   if (loading) {
     return <div className="p-6 text-center text-gray-400">Loading trades…</div>;
@@ -188,12 +172,12 @@ const NotableBuys = () => {
                 <span className="dark:text-white text-[#141313]/50">
                   bought
                 </span>
+                {/* Display symbol instead of address */}
                 <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
                   {tx.tokenSymbol}
                 </span>
                 <span className="dark:text-white text-[#141313]/50">
-                  {" "}
-                  with{" "}
+                  with{' '}
                   <span className="dark:text-white text-[#141313] font-medium">
                     ${tx.usdValue.toFixed(0)}
                   </span>
@@ -206,7 +190,6 @@ const NotableBuys = () => {
           </div>
         ))}
 
-        {/* Empty state */}
         {activeData.length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400">
             Not found.
