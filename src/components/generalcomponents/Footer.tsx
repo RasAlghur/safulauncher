@@ -37,7 +37,7 @@ const footerItems = [
 const Footer = () => {
   return (
     <footer className="lg:px-[40px] py-[30px] lg:py-[60px] border-t border-t-[#0C8CE0]/10 relative footer-snow">
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(1)].map((_, i) => (
           <DustParticles key={i} />
         ))}

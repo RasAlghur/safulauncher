@@ -60,13 +60,13 @@ const NotableBuys = () => {
   // 3) once we have tokens + ETH price, pull all buys
   useEffect(() => {
     if (!ethPriceUSD) {
-      console.log('here 1')
+      console.log("here 1");
       setLoading(true);
       return;
     }
 
     if (tokens.length === 0) {
-      console.log('here 2')
+      console.log("here 2");
       setLoading(false);
       return;
     }
@@ -137,25 +137,27 @@ const NotableBuys = () => {
   }
 
   return (
-    <section className="dark:bg-[#0A0D24]/40 text-white p-6 rounded-xl w-full max-w-6xl mx-auto">
+    <section className="dark:bg-[#0A0D24]/40 p-6 rounded-xl w-full max-w-6xl mx-auto">
       {/* Header with Tabs */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${activeTab === "buys"
-              ? "text-white border-b-2 border-[#1D223E]"
-              : "text-white/30"
-              }`}
+            className={`transition ${
+              activeTab === "buys"
+                ? "dark:text-white text-black border-b-2 border-[#1D223E]"
+                : "dark:text-white/30 text-black/70"
+            }`}
           >
             Notable Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${activeTab === "wins"
-              ? "text-white border-b-2 border-[#1D223E]"
-              : "text-white/30"
-              }`}
+            className={`transition ${
+              activeTab === "wins"
+                ? "dark:text-white text-black border-b-2 border-[#1D223E]"
+                : "dark:text-white/30 text-black/70"
+            }`}
           >
             Big Wins
           </button>
