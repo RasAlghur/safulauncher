@@ -12,6 +12,14 @@ button {
   cursor: pointer;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .dark .search {
   background: linear-gradient(
       0deg,

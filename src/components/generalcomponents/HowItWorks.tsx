@@ -90,13 +90,13 @@ const HowItWorks = () => {
         id="chain-left"
         src={chain1}
         alt=""
-        className="absolute top-0 -left-[23rem] size-[500px] lg:size-[658px] z-10"
+        className="absolute top-0 -left-[23rem] lg:-left-[30rem] size-[500px] lg:size-[658px] z-10"
       />
       <img
         id="chain-right"
         src={chain2}
         alt=""
-        className="absolute bottom-0 -right-[23rem] size-[500px] lg:size-[658px] z-10"
+        className="absolute bottom-0 -right-[23rem] lg:-right-[30rem] size-[500px] lg:size-[658px] z-10"
       />
 
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 hidden dark:block blur-3xl"></div>

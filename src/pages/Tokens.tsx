@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/pages/Tokens.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
@@ -16,6 +16,9 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import Advertisement from "../components/generalcomponents/Advertisement";
+import { useTrendingTokens } from "../hooks/useTrendingTokens";
+
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export interface TokenMetadata {
   name: string;
@@ -64,6 +67,20 @@ export default function Tokens() {
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (!sliderRef.current) return;
+    const { scrollLeft, clientWidth } = sliderRef.current;
+    const scrollAmount = clientWidth * 0.8;
+    sliderRef.current.scrollTo({
+      left:
+        direction === "left"
+          ? scrollLeft - scrollAmount
+          : scrollLeft + scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   // const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -209,6 +226,8 @@ export default function Tokens() {
       : (bVal as number) - (aVal as number);
   });
 
+  const trendingData = useTrendingTokens(tokens, ethPriceUSD, "24h");
+
   // Loading skeleton component
   const TokenSkeleton = () => (
     <div className="rounded-xl lg:px-6 px-2 py-5 animate-pulse">
@@ -232,7 +251,7 @@ export default function Tokens() {
   );
 
   return (
-    <div className=" ">
+    <div className="mountain ">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
@@ -245,15 +264,6 @@ export default function Tokens() {
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
-          Launched Tokens
-          {isLoadingMetrics && (
-            <span className="ml-2 text-sm text-gray-500">
-              (Loading metrics...)
-            </span>
-          )}
-        </h2>
-
         <input
           type="text"
           placeholder="Search tokens..."
@@ -264,13 +274,153 @@ export default function Tokens() {
           className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20 
              border border-[#E5E7EB] flex justify-center
              px-4 py-2 rounded-full 
-             w-full max-w-4xl mx-auto mb-[34px] 
+             w-full max-w-4xl mx-auto my-[34px] 
              focus:outline-none focus:ring-2 focus:ring-[#0C8CE0] 
              transition-all duration-200"
           disabled={isLoadingTokens}
         />
 
-        {/* Controls */}
+        {/* Trending tokens */}
+        <div className="flex justify-between items-center mt-10 mb-6">
+          <h2 className="text-2xl lg:text-[30px] font-raleway font-bold text-center dark:text-white text-[#01061C] mb-6">
+            Trending Tokens
+          </h2>
+          {/* Scroll Buttons */}
+          <div className="flex items-center gap-2 md:gap-6 lg:gap-[34px]">
+            <button
+              className="p-2 bg-[#141313]/12 dark:bg-[#101B3B]/70 dark:hover:bg-[#101B3B] rounded-[5px]"
+              onClick={() => scroll("left")}
+            >
+              <FaChevronLeft className="text-[#141313]/70 dark:text-white" />
+            </button>
+            <button
+              className="p-2 bg-[#141313]/12 dark:bg-[#101B3B]/70 dark:hover:bg-[#101B3B] rounded-[5px]"
+              onClick={() => scroll("right")}
+            >
+              <FaChevronRight className="text-[#141313]/70 dark:text-white" />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative rounded-2xl border border-white/10 dark:bg-[#0B132B]/40 bg-[#141313]/5">
+          <div
+            ref={sliderRef}
+            className="flex overflow-x-auto no-scrollbar scroll-smooth px-2 py-4"
+          >
+            {trendingData.map((t, idx) => (
+              <div
+                key={idx}
+                className="lg:w-[60%] sm:w-[80%] w-full px-6 py-5 flex-shrink-0 flex flex-col"
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <Link
+                    to={`/trade/${t.token.tokenAddress}`}
+                    className="flex items-start gap-4"
+                  >
+                    {t.token.tokenImageId && (
+                      <img
+                        src={`${import.meta.env.VITE_API_BASE_URL}${
+                          t.token.image?.path
+                        }`}
+                        alt={`${t.token.symbol} logo`}
+                        className="w-14 h-14 rounded-lg"
+                        crossOrigin=""
+                      />
+                    )}
+                    <div className="flex flex-col space-y-[10px]">
+                      <h3 className="dark:text-white text-black text-lg lg:text-xl font-semibold">
+                        {t.token.name} ({t.token.symbol})
+                      </h3>
+                      <p className="text-sm md:text-base text-[#147ABD]">
+                        Created by: {t.token.tokenCreator.slice(0, 6)}...
+                        {t.token.tokenCreator.slice(-4)}
+                      </p>
+                      <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]">
+                        Address: {t.token.tokenAddress.slice(0, 6)}...
+                        {t.token.tokenAddress.slice(-4)}
+                      </p>
+                      {t.token.description && (
+                        <p className="text-sm md:text-base dark:text-white text-black truncate">
+                          {t.token.description}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="mt-4 flex flex-col space-y-2 items-end">
+                    <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white  bg-[#064C7A] text-center rounded-3xl px-2 py-1 h-fit">
+                      MC ${t.marketCap.toFixed(2)}
+                    </div>
+
+                    <span className="dark:text-white text-black text-sm">
+                      V ${t.volume.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress bar*/}
+
+                <div className="w-full max-w-[40rem] bg-[#031E51] h-[35px] rounded-full overflow-hidden relative mt-auto p-1.5">
+                  <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center justify-end">
+                    {isLoadingMetrics
+                      ? "Loading..."
+                      : `${
+                          curveProgressMap[t.token.tokenAddress]?.toFixed(2) ??
+                          "0"
+                        }%`}
+                  </p>
+
+                  {(() => {
+                    const progress =
+                      curveProgressMap[t.token.tokenAddress] || 0;
+
+                    let gradientClass = "bg-orange-700";
+
+                    if (progress >= 70) {
+                      gradientClass =
+                        "bg-gradient-to-r from-green-500 to-green-300";
+                    } else if (progress >= 40) {
+                      gradientClass =
+                        "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                    }
+
+                    return (
+                      <div
+                        className={`h-full ${
+                          progress < 100 ? "rounded-l-full" : "rounded-full"
+                        } relative transition-all duration-500 ease-in-out ${
+                          isLoadingMetrics ? "bg-gray-600" : gradientClass
+                        }`}
+                        style={{
+                          width: `${isLoadingMetrics ? 0 : progress}%`,
+                        }}
+                      >
+                        {!isLoadingMetrics &&
+                          Array.from({ length: 20 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                              style={{ left: `${31 * (i + 1)}px` }}
+                            ></div>
+                          ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-left my-10 z-10 relative">
+          Launched Tokens
+          {isLoadingMetrics && (
+            <span className="ml-2 text-sm text-gray-500">
+              (Loading metrics...)
+            </span>
+          )}
+        </h2>
+
+        {/* Filters */}
         <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
           {/* Search Field Dropdown */}
           <div className="relative w-full sm:w-[250px]">
@@ -386,7 +536,7 @@ export default function Tokens() {
           </div>
         </div>
 
-        {/* Token Grid */}
+        {/* All Tokens */}
         {isLoadingTokens ? (
           <div className="dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl w-full px-2 py-5 border border-white/10">
             <div className="grid gap-6 z-10 relative md:grid-cols-2">
@@ -430,19 +580,19 @@ export default function Tokens() {
                           <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
                             {t.name} ({t.symbol})
                           </h3>
-                          <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
+                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#147ABD] mb-2.5">
                             Created by:{" "}
                             <span className="text-[#147ABD]">
                               {t.tokenCreator.slice(0, 6)}...
                               {t.tokenCreator.slice(-4)}
                             </span>
                           </p>
-                          <p className="dark:text-gray-500 text-[#141313] mb-2.5">
+                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
                             Address: {t.tokenAddress.slice(0, 6)}...
                             {t.tokenAddress.slice(-4)}
                           </p>
                           {t.website && (
-                            <p className="dark:text-white text-[#141313]/60">
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]/60">
                               Website:{" "}
                               <a
                                 href={t.website}
@@ -495,8 +645,8 @@ export default function Tokens() {
                     </div>
                   </li>
 
-                  <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-auto p-1.5">
-                    <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
+                  <div className="w-full max-w-[40rem] bg-[#031E51] h-[35px] rounded-full overflow-hidden relative mt-auto p-1.5">
+                    <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
                       {isLoadingMetrics
                         ? "Loading..."
                         : `${
@@ -532,7 +682,7 @@ export default function Tokens() {
                             Array.from({ length: 20 }).map((_, i) => (
                               <div
                                 key={i}
-                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                                className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
                                 style={{ left: `${31 * (i + 1)}px` }}
                               ></div>
                             ))}

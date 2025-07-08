@@ -8,6 +8,7 @@ import {
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import { base } from "../../lib/api";
+import { useTrendingTokens } from "../../hooks/useTrendingTokens";
 
 export interface TokenMetadata {
   name: string;
@@ -37,7 +38,7 @@ type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 const TrendingTokens = () => {
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
-  const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
+  const [, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [selectedRange, setSelectedRange] = useState<TimeRange>("24h");
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,8 @@ const TrendingTokens = () => {
         return now - 24 * 60 * 60 * 1000;
     }
   };
+
+  const trendingTokenData = useTrendingTokens(tokens, ethPriceUSD, "24h");
 
   // Fetch tokens list
   useEffect(() => {
@@ -275,14 +278,14 @@ const TrendingTokens = () => {
                 </tr>
               </thead>
               <tbody>
-                {trendingData.length === 0 ? (
+                {trendingTokenData.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-gray-400">
                       No trending tokens found for this time range
                     </td>
                   </tr>
                 ) : (
-                  trendingData.map((data) => (
+                  trendingTokenData.map((data) => (
                     <tr
                       key={data.token.tokenAddress}
                       className="border-b border-[#2A2F45] last-of-type:border-b-0 text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
