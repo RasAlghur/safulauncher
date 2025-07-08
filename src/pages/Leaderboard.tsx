@@ -87,9 +87,8 @@ export default function Leaderboard() {
         setEthPriceUSD(price);
 
         // Fetch token metadata map
-        const tokensRes = await base.get("tokens", {
-          params: { include: "image" },
-        });
+        const tokensRes = await base.get("tokens?include=image");
+
 
         const tokens: TokenMetadata[] = await tokensRes.data.data.data;
         const map: Record<string, TokenMetadata> = {};
@@ -229,13 +228,12 @@ export default function Leaderboard() {
                     setSelected(option);
                     setIsOpen(false);
                   }}
-                  className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                    idx === 0
+                  className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
                       ? "rounded-t-xl"
                       : idx === options.length - 1
-                      ? "rounded-b-xl"
-                      : ""
-                  }`}
+                        ? "rounded-b-xl"
+                        : ""
+                    }`}
                 >
                   {option}
                 </div>
@@ -293,9 +291,8 @@ export default function Leaderboard() {
                           <div className="flex items-center gap-3">
                             {tokenMeta.tokenImageId && (
                               <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${
-                                  tokenMeta.image?.path
-                                }`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}${tokenMeta.image?.path
+                                  }`}
                                 alt={tokenMeta.symbol}
                                 className="w-6 h-6 rounded-full"
                                 crossOrigin="anonymous"
@@ -330,11 +327,10 @@ export default function Leaderboard() {
             <button
               key={i + 1}
               onClick={() => setPage(i + 1)}
-              className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                i + 1 === page
+              className={`w-8 h-8 rounded-full text-sm font-medium transition ${i + 1 === page
                   ? "bg-[#0C8CE0] text-white"
                   : "bg-white/10 text-white/60 hover:bg-white/20"
-              }`}
+                }`}
             >
               {i + 1}
             </button>
