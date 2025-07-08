@@ -155,9 +155,10 @@ const Navbar = () => {
       });
 
       const { data } = res.data.data;
+      console.log(data);
       setTokens(data);
-      // setFilteredResults(data);
-      // setShowSuggestions(true);
+      setFilteredResults(data);
+      setShowSuggestions(true);
     } catch (error: unknown) {
       if (
         axios.isCancel(error) ||
