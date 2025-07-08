@@ -22,6 +22,7 @@ interface BuyTx {
   tokenAmount: string;
   ethAmount: string;
   usdValue: number;
+  tokenAddress: string;
   tokenSymbol: string;
 }
 
@@ -34,7 +35,7 @@ const NotableBuys = () => {
   const [activeTab, setActiveTab] = useState<"buys" | "wins">("buys");
   const [loading, setLoading] = useState(true);
 
-  // 1) load ETH price
+  // Load ETH price
   useEffect(() => {
     pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
       .then((raw) => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
@@ -123,11 +124,11 @@ const NotableBuys = () => {
                 <span className="dark:text-white text-[#141313]/50">
                   bought
                 </span>
+                {/* Display symbol instead of address */}
                 <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
                   {tx.tokenSymbol}
                 </span>
                 <span className="dark:text-white text-[#141313]/50">
-                  {" "}
                   with{" "}
                   <span className="dark:text-white text-[#141313] font-medium">
                     ${tx?.usdValue.toFixed(0)}
@@ -141,7 +142,6 @@ const NotableBuys = () => {
           </div>
         ))}
 
-        {/* Empty state */}
         {activeData.length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400">
             Not found.

@@ -7,6 +7,13 @@ import ThemeToggle from "../../lib/ThemeToggle";
 import { FiMenu, FiX } from "react-icons/fi";
 import { base } from "../../lib/api";
 
+import {
+  pureGetLatestETHPrice,
+  pureAmountOutMarketCap,
+  pureInfoDataRaw,
+} from "../../web3/readContracts";
+import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+
 interface TokenMetadata {
   name: string;
   symbol: string;
@@ -29,6 +36,8 @@ const Navbar = () => {
   const [navBg, setNavBg] = useState(false);
 
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [marketCapMap, setMarketCapMap] = useState<Record<string, number>>({});
+  const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredResults, setFilteredResults] = useState<TokenMetadata[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -78,13 +87,14 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch tokens
   useEffect(() => {
     const fetchTokens = async () => {
       try {
         const res = await base.get("/tokens", {
           params: { includes: "image" },
         });
-        setTokens(res.data.data.data); // Adjust based on API response
+        setTokens(res.data.data.data);
       } catch (error) {
         console.error("Failed to fetch tokens:", error);
       }
@@ -92,6 +102,53 @@ const Navbar = () => {
     fetchTokens();
   }, []);
 
+  // Fetch ETH price
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setEthPriceUSD(price);
+      } catch (err) {
+        console.error("Failed to fetch ETH price", err);
+      }
+    })();
+  }, []);
+
+  // Fetch Market Cap per token
+  useEffect(() => {
+    if (!tokens.length || !ethPriceUSD) return;
+
+    const fetchMarketCaps = async () => {
+      const newMap: Record<string, number> = {};
+
+      await Promise.all(
+        tokens.map(async (token) => {
+          try {
+            const info = await pureInfoDataRaw(token.tokenAddress);
+            const supply =
+              Array.isArray(info) && typeof info[7] !== "undefined"
+                ? Number(info[7])
+                : 0;
+
+            const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
+            const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+
+            const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
+            newMap[token.tokenAddress] = marketCap;
+          } catch (err) {
+            console.error(`Market cap error for ${token.tokenAddress}`, err);
+          }
+        })
+      );
+
+      setMarketCapMap(newMap);
+    };
+
+    fetchMarketCaps();
+  }, [tokens, ethPriceUSD]);
+
+  // Filter token suggestions
   useEffect(() => {
     const term = searchTerm.toLowerCase();
 
@@ -112,13 +169,13 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`py-3 lg:px-6 px-3 md:px-[79px] ${
+        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${
           navBg
             ? "bg-Dark-Purple"
             : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
         } fixed w-full top-0 left-0 z-50 transition-all duration-300 backdrop-blur-[20px]`}
       >
-        <nav className="flex items-center justify-between">
+        <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
             <img src={logo} alt="Safu Logo" width={40} height={40} />
@@ -135,7 +192,7 @@ const Navbar = () => {
                 {selectedMenu} <FaChevronDown className="ml-2 text-xs" />
               </button>
               {showMenu && (
-                <div className="absolute z-60 top-full bg-white/80 shadow-2xl backdrop-blur-[40px] mt-3 w-64 dark:border border-white/20 rounded-2xl space-y-1 text-black dark:bg-[#02071E]/95 dark:backdrop-blur-none dark:text-white overflow-hidden">
+                <div className="absolute z-60 top-full search dark:shadow-2xl  mt-3 w-64  rounded-2xl space-y-1 text-black dark:bg-[#02071E]/95 dark:backdrop-blur-none dark:text-white overflow-hidden">
                   <div className="relative z-10">
                     {[
                       {
@@ -170,7 +227,7 @@ const Navbar = () => {
                           setShowMenu(false);
                           navigate(item.to);
                         }}
-                        className="block px-5 py-3 transition duration-200 hover:bg-[#147ABD]/20 rounded-xl cursor-pointer"
+                        className="block px-5 py-3 transition duration-200 hover:bg-[#147ABD]/20  first-of-type:rounded-t-2xl last-of-type:rounded-b-2xl cursor-pointer"
                       >
                         <p className="text-base font-medium dark:text-white text-black">
                           {item.title}
@@ -203,7 +260,7 @@ const Navbar = () => {
               </div>
 
               {showSuggestions && filteredResults.length > 0 && (
-                <div className="absolute top-full -left-[5rem] mt-3 w-64 bg-white/30 backdrop-blur-[20px] dark:bg-[#02071E]/95 dark:backdrop-blur-none border border-white/10 text-white shadow-2xl rounded-2xl z-50 space-y-1">
+                <div className="absolute top-full -left-[5rem] mt-3 w-72 search text-white shadow-2xl rounded-2xl z-50 space-y-1">
                   {filteredResults.map((token) => (
                     <div
                       key={token.tokenAddress}
@@ -212,14 +269,36 @@ const Navbar = () => {
                         setSearchTerm("");
                         setShowSuggestions(false);
                       }}
-                      className="px-4 py-3 hover:bg-[#1A1A3D] cursor-pointer flex items-center justify-between"
+                      className="px-4 py-3 hover:bg-[#147ABD]/20 cursor-pointer flex items-center gap-3 first-of-type:rounded-t-2xl last-of-type:rounded-b-2xl"
                     >
-                      <p className="text-sm font-medium text-black dark:text-white">
-                        {token.name} ({token.symbol})
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {token.tokenAddress.slice(0, 6)}...
-                        {token.tokenAddress.slice(-4)}
+                      {/* Token Image */}
+                      {token.image?.path && (
+                        <img
+                          src={`${import.meta.env.VITE_API_BASE_URL}${
+                            token.image.path
+                          }`}
+                          alt={token.symbol}
+                          className="w-8 h-8 rounded-md object-cover"
+                          crossOrigin=""
+                        />
+                      )}
+
+                      {/* Token Info */}
+                      <div className="flex-1 overflow-hidden">
+                        <p className="text-sm font-semibold truncate dark:text-white text-black">
+                          {token.name} ({token.symbol})
+                        </p>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          {token.tokenAddress.slice(0, 6)}...
+                          {token.tokenAddress.slice(-4)}
+                        </p>
+                      </div>
+
+                      {/* Market Cap */}
+                      <p className="text-xs dark:text-white text-black text-right min-w-[80px]">
+                        {marketCapMap[token.tokenAddress] !== undefined
+                          ? `$${marketCapMap[token.tokenAddress].toFixed(2)}`
+                          : "—"}
                       </p>
                     </div>
                   ))}

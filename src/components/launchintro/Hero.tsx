@@ -68,7 +68,7 @@ const Hero = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 px-4 lg:px-[80px] lg:py-[28px] gap-10 lg:mt-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 px-4 lg:py-[28px] gap-10 lg:mt-16 max-w-7xl mx-auto">
         {/* Left Section */}
         <div className="flex flex-col justify-center items-center lg:items-start text-center lg:text-left">
           <h1

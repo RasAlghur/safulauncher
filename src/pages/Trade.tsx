@@ -1140,7 +1140,7 @@ export default function Trade() {
       <div className="lg:size-[30rem] lg:w-[40rem] rounded-full bg-[#3BC3DB]/10 absolute top-[800px] -left-40 blur-3xl hidden dark:block"></div>
 
       <div className="mx-auto pt-40 mb-20 px-4 lg:px-0 relative text-white max-w-[85rem]">
-        <div className="grid lg:grid-cols-[.4fr_.6fr] gap-10">
+        <div className="lg:grid lg:grid-cols-[.4fr_.6fr] gap-10">
           {/* Left section */}
           <div>
             <h1 className="text-2xl font-bold dark:text-white text-black font-raleway">
@@ -1662,7 +1662,7 @@ export default function Trade() {
               <div className=" backdrop-blur-md p-4">
                 {activeTab === "transactions" ? (
                   <div className="tx-table overflow-x-auto">
-                    <table className="min-w-full text-sm dark:text-white/80">
+                    <table className="min-w-[600px] md:min-w-full text-sm dark:text-white/80">
                       <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-white/10">
                         <tr>
                           <th>Type</th>
