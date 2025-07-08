@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/pages/Tokens.tsx
-import { useEffect, useState } from "react";
-import type { ChangeEvent } from "react";
+import axios from "axios";
+import { debounce } from "lodash";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
 import {
@@ -17,6 +18,24 @@ import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import Advertisement from "../components/generalcomponents/Advertisement";
 
+
+interface transaction {
+  id: string;
+  bundleIndex: number;
+  createdAt: Date;
+  ethAmount: string | number;
+  isBundleTransaction: boolean;
+  oldMarketCap: number;
+  originalTxnHash: string;
+  timestamp: Date;
+  tokenAddress: string;
+  tokenAmount: string | number;
+  txnHash: string;
+  type: string;
+  updatedAt: Date;
+  wallet: string;
+}
+
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -24,6 +43,7 @@ export interface TokenMetadata {
   description?: string;
   tokenAddress: string;
   tokenCreator: string;
+  transactions: transaction[];
   tokenImageId?: string;
   image?: {
     name: string;
@@ -32,6 +52,8 @@ export interface TokenMetadata {
   createdAt?: string;
   expiresAt?: string;
 }
+
+type searchField = "all" | "address" | "creator" | "name";
 
 /**
  * Description placeholder
@@ -64,26 +86,87 @@ export default function Tokens() {
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
+  const [hasNext, setHasNext] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
 
-  // const API = import.meta.env.VITE_API_BASE_URL;
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
 
   // Fetch list of tokens
-  useEffect(() => {
-    (async () => {
+  const fetchTokenList = useCallback(
+    async (pageNum = 1, query = "", searchTerm = "all", append = false) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
         setIsLoadingTokens(true);
-        const res = await await base.get("tokens", {
-          params: { include: "image" },
-        });
-        console.log(res.data.data.data);
-        setTokens(res.data.data.data);
+        const res = await base.get(
+          `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        const apiData = res.data.data;
+
+        // console.log(res.data);
+
+        setHasNext(apiData.hasNextPage);
+        setPage(pageNum);
+        setTokens((prev) =>
+          append ? [...prev, ...apiData.data] : apiData.data
+        );
       } catch (error) {
-        console.log(error);
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          // Request canceled
+        } else {
+          console.error("API Error:", error);
+        }
       } finally {
         setIsLoadingTokens(false);
       }
-    })();
-  }, []);
+    },
+    []
+  );
+
+  const debouncedFetch = useMemo(
+    () =>
+      debounce((query: string, searchTerm: searchField) => {
+        fetchTokenList(1, query, searchTerm, false);
+      }, 300),
+    [fetchTokenList]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedFetch(value, searchField);
+  };
+
+  const searchChange = (field: searchField) => {
+    setSearchField(field);
+    setSearchDropdownOpen(false);
+    debouncedFetch(searchTerm, field);
+  };
+
+  // Initial fetch or search
+  useEffect(() => {
+    fetchTokenList(1, searchTerm, searchField, false);
+    // Reset page and hasNext on new search
+    setPage(1);
+    setHasNext(true);
+  }, [fetchTokenList, searchField, searchTerm]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -132,18 +215,11 @@ export default function Tokens() {
             }
 
             // Fetch transaction logs
-
-            const res = await base.get("transactions", {
-              params: { tokenAddress: token.tokenAddress },
-            });
-            const logs: { ethAmount: string; timestamp: string }[] =
-              res.data.data.data;
-
-            console.log({ logs });
+            const logs = token.transactions;
 
             const volEth = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= since24h)
-              .reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+              .reduce((sum, tx) => sum + parseFloat(String(tx.ethAmount)), 0);
             newVolume[token.tokenAddress] = volEth * ethPriceUSD;
           } catch (e) {
             console.error(`Error for ${token.tokenAddress}:`, e);
@@ -160,33 +236,33 @@ export default function Tokens() {
     fetchTokenMetrics();
   }, [tokens, ethPriceUSD]);
 
-  // Filter tokens based on search state
-  const filtered = tokens.filter((token) => {
-    const term = searchTerm.toLowerCase();
-    if (!term) return true;
-    switch (searchField) {
-      case "address":
-        return token.tokenAddress.toLowerCase().includes(term);
-      case "creator":
-        return token.tokenCreator.toLowerCase().includes(term);
-      case "name":
-        return (
-          token.name.toLowerCase().includes(term) ||
-          token.symbol.toLowerCase().includes(term)
-        );
-      case "all":
-      default:
-        return [
-          token.tokenAddress,
-          token.tokenCreator,
-          token.name,
-          token.symbol,
-        ].some((field) => field.toLowerCase().includes(term));
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = containerRef.current;
+      if (
+        container &&
+        hasNext &&
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 100
+      ) {
+        fetchTokenList(page + 1, searchTerm, searchField, true);
+      }
+    };
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
     }
-  });
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [fetchTokenList, hasNext, page, searchField, searchTerm]);
+
 
   // Sort filtered tokens
-  const sortedTokens = [...filtered].sort((a, b) => {
+  const sortedTokens = [...tokens].sort((a, b) => {
     let aVal: number | Date = 0;
     let bVal: number | Date = 0;
     if (sortField === "volume") {
@@ -208,6 +284,13 @@ export default function Tokens() {
       ? (aVal as number) - (bVal as number)
       : (bVal as number) - (aVal as number);
   });
+
+  // Handle click events to prevent nested anchor navigation
+  const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   // Loading skeleton component
   const TokenSkeleton = () => (
@@ -258,9 +341,8 @@ export default function Tokens() {
           type="text"
           placeholder="Search tokens..."
           value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setSearchTerm(e.target.value)
-          }
+          ref={inputRef}
+          onChange={handleChange}
           className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20 
              border border-[#E5E7EB] flex justify-center
              px-4 py-2 rounded-full 
@@ -285,24 +367,22 @@ export default function Tokens() {
             </div>
             {searchDropdownOpen && (
               <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                {["all", "address", "creator", "name"].map((field) => (
+                {(["all", "address", "creator", "name"]as searchField[]).map(
+                  (field) => (
                   <div
                     key={field}
-                    onClick={() => {
-                      setSearchField(field as any);
-                      setSearchDropdownOpen(false);
-                    }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 capitalize ${
-                      field === "all"
-                        ? "rounded-t-xl"
-                        : field === "name"
+                    onClick={() => searchChange(field)}
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 capitalize ${field === "all"
+                      ? "rounded-t-xl"
+                      : field === "name"
                         ? "rounded-b-xl"
                         : ""
-                    }`}
+                      }`}
                   >
                     {field === "name" ? "Name/Symbol" : field}
                   </div>
-                ))}
+                )
+                )}
               </div>
             )}
           </div>
@@ -331,13 +411,12 @@ export default function Tokens() {
                       setSortField(value as any);
                       setSortDropdownOpen(false);
                     }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                      value === "volume"
-                        ? "rounded-t-xl"
-                        : value === "createdAt"
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${value === "volume"
+                      ? "rounded-t-xl"
+                      : value === "createdAt"
                         ? "rounded-b-xl"
                         : ""
-                    }`}
+                      }`}
                   >
                     {label}
                   </div>
@@ -399,59 +478,60 @@ export default function Tokens() {
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
-            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
-              sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-            } px-2 py-5 border border-white/10`}
+            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+              } px-2 py-5 border border-white/10`}
           >
             <ul
-              className={`grid gap-6 z-10 relative ${
-                sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-              }`}
+              className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                }`}
             >
               {sortedTokens.map((t, idx) => (
                 <div key={idx} className="flex flex-col">
                   <li className="rounded-xl lg:px-6 px-2 py-5 ">
                     <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                      <Link
-                        to={`/trade/${t.tokenAddress}`}
-                        className="flex items-start gap-4"
-                      >
-                        {t.tokenImageId && (
-                          <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}${
-                              t.image?.path
-                            }`}
-                            alt={`${t.symbol} logo`}
-                            className="w-14 h-14 rounded-lg"
-                            crossOrigin=""
-                          />
-                        )}
-                        <div>
-                          <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
-                            {t.name} ({t.symbol})
-                          </h3>
-                          <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
-                            Created by:{" "}
-                            <span className="text-[#147ABD]">
-                              {t.tokenCreator.slice(0, 6)}...
-                              {t.tokenCreator.slice(-4)}
-                            </span>
-                          </p>
-                          <p className="dark:text-gray-500 text-[#141313] mb-2.5">
-                            Address: {t.tokenAddress.slice(0, 6)}...
-                            {t.tokenAddress.slice(-4)}
-                          </p>
+                      <div className="flex items-start gap-4">
+                        <Link
+                          to={`/trade/${t.tokenAddress}`}
+                          className="flex items-start gap-4 min-w-0"
+                        >
+                          {t.tokenImageId && (
+                            <img
+                              src={`${import.meta.env.VITE_API_BASE_URL}${t.image?.path
+                                }`}
+                              alt={`${t.symbol} logo`}
+                              className="w-14 h-14 rounded-lg flex-shrink-0"
+                              crossOrigin=""
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                              {t.name} ({t.symbol})
+                            </h3>
+                            <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
+                              Created by:{" "}
+                              <span className="text-[#147ABD]">
+                                {t.tokenCreator.slice(0, 6)}...
+                                {t.tokenCreator.slice(-4)}
+                              </span>
+                            </p>
+                            <p className="dark:text-gray-500 text-[#141313] mb-2.5">
+                              Address: {t.tokenAddress.slice(0, 6)}...
+                              {t.tokenAddress.slice(-4)}
+                            </p>
+                          </div>
+                        </Link>
+                        
+                        {/* Website and Description - Outside of Link */}
+                        <div className="flex flex-col gap-2">
                           {t.website && (
                             <p className="dark:text-white text-[#141313]/60">
                               Website:{" "}
-                              <a
-                                href={t.website}
-                                className="underline break-all"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                onClick={(e) => handleWebsiteClick(e, t.website!)}
+                                className="underline break-all text-[#147ABD] hover:text-[#0C8CE0] transition-colors"
                               >
                                 {t.website}
-                              </a>
+                              </button>
                             </p>
                           )}
 
@@ -463,7 +543,8 @@ export default function Tokens() {
                             )}
                           </div>
                         </div>
-                      </Link>
+                      </div>
+                      
                       {/* Stats */}
                       <div className="flex flex-col space-y-1 items-end">
                         <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
@@ -473,8 +554,7 @@ export default function Tokens() {
                               Loading...
                             </span>
                           ) : (
-                            ` $${
-                              volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"
+                            ` $${volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"
                             }`
                           )}
                         </p>
@@ -490,7 +570,6 @@ export default function Tokens() {
                             </p>
                           )}
                         </div>
-                        {/* Progress Bar */}
                       </div>
                     </div>
                   </li>
@@ -499,9 +578,8 @@ export default function Tokens() {
                     <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
                       {isLoadingMetrics
                         ? "Loading..."
-                        : `${
-                            curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
-                          }%`}
+                        : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
+                        }%`}
                     </p>
 
                     {(() => {
@@ -519,11 +597,9 @@ export default function Tokens() {
 
                       return (
                         <div
-                          className={`h-full ${
-                            progress < 100 ? "rounded-l-full" : "rounded-full"
-                          } relative transition-all duration-500 ease-in-out ${
-                            isLoadingMetrics ? "bg-gray-600" : gradientClass
-                          }`}
+                          className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                            } relative transition-all duration-500 ease-in-out ${isLoadingMetrics ? "bg-gray-600" : gradientClass
+                            }`}
                           style={{
                             width: `${isLoadingMetrics ? 0 : progress}%`,
                           }}
