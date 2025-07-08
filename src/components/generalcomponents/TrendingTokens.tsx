@@ -103,7 +103,6 @@ const TrendingTokens = () => {
     };
 
     async function fetchTrendingData() {
-      const trendingTokens: TrendingTokenData[] = [];
       const logs: logs[] = await transactionByTime();
       
       try {

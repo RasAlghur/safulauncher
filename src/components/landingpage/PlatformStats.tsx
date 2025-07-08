@@ -23,10 +23,6 @@ import { base } from "../../lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface PlatformStatsProps {
-  ethPriceUSD?: number;
-}
-
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -39,7 +35,7 @@ export interface TokenMetadata {
   expiresAt?: string;
 }
 
-const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
+const PlatformStats = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
