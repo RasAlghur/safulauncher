@@ -817,9 +817,9 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     try {
-      const response = await base.get("transactions", {
-        params: { tokenAddress },
-      });
+      const response = await base.get(
+        `transactions?tokenAddress=${tokenAddress}`
+      );
       const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
@@ -835,6 +835,7 @@ export default function Trade() {
     fetchLogsWithCallback();
 
     if (!socket.connected) {
+      console.log("socket connected");
       socket.connect();
     }
 
@@ -846,7 +847,7 @@ export default function Trade() {
           if (isAutoUpdateEnabled) {
             setTimeout(() => loadChartData(true), 100);
           }
-          return updated.reverse();
+          return updated;
         });
       }
     };

@@ -22,8 +22,12 @@ interface BuyTx {
   tokenAmount: string;
   ethAmount: string;
   usdValue: number;
+  token: {
+    symbol: string;
+  };
   tokenAddress: string;
-  tokenSymbol: string;
+  txnHash: string;
+  type: string;
 }
 
 const NotableBuys = () => {
@@ -43,6 +47,7 @@ const NotableBuys = () => {
       .catch(() => console.error("Failed to fetch ETH price"));
   }, []);
 
+  // Fetch recent buys & wins, then fetch unique token symbols
   useEffect(() => {
     if (!ethPriceUSD) {
       setLoading(true);
@@ -55,11 +60,12 @@ const NotableBuys = () => {
         const request = await base.get("recent-and-win", {
           params: { ethAmt: ethPriceUSD },
         });
-
-        const response = request.data.data;
-        setAllBuys({ recent: response.recent, wins: response.win });
+        const { recent, win } = request.data.data;
+        // console.log(recent, win);
+        setAllBuys({ recent, wins: win });
       } catch (error) {
-        if (error) setAllBuys({ recent: [], wins: [] });
+        console.error("Failed to load notable buys:", error);
+        setAllBuys({ recent: [], wins: [] });
       } finally {
         setLoading(false);
       }
@@ -126,7 +132,7 @@ const NotableBuys = () => {
                 </span>
                 {/* Display symbol instead of address */}
                 <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
-                  {tx.tokenSymbol}
+                  {tx.token.symbol}
                 </span>
                 <span className="dark:text-white text-[#141313]/50">
                   with{" "}

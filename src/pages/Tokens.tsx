@@ -5,19 +5,18 @@ import { debounce } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
-import {
-  pureInfoDataRaw,
-  pureGetLatestETHPrice,
-  pureAmountOutMarketCap,
-} from "../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../web3/config";
-import Navbar from "../components/launchintro/Navbar";
-import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
+import Footer from "../components/generalcomponents/Footer";
+import Navbar from "../components/launchintro/Navbar";
 import { base } from "../lib/api";
-import { BsChevronDown } from "react-icons/bs";
+import { ETH_USDT_PRICE_FEED } from "../web3/config";
+import {
+  pureAmountOutMarketCap,
+  pureGetLatestETHPrice,
+  pureInfoDataRaw,
+} from "../web3/readContracts";
 import Advertisement from "../components/generalcomponents/Advertisement";
-
+import { BsChevronDown } from "react-icons/bs";
 
 interface transaction {
   id: string;
@@ -35,7 +34,6 @@ interface transaction {
   updatedAt: Date;
   wallet: string;
 }
-
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -54,7 +52,6 @@ export interface TokenMetadata {
 }
 
 type searchField = "all" | "address" | "creator" | "name";
-
 /**
  * Description placeholder
  *
@@ -76,9 +73,7 @@ export default function Tokens() {
 
   // Filter & sort state
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchField, setSearchField] = useState<
-    "all" | "address" | "creator" | "name"
-  >("all");
+  const [searchField, setSearchField] = useState<searchField>("all");
   const [sortField, setSortField] = useState<
     "volume" | "createdAt" | "progress"
   >("volume");
@@ -91,8 +86,7 @@ export default function Tokens() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch list of tokens
   const fetchTokenList = useCallback(
@@ -244,7 +238,7 @@ export default function Tokens() {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100
+          container.scrollHeight - 100
       ) {
         fetchTokenList(page + 1, searchTerm, searchField, true);
       }
@@ -259,7 +253,6 @@ export default function Tokens() {
       }
     };
   }, [fetchTokenList, hasNext, page, searchField, searchTerm]);
-
 
   // Sort filtered tokens
   const sortedTokens = [...tokens].sort((a, b) => {
@@ -286,11 +279,11 @@ export default function Tokens() {
   });
 
   // Handle click events to prevent nested anchor navigation
-  const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
+  // const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   window.open(url, "_blank", "noopener,noreferrer");
+  // };
 
   // Loading skeleton component
   const TokenSkeleton = () => (
@@ -366,22 +359,23 @@ export default function Tokens() {
               </div>
             </div>
             {searchDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                {(["all", "address", "creator", "name"]as searchField[]).map(
+              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+                {(["all", "address", "creator", "name"] as searchField[]).map(
                   (field) => (
-                  <div
-                    key={field}
-                    onClick={() => searchChange(field)}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 capitalize ${field === "all"
-                      ? "rounded-t-xl"
-                      : field === "name"
-                        ? "rounded-b-xl"
-                        : ""
+                    <div
+                      key={field}
+                      onClick={() => searchChange(field)}
+                      className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                        field === "all"
+                          ? "rounded-t-xl"
+                          : field === "name"
+                          ? "rounded-b-xl"
+                          : ""
                       }`}
-                  >
-                    {field === "name" ? "Name/Symbol" : field}
-                  </div>
-                )
+                    >
+                      {field === "name" ? "Name/Symbol" : field}
+                    </div>
+                  )
                 )}
               </div>
             )}
@@ -411,12 +405,13 @@ export default function Tokens() {
                       setSortField(value as any);
                       setSortDropdownOpen(false);
                     }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${value === "volume"
-                      ? "rounded-t-xl"
-                      : value === "createdAt"
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                      value === "volume"
+                        ? "rounded-t-xl"
+                        : value === "createdAt"
                         ? "rounded-b-xl"
                         : ""
-                      }`}
+                    }`}
                   >
                     {label}
                   </div>
@@ -478,12 +473,16 @@ export default function Tokens() {
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
-            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-              } px-2 py-5 border border-white/10`}
+            ref={containerRef}
+            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl h-[55rem] overflow-y-auto ${
+              sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+            } px-2 py-5 border border-white/10`}
+            style={{ scrollbarWidth: "none" }}
           >
             <ul
-              className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-                }`}
+              className={`grid gap-6 z-10 relative ${
+                sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+              }`}
             >
               {sortedTokens.map((t, idx) => (
                 <div key={idx} className="flex flex-col">
@@ -496,8 +495,9 @@ export default function Tokens() {
                         >
                           {t.tokenImageId && (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${t.image?.path
-                                }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                t.image?.path
+                              }`}
                               alt={`${t.symbol} logo`}
                               className="w-14 h-14 rounded-lg flex-shrink-0"
                               crossOrigin=""
@@ -520,18 +520,18 @@ export default function Tokens() {
                             </p>
                           </div>
                         </Link>
-                        
+
                         {/* Website and Description - Outside of Link */}
                         <div className="flex flex-col gap-2">
                           {t.website && (
                             <p className="dark:text-white text-[#141313]/60">
                               Website:{" "}
-                              <button
-                                onClick={(e) => handleWebsiteClick(e, t.website!)}
-                                className="underline break-all text-[#147ABD] hover:text-[#0C8CE0] transition-colors"
+                              <span
+                                className="underline break-all"
+                                onClick={() => location.assign(`${t.website}`)}
                               >
                                 {t.website}
-                              </button>
+                              </span>
                             </p>
                           )}
 
@@ -544,7 +544,7 @@ export default function Tokens() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Stats */}
                       <div className="flex flex-col space-y-1 items-end">
                         <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
@@ -554,7 +554,8 @@ export default function Tokens() {
                               Loading...
                             </span>
                           ) : (
-                            ` $${volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"
+                            ` $${
+                              volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"
                             }`
                           )}
                         </p>
@@ -578,8 +579,9 @@ export default function Tokens() {
                     <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
                       {isLoadingMetrics
                         ? "Loading..."
-                        : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
-                        }%`}
+                        : `${
+                            curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
+                          }%`}
                     </p>
 
                     {(() => {
@@ -597,9 +599,11 @@ export default function Tokens() {
 
                       return (
                         <div
-                          className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                            } relative transition-all duration-500 ease-in-out ${isLoadingMetrics ? "bg-gray-600" : gradientClass
-                            }`}
+                          className={`h-full ${
+                            progress < 100 ? "rounded-l-full" : "rounded-full"
+                          } relative transition-all duration-500 ease-in-out ${
+                            isLoadingMetrics ? "bg-gray-600" : gradientClass
+                          }`}
                           style={{
                             width: `${isLoadingMetrics ? 0 : progress}%`,
                           }}

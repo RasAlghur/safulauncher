@@ -108,13 +108,13 @@ const TrendingTokens = () => {
         // Early return if no logs available
         if (!Array.isArray(logs) || logs.length === 0) {
           console.warn(`No transaction logs found for `);
-          trendingTokens.push({
-            token: {} as TokenMetadata,
-            marketCap: 0,
-            volume: 0,
-            priceChange: 0,
-            holders: 0,
-          });
+          // trendingTokens.push({
+          //   token: {} as TokenMetadata,
+          //   marketCap: 0,
+          //   volume: 0,
+          //   priceChange: 0,
+          //   holders: 0,
+          // });
           return;
         }
 
@@ -167,15 +167,21 @@ const TrendingTokens = () => {
           (net) => net > 0
         ).length;
 
-        logs.map((token) =>
-          trendingTokens.push({
-            token: token.token,
-            marketCap: totalMarketCap,
-            volume,
-            priceChange,
-            holders,
-          })
-        );
+        const seen = new Set();
+        [...logs].forEach((token) => {
+          const address = token.token.tokenAddress;
+
+          if (!seen.has(address)) {
+            seen.add(address);
+            trendingTokens.push({
+              token: token.token,
+              marketCap: totalMarketCap,
+              volume,
+              priceChange,
+              holders,
+            });
+          }
+        });
       } catch (e) {
         console.error(`Error fetching data for:`, e);
 

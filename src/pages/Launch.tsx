@@ -14,7 +14,12 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { ETH_USDT_PRICE_FEED, LAUNCHER_ABI, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
+import {
+  ETH_USDT_PRICE_FEED,
+  LAUNCHER_ABI,
+  PRICE_GETTER_ABI,
+  SAFU_LAUNCHER_CA,
+} from "../web3/config";
 import { ethers } from "ethers";
 import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -699,19 +704,15 @@ export default function Launch(): JSX.Element {
     functionName: "WETH",
   });
 
-  const {
-    data: latestETHPrice,
-    isLoading: isLoadingLatestETHPrice
-  } = useReadContract({
-    ...PRICE_GETTER_ABI,
-    functionName: "getLatestETHPrice",
-    args: [ETH_USDT_PRICE_FEED!],
-  });
+  const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
+    useReadContract({
+      ...PRICE_GETTER_ABI,
+      functionName: "getLatestETHPrice",
+      args: [ETH_USDT_PRICE_FEED!],
+    });
 
   const infoETHCurrentPrice =
-    isConnected && !isLoadingLatestETHPrice
-      ? Number(latestETHPrice) / 1e8
-      : 0;
+    isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
 
   const handleSubmit = useCallback(
     (e: FormEvent) => {
@@ -786,7 +787,7 @@ export default function Launch(): JSX.Element {
         formData.append("website", website);
         formData.append("description", description);
         formData.append("tokenCreator", result.from);
-        formData.append("createdAt", createdAt); // <–– here you use the block time
+        formData.append("createdAt", createdAt);
 
         const lastLog = result.logs[result.logs.length - 1];
         const topic1 = lastLog?.topics[1] ?? "";
@@ -796,8 +797,6 @@ export default function Launch(): JSX.Element {
         formData.append("tokenAddress", tokenAddress);
         if (logo) formData.append("logo", logo);
 
-        // const API = `https://safulauncher-production.up.railway.app`;
-        // const API = import.meta.env.VITE_API_BASE_URL;
         console.log("posting...");
         await base.post("token", formData);
         console.log("posting completed...");
@@ -928,6 +927,7 @@ export default function Launch(): JSX.Element {
     taxPercentsArray,
     uniV2Router,
     uniV2WETH,
+    infoETHCurrentPrice,
   ]);
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());

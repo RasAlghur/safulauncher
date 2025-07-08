@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { FaChevronDown, FaSearch } from "react-icons/fa";
 import logo from "../../assets/logo.png";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -6,6 +6,8 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import ThemeToggle from "../../lib/ThemeToggle";
 import { FiMenu, FiX } from "react-icons/fi";
 import { base } from "../../lib/api";
+import { debounce } from "lodash";
+import axios from "axios";
 
 import {
   pureGetLatestETHPrice,
@@ -87,21 +89,6 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch tokens
-  useEffect(() => {
-    const fetchTokens = async () => {
-      try {
-        const res = await base.get("/tokens", {
-          params: { includes: "image" },
-        });
-        setTokens(res.data.data.data);
-      } catch (error) {
-        console.error("Failed to fetch tokens:", error);
-      }
-    };
-    fetchTokens();
-  }, []);
-
   // Fetch ETH price
   useEffect(() => {
     (async () => {
@@ -148,23 +135,60 @@ const Navbar = () => {
     fetchMarketCaps();
   }, [tokens, ethPriceUSD]);
 
-  // Filter token suggestions
-  useEffect(() => {
-    const term = searchTerm.toLowerCase();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-    if (term && Array.isArray(tokens)) {
-      const results = tokens.filter((token) =>
-        [token.name, token.symbol, token.tokenCreator, token.tokenAddress].some(
-          (field) => field?.toLowerCase().includes(term)
-        )
-      );
-      setFilteredResults(results.slice(0, 5));
+  const searchToken = useCallback(async (text: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      if (!text.trim()) return;
+
+      const res = await base.get("tokens", {
+        params: { includes: "image", search: text, limit: 5 },
+        signal: controller.signal,
+      });
+
+      const { data } = res.data.data;
+      console.log(data);
+      setTokens(data);
+      setFilteredResults(data);
       setShowSuggestions(true);
-    } else {
+    } catch (error: unknown) {
+      if (
+        axios.isCancel(error) ||
+        (typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          (error as { name?: string }).name === "CanceledError")
+      ) {
+        // Request canceled
+      } else {
+        console.error("API Error:", error);
+      }
       setFilteredResults([]);
       setShowSuggestions(false);
     }
-  }, [searchTerm, tokens]);
+  }, []);
+
+  const debouncedFetch = useMemo(
+    () =>
+      debounce((query: string) => {
+        searchToken(query);
+      }, 300),
+    [searchToken]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedFetch(value);
+  };
 
   return (
     <>
@@ -250,10 +274,11 @@ const Navbar = () => {
               <div className="flex items-center dark:bg-[#071129] px-4 py-3 rounded-r-lg w-full bg-black/5">
                 <FaSearch className="dark:text-gray-400 text-[#141313]/40" />
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Search for tokens & profiles"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleChange}
                   onFocus={() => setShowSuggestions(true)}
                   className="ml-2 bg-transparent text-sm dark:text-white text-black dark:placeholder-gray-400 placeholder-[#141313]/40 outline-none w-full"
                 />

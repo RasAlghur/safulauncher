@@ -50,13 +50,11 @@ const PlatformStats = () => {
   // Fetch list of tokens
   useEffect(() => {
     (async () => {
-      // const response = await base.get("token", {
-      //   params: { includes: "image" },
-      // });
-      // const data = response.data.data.data;
-      // setTotalTokenCount([data]?.length);
-      // setTokens([data] as TokenMetadata[]);
-      setTokens([] as TokenMetadata[]);
+      const response = await base.get("token-all");
+      const data = response.data.data;
+      // console.log(response.data.data);
+      setTotalTokenCount([data]?.length);
+      setTokens([data] as TokenMetadata[]);
     })();
   }, []);
 
