@@ -61,54 +61,7 @@ const NotableBuys = () => {
           params: { ethAmt: ethPriceUSD },
         });
         const { recent, win } = request.data.data;
-        console.log(recent, win);
-
-        // Get unique token addresses to avoid duplicate calls
-        // const uniqueAddresses = Array.from(
-        //   new Set(
-        //     [...recent, ...win]
-        //       .map((tx: BuyTx) => tx.tokenAddress)
-        //       .filter((addr: string) => !!addr)
-        //   )
-        // );
-
-        // Fetch symbol for each unique address
-        // const symbolMap: Record<string, string> = {};
-        // await Promise.all(
-        //   uniqueAddresses.map(async (addr) => {
-        //     try {
-        //       const res = await base.get("token", {
-        //         params: { tokenAddress: addr },
-        //       });
-        //       symbolMap[addr] = res.data.data.data.symbol;
-        //     } catch (e) {
-        //       console.error(`Error fetching symbol for ${addr}:`, e);
-        //       symbolMap[addr] = addr.slice(0, 6);
-        //     }
-        //   })
-        // );
-
-        // // Map transactions to include tokenSymbol
-        // const recentWithSymbol: BuyTx[] = recent.map((tx: any) => ({
-        //   wallet: tx.wallet,
-        //   timestamp: tx.timestamp,
-        //   tokenAmount: tx.tokenAmount,
-        //   ethAmount: tx.ethAmount,
-        //   usdValue: tx.ethAmount * ethPriceUSD,
-        //   tokenAddress: tx.tokenAddress,
-        //   tokenSymbol: symbolMap[tx.tokenAddress],
-        // }));
-
-        // const winsWithSymbol: BuyTx[] = win.map((tx: any) => ({
-        //   wallet: tx.wallet,
-        //   timestamp: tx.timestamp,
-        //   tokenAmount: tx.tokenAmount,
-        //   ethAmount: tx.ethAmount,
-        //   usdValue: tx.ethAmount * ethPriceUSD,
-        //   tokenAddress: tx.tokenAddress,
-        //   tokenSymbol: symbolMap[tx.tokenAddress],
-        // }));
-
+        // console.log(recent, win);
         setAllBuys({ recent, wins: win });
       } catch (error) {
         console.error("Failed to load notable buys:", error);
