@@ -22,7 +22,12 @@ interface BuyTx {
   tokenAmount: string;
   ethAmount: string;
   usdValue: number;
-  tokenSymbol: string;
+  token: {
+    symbol: string;
+  };
+  tokenAddress: string;
+  txnHash: string;
+  type: string;
 }
 
 const NotableBuys = () => {
@@ -34,7 +39,7 @@ const NotableBuys = () => {
   const [activeTab, setActiveTab] = useState<"buys" | "wins">("buys");
   const [loading, setLoading] = useState(true);
 
-  // 1) load ETH price
+  // Load ETH price
   useEffect(() => {
     pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
       .then((raw) => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
@@ -42,6 +47,7 @@ const NotableBuys = () => {
       .catch(() => console.error("Failed to fetch ETH price"));
   }, []);
 
+  // Fetch recent buys & wins, then fetch unique token symbols
   useEffect(() => {
     if (!ethPriceUSD) {
       setLoading(true);
@@ -54,11 +60,59 @@ const NotableBuys = () => {
         const request = await base.get("recent-and-win", {
           params: { ethAmt: ethPriceUSD },
         });
+        const { recent, win } = request.data.data;
+        console.log(recent, win);
 
-        const response = request.data.data;
-        setAllBuys({ recent: response.recent, wins: response.win });
+        // Get unique token addresses to avoid duplicate calls
+        // const uniqueAddresses = Array.from(
+        //   new Set(
+        //     [...recent, ...win]
+        //       .map((tx: BuyTx) => tx.tokenAddress)
+        //       .filter((addr: string) => !!addr)
+        //   )
+        // );
+
+        // Fetch symbol for each unique address
+        // const symbolMap: Record<string, string> = {};
+        // await Promise.all(
+        //   uniqueAddresses.map(async (addr) => {
+        //     try {
+        //       const res = await base.get("token", {
+        //         params: { tokenAddress: addr },
+        //       });
+        //       symbolMap[addr] = res.data.data.data.symbol;
+        //     } catch (e) {
+        //       console.error(`Error fetching symbol for ${addr}:`, e);
+        //       symbolMap[addr] = addr.slice(0, 6);
+        //     }
+        //   })
+        // );
+
+        // // Map transactions to include tokenSymbol
+        // const recentWithSymbol: BuyTx[] = recent.map((tx: any) => ({
+        //   wallet: tx.wallet,
+        //   timestamp: tx.timestamp,
+        //   tokenAmount: tx.tokenAmount,
+        //   ethAmount: tx.ethAmount,
+        //   usdValue: tx.ethAmount * ethPriceUSD,
+        //   tokenAddress: tx.tokenAddress,
+        //   tokenSymbol: symbolMap[tx.tokenAddress],
+        // }));
+
+        // const winsWithSymbol: BuyTx[] = win.map((tx: any) => ({
+        //   wallet: tx.wallet,
+        //   timestamp: tx.timestamp,
+        //   tokenAmount: tx.tokenAmount,
+        //   ethAmount: tx.ethAmount,
+        //   usdValue: tx.ethAmount * ethPriceUSD,
+        //   tokenAddress: tx.tokenAddress,
+        //   tokenSymbol: symbolMap[tx.tokenAddress],
+        // }));
+
+        setAllBuys({ recent, wins: win });
       } catch (error) {
-        if (error) setAllBuys({ recent: [], wins: [] });
+        console.error("Failed to load notable buys:", error);
+        setAllBuys({ recent: [], wins: [] });
       } finally {
         setLoading(false);
       }
@@ -123,11 +177,11 @@ const NotableBuys = () => {
                 <span className="dark:text-white text-[#141313]/50">
                   bought
                 </span>
+                {/* Display symbol instead of address */}
                 <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
-                  {tx.tokenSymbol}
+                  {tx.token.symbol}
                 </span>
                 <span className="dark:text-white text-[#141313]/50">
-                  {" "}
                   with{" "}
                   <span className="dark:text-white text-[#141313] font-medium">
                     ${tx?.usdValue.toFixed(0)}
@@ -141,7 +195,6 @@ const NotableBuys = () => {
           </div>
         ))}
 
-        {/* Empty state */}
         {activeData.length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400">
             Not found.

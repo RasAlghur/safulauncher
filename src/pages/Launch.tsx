@@ -787,7 +787,7 @@ export default function Launch(): JSX.Element {
         formData.append("website", website);
         formData.append("description", description);
         formData.append("tokenCreator", result.from);
-        formData.append("createdAt", createdAt); // <–– here you use the block time
+        formData.append("createdAt", createdAt);
 
         const lastLog = result.logs[result.logs.length - 1];
         const topic1 = lastLog?.topics[1] ?? "";

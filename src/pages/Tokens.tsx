@@ -3,7 +3,6 @@
 import axios from "axios";
 import { debounce } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BsChevronDown } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import "../App.css";
 import DustParticles from "../components/generalcomponents/DustParticles";
@@ -16,6 +15,8 @@ import {
   pureGetLatestETHPrice,
   pureInfoDataRaw,
 } from "../web3/readContracts";
+import Advertisement from "../components/generalcomponents/Advertisement";
+import { BsChevronDown } from "react-icons/bs";
 
 interface transaction {
   id: string;
@@ -277,6 +278,13 @@ export default function Tokens() {
       : (bVal as number) - (aVal as number);
   });
 
+  // Handle click events to prevent nested anchor navigation
+  // const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   window.open(url, "_blank", "noopener,noreferrer");
+  // };
+
   // Loading skeleton component
   const TokenSkeleton = () => (
     <div className="rounded-xl lg:px-6 px-2 py-5 animate-pulse">
@@ -300,18 +308,20 @@ export default function Tokens() {
   );
 
   return (
-    <div className=" text-white">
+    <div className=" ">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
           <DustParticles key={i} />
         ))}
       </div>
-      <div className="pt-40 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+
+      <div className="pt-24 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+        <Advertisement />
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center mb-10 z-10 relative">
+        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
           Launched Tokens
           {isLoadingMetrics && (
             <span className="ml-2 text-sm text-gray-500">
@@ -336,7 +346,7 @@ export default function Tokens() {
         />
 
         {/* Controls */}
-        <div className="flex flex-wrap gap-4 justify-center mb-10 z-10 relative">
+        <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
           {/* Search Field Dropdown */}
           <div className="relative w-full sm:w-[250px]">
             <div
@@ -383,7 +393,7 @@ export default function Tokens() {
               </div>
             </div>
             {sortDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                 {[
                   { value: "volume", label: "24h Volume (USD)" },
                   { value: "progress", label: "Curve Progress" },
@@ -395,7 +405,7 @@ export default function Tokens() {
                       setSortField(value as any);
                       setSortDropdownOpen(false);
                     }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
                       value === "volume"
                         ? "rounded-t-xl"
                         : value === "createdAt"
@@ -426,13 +436,13 @@ export default function Tokens() {
               </div>
             </div>
             {orderDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                 <div
                   onClick={() => {
                     setSortOrder("desc");
                     setOrderDropdownOpen(false);
                   }}
-                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-t-xl"
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
                 >
                   High → Low / New → Old
                 </div>
@@ -441,7 +451,7 @@ export default function Tokens() {
                     setSortOrder("asc");
                     setOrderDropdownOpen(false);
                   }}
-                  className="px-4 py-2 cursor-pointer hover:bg-Primary rounded-b-xl"
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
                 >
                   Low → High / Old → New
                 </div>
@@ -478,35 +488,41 @@ export default function Tokens() {
                 <div key={idx} className="flex flex-col">
                   <li className="rounded-xl lg:px-6 px-2 py-5 ">
                     <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                      <Link
-                        to={`/trade/${t.tokenAddress}`}
-                        className="flex items-start gap-4"
-                      >
-                        {t.tokenImageId && (
-                          <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}${
-                              t.image?.path
-                            }`}
-                            alt={`${t.symbol} logo`}
-                            className="w-14 h-14 rounded-lg"
-                            crossOrigin=""
-                          />
-                        )}
-                        <div>
-                          <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
-                            {t.name} ({t.symbol})
-                          </h3>
-                          <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
-                            Created by:{" "}
-                            <span className="text-[#147ABD]">
-                              {t.tokenCreator.slice(0, 6)}...
-                              {t.tokenCreator.slice(-4)}
-                            </span>
-                          </p>
-                          <p className="dark:text-gray-500 text-[#141313] mb-2.5">
-                            Address: {t.tokenAddress.slice(0, 6)}...
-                            {t.tokenAddress.slice(-4)}
-                          </p>
+                      <div className="flex items-start gap-4">
+                        <Link
+                          to={`/trade/${t.tokenAddress}`}
+                          className="flex items-start gap-4 min-w-0"
+                        >
+                          {t.tokenImageId && (
+                            <img
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                t.image?.path
+                              }`}
+                              alt={`${t.symbol} logo`}
+                              className="w-14 h-14 rounded-lg flex-shrink-0"
+                              crossOrigin=""
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                              {t.name} ({t.symbol})
+                            </h3>
+                            <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
+                              Created by:{" "}
+                              <span className="text-[#147ABD]">
+                                {t.tokenCreator.slice(0, 6)}...
+                                {t.tokenCreator.slice(-4)}
+                              </span>
+                            </p>
+                            <p className="dark:text-gray-500 text-[#141313] mb-2.5">
+                              Address: {t.tokenAddress.slice(0, 6)}...
+                              {t.tokenAddress.slice(-4)}
+                            </p>
+                          </div>
+                        </Link>
+
+                        {/* Website and Description - Outside of Link */}
+                        <div className="flex flex-col gap-2">
                           {t.website && (
                             <p className="dark:text-white text-[#141313]/60">
                               Website:{" "}
@@ -527,7 +543,8 @@ export default function Tokens() {
                             )}
                           </div>
                         </div>
-                      </Link>
+                      </div>
+
                       {/* Stats */}
                       <div className="flex flex-col space-y-1 items-end">
                         <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
@@ -554,7 +571,6 @@ export default function Tokens() {
                             </p>
                           )}
                         </div>
-                        {/* Progress Bar */}
                       </div>
                     </div>
                   </li>
