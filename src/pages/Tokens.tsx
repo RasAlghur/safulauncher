@@ -308,7 +308,7 @@ export default function Tokens() {
   );
 
   return (
-    <div className=" ">
+    <div className="mountain ">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(2)].map((_, i) => (
@@ -473,11 +473,9 @@ export default function Tokens() {
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
-            ref={containerRef}
-            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl h-[55rem] overflow-y-auto ${
+            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
               sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
             } px-2 py-5 border border-white/10`}
-            style={{ scrollbarWidth: "none" }}
           >
             <ul
               className={`grid gap-6 z-10 relative ${
@@ -488,50 +486,46 @@ export default function Tokens() {
                 <div key={idx} className="flex flex-col">
                   <li className="rounded-xl lg:px-6 px-2 py-5 ">
                     <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                      <div className="flex items-start gap-4">
-                        <Link
-                          to={`/trade/${t.tokenAddress}`}
-                          className="flex items-start gap-4 min-w-0"
-                        >
-                          {t.tokenImageId && (
-                            <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                t.image?.path
-                              }`}
-                              alt={`${t.symbol} logo`}
-                              className="w-14 h-14 rounded-lg flex-shrink-0"
-                              crossOrigin=""
-                            />
-                          )}
-                          <div className="min-w-0">
-                            <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
-                              {t.name} ({t.symbol})
-                            </h3>
-                            <p className="text-sm dark:text-gray-400 text-[#147ABD] mb-2.5">
-                              Created by:{" "}
-                              <span className="text-[#147ABD]">
-                                {t.tokenCreator.slice(0, 6)}...
-                                {t.tokenCreator.slice(-4)}
-                              </span>
-                            </p>
-                            <p className="dark:text-gray-500 text-[#141313] mb-2.5">
-                              Address: {t.tokenAddress.slice(0, 6)}...
-                              {t.tokenAddress.slice(-4)}
-                            </p>
-                          </div>
-                        </Link>
-
-                        {/* Website and Description - Outside of Link */}
-                        <div className="flex flex-col gap-2">
+                      <Link
+                        to={`/trade/${t.tokenAddress}`}
+                        className="flex items-start gap-4"
+                      >
+                        {t.tokenImageId && (
+                          <img
+                            src={`${import.meta.env.VITE_API_BASE_URL}${
+                              t.image?.path
+                            }`}
+                            alt={`${t.symbol} logo`}
+                            className="w-14 h-14 rounded-lg"
+                            crossOrigin=""
+                          />
+                        )}
+                        <div>
+                          <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                            {t.name} ({t.symbol})
+                          </h3>
+                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#147ABD] mb-2.5">
+                            Created by:{" "}
+                            <span className="text-[#147ABD]">
+                              {t.tokenCreator.slice(0, 6)}...
+                              {t.tokenCreator.slice(-4)}
+                            </span>
+                          </p>
+                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
+                            Address: {t.tokenAddress.slice(0, 6)}...
+                            {t.tokenAddress.slice(-4)}
+                          </p>
                           {t.website && (
-                            <p className="dark:text-white text-[#141313]/60">
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]/60">
                               Website:{" "}
-                              <span
+                              <a
+                                href={t.website}
                                 className="underline break-all"
-                                onClick={() => location.assign(`${t.website}`)}
+                                target="_blank"
+                                rel="noopener noreferrer"
                               >
                                 {t.website}
-                              </span>
+                              </a>
                             </p>
                           )}
 
@@ -543,8 +537,7 @@ export default function Tokens() {
                             )}
                           </div>
                         </div>
-                      </div>
-
+                      </Link>
                       {/* Stats */}
                       <div className="flex flex-col space-y-1 items-end">
                         <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
@@ -571,12 +564,13 @@ export default function Tokens() {
                             </p>
                           )}
                         </div>
+                        {/* Progress Bar */}
                       </div>
                     </div>
                   </li>
 
-                  <div className="w-full max-w-[40rem] bg-[#040a1a] h-10 rounded-full overflow-hidden relative mt-auto p-1.5">
-                    <p className="absolute inset-0 text-center text-white text-[13px] font-semibold z-10 flex items-center justify-center">
+                  <div className="w-full max-w-[40rem] bg-[#031E51] h-[35px] rounded-full overflow-hidden relative mt-auto p-1.5">
+                    <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
                       {isLoadingMetrics
                         ? "Loading..."
                         : `${
@@ -612,7 +606,7 @@ export default function Tokens() {
                             Array.from({ length: 20 }).map((_, i) => (
                               <div
                                 key={i}
-                                className="bg-[#040a1a] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                                className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
                                 style={{ left: `${31 * (i + 1)}px` }}
                               ></div>
                             ))}

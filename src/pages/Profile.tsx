@@ -24,7 +24,7 @@ const Profile = () => {
   ];
 
   return (
-    <div className="px-4 relative">
+    <div className="px-4 relative mountain">
       <Navbar />
 
       {/* Background Glow */}
