@@ -39,21 +39,6 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tokens] = useState<TokenMetadata[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const res = await base.get("/tokens", {
-  //         params: { include: "image" },
-  //       });
-  //       const data = res.data as { data: TokenMetadata[] };
-  //       console.log("TOKEN RESPONSE:", data.data.data);
-  //       setTokens(data.data);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   })();
-  // }, []);
-
   return (
     <TokenContext.Provider value={{ tokens, searchTerm, setSearchTerm }}>
       {children}

@@ -54,9 +54,7 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
 
   useEffect(() => {
     (async () => {
-      const response = await base.get("token", {
-        params: { includes: "image" },
-      });
+      const response = await base.get("tokens?includes=image");
       const data = response.data.data.data;
       setTotalTokenCount([data]?.length);
       setTokens([data] as TokenMetadata[]);

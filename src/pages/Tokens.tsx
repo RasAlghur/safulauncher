@@ -1,21 +1,38 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/pages/Tokens.tsx
-import { useEffect, useState } from "react";
-import type { ChangeEvent } from "react";
+import axios from "axios";
+import { debounce } from "lodash";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BsChevronDown } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import "../App.css";
-import {
-  pureInfoDataRaw,
-  pureGetLatestETHPrice,
-  pureAmountOutMarketCap,
-} from "../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../web3/config";
-import Navbar from "../components/launchintro/Navbar";
-import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
+import Footer from "../components/generalcomponents/Footer";
+import Navbar from "../components/launchintro/Navbar";
 import { base } from "../lib/api";
-import { BsChevronDown } from "react-icons/bs";
+import { ETH_USDT_PRICE_FEED } from "../web3/config";
+import {
+  pureAmountOutMarketCap,
+  pureGetLatestETHPrice,
+  pureInfoDataRaw,
+} from "../web3/readContracts";
 
+interface transaction {
+  id: string;
+  bundleIndex: number;
+  createdAt: Date;
+  ethAmount: string | number;
+  isBundleTransaction: boolean;
+  oldMarketCap: number;
+  originalTxnHash: string;
+  timestamp: Date;
+  tokenAddress: string;
+  tokenAmount: string | number;
+  txnHash: string;
+  type: string;
+  updatedAt: Date;
+  wallet: string;
+}
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -23,6 +40,7 @@ export interface TokenMetadata {
   description?: string;
   tokenAddress: string;
   tokenCreator: string;
+  transactions: transaction[];
   tokenImageId?: string;
   image?: {
     name: string;
@@ -32,6 +50,7 @@ export interface TokenMetadata {
   expiresAt?: string;
 }
 
+type searchField = "all" | "address" | "creator" | "name";
 /**
  * Description placeholder
  *
@@ -53,9 +72,7 @@ export default function Tokens() {
 
   // Filter & sort state
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchField, setSearchField] = useState<
-    "all" | "address" | "creator" | "name"
-  >("all");
+  const [searchField, setSearchField] = useState<searchField>("all");
   const [sortField, setSortField] = useState<
     "volume" | "createdAt" | "progress"
   >("volume");
@@ -63,26 +80,86 @@ export default function Tokens() {
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
+  const [hasNext, setHasNext] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(1);
 
-  // const API = import.meta.env.VITE_API_BASE_URL;
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch list of tokens
-  useEffect(() => {
-    (async () => {
+  const fetchTokenList = useCallback(
+    async (pageNum = 1, query = "", searchTerm = "all", append = false) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
         setIsLoadingTokens(true);
-        const res = await await base.get("tokens", {
-          params: { include: "image" },
-        });
-        console.log(res.data.data.data);
-        setTokens(res.data.data.data);
+        const res = await base.get(
+          `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        const apiData = res.data.data;
+
+        // console.log(res.data);
+
+        setHasNext(apiData.hasNextPage);
+        setPage(pageNum);
+        setTokens((prev) =>
+          append ? [...prev, ...apiData.data] : apiData.data
+        );
       } catch (error) {
-        console.log(error);
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          // Request canceled
+        } else {
+          console.error("API Error:", error);
+        }
       } finally {
         setIsLoadingTokens(false);
       }
-    })();
-  }, []);
+    },
+    []
+  );
+
+  const debouncedFetch = useMemo(
+    () =>
+      debounce((query: string, searchTerm: searchField) => {
+        fetchTokenList(1, query, searchTerm, false);
+      }, 300),
+    [fetchTokenList]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedFetch(value, searchField);
+  };
+
+  const searchChange = (field: searchField) => {
+    setSearchField(field);
+    setSearchDropdownOpen(false);
+    debouncedFetch(searchTerm, field);
+  };
+
+  // Initial fetch or search
+  useEffect(() => {
+    fetchTokenList(1, searchTerm, searchField, false);
+    // Reset page and hasNext on new search
+    setPage(1);
+    setHasNext(true);
+  }, [fetchTokenList, searchField, searchTerm]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -131,18 +208,11 @@ export default function Tokens() {
             }
 
             // Fetch transaction logs
-
-            const res = await base.get("transactions", {
-              params: { tokenAddress: token.tokenAddress },
-            });
-            const logs: { ethAmount: string; timestamp: string }[] =
-              res.data.data.data;
-
-            console.log({ logs });
+            const logs = token.transactions;
 
             const volEth = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= since24h)
-              .reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+              .reduce((sum, tx) => sum + parseFloat(String(tx.ethAmount)), 0);
             newVolume[token.tokenAddress] = volEth * ethPriceUSD;
           } catch (e) {
             console.error(`Error for ${token.tokenAddress}:`, e);
@@ -159,33 +229,32 @@ export default function Tokens() {
     fetchTokenMetrics();
   }, [tokens, ethPriceUSD]);
 
-  // Filter tokens based on search state
-  const filtered = tokens.filter((token) => {
-    const term = searchTerm.toLowerCase();
-    if (!term) return true;
-    switch (searchField) {
-      case "address":
-        return token.tokenAddress.toLowerCase().includes(term);
-      case "creator":
-        return token.tokenCreator.toLowerCase().includes(term);
-      case "name":
-        return (
-          token.name.toLowerCase().includes(term) ||
-          token.symbol.toLowerCase().includes(term)
-        );
-      case "all":
-      default:
-        return [
-          token.tokenAddress,
-          token.tokenCreator,
-          token.name,
-          token.symbol,
-        ].some((field) => field.toLowerCase().includes(term));
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = containerRef.current;
+      if (
+        container &&
+        hasNext &&
+        container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 100
+      ) {
+        fetchTokenList(page + 1, searchTerm, searchField, true);
+      }
+    };
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
     }
-  });
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [fetchTokenList, hasNext, page, searchField, searchTerm]);
 
   // Sort filtered tokens
-  const sortedTokens = [...filtered].sort((a, b) => {
+  const sortedTokens = [...tokens].sort((a, b) => {
     let aVal: number | Date = 0;
     let bVal: number | Date = 0;
     if (sortField === "volume") {
@@ -255,9 +324,8 @@ export default function Tokens() {
           type="text"
           placeholder="Search tokens..."
           value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setSearchTerm(e.target.value)
-          }
+          ref={inputRef}
+          onChange={handleChange}
           className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20 
              border border-[#E5E7EB] flex justify-center
              px-4 py-2 rounded-full 
@@ -282,24 +350,23 @@ export default function Tokens() {
             </div>
             {searchDropdownOpen && (
               <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
-                {["all", "address", "creator", "name"].map((field) => (
-                  <div
-                    key={field}
-                    onClick={() => {
-                      setSearchField(field as any);
-                      setSearchDropdownOpen(false);
-                    }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
-                      field === "all"
-                        ? "rounded-t-xl"
-                        : field === "name"
-                        ? "rounded-b-xl"
-                        : ""
-                    }`}
-                  >
-                    {field === "name" ? "Name/Symbol" : field}
-                  </div>
-                ))}
+                {(["all", "address", "creator", "name"] as searchField[]).map(
+                  (field) => (
+                    <div
+                      key={field}
+                      onClick={() => searchChange(field)}
+                      className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                        field === "all"
+                          ? "rounded-t-xl"
+                          : field === "name"
+                          ? "rounded-b-xl"
+                          : ""
+                      }`}
+                    >
+                      {field === "name" ? "Name/Symbol" : field}
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
@@ -396,9 +463,11 @@ export default function Tokens() {
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
-            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+            ref={containerRef}
+            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl h-[55rem] overflow-y-auto ${
               sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
             } px-2 py-5 border border-white/10`}
+            style={{ scrollbarWidth: "none" }}
           >
             <ul
               className={`grid gap-6 z-10 relative ${
@@ -441,14 +510,12 @@ export default function Tokens() {
                           {t.website && (
                             <p className="dark:text-white text-[#141313]/60">
                               Website:{" "}
-                              <a
-                                href={t.website}
+                              <span
                                 className="underline break-all"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                onClick={() => location.assign(`${t.website}`)}
                               >
                                 {t.website}
-                              </a>
+                              </span>
                             </p>
                           )}
 

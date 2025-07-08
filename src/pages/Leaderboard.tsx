@@ -87,9 +87,7 @@ export default function Leaderboard() {
         setEthPriceUSD(price);
 
         // Fetch token metadata map
-        const tokensRes = await base.get("tokens", {
-          params: { include: "image" },
-        });
+        const tokensRes = await base.get("tokens?include=image");
 
         const tokens: TokenMetadata[] = await tokensRes.data.data.data;
         const map: Record<string, TokenMetadata> = {};

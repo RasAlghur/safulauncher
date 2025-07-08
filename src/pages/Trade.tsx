@@ -817,9 +817,9 @@ export default function Trade() {
     if (!tokenAddress) return;
 
     try {
-      const response = await base.get("transactions", {
-        params: { tokenAddress },
-      });
+      const response = await base.get(
+        `transactions?tokenAddress=${tokenAddress}`
+      );
       const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
