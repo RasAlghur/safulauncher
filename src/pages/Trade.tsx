@@ -397,7 +397,6 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
-  console.log("infoData", infoData);
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[7]) : 0;
   const tokenSold = Array.isArray(infoData) ? Number(infoData[10]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;

@@ -1,4 +1,4 @@
-// // PlatformStats.tsx
+// PlatformStats.tsx
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -50,26 +50,47 @@ const PlatformStats = () => {
   // Fetch list of tokens
   useEffect(() => {
     (async () => {
-      const response = await base.get("token-all");
-      const data = response.data.data;
-      // console.log(response.data.data);
-      setTotalTokenCount([data]?.length);
-      setTokens([data] as TokenMetadata[]);
+      try {
+        const response = await base.get("token-all");
+        const data = response.data.data;
+        
+        // Handle the nested array structure
+        let flattenedTokens: TokenMetadata[] = [];
+        
+        if (Array.isArray(data)) {
+          // If data is an array of arrays, flatten it
+          flattenedTokens = data.flat();
+        } else if (data && typeof data === 'object') {
+          // If data is a single object, wrap it in an array
+          flattenedTokens = [data];
+        }
+        
+        setTotalTokenCount(flattenedTokens.length);
+        setTokens(flattenedTokens);
+      } catch (error) {
+        console.error("Error fetching tokens:", error);
+      }
     })();
   }, []);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) {
+      return;
+    }
 
     async function fetchTokenMetrics() {
       const newCurve: Record<string, number> = {};
 
+      
+      const validTokens = tokens.filter(token => token && token.tokenAddress);
+      
       await Promise.all(
-        tokens.map(async (token) => {
+        validTokens.map(async (token) => {
           try {
             // Fetch bonding curve data
             const info = await pureInfoDataRaw(token.tokenAddress);
+            
             if (Array.isArray(info)) {
               const supply = Number(info[7]);
               const sold = Number(info[10]);
@@ -136,10 +157,9 @@ const PlatformStats = () => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${
-          pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[0] !== undefined
+          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -152,10 +172,9 @@ const PlatformStats = () => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${
-          pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[1] !== undefined
+          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -183,7 +202,7 @@ const PlatformStats = () => {
     {
       id: 1,
       title: "Avg. Bonding",
-      mainValue: `${averageCurveProgress.toFixed(2) || 0}%`, // This doesn't seem to have a corresponding pureMetrics value
+      mainValue: `${averageCurveProgress.toFixed(2) || 0}%`,
       ethValue: "",
       icon: AverageBonding,
     },
@@ -203,7 +222,8 @@ const PlatformStats = () => {
     },
     {
       id: 4,
-      mainValue: "234", // This doesn't seem to have a corresponding pureMetrics value
+      title: "SAFU Holders",
+      mainValue: "234",
       ethValue: "",
       icon: SafuHolders,
     },
@@ -215,10 +235,9 @@ const PlatformStats = () => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${
-          pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-            : 0
+        `${pureMetrics[6] !== undefined
+          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -300,15 +319,12 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     {stat.mainValue}
                   </div>
-                  {/* Title */}
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
-                  {/* ETH value in brackets (only for ETH-related stats) */}
                   {stat.ethValue && (
                     <div className="text-sm dark:text-white/60 text-black/60 font-medium">
                       {stat.ethValue}
@@ -332,15 +348,12 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     {stat.mainValue}
                   </div>
-                  {/* Title */}
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
-                  {/* ETH value in brackets (only for ETH-related stats) */}
                   {stat.ethValue && (
                     <div className="text-sm dark:text-white/60 text-black/60 font-medium">
                       {stat.ethValue}
@@ -365,15 +378,12 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4">
                     <Icon className="w-full h-full" />
                   </div>
-                  {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     {stat.mainValue}
                   </div>
-                  {/* Title */}
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>
-                  {/* ETH value in brackets (only for ETH-related stats) */}
                   {stat.ethValue && (
                     <div className="text-sm dark:text-white/60 text-black/60 font-medium">
                       {stat.ethValue}
