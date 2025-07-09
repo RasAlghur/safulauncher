@@ -397,7 +397,6 @@ export default function Trade() {
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
-  console.log("infoData", infoData);
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[7]) : 0;
   const tokenSold = Array.isArray(infoData) ? Number(infoData[10]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
@@ -1132,7 +1131,7 @@ export default function Trade() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative mountain">
       <Navbar />
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         {[...Array(3)].map((_, i) => (
@@ -1538,7 +1537,16 @@ export default function Trade() {
               </div>
 
               {/* Styled progress bar with dynamic gradient */}
-              <div className="bg-[#031E51] h-10 rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden">
+              <div className="bg-[#031E51] h-[35px] rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden mb-4">
+                <p className="absolute right-4 top-2 text-white text-[13px] font-semibold z-10 flex items-center justify-end">
+                  {isLoadingInfoData ? (
+                    <span className="loading-text text-gray-400">
+                      Loading...
+                    </span>
+                  ) : (
+                    `${curvePercentClamped.toFixed(0)}%`
+                  )}
+                </p>
                 {(() => {
                   const progress = curveProgressMap[token.tokenAddress] || 0;
 

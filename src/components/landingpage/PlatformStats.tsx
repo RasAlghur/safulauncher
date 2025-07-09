@@ -23,10 +23,6 @@ import { base } from "../../lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface PlatformStatsProps {
-  ethPriceUSD?: number;
-}
-
 export interface TokenMetadata {
   name: string;
   symbol: string;
@@ -39,40 +35,62 @@ export interface TokenMetadata {
   expiresAt?: string;
 }
 
-const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
+const PlatformStats = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
-  const [currentETHPrice, setCurrentETHPrice] = useState<number>(
-    ethPriceUSD || 0
-  );
+  const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
 
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   // Add new state for aggregated data
   const [totalCurveProgress, setTotalCurveProgress] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
+  // Fetch list of tokens
   useEffect(() => {
     (async () => {
-      const response = await base.get("tokens?includes=image");
-      const data = response.data.data.data;
-      setTotalTokenCount([data]?.length);
-      setTokens([data] as TokenMetadata[]);
+      try {
+        const response = await base.get("token-all");
+        const data = response.data.data;
+
+        console.log("Raw API response:", data);
+
+        // Handle the nested array structure
+        let flattenedTokens: TokenMetadata[] = [];
+
+        if (Array.isArray(data)) {
+          // If data is an array of arrays, flatten it
+          flattenedTokens = data.flat();
+        } else if (data && typeof data === 'object') {
+          // If data is a single object, wrap it in an array
+          flattenedTokens = [data];
+        }
+
+        setTotalTokenCount(flattenedTokens.length);
+        setTokens(flattenedTokens);
+      } catch (error) {
+        console.error("Error fetching tokens:", error);
+      }
     })();
   }, []);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) {
+      return;
+    }
 
     async function fetchTokenMetrics() {
       const newCurve: Record<string, number> = {};
 
+      const validTokens = tokens.filter(token => token && token.tokenAddress);
+
       await Promise.all(
-        tokens.map(async (token) => {
+        validTokens.map(async (token) => {
           try {
             // Fetch bonding curve data
             const info = await pureInfoDataRaw(token.tokenAddress);
+
             if (Array.isArray(info)) {
               const supply = Number(info[7]);
               const sold = Number(info[10]);
@@ -105,21 +123,17 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
 
   // Fetch ETH price if not provided
   useEffect(() => {
-    if (!ethPriceUSD) {
-      async function fetchETHPrice() {
-        try {
-          const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
-          const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
-          setCurrentETHPrice(price);
-        } catch (error) {
-          console.error("Failed to fetch ETH price:", error);
-        }
+    async function fetchETHPrice() {
+      try {
+        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setCurrentETHPrice(price);
+      } catch (error) {
+        console.error("Failed to fetch ETH price:", error);
       }
-      fetchETHPrice();
-    } else {
-      setCurrentETHPrice(ethPriceUSD);
     }
-  }, [ethPriceUSD]);
+    fetchETHPrice();
+  }, []);
 
   // Helper function to get USD value as main display
   const getMainValue = (ethValue: number, fallbackValue: string) => {
@@ -143,10 +157,9 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${
-          pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[0] !== undefined
+          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -158,10 +171,9 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${
-          pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+        `${pureMetrics[1] !== undefined
+          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
@@ -209,10 +221,9 @@ const PlatformStats = ({ ethPriceUSD }: PlatformStatsProps) => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${
-          pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-            : 0
+        `${pureMetrics[6] !== undefined
+          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+          : 0
         } ETH`
       ),
       ethValue: getETHDisplay(
