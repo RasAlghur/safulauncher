@@ -780,10 +780,12 @@ export default function Trade() {
             oldMarketCap: marketCapUSD,
           };
 
+          console.log("about to post to server");
           const response = await base.post(`transaction`, body, {
             headers: { "Content-Type": "application/json" },
           });
 
+          console.log("database response", response.data);
           socket.emit("newTransaction", body);
 
           if (response.status === 409) {
