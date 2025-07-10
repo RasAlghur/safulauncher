@@ -2,6 +2,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Loader from "./components/generalcomponents/Loader";
+import ChatWrapper from "./context/ChatWrapper";
 import "./App.css";
 
 // Lazy load pages
@@ -12,7 +13,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Tokens = lazy(() => import("./pages/Tokens"));
 const Trade = lazy(() => import("./pages/Trade"));
 const LaunchIntro = lazy(() => import("./pages/Launchintro"));
-const Chat = lazy(() => import("./pages/chat"));
 
 function App() {
   return (
@@ -28,7 +28,7 @@ function App() {
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/trade" element={<Trade />} />
             <Route path="/trade/:tokenAddress" element={<Trade />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route path="/chat/:tokenAddress" element={<ChatWrapper />} />
           </Routes>
         </Suspense>
       </main>
