@@ -1,13 +1,13 @@
 import {
+  useCallback,
   useEffect,
+  useRef,
   useState,
   type FormEventHandler,
-  useRef,
-  useCallback,
 } from "react";
-import { socket } from "../lib/socket";
-import { base } from "../lib/api";
 import { FaArrowDown } from "react-icons/fa";
+import { base } from "../lib/api";
+import { socket } from "../lib/socket";
 
 interface MessagePayload {
   id: string;
