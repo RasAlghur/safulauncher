@@ -40,6 +40,9 @@ import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { base } from "../lib/api";
 import { socket } from "../lib/socket";
+import Chat from "./chat";
+import { FaArrowDown, FaEthereum } from "react-icons/fa";
+import { RiArrowUpDownFill } from "react-icons/ri";
 
 /**
  * Description placeholder
@@ -1139,20 +1142,110 @@ export default function Trade() {
       <div className="lg:size-[30rem] lg:w-[55rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
       <div className="lg:size-[30rem] lg:w-[40rem] rounded-full bg-[#3BC3DB]/10 absolute top-[800px] -left-40 blur-3xl hidden dark:block"></div>
 
-      <div className="mx-auto pt-40 mb-20 px-4 lg:px-0 relative text-white max-w-[85rem]">
+      <div className="mx-auto pt-20 lg:pt-40 mb-20 px-4 lg:px-0 relative text-white max-w-[85rem]">
         <div className="lg:grid lg:grid-cols-[.4fr_.6fr] gap-10">
           {/* Left section */}
           <div>
-            <h1 className="text-2xl font-bold dark:text-white text-black font-raleway">
-              Trade {token.name}{" "}
-              <span className="dark:text-white/60 text-black/80">
-                ({token.symbol})
-              </span>
-            </h1>
-            <div className="grid mb-2.5 gap-4 mt-2.5 max-w-[30rem]">
+            {/* Heading and Admin Panel */}
+            <div>
+              {/* Admin Panel */}
+              {!isTokenCreator && (
+                <div className="relative mt-6">
+                  <div className="flex flex-col gap-3 md:grid grid-cols-2">
+                    <h1 className="text-2xl font-bold dark:text-white text-black font-raleway">
+                      Trade {token.name}{" "}
+                      <span className="dark:text-white/60 text-black/80">
+                        ({token.symbol})
+                      </span>
+                    </h1>
+
+                    <div className="flex gap-4 h-fit">
+                      {/* Add Whitelist Button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminPanel(!showAdminPanel)}
+                        disabled={isTransactionPending}
+                        className="p-[10px] rounded-[10px] text-[12px] font-raleway border dark:border-[#EA971C] dark:text-[#EA971C] dark:hover:bg-[#FFA726] border-[#FF0199] text-[#FF0199] hover:bg-[#FF0199] hover:text-white font-semibold transition-all disabled:opacity-50"
+                      >
+                        Add Whitelist
+                      </button>
+
+                      {/* Start Trading Button */}
+                      <button
+                        type="button"
+                        onClick={handleStartTrading}
+                        disabled={
+                          isTransactionPending ||
+                          isStartTrading === 1 ||
+                          isProcessingTxn
+                        }
+                        className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                      >
+                        {isStartTrading === 1
+                          ? "Trading Started"
+                          : "Start Trading"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Whitelist Pop-up */}
+                  {showAdminPanel && (
+                    <div className="absolute z-20 mt-4 p-5 w-full md:w-[450px] bg-white dark:bg-black border border-gray-500 rounded-xl shadow-xl space-y-4">
+                      {/* Close Icon */}
+                      <button
+                        onClick={() => setShowAdminPanel(false)}
+                        className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-white text-xl"
+                        aria-label="Close"
+                      >
+                        &times;
+                      </button>
+
+                      <h4 className="text-lg font-semibold dark:text-white text-black">
+                        Whitelist Management
+                      </h4>
+
+                      <div className="flex flex-col md:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={whitelistAddresses}
+                          onChange={(e) =>
+                            setWhitelistAddresses(e.target.value)
+                          }
+                          placeholder="Enter addresses separated by commas"
+                          disabled={isTransactionPending || isProcessingTxn}
+                          className="flex-1 w-full dark:bg-[#1d1d1d] bg-white dark:text-white text-black border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddToWhitelist}
+                          disabled={
+                            isTransactionPending ||
+                            !whitelistAddresses.trim() ||
+                            isProcessingTxn
+                          }
+                          className="px-4 py-2 bg-[#FFA726] hover:bg-[#e69500] text-white rounded-md disabled:opacity-50"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleDisableWhitelist}
+                        disabled={isTransactionPending || isProcessingTxn}
+                        className="w-full px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
+                      >
+                        Disable Whitelist
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="grid mb-2.5 gap-4 mt-2.5">
               {/* Token info */}
 
-              <div className="grid lg:grid-cols-2 mb-2.5 gap-4 mt-2.5 max-w-[30rem] ">
+              <div className="grid sm:grid-cols-2 mb-2.5 gap-4 mt-2.5  ">
                 <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                   <p className="dark:text-white text-black">
                     <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
@@ -1237,7 +1330,7 @@ export default function Trade() {
                 </div>
               </div>
 
-              <div className="max-w-[30rem] rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3">
+              <div className="rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3">
                 <h2 className="text-xl font-semibold dark:text-white text-black flex items-center font-raleway">
                   Volume Summary
                 </h2>
@@ -1273,88 +1366,9 @@ export default function Trade() {
               </div>
             </div>
 
-            {/* Admin Panel */}
-            {!isTokenCreator && (
-              <div className="rounded-xl max-w-[30rem] p-5 mt-6 space-y-4 dark:bg-white/5 bg-[#141313]/4 border border-white/10">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold dark:text-white text-black font-raleway">
-                    Admin Controls
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminPanel(!showAdminPanel)}
-                    disabled={isTransactionPending}
-                    className="text-sm px-4 py-2 bg-[#0C8CE0] hover:bg-[#1b95e0] text-white rounded-lg disabled:opacity-50 cursor-pointer"
-                  >
-                    {showAdminPanel ? "Hide" : "Show"} Controls
-                  </button>
-                </div>
-                {showAdminPanel && (
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="dark:text-white text-black font-medium mb-2">
-                        Trading Control
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={handleStartTrading}
-                        disabled={
-                          isTransactionPending ||
-                          isStartTrading === 1 ||
-                          isProcessingTxn
-                        }
-                        className="w-full px-4 py-2 bg-[#27AE60] hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
-                      >
-                        {isStartTrading === 1
-                          ? "Trading Started"
-                          : "Start Trading"}
-                      </button>
-                    </div>
-                    <div>
-                      <h4 className="dark:text-white text-black font-medium mb-2">
-                        Whitelist Management
-                      </h4>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          value={whitelistAddresses}
-                          onChange={(e) =>
-                            setWhitelistAddresses(e.target.value)
-                          }
-                          placeholder="Enter addresses separated by commas"
-                          disabled={isTransactionPending || isProcessingTxn}
-                          className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddToWhitelist}
-                          disabled={
-                            isTransactionPending ||
-                            !whitelistAddresses.trim() ||
-                            isProcessingTxn
-                          }
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleDisableWhitelist}
-                        disabled={isTransactionPending || isProcessingTxn}
-                        className="w-full px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
-                      >
-                        Disable Whitelist
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="top-section mt-4">
+            {/* <div className="top-section mt-4">
               <div className="trade-widget dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-2xl p-6 border border-white/10 max-w-[30rem] text-white space-y-4">
-                {/* Tabs */}
+             
                 <div className="flex space-x-6 text-lg font-medium border-b border-white/10 pb-2">
                   <button
                     type="button"
@@ -1382,7 +1396,7 @@ export default function Trade() {
                   </button>
                 </div>
 
-                {/* Balance */}
+           
                 {mode === "sell" && (
                   <div className="text-sm dark:text-white/70 text-black">
                     Balance:{" "}
@@ -1396,7 +1410,7 @@ export default function Trade() {
                   </div>
                 )}
 
-                {/* Form */}
+            
                 <div className="space-y-4">
                   <label className="block text-sm dark:text-white/70 text-black font-medium">
                     Amount ({mode === "buy" ? "ETH" : token.symbol})
@@ -1427,7 +1441,7 @@ export default function Trade() {
                     </button>
                   )}
 
-                  {/* Output */}
+                 
                   <div className="text-sm dark:text-white text-[#141313]">
                     {isLoadingAmountOutSelect ? (
                       <span className="italic dark:text-white/50 text-black/50">
@@ -1447,13 +1461,13 @@ export default function Trade() {
                     )}
                   </div>
 
-                  {/* Approval warning */}
+               
                   {mode === "sell" && needsApproval && (
                     <div className="text-xs text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
                       ⚠️ Approval required to sell tokens
                     </div>
                   )}
-                  {/* Submit Button */}
+             
                   <button
                     type="button"
                     onClick={handleButtonClick}
@@ -1473,7 +1487,6 @@ export default function Trade() {
                   </button>
                 </div>
 
-                {/* Messages */}
                 {isWritePending && (
                   <div className="text-sm text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
                     Please confirm the transaction in your wallet
@@ -1520,7 +1533,185 @@ export default function Trade() {
                   </div>
                 )}
               </div>
+            </div> */}
+
+            <div className="top-section mt-4">
+              <div className="trade-widget dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+                {/* Swap Interface */}
+                <div className="space-y-4">
+                  {/* SELL INPUT */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="md:text-lg dark:text-white text-black font-medium">
+                      Sell
+                    </label>
+                    <div className="flex items-center justify-between bg-black/20 dark:bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+                      <input
+                        type="number"
+                        id="amount-input"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.0"
+                        min="0"
+                        step="any"
+                        autoComplete="off"
+                        disabled={isTransactionPending}
+                        className="bg-transparent w-full text-lg focus:outline-none dark:text-white text-black placeholder-gray-400 "
+                      />
+                      <span className="ml-1 text-white font-raleway font-medium flex items-center gap-1">
+                        {mode === "buy" && <FaEthereum className="text-xl" />}
+                        {mode === "buy" ? "ETH" : token.symbol}
+                      </span>
+                    </div>
+                    {mode === "sell" && (
+                      <div className="flex justify-between items-center text-sm dark:text-white/70 text-black">
+                        <span>
+                          Balance:{" "}
+                          {isLoadingBalance ? (
+                            <span className="italic text-white/50">
+                              Loading...
+                            </span>
+                          ) : (
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
+                            }`
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleMaxClick}
+                          disabled={
+                            isTransactionPending ||
+                            isLoadingBalance ||
+                            !getBalance
+                          }
+                          className="bg-Primary font-medium text-sm px-2 py-1 flex items-center justify-center text-white rounded-full"
+                        >
+                          {isLoadingBalance ? "..." : "Max"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleMode(mode === "buy" ? "sell" : "buy")
+                      }
+                      className="group relative flex items-center justify-center size-12 rounded-full bg-black/40 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0] overflow-hidden"
+                    >
+                      <FaArrowDown className="text-xl text-white transition-opacity duration-300 group-hover:opacity-0 absolute" />
+
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ">
+                        <RiArrowUpDownFill className="text-2xl text-white " />
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* BUY OUTPUT */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="md:text-lg dark:text-white text-black font-medium">
+                      Buy
+                    </label>
+                    <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+                      <span className="text-lg">
+                        {isLoadingAmountOutSelect ? (
+                          <span className="italic text-white/50">
+                            Calculating...
+                          </span>
+                        ) : amountOutSelect ? (
+                          formatTokenAmount(
+                            Number(amountOutSelect.toString()) / 1e18,
+                            mode === "sell" ? 8 : 2
+                          )
+                        ) : (
+                          "0"
+                        )}
+                      </span>
+                      <span className="ml-1 font-raleway font-medium flex items-center gap-1">
+                        {mode === "sell" && <FaEthereum className="text-xl" />}
+                        {mode === "buy" ? token.symbol : "ETH"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Approval Warning */}
+                  {mode === "sell" && needsApproval && (
+                    <div className="text-xs text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                      ⚠️ Approval required to sell tokens
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <button
+                    type="button"
+                    onClick={handleButtonClick}
+                    className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                      isTransactionPending
+                        ? "opacity-60 cursor-not-allowed"
+                        : ""
+                    }`}
+                    disabled={
+                      isTransactionPending || !amount || parseFloat(amount) <= 0
+                    }
+                  >
+                    {getButtonText()}
+                    {isTransactionPending && (
+                      <span className="ml-2 animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    )}
+                  </button>
+
+                  {/* Transaction Status Messages */}
+                  {isWritePending && (
+                    <div className="text-sm text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                      Please confirm the transaction in your wallet
+                    </div>
+                  )}
+                  {isConfirming && (
+                    <div className="text-sm text-blue-400 bg-blue-500/10 p-2 rounded-md">
+                      Transaction submitted. Waiting for confirmation...
+                    </div>
+                  )}
+                  {isConfirmed && txHash && (
+                    <div className="status-message success">
+                      <p>
+                        {lastTxnType === "approval"
+                          ? "Approval confirmed! You can now sell tokens."
+                          : lastTxnType === "sell"
+                          ? "Sell transaction confirmed successfully!"
+                          : lastTxnType === "buy"
+                          ? "Buy transaction confirmed successfully!"
+                          : [
+                              "startTrading",
+                              "addToWhitelist",
+                              "disableWhitelist",
+                            ].includes(lastTxnType!)
+                          ? getAdminTxnMessage()
+                          : "Transaction confirmed successfully!"}
+                      </p>
+                      <p className="text-sm text-gray-300">
+                        Transaction: {txHash}
+                      </p>
+                    </div>
+                  )}
+                  {errorMsg && (
+                    <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-md">
+                      {errorMsg}
+                    </div>
+                  )}
+                  {error && (
+                    <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-md">
+                      Error:{" "}
+                      {"shortMessage" in (error as { shortMessage?: string })
+                        ? (error as { shortMessage?: string }).shortMessage
+                        : (error as Error).message}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+
             {/* )} */}
 
             {/* Progress Bar */}
@@ -1729,28 +1920,8 @@ export default function Trade() {
                     </table>
                   </div>
                 ) : (
-                  <div className="chat space-y-4">
-                    <h2 className="text-lg font-semibold dark:text-white text-black">
-                      Community Chat
-                    </h2>
-                    {/* <div
-                      id="chatBody"
-                      className="chat-body max-h-[300px] overflow-y-auto bg-[#0B132B]/30 p-3 rounded-lg border border-white/10"
-                    /> */}
-                    <div className="chat-input flex items-center gap-2 max-w-[30rem]">
-                      <input
-                        id="chatInput"
-                        placeholder="Type a message…"
-                        className="flex-1 bg-[#0B132B] text-white placeholder-white/40 px-4 py-2 rounded-lg border border-white/10"
-                      />
-                      <button
-                        type="button"
-                        id="sendBtn"
-                        className="bg-[#0C8CE0] hover:bg-[#0C8CE0]/80 text-white px-4 py-2 rounded-lg"
-                      >
-                        Send
-                      </button>
-                    </div>
+                  <div className="">
+                    <Chat />
                   </div>
                 )}
               </div>
