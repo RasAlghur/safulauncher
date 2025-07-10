@@ -1164,7 +1164,7 @@ export default function Trade() {
                 </h1>
 
                 {/* Conditional Admin Buttons */}
-                {!isTokenCreator && (
+                {isTokenCreator && (
                   <div className="flex gap-4 h-fit">
                     {/* Add Whitelist Button */}
                     <button
@@ -1196,7 +1196,7 @@ export default function Trade() {
               </div>
 
               {/* Whitelist Pop-up Panel */}
-              {!isTokenCreator && showAdminPanel && (
+              {isTokenCreator && showAdminPanel && (
                 <div className="relative">
                   <div className="absolute z-20 mt-4 p-5 w-full md:w-[450px] bg-white dark:bg-black border border-gray-500 rounded-xl shadow-xl space-y-4">
                     {/* Close Icon */}
@@ -1283,9 +1283,7 @@ export default function Trade() {
                       <div className="text-sm dark:text-white/70 text-black">
                         Balance:{" "}
                         {isLoadingUserETHBal ? (
-                          <span className="italic text-white/50">
-                            Loading...
-                          </span>
+                          <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                         ) : (
                           `${parseFloat(
                             userETHBalance?.formatted ?? "0"
@@ -1293,14 +1291,13 @@ export default function Trade() {
                         )}
                       </div>
                     )}
+
                     {mode === "sell" && (
                       <div className="flex justify-between items-center text-sm dark:text-white/70 text-black">
                         <span>
                           Balance:{" "}
                           {isLoadingBalance ? (
-                            <span className="italic text-white/50">
-                              Loading...
-                            </span>
+                            <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
                             `${parseFloat(tokenBalance).toLocaleString()} ${
                               token.symbol
@@ -1349,9 +1346,7 @@ export default function Trade() {
                     <div className="flex items-center justify-between dark:text-white text-black bg-black/10 dark:bg-white/5 px-4 py-3 rounded-xl border border-white/10">
                       <span className="text-lg">
                         {isLoadingAmountOutSelect ? (
-                          <span className="italic text-white/50">
-                            Calculating...
-                          </span>
+                          <span className="inline-block w-24 h-5 bg-white/20 animate-pulse rounded" />
                         ) : amountOutSelect ? (
                           formatTokenAmount(
                             Number(amountOutSelect.toString()) / 1e18,
@@ -1361,6 +1356,7 @@ export default function Trade() {
                           "0"
                         )}
                       </span>
+
                       <span className="ml-1 font-raleway font-medium flex items-center gap-1 dark:text-white text-black">
                         {mode === "sell" && <FaEthereum className="text-xl" />}
                         {mode === "buy" ? token.symbol : "ETH"}
@@ -1451,7 +1447,7 @@ export default function Trade() {
               <div className="progress-label dark:text-white text-[#141313]/90 font-medium text-lg font-raleway mb-2">
                 Bonding Curve Progress:{" "}
                 {isLoadingInfoData ? (
-                  <span className="loading-text text-gray-400">Loading...</span>
+                  <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                 ) : (
                   `${curvePercentClamped.toFixed(0)}%`
                 )}
@@ -1461,9 +1457,7 @@ export default function Trade() {
               <div className="bg-[#031E51] h-[35px] rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden mb-4">
                 <p className="absolute right-4 top-2 text-white text-[13px] font-semibold z-10 flex items-center justify-end">
                   {isLoadingInfoData ? (
-                    <span className="loading-text text-gray-400">
-                      Loading...
-                    </span>
+                    <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                   ) : (
                     `${curvePercentClamped.toFixed(0)}%`
                   )}
@@ -1628,9 +1622,11 @@ export default function Trade() {
                         <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
                           Token Price:
                         </span>{" "}
-                        {tokenPriceUSD > 0
-                          ? `$${tokenPriceUSD}`
-                          : "Calculating..."}
+                        {tokenPriceUSD > 0 ? (
+                          `$${tokenPriceUSD}`
+                        ) : (
+                          <span className="inline-block w-20 h-5 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
+                        )}
                       </p>
                     </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
@@ -1638,9 +1634,11 @@ export default function Trade() {
                         <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
                           Market Cap:
                         </span>{" "}
-                        {marketCapUSD > 0
-                          ? `$${formatTokenAmount(marketCapUSD)}`
-                          : "Calculating..."}
+                        {marketCapUSD > 0 ? (
+                          `$${formatTokenAmount(marketCapUSD)}`
+                        ) : (
+                          <span className="inline-block w-24 h-5 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
+                        )}
                       </p>
                     </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
