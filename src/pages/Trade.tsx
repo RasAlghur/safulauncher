@@ -205,6 +205,7 @@ function formatTokenAmount(
  */
 export default function Trade() {
   const { address, isConnected } = useAccount();
+
   const { data: userETHBalance, isLoading: isLoadingUserETHBal } = useBalance({
     address,
   });
@@ -1941,7 +1942,7 @@ export default function Trade() {
                   </div>
                 ) : (
                   <div className="">
-                    <Chat />
+                    <Chat address={address} tokenAddress={tokenAddress} />
                   </div>
                 )}
               </div>
