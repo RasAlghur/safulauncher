@@ -27,8 +27,11 @@ interface oldMessages {
   hasPrevPage: boolean;
   hasNextPage: boolean;
 }
-
-export default function Chat() {
+type prop = {
+  address: string | undefined;
+  tokenAddress: string | undefined;
+};
+export default function Chat({ address, tokenAddress }: prop) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<MessagePayload[]>([]);
   const [hasNextPage, setHasNextPage] = useState<boolean>(false);
@@ -36,17 +39,13 @@ export default function Chat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  //Note: this is just for styling purposes, you can replace it with your own user ID logic
-  // In a real application, you would get the user ID from your authentication system
-  const userId = socket.id || "user1"; // Fallback user ID if socket is not connected
-
   const onMessageSend: FormEventHandler<HTMLButtonElement> = async (e) => {
     e.preventDefault();
     if (message.trim() === "") return;
 
     const payload: Pick<MessagePayload, "groupId" | "text" | "userId"> = {
-      groupId: "default",
-      userId,
+      groupId: String(tokenAddress),
+      userId: String(address),
       text: message,
     };
 
@@ -62,8 +61,11 @@ export default function Chat() {
       socket.connect();
     }
 
+    // Join the group chat room
+    socket.emit("joinRoom", String(tokenAddress));
+
     const handleReceiveMessage = (msg: MessagePayload) => {
-      console.log("Received message:", msg);
+      // console.log("Received message:", msg);
       setMessages((prevMessages) => [...prevMessages, msg]);
     };
 
@@ -73,25 +75,28 @@ export default function Chat() {
       socket.off("recMessage", handleReceiveMessage);
       socket.disconnect();
     };
-  }, []);
+  }, [tokenAddress]);
 
-  const fetchMessages = async (page = 1, append = false) => {
-    const response = await base.get("community-chat", {
-      params: { page },
-    });
-    const { data } = response.data;
-    const oldMessages: oldMessages = data;
-    // console.log(oldMessages);
+  const fetchMessages = useCallback(
+    async (page = 1, append = false, groupId = tokenAddress) => {
+      const response = await base.get("community-chats", {
+        params: { page, groupId },
+      });
+      const { data } = response.data;
+      const oldMessages: oldMessages = data;
+      // console.log(oldMessages);
 
-    setHasNextPage(oldMessages.hasNextPage);
-    setCurrentPage(oldMessages.currentPage);
+      setHasNextPage(oldMessages.hasNextPage);
+      setCurrentPage(oldMessages.currentPage);
 
-    if (append) {
-      setMessages((prev) => [...oldMessages.data, ...prev]);
-    } else {
-      setMessages(oldMessages.data);
-    }
-  };
+      if (append) {
+        setMessages((prev) => [...oldMessages.data, ...prev]);
+      } else {
+        setMessages(oldMessages.data);
+      }
+    },
+    [tokenAddress]
+  );
 
   const scrollToBottom = () => {
     const container = chatContainerRef.current;
@@ -102,7 +107,7 @@ export default function Chat() {
 
   useEffect(() => {
     fetchMessages();
-  }, []);
+  }, [fetchMessages]);
 
   const initialLoad = useRef(true);
 
@@ -135,7 +140,7 @@ export default function Chat() {
         }
       }, 0);
     }
-  }, [hasNextPage, currentPage]);
+  }, [hasNextPage, currentPage, fetchMessages]);
 
   // Attach scroll event
   useEffect(() => {
@@ -156,7 +161,7 @@ export default function Chat() {
         style={{ scrollBehavior: "smooth", scrollbarWidth: "none" }}
       >
         {messages.map((msg, index) => {
-          const isUser = userId === msg.userId;
+          const isUser = address === msg.userId;
           const bubbleColor = isUser ? "bg-[#1E88E5]" : "bg-[#1A237E]";
           const bubbleAlign = isUser ? "items-end" : "items-start";
           const textAlign = isUser ? "text-right" : "text-left";
@@ -207,6 +212,7 @@ export default function Chat() {
 
         <button
           onClick={onMessageSend}
+          disabled={!address}
           className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
         >
           <FiSend />

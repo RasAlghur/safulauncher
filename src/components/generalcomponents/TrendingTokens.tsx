@@ -94,17 +94,35 @@ const TrendingTokens = () => {
       const sinceTime = getTimeRangeMs(selectedRange);
       try {
         // Get volume and price change data
-        const res = await base.get(`find-by-time`, {
-          params: { timestamp: sinceTime },
-        });
-        return res.data?.data || [];
+        const [Logs, messageCount] = await Promise.allSettled([
+          base.get(`find-by-time`, {
+            params: { timestamp: sinceTime },
+          }),
+
+          base.get(`message-count`, {
+            params: { timestamp: sinceTime },
+          }),
+        ]);
+        const tokenLogs = Logs.status === "fulfilled" ? Logs.value : null;
+        const count =
+          messageCount.status === "fulfilled" ? messageCount.value : null;
+
+        return {
+          token: tokenLogs?.data.data || [],
+          messageCount: count?.data.data || [],
+        };
       } catch (error) {
         console.log(error);
       }
     };
 
     async function fetchTrendingData() {
-      const logs: logs[] = await transactionByTime();
+      const result = await transactionByTime();
+
+      const logs: logs[] = result?.token;
+      const msgCount = result?.messageCount;
+
+      console.log(msgCount);
 
       try {
         // Early return if no logs available
@@ -128,92 +146,102 @@ const TrendingTokens = () => {
         });
 
         // Process each token individually
-        const tokenPromises = Object.entries(tokenGroups).map(async ([tokenAddress, tokenLogs]) => {
-          try {
-            // Get market cap for this token
-            const info = await pureInfoDataRaw(tokenAddress);
-            console.log("Fetching marketcap data for token:", tokenAddress);
+        const tokenPromises = Object.entries(tokenGroups).map(
+          async ([tokenAddress, tokenLogs]) => {
+            try {
+              // Get market cap for this token
+              const info = await pureInfoDataRaw(tokenAddress);
+              console.log("Fetching marketcap data for token:", tokenAddress);
 
-            let marketCap = 0;
-            if (Array.isArray(info)) {
-              const supply = Number(info[7]);
-              const rawAmt = await pureAmountOutMarketCap(tokenAddress);
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
-              marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
-            }
-            console.log(`Market cap for token ${tokenAddress} is ${marketCap}`);
-
-            // Calculate volume for this token
-            const volumeEth = tokenLogs.reduce(
-              (sum, tx) => sum + parseFloat(tx.ethAmount),
-              0
-            );
-            const volume = volumeEth * ethPriceUSD;
-
-            // Calculate price change for this token
-            let priceChange = 0;
-            if (tokenLogs.length > 0) {
-              // Sort by timestamp to get the earliest transaction
-              const sortedLogs = tokenLogs.sort((a, b) =>
-                parseInt(a.timestamp) - parseInt(b.timestamp)
-              );
-              const firstTx = sortedLogs[0];
-              const oldMC = parseFloat(firstTx.oldMarketCap);
-              if (oldMC > 0) {
-                priceChange = ((marketCap - oldMC) / oldMC) * 100;
+              let marketCap = 0;
+              if (Array.isArray(info)) {
+                const supply = Number(info[7]);
+                const rawAmt = await pureAmountOutMarketCap(tokenAddress);
+                const pricePerToken = rawAmt
+                  ? Number(rawAmt.toString()) / 1e18
+                  : 0;
+                marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               }
+              console.log(
+                `Market cap for token ${tokenAddress} is ${marketCap}`
+              );
+
+              // Calculate volume for this token
+              const volumeEth = tokenLogs.reduce(
+                (sum, tx) => sum + parseFloat(tx.ethAmount),
+                0
+              );
+              const volume = volumeEth * ethPriceUSD;
+
+              // Calculate price change for this token
+              let priceChange = 0;
+              if (tokenLogs.length > 0) {
+                // Sort by timestamp to get the earliest transaction
+                const sortedLogs = tokenLogs.sort(
+                  (a, b) => parseInt(a.timestamp) - parseInt(b.timestamp)
+                );
+                const firstTx = sortedLogs[0];
+                const oldMC = parseFloat(firstTx.oldMarketCap);
+                if (oldMC > 0) {
+                  priceChange = ((marketCap - oldMC) / oldMC) * 100;
+                }
+              }
+
+              // Calculate holders for this token
+              const balanceMap: Record<string, number> = {};
+              tokenLogs.forEach((tx) => {
+                const amt = parseFloat(tx.tokenAmount);
+                const w = tx.wallet.toLowerCase();
+                if (!balanceMap[w]) balanceMap[w] = 0;
+                // add on buys, subtract on sells
+                balanceMap[w] += tx.type === "buy" ? amt : -amt;
+              });
+
+              // Count only those wallets still holding >0 tokens
+              const holders = Object.values(balanceMap).filter(
+                (net) => net > 0
+              ).length;
+
+              // Get token metadata from the first log (they should all be the same)
+              const token = tokenLogs[0].token;
+
+              return {
+                token,
+                marketCap,
+                volume,
+                priceChange,
+                holders,
+              };
+            } catch (e) {
+              console.error(
+                `Error fetching data for token ${tokenAddress}:`,
+                e
+              );
+
+              // Return token with zero values on error
+              return {
+                token: tokenLogs[0]?.token || ({} as TokenMetadata),
+                marketCap: 0,
+                volume: 0,
+                priceChange: 0,
+                holders: 0,
+              };
             }
-
-            // Calculate holders for this token
-            const balanceMap: Record<string, number> = {};
-            tokenLogs.forEach((tx) => {
-              const amt = parseFloat(tx.tokenAmount);
-              const w = tx.wallet.toLowerCase();
-              if (!balanceMap[w]) balanceMap[w] = 0;
-              // add on buys, subtract on sells
-              balanceMap[w] += tx.type === "buy" ? amt : -amt;
-            });
-
-            // Count only those wallets still holding >0 tokens
-            const holders = Object.values(balanceMap).filter(
-              (net) => net > 0
-            ).length;
-
-            // Get token metadata from the first log (they should all be the same)
-            const token = tokenLogs[0].token;
-
-            return {
-              token,
-              marketCap,
-              volume,
-              priceChange,
-              holders,
-            };
-          } catch (e) {
-            console.error(`Error fetching data for token ${tokenAddress}:`, e);
-
-            // Return token with zero values on error
-            return {
-              token: tokenLogs[0]?.token || {} as TokenMetadata,
-              marketCap: 0,
-              volume: 0,
-              priceChange: 0,
-              holders: 0,
-            };
           }
-        });
+        );
 
         // Wait for all token data to be processed
         const processedTokens = await Promise.all(tokenPromises);
 
         // After you have `processedTokens: TrendingTokenData[]`
 
-        const mainValue = (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0);
+        const mainValue =
+          pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0;
         const usdValue = mainValue * ethPriceUSD;
 
         const volumeCrit = 0.04 * usdValue; // 4% of total volume
 
-        processedTokens.map(t => {
+        processedTokens.map((t) => {
           const meetsVolume = t.volume >= volumeCrit;
           const meetsHighGain = t.priceChange >= 100;
           const meetsHighLoss = t.priceChange <= -90;
@@ -233,22 +261,28 @@ const TrendingTokens = () => {
         //    • ≥ 4% of total volume
         //    • priceChange ≥ +100%
         //    • priceChange ≤ -90%
-        const filtered = processedTokens.filter(t =>
-          t.volume >= volumeCrit ||
-          t.priceChange >= 100 ||
-          t.priceChange <= -90
+
+        const filtered = processedTokens.filter(
+          (t) =>
+            t.volume >= volumeCrit ||
+            t.priceChange >= 100 ||
+            t.priceChange <= -90
         );
 
         // 3. Split into two tiers:
         //    • Tier 1: meets *both* volume AND price‑change criteria
         //    • Tier 2: meets *only one* of the criteria
-        const tier1 = filtered.filter(t =>
-          (t.volume >= volumeCrit) &&
-          (t.priceChange >= 100 || t.priceChange <= -90)
+        const tier1 = filtered.filter(
+          (t) =>
+            t.volume >= volumeCrit &&
+            (t.priceChange >= 100 || t.priceChange <= -90)
         );
-        const tier2 = filtered.filter(t =>
-          !((t.volume >= volumeCrit) &&
-            (t.priceChange >= 100 || t.priceChange <= -90))
+        const tier2 = filtered.filter(
+          (t) =>
+            !(
+              t.volume >= volumeCrit &&
+              (t.priceChange >= 100 || t.priceChange <= -90)
+            )
         );
 
         // 4. Sort *each* tier by descending volume
@@ -305,10 +339,11 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
-                ? "bg-[#1D223E] text-white"
-                : "text-gray-400 hover:text-white"
-                }`}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                range === selectedRange
+                  ? "bg-[#1D223E] text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
               {range}
             </button>
@@ -355,8 +390,9 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
-                                }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                data.token.image?.path
+                              }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -378,10 +414,11 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${data.priceChange < 0
-                          ? "text-red-500"
-                          : "text-green-400"
-                          }`}
+                        className={`p-3 font-semibold ${
+                          data.priceChange < 0
+                            ? "text-red-500"
+                            : "text-green-400"
+                        }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
