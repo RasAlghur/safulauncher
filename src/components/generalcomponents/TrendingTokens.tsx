@@ -5,6 +5,7 @@ import {
   pureInfoDataRaw,
   pureGetLatestETHPrice,
   pureAmountOutMarketCap,
+  pureMetrics,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import { base } from "../../lib/api";
@@ -104,7 +105,7 @@ const TrendingTokens = () => {
 
     async function fetchTrendingData() {
       const logs: logs[] = await transactionByTime();
-      
+
       try {
         // Early return if no logs available
         if (!Array.isArray(logs) || logs.length === 0) {
@@ -132,7 +133,7 @@ const TrendingTokens = () => {
             // Get market cap for this token
             const info = await pureInfoDataRaw(tokenAddress);
             console.log("Fetching marketcap data for token:", tokenAddress);
-            
+
             let marketCap = 0;
             if (Array.isArray(info)) {
               const supply = Number(info[7]);
@@ -153,7 +154,7 @@ const TrendingTokens = () => {
             let priceChange = 0;
             if (tokenLogs.length > 0) {
               // Sort by timestamp to get the earliest transaction
-              const sortedLogs = tokenLogs.sort((a, b) => 
+              const sortedLogs = tokenLogs.sort((a, b) =>
                 parseInt(a.timestamp) - parseInt(b.timestamp)
               );
               const firstTx = sortedLogs[0];
@@ -190,7 +191,7 @@ const TrendingTokens = () => {
             };
           } catch (e) {
             console.error(`Error fetching data for token ${tokenAddress}:`, e);
-            
+
             // Return token with zero values on error
             return {
               token: tokenLogs[0]?.token || {} as TokenMetadata,
@@ -204,14 +205,70 @@ const TrendingTokens = () => {
 
         // Wait for all token data to be processed
         const processedTokens = await Promise.all(tokenPromises);
-        
-        // Sort by volume (descending) and take top 10
-        const sortedTrending = processedTokens
-          .sort((a, b) => b.volume - a.volume)
-          .slice(0, 10);
 
-        setTrendingData(sortedTrending);
+        // After you have `processedTokens: TrendingTokenData[]`
+
+        const mainValue = (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0);
+        const usdValue = mainValue * ethPriceUSD;
+
+        const volumeCrit = 0.04 * usdValue; // 4% of total volume
+
+        processedTokens.map(t => {
+          const meetsVolume = t.volume >= volumeCrit;
+          const meetsHighGain = t.priceChange >= 100;
+          const meetsHighLoss = t.priceChange <= -90;
+
+          console.log(
+            `Token ${t.token.symbol} (${t.token.tokenAddress}):`,
+            `volume=${t.volume.toFixed(2)} (${meetsVolume ? "✔️" : "✖️"} ≥4%),`,
+            `Δ=${t.priceChange.toFixed(1)}%`,
+            meetsHighGain ? "✔️+100%" : "",
+            meetsHighLoss ? "✔️-90%" : ""
+          );
+
+          return { ...t, meetsVolume, meetsHighGain, meetsHighLoss };
+        });
+
+        // 2. Filter tokens that meet *any* of the criteria:
+        //    • ≥ 4% of total volume
+        //    • priceChange ≥ +100%
+        //    • priceChange ≤ -90%
+        const filtered = processedTokens.filter(t =>
+          t.volume >= volumeCrit ||
+          t.priceChange >= 100 ||
+          t.priceChange <= -90
+        );
+
+        // 3. Split into two tiers:
+        //    • Tier 1: meets *both* volume AND price‑change criteria
+        //    • Tier 2: meets *only one* of the criteria
+        const tier1 = filtered.filter(t =>
+          (t.volume >= volumeCrit) &&
+          (t.priceChange >= 100 || t.priceChange <= -90)
+        );
+        const tier2 = filtered.filter(t =>
+          !((t.volume >= volumeCrit) &&
+            (t.priceChange >= 100 || t.priceChange <= -90))
+        );
+
+        // 4. Sort *each* tier by descending volume
+        tier1.sort((a, b) => b.volume - a.volume);
+        tier2.sort((a, b) => b.volume - a.volume);
+
+        // 5. Concatenate tiers (tier1 first), and optionally take top N
+        const ranked = [...tier1, ...tier2].slice(0, 10);
+
+        // 6. Update state
+        setTrendingData(ranked);
         setLoading(false);
+
+        // // Sort by volume (descending) and take top 10
+        // const sortedTrending = processedTokens
+        //   .sort((a, b) => b.volume - a.volume)
+        //   .slice(0, 10);
+
+        // setTrendingData(sortedTrending);
+        // setLoading(false);
       } catch (e) {
         console.error(`Error in fetchTrendingData:`, e);
         setTrendingData([]);
@@ -248,11 +305,10 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange
-                  ? "bg-[#1D223E] text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
+                ? "bg-[#1D223E] text-white"
+                : "text-gray-400 hover:text-white"
+                }`}
             >
               {range}
             </button>
@@ -299,9 +355,8 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                data.token.image?.path
-                              }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
+                                }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -323,11 +378,10 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0
-                            ? "text-red-500"
-                            : "text-green-400"
-                        }`}
+                        className={`p-3 font-semibold ${data.priceChange < 0
+                          ? "text-red-500"
+                          : "text-green-400"
+                          }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>

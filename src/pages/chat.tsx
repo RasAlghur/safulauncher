@@ -6,8 +6,9 @@ import {
   type FormEventHandler,
 } from "react";
 import { FaArrowDown } from "react-icons/fa";
-import { base } from "../lib/api";
+import { FiSend } from "react-icons/fi";
 import { socket } from "../lib/socket";
+import { base } from "../lib/api";
 
 interface MessagePayload {
   id: string;
@@ -147,49 +148,68 @@ export default function Chat() {
   }, [handleScroll]);
 
   return (
-    <div className="flex flex-col h-screen p-4 bg-gray-900">
-      <div className="relative">
-        <div
-          className="h-96 overflow-y-auto"
-          ref={chatContainerRef}
-          style={{ scrollBehavior: "smooth", scrollbarWidth: "none" }}
-        >
-          {messages.map((msg, index) => {
-            return (
-              <div
-                key={index}
-                className={`${
-                  userId === msg.userId ? "flex justify-end" : "justify-start"
-                } text-white mb-2`}
-              >
-                <p>{msg.text}</p>
-              </div>
-            );
-          })}
-        </div>
+    <div className="flex flex-col h-fit bg-[#0B1120] relative font-sans">
+      {/* Messages Area */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-6 relative"
+        ref={chatContainerRef}
+        style={{ scrollBehavior: "smooth", scrollbarWidth: "none" }}
+      >
+        {messages.map((msg, index) => {
+          const isUser = userId === msg.userId;
+          const bubbleColor = isUser ? "bg-[#1E88E5]" : "bg-[#1A237E]";
+          const bubbleAlign = isUser ? "items-end" : "items-start";
+          const textAlign = isUser ? "text-right" : "text-left";
 
+          return (
+            <div key={index} className={`mb-4 flex flex-col ${bubbleAlign}`}>
+              {/* Avatar & Address for incoming messages */}
+              {!isUser && (
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-white/80 text-sm font-medium">
+                    {msg.userId?.slice(0, 5) + "..." + msg.userId?.slice(-4)}
+                  </span>
+                </div>
+              )}
+
+              {/* Message bubble */}
+              <div
+                className={`max-w-[75%] ${bubbleColor} text-white px-4 py-3 rounded-2xl ${textAlign}`}
+              >
+                {msg.text}
+              </div>
+
+              {/* Timestamp */}
+            </div>
+          );
+        })}
+
+        {/* Scroll To Bottom */}
         <button
           onClick={scrollToBottom}
           className={`${
             showScrollButton ? "block" : "hidden"
-          } absolute bottom-3 right-2 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
+          } absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
         >
           <FaArrowDown />
         </button>
       </div>
-      <div className="flex gap-2">
+
+      {/* Input Area */}
+      <div className="px-4 py-3 border-t border-white/10 bg-[#0B1120] flex items-center gap-2">
         <input
           type="text"
-          placeholder="Type your message here..."
-          className="w-full p-2 mb-4 bg-gray-800 text-white rounded"
+          placeholder="Enter Your Messages"
+          className="flex-1 rounded-full bg-[#111827] text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
+
         <button
           onClick={onMessageSend}
-          className="bg-blue-500 h-max text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
         >
-          Send
+          <FiSend />
         </button>
       </div>
     </div>
