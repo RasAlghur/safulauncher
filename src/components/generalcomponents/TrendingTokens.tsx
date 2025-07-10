@@ -257,11 +257,6 @@ const TrendingTokens = () => {
           return { ...t, meetsVolume, meetsHighGain, meetsHighLoss };
         });
 
-        // 2. Filter tokens that meet *any* of the criteria:
-        //    • ≥ 4% of total volume
-        //    • priceChange ≥ +100%
-        //    • priceChange ≤ -90%
-
         const filtered = processedTokens.filter(
           (t) =>
             t.volume >= volumeCrit ||
@@ -269,9 +264,6 @@ const TrendingTokens = () => {
             t.priceChange <= -90
         );
 
-        // 3. Split into two tiers:
-        //    • Tier 1: meets *both* volume AND price‑change criteria
-        //    • Tier 2: meets *only one* of the criteria
         const tier1 = filtered.filter(
           (t) =>
             t.volume >= volumeCrit &&
