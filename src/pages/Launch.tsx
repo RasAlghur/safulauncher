@@ -797,9 +797,17 @@ export default function Launch(): JSX.Element {
         formData.append("tokenAddress", tokenAddress);
         if (logo) formData.append("logo", logo);
 
-        console.log("posting...");
-        await base.post("token", formData);
-        console.log("posting completed...");
+        // await base.post("token", formData);
+        const request = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}token`,
+          {
+            method: "POST",
+            body: formData,
+            // Don't set Content-Type header - FormData will do it
+          }
+        );
+        const response = await request.json();
+        console.log(response);
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {
