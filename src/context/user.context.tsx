@@ -6,15 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { base } from "../lib/api";
-
-interface serverResponse {
-  id: string;
-  wallet: string;
-  username?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { base, saveUserLocally, type serverResponse } from "../lib/api";
 
 interface UserContextType {
   user: serverResponse | null;
@@ -29,11 +21,6 @@ export const useUser = () => {
   if (!ctx)
     throw new Error("useTokenContext must be used within TokenProvider");
   return ctx;
-};
-
-const saveUserLocally = (user: serverResponse) => {
-  const saveUser = JSON.stringify(user);
-  return localStorage.setItem("safu_launcher", saveUser);
 };
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({

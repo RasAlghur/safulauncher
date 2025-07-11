@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { FaBell } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useUser } from "../context/user.context";
-import { base } from "../lib/api";
+import { base, saveUserLocally } from "../lib/api";
 import axios from "axios";
+import { debounce } from "lodash";
 
 interface launchedToken {
   name: string;
@@ -20,11 +28,39 @@ const Profile = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
   const [page, setPage] = useState<number>(1);
+  const [username, setUsername] = useState<string>();
+  const [enableChange, setEnableChange] = useState<boolean>();
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
+    boolean | null
+  >(null);
   const [activeTab, setActiveTab] = useState<"holdings" | "launched">(
     "holdings"
   );
 
-  const { saveOrFetchUser } = useUser();
+  const { user, saveOrFetchUser } = useUser();
+
+  // days left and disable and enable of the username form
+  useEffect(() => {
+    const findDayLast = () => {
+      const today = new Date();
+      const lastChange = new Date(String(user?.updatedAt));
+
+      const diffMs = today.getTime() - lastChange.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const daysLeft = 30 - diffDays;
+
+      if (daysLeft <= 0) {
+        setEnableChange(false);
+      } else if (user?.username === null || user?.username === "") {
+        setEnableChange(false);
+      } else {
+        setEnableChange(true);
+        console.log(`There are ${daysLeft} day(s) left to reach 30 days.`);
+      }
+    };
+
+    findDayLast();
+  }, [user?.updatedAt, user?.username]);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,6 +72,64 @@ const Profile = () => {
       isMounted = false;
     };
   }, [isConnected, address, saveOrFetchUser]);
+
+  // handle username search so user will know available names
+  const abortController = useRef<AbortController | null>(null);
+  const findUsername = useCallback(async (query = "") => {
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    const controller = new AbortController();
+    abortController.current = controller;
+    try {
+      const res = await base.get(`users?search=${query}`, {
+        signal: controller.signal,
+      });
+      const response = res.data.data;
+      const result = response.data.length > 0 ? false : true;
+      setIsUsernameAvailable(result);
+    } catch (error) {
+      if (
+        axios.isCancel(error) ||
+        (typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          (error as { name?: string }).name === "CanceledError")
+      ) {
+        console.log(error);
+        // Request canceled
+      } else {
+        console.error("API Error:", error);
+      }
+    }
+  }, []);
+
+  const debouncedFetch = useMemo(
+    () =>
+      debounce((query: string) => {
+        findUsername(query);
+      }, 300),
+    [findUsername]
+  );
+
+  // change username
+  const handleSubmitting = async () => {
+    if (!user?.id || !username?.trim()) return;
+    try {
+      const request = await base.patch(`user/${user.id}`, { username });
+      const response = await request.data.data;
+      saveUserLocally(response);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onchange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    debouncedFetch(value);
+    setUsername(value);
+  };
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -187,6 +281,34 @@ const Profile = () => {
             <div className="mt-4">{/* Replace with chart component */}</div>
           </div>
         </div>
+
+        <form>
+          <div>
+            <input
+              type="text"
+              placeholder="enter your email address"
+              value={username}
+              onChange={onchange}
+              disabled={enableChange}
+            />
+            <p
+              className={`${
+                isUsernameAvailable ? "text-green-500" : "text-red-500"
+              } text-xs`}
+            >
+              {isUsernameAvailable && "Username available"}
+              {isUsernameAvailable === false && "Username not available"}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSubmitting}
+            disabled={enableChange}
+          >
+            Submit
+          </button>
+        </form>
 
         {/* Tabs */}
         <div className="flex gap-6 text-lg font-semibold mb-6">
