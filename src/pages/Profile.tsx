@@ -7,15 +7,18 @@ import {
   type ChangeEvent,
 } from "react";
 import { FaBell, FaEdit, FaTimes } from "react-icons/fa";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useUser } from "../context/user.context";
 import { base } from "../lib/api";
+import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ETH_USDT_PRICE_FEED, PRICE_GETTER_ABI } from "../web3/config";
+import { pureAmountOutMarketCap } from "../web3/readContracts";
 
 interface launchedToken {
   name: string;
@@ -23,11 +26,27 @@ interface launchedToken {
   createdAt: string;
 }
 
+interface TokenHolding {
+  contractAddress: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  balance: number;
+  formattedBalance: string;
+  rawBalance: string;
+  logo?: string;
+  priceInETH?: number;
+  usdValue?: number;
+  isLoadingPrice?: boolean;
+}
+
 const Profile = () => {
   const { address, isConnected } = useAccount();
   const [hasNext, setHasNext] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [tokenHoldingsLoading, setTokenHoldingsLoading] = useState<boolean>(false);
   const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
+  const [tokenHoldings, setTokenHoldings] = useState<TokenHolding[]>([]);
   const [page, setPage] = useState<number>(1);
   const [username, setUsername] = useState<string>();
   const [enableChange, setEnableChange] = useState<boolean>();
@@ -41,6 +60,94 @@ const Profile = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { user, saveOrFetchUser, updateUser } = useUser();
+
+  // Get ETH price
+  const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
+    useReadContract({
+      ...PRICE_GETTER_ABI,
+      functionName: "getLatestETHPrice",
+      args: [ETH_USDT_PRICE_FEED!],
+    });
+
+  const ethPriceUSD = useMemo(() => {
+    return isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
+  }, [isConnected, isLoadingLatestETHPrice, latestETHPrice]);
+
+  // Fetch token price in ETH for a specific token
+  const fetchTokenPrice = useCallback(async (tokenAddress: string): Promise<number> => {
+    try {
+      const raw = await pureAmountOutMarketCap(tokenAddress);
+      if (raw !== undefined && raw !== null) {
+        return Number(raw.toString()) / 1e18;
+      }
+      return 0;
+    } catch (error) {
+      console.error(`Failed to fetch price for token ${tokenAddress}:`, error);
+      return 0;
+    }
+  }, []);
+
+  // Fetch token holdings and their prices
+  const fetchTokenHoldings = useCallback(async () => {
+    if (!address) return;
+
+    setTokenHoldingsLoading(true);
+    try {
+      const holdings = await AlchemyTokenDiscovery.getAllTokenBalances(address);
+      const holdingsWithMetadata = holdings.map((token) => ({
+        ...token,
+        rawBalance: token.rawBalance ?? "",
+        logo: token.logo ?? "",
+        priceInETH: 0,
+        usdValue: 0,
+        isLoadingPrice: true,
+      }));
+
+      setTokenHoldings(holdingsWithMetadata);
+
+      // Fetch prices for each token
+      const updatedHoldings = await Promise.all(
+        holdingsWithMetadata.map(async (token) => {
+          const priceInETH = await fetchTokenPrice(token.contractAddress);
+          const usdValue = token.balance * priceInETH * ethPriceUSD;
+          
+          return {
+            ...token,
+            priceInETH,
+            usdValue,
+            isLoadingPrice: false,
+          };
+        })
+      );
+
+      setTokenHoldings(updatedHoldings);
+    } catch (error) {
+      console.error("Error fetching token holdings:", error);
+      setTokenHoldings([]);
+    } finally {
+      setTokenHoldingsLoading(false);
+    }
+  }, [address, fetchTokenPrice, ethPriceUSD]);
+
+  // Calculate total balance in USD
+  const totalBalance = useMemo(() => {
+    return tokenHoldings.reduce((sum, token) => {
+      return sum + (token.usdValue || 0);
+    }, 0);
+  }, [tokenHoldings]);
+
+  // Previous day balance for percentage calculation (mock data - you might want to store this)
+  const previousDayBalance = useMemo(() => {
+    // This should come from your backend or local storage
+    // For now, we'll calculate a mock previous balance
+    return totalBalance * 0.9; // Assuming 10% increase
+  }, [totalBalance]);
+
+  const balanceChange = useMemo(() => {
+    const change = totalBalance - previousDayBalance;
+    const percentage = previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
+    return { amount: change, percentage };
+  }, [totalBalance, previousDayBalance]);
 
   // days left and disable and enable of the username form
   useEffect(() => {
@@ -69,12 +176,13 @@ const Profile = () => {
     let isMounted = true;
     if (isConnected && isMounted) {
       saveOrFetchUser(String(address));
+      fetchTokenHoldings();
     }
 
     return () => {
       isMounted = false;
     };
-  }, [isConnected, address, saveOrFetchUser]);
+  }, [isConnected, address, saveOrFetchUser, fetchTokenHoldings]);
 
   // handle username search so user will know available names
   const abortController = useRef<AbortController | null>(null);
@@ -100,7 +208,6 @@ const Profile = () => {
           (error as { name?: string }).name === "CanceledError")
       ) {
         console.log(error);
-        // Request canceled
       } else {
         console.error("API Error:", error);
       }
@@ -123,7 +230,6 @@ const Profile = () => {
       const request = await base.patch(`user/${user.id}`, { username });
       const response = await request.data.data;
 
-      // Update both local storage and context state immediately
       updateUser(response);
 
       console.log(response);
@@ -206,7 +312,6 @@ const Profile = () => {
     console.log(address);
     if (address) {
       findHolderToken(1, address, false);
-      // Reset page and hasNext on new search
       setPage(1);
       setHasNext(true);
     }
@@ -240,19 +345,18 @@ const Profile = () => {
     };
   }, [address, findHolderToken, hasNext, page]);
 
-  const holdings = [
-    { name: "CLANKVTX", amount: "2.345", value: "$6,789" },
-    { name: "CLANKER", amount: "1,500", value: "$3,000" },
-    { name: "TINY", amount: "3,200", value: "$1,280" },
-    { name: "MOAR", amount: "750", value: "$1,150" },
-    { name: "TINY", amount: "5,800", value: "$4,060" },
-  ];
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "numeric",
       day: "numeric",
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
     });
   };
 
@@ -367,10 +471,11 @@ const Profile = () => {
               Total Balance
             </h2>
             <div className="lg:text-[70px] font-bold mb-2 font-raleway">
-              $16,254
+              ${formatCurrency(totalBalance)}
             </div>
-            <div className="text-green-400 text-sm text-center">
-              ▲ +10% [$1,600]
+            <div className={`text-sm text-center ${balanceChange.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {balanceChange.amount >= 0 ? '▲' : '▼'} {balanceChange.percentage >= 0 ? '+' : ''}{balanceChange.percentage.toFixed(2)}% 
+              [${balanceChange.amount >= 0 ? '+' : ''}${formatCurrency(Math.abs(balanceChange.amount))}]
             </div>
             <div className="mt-4">{/* Replace with chart component */}</div>
           </div>
@@ -400,23 +505,61 @@ const Profile = () => {
 
         {/* Tab Content */}
         {activeTab === "holdings" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {holdings.map((token, i) => (
-              <div
-                key={i}
-                className="dark:bg-[#0B132B] bg-[#141313]/5  rounded-xl px-5 py-4 flex justify-between items-center"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500" />
-                  <span className="font-bold text-sm text-black dark:text-white">
-                    {token.name}
-                  </span>
-                </div>
-                <div className="text-sm dark:text-white/70 text-[#141313]/75">
-                  {token.amount} <span className="ml-2">[{token.value}]</span>
-                </div>
+          <div className="space-y-4">
+            {tokenHoldingsLoading ? (
+              <div className="text-center py-8">
+                <p className="dark:text-white/70 text-[#141313]/75">Loading token holdings...</p>
               </div>
-            ))}
+            ) : tokenHoldings.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="dark:text-white/70 text-[#141313]/75">No token holdings found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {tokenHoldings.map((token, i) => (
+                  <div
+                    key={i}
+                    className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
+                  >
+                    <div className="flex items-center gap-3">
+                      {token.logo ? (
+                        <img
+                          src={token.logo}
+                          alt={token.symbol}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? 'hidden' : ''}`} />
+                      <div>
+                        <span className="font-bold text-sm text-black dark:text-white block">
+                          {token.symbol}
+                        </span>
+                        <span className="text-xs text-black/60 dark:text-white/60">
+                          {token.name}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-sm dark:text-white/70 text-[#141313]/75 text-right">
+                      <div>{token.formattedBalance}</div>
+                      <div className="text-xs opacity-60">
+                        {token.isLoadingPrice ? (
+                          "Loading..."
+                        ) : token.usdValue && token.usdValue > 0 ? (
+                          `$${formatCurrency(token.usdValue)}`
+                        ) : (
+                          "$0.00"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
