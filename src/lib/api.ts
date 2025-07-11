@@ -37,3 +37,15 @@ base.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export interface serverResponse {
+  id: string;
+  wallet: string;
+  username?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+export const saveUserLocally = (user: serverResponse) => {
+  const saveUser = JSON.stringify(user);
+  return localStorage.setItem("safu_launcher", saveUser);
+};
