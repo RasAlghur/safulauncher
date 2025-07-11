@@ -490,6 +490,7 @@ export default function Tokens() {
           <p className="text-center text-gray-400">No tokens found.</p>
         ) : (
           <div
+            ref={containerRef}
             className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
               sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
             } px-2 py-5 border border-white/10`}

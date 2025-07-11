@@ -1,13 +1,127 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FaBell } from "react-icons/fa";
+import { useAccount } from "wagmi";
+import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import Navbar from "../components/launchintro/Navbar";
-import { FaBell } from "react-icons/fa";
-import DustParticles from "../components/generalcomponents/DustParticles";
+import { useUser } from "../context/user.context";
+import { base } from "../lib/api";
+import axios from "axios";
+
+interface launchedToken {
+  name: string;
+  symbol: string;
+  createdAt: string;
+}
 
 const Profile = () => {
+  const { address, isConnected } = useAccount();
+  const [hasNext, setHasNext] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
+  const [page, setPage] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<"holdings" | "launched">(
     "holdings"
   );
+
+  const { saveOrFetchUser } = useUser();
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isConnected && isMounted) {
+      saveOrFetchUser(String(address));
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isConnected, address, saveOrFetchUser]);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const findHolderToken = useCallback(
+    async (pageNum = 1, wallet = "", append = false) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      try {
+        setLoading(true);
+        const res = await base.get(
+          `tokens?tokenCreator=${encodeURIComponent(
+            String(wallet)
+          )}&page=${pageNum}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        const apiData = res.data.data;
+        console.log({ apiData });
+        setHasNext(apiData.hasNextPage);
+        setPage(pageNum);
+        setLaunchedTokens((prev) =>
+          append ? [...prev, ...apiData.data] : apiData.data
+        );
+      } catch (error) {
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          // Request canceled
+        } else {
+          console.error("API Error:", error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // Initial fetch or search
+  useEffect(() => {
+    console.log(address);
+    if (address) {
+      findHolderToken(1, address, false);
+      // Reset page and hasNext on new search
+      setPage(1);
+      setHasNext(true);
+    }
+  }, [address, findHolderToken]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = containerRef.current;
+
+      const condition =
+        container &&
+        hasNext &&
+        container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 100 &&
+        address;
+
+      if (condition) {
+        findHolderToken(page + 1, address, true);
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [address, findHolderToken, hasNext, page]);
 
   const holdings = [
     { name: "CLANKVTX", amount: "2.345", value: "$6,789" },
@@ -17,11 +131,13 @@ const Profile = () => {
     { name: "TINY", amount: "5,800", value: "$4,060" },
   ];
 
-  const launchedTokens = [
-    { name: "Galactica", symbol: "GL", deployed: "2025-04-01" },
-    { name: "RocketCoin", symbol: "RC", deployed: "2025-03-15" },
-    { name: "MetaCoin", symbol: "MC2", deployed: "2025-02-20" },
-  ];
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
+  };
 
   return (
     <div className="px-4 relative mountain">
@@ -41,7 +157,9 @@ const Profile = () => {
         {/* Wallet & Notification */}
         <div className="flex justify-center items-center gap-6 mb-10">
           <div className="dark:bg-white/4 bg-[#141313]/2 text-[#141313]/90 dark:text-white px-4 py-4 rounded-xl text-sm font-mono">
-            0xgdk9...a29f
+            {address
+              ? `${address.slice(0, 4)}...${address.slice(-4)}`
+              : "connect wallet"}
           </div>
           <div className="relative w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center">
             <FaBell className="dark:text-white/70 text-[#141313] text-sm" />
@@ -116,22 +234,26 @@ const Profile = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {launchedTokens.map((token, i) => (
-              <div
-                key={i}
-                className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
-                  <span className="font-bold text-sm text-black dark:text-white">
-                    {token.name} ({token.symbol})
-                  </span>
+            <div ref={containerRef}>
+              {launchedTokens.map(({ name, symbol, createdAt }, i) => (
+                <div
+                  key={i}
+                  className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <span className="font-bold text-sm text-black dark:text-white">
+                      {name} ({symbol})
+                    </span>
+                  </div>
+                  <div className="text-sm dark:text-white/70 text-[#141313]/75">
+                    Deployed: {formatDate(createdAt)}
+                  </div>
                 </div>
-                <div className="text-sm dark:text-white/70 text-[#141313]/75">
-                  Deployed: {token.deployed}
-                </div>
-              </div>
-            ))}
+              ))}
+
+              <p>{loading && "Please wait...."}</p>
+            </div>
           </div>
         )}
       </div>
