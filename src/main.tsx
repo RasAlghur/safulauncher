@@ -9,6 +9,7 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { config } from "./config/config.ts";
 import { AuthProvider } from "./lib/AuthContext.tsx";
 import { TokenProvider } from "./context/TokenContext.tsx";
+import { UserProvider } from "./context/user.context.tsx";
 
 /**
  * Description placeholder
@@ -26,7 +27,9 @@ const WalletApp = () => {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <App />
+          <UserProvider>
+            <App />
+          </UserProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
