@@ -6,15 +6,16 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaEdit, FaTimes } from "react-icons/fa";
 import { useAccount } from "wagmi";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useUser } from "../context/user.context";
-import { base, saveUserLocally } from "../lib/api";
+import { base } from "../lib/api";
 import axios from "axios";
 import { debounce } from "lodash";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface launchedToken {
   name: string;
@@ -36,8 +37,10 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState<"holdings" | "launched">(
     "holdings"
   );
+  const [showEditCard, setShowEditCard] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { user, saveOrFetchUser } = useUser();
+  const { user, saveOrFetchUser, updateUser } = useUser();
 
   // days left and disable and enable of the username form
   useEffect(() => {
@@ -115,13 +118,22 @@ const Profile = () => {
   // change username
   const handleSubmitting = async () => {
     if (!user?.id || !username?.trim()) return;
+    setIsSubmitting(true);
     try {
       const request = await base.patch(`user/${user.id}`, { username });
       const response = await request.data.data;
-      saveUserLocally(response);
+
+      // Update both local storage and context state immediately
+      updateUser(response);
+
       console.log(response);
+      setShowEditCard(false);
+      setUsername("");
+      setIsUsernameAvailable(null);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -129,6 +141,17 @@ const Profile = () => {
     const value = e.target.value;
     debouncedFetch(value);
     setUsername(value);
+  };
+
+  const handleEditClick = () => {
+    setShowEditCard(true);
+    setUsername(user?.username || "");
+  };
+
+  const handleCloseCard = () => {
+    setShowEditCard(false);
+    setUsername("");
+    setIsUsernameAvailable(null);
   };
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -198,7 +221,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-          container.scrollHeight - 100 &&
+        container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -252,17 +275,88 @@ const Profile = () => {
         <div className="flex justify-center items-center gap-6 mb-10">
           <div className="dark:bg-white/4 bg-[#141313]/2 text-[#141313]/90 dark:text-white px-4 py-4 rounded-xl text-sm font-mono">
             {address
-              ? `${address.slice(0, 4)}...${address.slice(-4)}`
-              : "connect wallet"}
+              ? (user?.username && user.username.trim() !== ""
+                ? `@${user.username}`
+                : `${address.slice(0, 4)}...${address.slice(-4)}`)
+              : <ConnectButton />}
           </div>
-          <div className="relative w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center">
-            <FaBell className="dark:text-white/70 text-[#141313] text-sm" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+          <div className="flex items-center gap-3">
+            <div className="relative w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center">
+              <FaBell className="dark:text-white/70 text-[#141313] text-sm" />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+            </div>
+            <button
+              onClick={handleEditClick}
+              className="w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <FaEdit className="dark:text-white/70 text-[#141313] text-sm" />
+            </button>
           </div>
         </div>
 
-        {/* Balance Card */}
+        {/* Edit Username Card */}
+        {showEditCard && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="dark:bg-[#050A1E] bg-white border border-white/10 rounded-xl p-6 max-w-md w-full relative">
+              <button
+                onClick={handleCloseCard}
+                className="absolute top-4 right-4 w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              >
+                <FaTimes className="dark:text-white/70 text-[#141313] text-sm" />
+              </button>
 
+              <h2 className="text-xl font-bold dark:text-white text-black mb-6 font-raleway">
+                Edit Username
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium dark:text-white/70 text-black/70 mb-2">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 dark:text-white/70 text-black/70 text-sm font-mono">
+                      @
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Enter your preferred username"
+                      value={username}
+                      onChange={onchange}
+                      disabled={enableChange}
+                      className="w-full pl-8 pr-4 py-3 dark:bg-white/5 bg-[#141313]/5 border border-white/10 rounded-lg dark:text-white text-black placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#3BC3DB] disabled:opacity-50"
+                    />
+                  </div>
+                  {isUsernameAvailable !== null && (
+                    <p className={`${isUsernameAvailable ? "text-green-500" : "text-red-500"} text-xs mt-2`}>
+                      {isUsernameAvailable ? "Username available" : "Username not available"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseCard}
+                    className="flex-1 px-4 py-3 dark:bg-white/10 bg-[#141313]/10 dark:text-white text-black rounded-lg hover:bg-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitting}
+                    disabled={enableChange || !username?.trim() || isUsernameAvailable === false || isSubmitting}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Balance Card */}
         <div className="relative rounded-xl p-6 mb-10 flex flex-col items-center justify-center overflow-hidden">
           {/* Gradient Background Layer */}
           <div className="absolute inset-0 bg-gradient-to-l from-[#3BC3DB] to-[#0C8CE0] dark:opacity-[0.2] opacity-[0.08] pointer-events-none rounded-xl" />
@@ -282,52 +376,22 @@ const Profile = () => {
           </div>
         </div>
 
-        <form>
-          <div>
-            <input
-              type="text"
-              placeholder="enter your email address"
-              value={username}
-              onChange={onchange}
-              disabled={enableChange}
-            />
-            <p
-              className={`${
-                isUsernameAvailable ? "text-green-500" : "text-red-500"
-              } text-xs`}
-            >
-              {isUsernameAvailable && "Username available"}
-              {isUsernameAvailable === false && "Username not available"}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSubmitting}
-            disabled={enableChange}
-          >
-            Submit
-          </button>
-        </form>
-
         {/* Tabs */}
         <div className="flex gap-6 text-lg font-semibold mb-6">
           <button
-            className={`pb-1 transition cursor-pointer ${
-              activeTab === "holdings"
-                ? "border-white dark:text-white text-black"
-                : "border-transparent dark:text-white/30 text-black/60"
-            }`}
+            className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
+              ? "border-white dark:text-white text-black"
+              : "border-transparent dark:text-white/30 text-black/60"
+              }`}
             onClick={() => setActiveTab("holdings")}
           >
             Holdings
           </button>
           <button
-            className={`pb-1 transition cursor-pointer ${
-              activeTab === "launched"
-                ? "border-white dark:text-white text-[#141313]/75"
-                : "border-transparent dark:text-white/30 text-black/60"
-            }`}
+            className={`pb-1 transition cursor-pointer ${activeTab === "launched"
+              ? "border-white dark:text-white text-[#141313]/75"
+              : "border-transparent dark:text-white/30 text-black/60"
+              }`}
             onClick={() => setActiveTab("launched")}
           >
             Token Launched

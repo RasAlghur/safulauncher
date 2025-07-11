@@ -11,6 +11,7 @@ import { base, saveUserLocally, type serverResponse } from "../lib/api";
 interface UserContextType {
   user: serverResponse | null;
   saveOrFetchUser: (address: string) => void;
+  updateUser: (userData: serverResponse) => void;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -69,9 +70,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     [user?.wallet]
   );
 
+  const updateUser = useCallback((userData: serverResponse) => {
+    setUser(userData);
+    saveUserLocally(userData);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, saveOrFetchUser }),
-    [user, saveOrFetchUser]
+    () => ({ user, saveOrFetchUser, updateUser }),
+    [user, saveOrFetchUser, updateUser]
   );
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

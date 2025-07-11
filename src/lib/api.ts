@@ -45,6 +45,7 @@ export interface serverResponse {
   createdAt: Date;
   updatedAt: Date;
 }
+
 export const saveUserLocally = (user: serverResponse) => {
   const saveUser = JSON.stringify(user);
   return localStorage.setItem("safu_launcher", saveUser);
