@@ -97,18 +97,35 @@ export default function Tokens() {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
+      const withRetry = async (retries = 3, delay = 1000) => {
+        let lastError;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            const res = await base.get(
+              `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
+              { signal: controller.signal }
+            );
+            return res;
+          } catch (err) {
+            lastError = err;
+
+            // Cancelled manually — do not retry
+            if (axios.isCancel(err)) {
+              throw err;
+            }
+
+            if (attempt < retries) {
+              await new Promise((res) => setTimeout(res, delay));
+            }
+          }
+        }
+        throw lastError;
+      };
+
       try {
         setIsLoadingTokens(true);
-        const res = await base.get(
-          `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
-          {
-            signal: controller.signal,
-          }
-        );
-
+        const res = await withRetry();
         const apiData = res.data.data;
-
-        // console.log(res.data);
 
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
@@ -123,9 +140,9 @@ export default function Tokens() {
             "name" in error &&
             (error as { name?: string }).name === "CanceledError")
         ) {
-          // Request canceled
+          // Request canceled — do nothing
         } else {
-          console.error("API Error:", error);
+          console.error("API Error after retries:", error);
         }
       } finally {
         setIsLoadingTokens(false);

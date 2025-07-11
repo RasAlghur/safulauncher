@@ -6,9 +6,9 @@ import {
   type FormEventHandler,
 } from "react";
 import { FaArrowDown } from "react-icons/fa";
-import { FiSend } from "react-icons/fi";
 import { socket } from "../lib/socket";
 import { base } from "../lib/api";
+import { IoChevronForward } from "react-icons/io5";
 
 interface MessagePayload {
   id: string;
@@ -153,7 +153,7 @@ export default function Chat({ address, tokenAddress }: prop) {
   }, [handleScroll]);
 
   return (
-    <div className="flex flex-col h-fit bg-[#0B1120] relative font-sans">
+    <div className="flex flex-col h-fit dark:bg-[#0B1120] relative font-sans">
       {/* Messages Area */}
       <div
         className="flex-1 overflow-y-auto px-4 py-6 relative"
@@ -162,7 +162,7 @@ export default function Chat({ address, tokenAddress }: prop) {
       >
         {messages.map((msg, index) => {
           const isUser = address === msg.userId;
-          const bubbleColor = isUser ? "bg-[#1E88E5]" : "bg-[#1A237E]";
+          const bubbleColor = isUser ? "bg-[#0C2FE0]/75" : "bg-[#0C8CE0]";
           const bubbleAlign = isUser ? "items-end" : "items-start";
           const textAlign = isUser ? "text-right" : "text-left";
 
@@ -171,7 +171,7 @@ export default function Chat({ address, tokenAddress }: prop) {
               {/* Avatar & Address for incoming messages */}
               {!isUser && (
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white/80 text-sm font-medium">
+                  <span className="dark:text-white/80 text-black text-sm font-medium">
                     {msg.userId?.slice(0, 5) + "..." + msg.userId?.slice(-4)}
                   </span>
                 </div>
@@ -179,7 +179,7 @@ export default function Chat({ address, tokenAddress }: prop) {
 
               {/* Message bubble */}
               <div
-                className={`max-w-[75%] ${bubbleColor} text-white px-4 py-3 rounded-2xl ${textAlign}`}
+                className={`max-w-[75%] ${bubbleColor} text-white px-4 py-3 rounded-l-2xl rounded-tr-2xl ${textAlign}`}
               >
                 {msg.text}
               </div>
@@ -201,11 +201,11 @@ export default function Chat({ address, tokenAddress }: prop) {
       </div>
 
       {/* Input Area */}
-      <div className="px-4 py-3 border-t border-white/10 bg-[#0B1120] flex items-center gap-2">
+      <div className="px-4 py-3 border-t border-t-[#0C8CE0]/50 dark:border-white/10 dark:bg-[#0B1120] flex items-center gap-2">
         <input
           type="text"
           placeholder="Enter Your Messages"
-          className="flex-1 rounded-full bg-[#111827] text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded-full  dark:text-white text-[#141313] dark:placeholder:text-white/60 font-raleway placeholder:text-black/60 px-4 py-2 focus:outline-none "
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
@@ -213,9 +213,9 @@ export default function Chat({ address, tokenAddress }: prop) {
         <button
           onClick={onMessageSend}
           disabled={!address}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
+          className="bg-[#0C8CE0] hover:bg-[#0C2FE0]/90 text-white p-3 flex items-center justify-center rounded-full"
         >
-          <FiSend />
+          <IoChevronForward className="text-xl" />
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
@@ -78,27 +79,59 @@ export default function Leaderboard() {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(options[0]);
 
+  // Utility: retry wrapper
+  async function retry<T>(
+    fn: () => Promise<T>,
+    retries = 3,
+    delay = 500
+  ): Promise<T> {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        return await fn();
+      } catch (error) {
+        // Avoid retrying Axios cancelation or other intentional aborts
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          throw error;
+        }
+
+        attempt++;
+        if (attempt >= retries) throw error;
+        await new Promise((res) => setTimeout(res, delay));
+      }
+    }
+    throw new Error("Max retry attempts exceeded");
+  }
+
   useEffect(() => {
     async function loadData() {
       try {
-        // First, fetch ETH price
-        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        // Fetch ETH price with retry
+        const raw = await retry(() =>
+          pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
+        );
         const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
         setEthPriceUSD(price);
 
-        // Fetch token metadata map
-        const tokensRes = await base.get("tokens?include=image");
+        // Fetch token metadata map with retry
+        const tokensRes = await retry(() => base.get("tokens?include=image"));
+        const tokens: TokenMetadata[] = tokensRes.data.data.data;
 
-        const tokens: TokenMetadata[] = await tokensRes.data.data.data;
         const map: Record<string, TokenMetadata> = {};
         tokens.forEach((t) => {
           map[t.tokenAddress.toLowerCase()] = t;
         });
         setTokensMap(map);
 
-        // Fetch all transactions and build leaderboard
-        const txRes = await base.get("transactions");
-        const allTx: TxLog[] = await txRes.data.data.data;
+        // Fetch transactions and build leaderboard with retry
+        const txRes = await retry(() => base.get("transactions"));
+        const allTx: TxLog[] = txRes.data.data.data;
 
         const walletMap: Record<
           string,
@@ -106,7 +139,6 @@ export default function Leaderboard() {
         > = {};
 
         allTx.forEach((tx) => {
-          // Only process buy and sell transactions
           if (tx.type !== "buy" && tx.type !== "sell") return;
 
           const vol = parseFloat(tx.ethAmount);
