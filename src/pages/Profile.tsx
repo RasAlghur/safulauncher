@@ -54,7 +54,7 @@ const Profile = () => {
   const [tokenHoldings, setTokenHoldings] = useState<TokenHolding[]>([]);
   const [page, setPage] = useState<number>(1);
   const [username, setUsername] = useState<string>();
-  const [enableChange, setEnableChange] = useState<boolean>();
+  const [enableChange, setEnableChange] = useState<boolean>(false);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<
     boolean | null
   >(null);
@@ -193,9 +193,14 @@ const Profile = () => {
 
       if (daysLeft <= 0) {
         setEnableChange(false);
-      } else if (user?.username === null || user?.username === "") {
+      } else if (
+        user?.username === null ||
+        user?.username === undefined ||
+        user?.username === ""
+      ) {
         setEnableChange(false);
       } else {
+        console.log(user?.username);
         setEnableChange(true);
         console.log(`There are ${daysLeft} day(s) left to reach 30 days.`);
       }
