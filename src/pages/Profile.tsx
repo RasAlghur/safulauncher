@@ -49,14 +49,19 @@ const Profile = () => {
   const { address, isConnected } = useAccount();
   const [hasNext, setHasNext] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [tokenHoldingsLoading, setTokenHoldingsLoading] = useState<boolean>(false);
+  const [tokenHoldingsLoading, setTokenHoldingsLoading] =
+    useState<boolean>(false);
   const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
   const [tokenHoldings, setTokenHoldings] = useState<TokenHolding[]>([]);
   const [page, setPage] = useState<number>(1);
   const [username, setUsername] = useState<string>();
-  const [enableChange, setEnableChange] = useState<boolean>();
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<"holdings" | "launched">("holdings");
+  const [enableChange, setEnableChange] = useState<boolean>(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
+    boolean | null
+  >(null);
+  const [activeTab, setActiveTab] = useState<"holdings" | "launched">(
+    "holdings"
+  );
   const [showEditCard, setShowEditCard] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [allToken, setAllToken] = useState<tokenAll[]>([]);
@@ -64,14 +69,17 @@ const Profile = () => {
   const { user, saveOrFetchUser, updateUser } = useUser();
 
   // Get ETH price
-  const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } = useReadContract({
-    ...PRICE_GETTER_ABI,
-    functionName: "getLatestETHPrice",
-    args: [ETH_USDT_PRICE_FEED!],
-  });
+  const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
+    useReadContract({
+      ...PRICE_GETTER_ABI,
+      functionName: "getLatestETHPrice",
+      args: [ETH_USDT_PRICE_FEED!],
+    });
 
   const ethPriceUSD = useMemo(() => {
-    return isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
+    return isConnected && !isLoadingLatestETHPrice
+      ? Number(latestETHPrice) / 1e8
+      : 0;
   }, [isConnected, isLoadingLatestETHPrice, latestETHPrice]);
 
   // Fetch all tokens from database
@@ -93,18 +101,24 @@ const Profile = () => {
   }, [fetchAllTokens]);
 
   // Fetch token price in ETH for a specific token
-  const fetchTokenPrice = useCallback(async (tokenAddress: string): Promise<number> => {
-    try {
-      const raw = await pureAmountOutMarketCap(tokenAddress);
-      if (raw !== undefined && raw !== null) {
-        return Number(raw.toString()) / 1e18;
+  const fetchTokenPrice = useCallback(
+    async (tokenAddress: string): Promise<number> => {
+      try {
+        const raw = await pureAmountOutMarketCap(tokenAddress);
+        if (raw !== undefined && raw !== null) {
+          return Number(raw.toString()) / 1e18;
+        }
+        return 0;
+      } catch (error) {
+        console.error(
+          `Failed to fetch price for token ${tokenAddress}:`,
+          error
+        );
+        return 0;
       }
-      return 0;
-    } catch (error) {
-      console.error(`Failed to fetch price for token ${tokenAddress}:`, error);
-      return 0;
-    }
-  }, []);
+    },
+    []
+  );
 
   // Fetch token holdings and their prices
   const fetchTokenHoldings = useCallback(async () => {
@@ -161,7 +175,9 @@ const Profile = () => {
 
     // Filter user holdings to only include tokens that exist in database
     const filtered = tokenHoldings.filter((holding) => {
-      const isInDb = dbTokenAddresses.has(holding.contractAddress.toLowerCase());
+      const isInDb = dbTokenAddresses.has(
+        holding.contractAddress.toLowerCase()
+      );
       return isInDb;
     });
     return filtered;
@@ -179,9 +195,24 @@ const Profile = () => {
     return totalBalance * 0.9; // Assuming 10% increase
   }, [totalBalance]);
 
+  // track balance
+  const trackBalance = async (wallet: string, balance: string) => {
+    try {
+      const request = await base.post("track-balance", {
+        currentBalance: balance,
+        wallet: wallet,
+      });
+      const response = request.data;
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const balanceChange = useMemo(() => {
     const change = totalBalance - previousDayBalance;
-    const percentage = previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
+    const percentage =
+      previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
     return { amount: change, percentage };
   }, [totalBalance, previousDayBalance]);
 
@@ -196,9 +227,14 @@ const Profile = () => {
 
       if (daysLeft <= 0) {
         setEnableChange(false);
-      } else if (user?.username === null || user?.username === "") {
+      } else if (
+        user?.username === null ||
+        user?.username === undefined ||
+        user?.username === ""
+      ) {
         setEnableChange(false);
       } else {
+        console.log(user?.username);
         setEnableChange(true);
         console.log(`There are ${daysLeft} day(s) left to reach 30 days.`);
       }
@@ -236,9 +272,13 @@ const Profile = () => {
       const result = response.data.length > 0 ? false : true;
       setIsUsernameAvailable(result);
     } catch (error) {
-      if (axios.isCancel(error) || 
-          (typeof error === "object" && error !== null && "name" in error && 
-           (error as { name?: string }).name === "CanceledError")) {
+      if (
+        axios.isCancel(error) ||
+        (typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          (error as { name?: string }).name === "CanceledError")
+      ) {
         console.log(error);
       } else {
         console.error("API Error:", error);
@@ -247,9 +287,10 @@ const Profile = () => {
   }, []);
 
   const debouncedFetch = useMemo(
-    () => debounce((query: string) => {
-      findUsername(query);
-    }, 300),
+    () =>
+      debounce((query: string) => {
+        findUsername(query);
+      }, 300),
     [findUsername]
   );
 
@@ -292,36 +333,47 @@ const Profile = () => {
   // Launched tokens logic
   const abortControllerRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const findHolderToken = useCallback(async (pageNum = 1, wallet = "", append = false) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    try {
-      setLoading(true);
-      const res = await base.get(
-        `tokens?tokenCreator=${encodeURIComponent(String(wallet))}&page=${pageNum}`,
-        { signal: controller.signal }
-      );
-
-      const apiData = res.data.data;
-      setHasNext(apiData.hasNextPage);
-      setPage(pageNum);
-      setLaunchedTokens((prev) => (append ? [...prev, ...apiData.data] : apiData.data));
-    } catch (error) {
-      if (axios.isCancel(error) || 
-          (typeof error === "object" && error !== null && "name" in error && 
-           (error as { name?: string }).name === "CanceledError")) {
-        // Request canceled
-      } else {
-        console.error("API Error:", error);
+  const findHolderToken = useCallback(
+    async (pageNum = 1, wallet = "", append = false) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      try {
+        setLoading(true);
+        const res = await base.get(
+          `tokens?tokenCreator=${encodeURIComponent(
+            String(wallet)
+          )}&page=${pageNum}`,
+          { signal: controller.signal }
+        );
+
+        const apiData = res.data.data;
+        setHasNext(apiData.hasNextPage);
+        setPage(pageNum);
+        setLaunchedTokens((prev) =>
+          append ? [...prev, ...apiData.data] : apiData.data
+        );
+      } catch (error) {
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          // Request canceled
+        } else {
+          console.error("API Error:", error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Initial fetch for launched tokens
   useEffect(() => {
@@ -339,7 +391,8 @@ const Profile = () => {
       const condition =
         container &&
         hasNext &&
-        container.scrollTop + container.clientHeight >= container.scrollHeight - 100 &&
+        container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -409,7 +462,7 @@ const Profile = () => {
             <button
               onClick={handleEditClick}
               className="w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer relative z-40"
-              style={{ pointerEvents: 'auto' }}
+              style={{ pointerEvents: "auto" }}
             >
               <FaEdit className="dark:text-white/70 text-[#141313] text-sm" />
             </button>
@@ -450,8 +503,14 @@ const Profile = () => {
                     />
                   </div>
                   {isUsernameAvailable !== null && (
-                    <p className={`${isUsernameAvailable ? "text-green-500" : "text-red-500"} text-xs mt-2`}>
-                      {isUsernameAvailable ? "Username available" : "Username not available"}
+                    <p
+                      className={`${
+                        isUsernameAvailable ? "text-green-500" : "text-red-500"
+                      } text-xs mt-2`}
+                    >
+                      {isUsernameAvailable
+                        ? "Username available"
+                        : "Username not available"}
                     </p>
                   )}
                 </div>
@@ -493,9 +552,15 @@ const Profile = () => {
             <div className="lg:text-[70px] font-bold mb-2 font-raleway">
               ${formatCurrency(totalBalance)}
             </div>
-            <div className={`text-sm text-center ${balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {balanceChange.amount >= 0 ? "▲" : "▼"} {balanceChange.percentage >= 0 ? "+" : ""}
-              {balanceChange.percentage.toFixed(2)}% [${balanceChange.amount >= 0 ? "+" : ""}$
+            <div
+              className={`text-sm text-center ${
+                balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
+              {balanceChange.percentage >= 0 ? "+" : ""}
+              {balanceChange.percentage.toFixed(2)}% [$
+              {balanceChange.amount >= 0 ? "+" : ""}$
               {formatCurrency(Math.abs(balanceChange.amount))}]
             </div>
           </div>
@@ -559,7 +624,9 @@ const Profile = () => {
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = "none";
-                            target.nextElementSibling?.classList.remove("hidden");
+                            target.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
                           }}
                         />
                       ) : null}
