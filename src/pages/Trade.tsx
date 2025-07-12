@@ -410,6 +410,8 @@ export default function Trade() {
   const tokenSold = Array.isArray(infoData) ? Number(infoData[10]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
   const isBundled = Array.isArray(infoData) ? Number(infoData[17]) : 0;
+  const isTaxedOnDex = Array.isArray(infoData) ? Number(infoData[18]) : 0;
+  const IsTaxedOnSafu = Array.isArray(infoData) ? Number(infoData[19]) : 0;
   const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
 
@@ -1385,8 +1387,8 @@ export default function Trade() {
                       type="button"
                       onClick={handleButtonClick}
                       className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-[#0C8CE0] hover:bg-blue-600 transition ${isTransactionPending
-                          ? "opacity-60 cursor-not-allowed"
-                          : ""
+                        ? "opacity-60 cursor-not-allowed"
+                        : ""
                         }`}
                       disabled={
                         isTransactionPending || !amount || parseFloat(amount) <= 0
@@ -1517,8 +1519,8 @@ export default function Trade() {
                   <button
                     onClick={() => setActiveTab2("chart")}
                     className={`text-[20px] font-raleway font-medium transition ${activeTab2 === "chart"
-                        ? "dark:text-white text-black"
-                        : "dark:text-white/30 dark:hover:text-white text-black/70"
+                      ? "dark:text-white text-black"
+                      : "dark:text-white/30 dark:hover:text-white text-black/70"
                       }`}
                   >
                     Chart
@@ -1526,8 +1528,8 @@ export default function Trade() {
                   <button
                     onClick={() => setActiveTab2("info")}
                     className={`text-[20px] font-raleway font-medium transition ${activeTab2 === "info"
-                        ? "dark:text-white text-black"
-                        : "dark:text-white/30 dark:hover:text-white text-black/70"
+                      ? "dark:text-white text-black"
+                      : "dark:text-white/30 dark:hover:text-white text-black/70"
                       }`}
                   >
                     Info
@@ -1675,6 +1677,34 @@ export default function Trade() {
                     </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                       <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                        Tax on Dex:
+                      </p>{" "}
+                      {isTaxedOnDex ? (
+                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                          <FiCheckCircle className="text-white" />
+                        </div>
+                      ) : (
+                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                          <MdOutlineCancel className="text-black" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                        Tax on SafuLauncher:
+                      </p>{" "}
+                      {IsTaxedOnSafu ? (
+                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                          <FiCheckCircle className="text-white" />
+                        </div>
+                      ) : (
+                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                          <MdOutlineCancel className="text-black" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
+                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
                         Whitelist Ongoing:
                       </p>{" "}
                       {isWhiteListOngoing ? (
@@ -1757,8 +1787,8 @@ export default function Trade() {
                   type="button"
                   onClick={() => setActiveTab("transactions")}
                   className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
-                      ? " dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
+                    ? " dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
                     } transition cursor-pointer`}
                 >
                   Recent Transactions
@@ -1767,8 +1797,8 @@ export default function Trade() {
                   type="button"
                   onClick={() => setActiveTab("chat")}
                   className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
-                      ? "dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
+                    ? "dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
                     } transition cursor-pointer`}
                 >
                   Community Chat
@@ -1795,8 +1825,8 @@ export default function Trade() {
                           <tr key={i} className="mb-4">
                             <td
                               className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
+                                ? "text-green-500"
+                                : "text-red-500"
                                 }`}
                             >
                               {tx.type === "buy" ? (
