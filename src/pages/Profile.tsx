@@ -40,11 +40,16 @@ interface TokenHolding {
   isLoadingPrice?: boolean;
 }
 
+type tokenAll = {
+  tokenAddress: string;
+};
+
 const Profile = () => {
   const { address, isConnected } = useAccount();
   const [hasNext, setHasNext] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [tokenHoldingsLoading, setTokenHoldingsLoading] = useState<boolean>(false);
+  const [tokenHoldingsLoading, setTokenHoldingsLoading] =
+    useState<boolean>(false);
   const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
   const [tokenHoldings, setTokenHoldings] = useState<TokenHolding[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -58,6 +63,7 @@ const Profile = () => {
   );
   const [showEditCard, setShowEditCard] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [allToken, setAllToken] = useState<tokenAll[]>([]);
 
   const { user, saveOrFetchUser, updateUser } = useUser();
 
@@ -70,22 +76,47 @@ const Profile = () => {
     });
 
   const ethPriceUSD = useMemo(() => {
-    return isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
+    return isConnected && !isLoadingLatestETHPrice
+      ? Number(latestETHPrice) / 1e8
+      : 0;
   }, [isConnected, isLoadingLatestETHPrice, latestETHPrice]);
 
-  // Fetch token price in ETH for a specific token
-  const fetchTokenPrice = useCallback(async (tokenAddress: string): Promise<number> => {
-    try {
-      const raw = await pureAmountOutMarketCap(tokenAddress);
-      if (raw !== undefined && raw !== null) {
-        return Number(raw.toString()) / 1e18;
+  // find all tokens
+  useEffect(() => {
+    (async () => {
+      try {
+        const request = await base.get("token-all");
+        const response = await request.data;
+        setAllToken(response.data || []);
+        console.log(response);
+      } catch (error) {
+        if (error) {
+          setAllToken([]);
+        }
+        console.log(error);
       }
-      return 0;
-    } catch (error) {
-      console.error(`Failed to fetch price for token ${tokenAddress}:`, error);
-      return 0;
-    }
+    })();
   }, []);
+
+  // Fetch token price in ETH for a specific token
+  const fetchTokenPrice = useCallback(
+    async (tokenAddress: string): Promise<number> => {
+      try {
+        const raw = await pureAmountOutMarketCap(tokenAddress);
+        if (raw !== undefined && raw !== null) {
+          return Number(raw.toString()) / 1e18;
+        }
+        return 0;
+      } catch (error) {
+        console.error(
+          `Failed to fetch price for token ${tokenAddress}:`,
+          error
+        );
+        return 0;
+      }
+    },
+    []
+  );
 
   // Fetch token holdings and their prices
   const fetchTokenHoldings = useCallback(async () => {
@@ -110,7 +141,7 @@ const Profile = () => {
         holdingsWithMetadata.map(async (token) => {
           const priceInETH = await fetchTokenPrice(token.contractAddress);
           const usdValue = token.balance * priceInETH * ethPriceUSD;
-          
+
           return {
             ...token,
             priceInETH,
@@ -145,7 +176,8 @@ const Profile = () => {
 
   const balanceChange = useMemo(() => {
     const change = totalBalance - previousDayBalance;
-    const percentage = previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
+    const percentage =
+      previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
     return { amount: change, percentage };
   }, [totalBalance, previousDayBalance]);
 
@@ -282,7 +314,7 @@ const Profile = () => {
         );
 
         const apiData = res.data.data;
-        console.log({ apiData });
+        // console.log({ apiData });
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
         setLaunchedTokens((prev) =>
@@ -326,7 +358,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100 &&
+          container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -354,9 +386,9 @@ const Profile = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('en-US', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    return amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
   };
 
@@ -378,11 +410,15 @@ const Profile = () => {
         {/* Wallet & Notification */}
         <div className="flex justify-center items-center gap-6 mb-10">
           <div className="dark:bg-white/4 bg-[#141313]/2 text-[#141313]/90 dark:text-white px-4 py-4 rounded-xl text-sm font-mono">
-            {address
-              ? (user?.username && user.username.trim() !== ""
-                ? `@${user.username}`
-                : `${address.slice(0, 4)}...${address.slice(-4)}`)
-              : <ConnectButton />}
+            {address ? (
+              user?.username && user.username.trim() !== "" ? (
+                `@${user.username}`
+              ) : (
+                `${address.slice(0, 4)}...${address.slice(-4)}`
+              )
+            ) : (
+              <ConnectButton />
+            )}
           </div>
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center">
@@ -432,8 +468,14 @@ const Profile = () => {
                     />
                   </div>
                   {isUsernameAvailable !== null && (
-                    <p className={`${isUsernameAvailable ? "text-green-500" : "text-red-500"} text-xs mt-2`}>
-                      {isUsernameAvailable ? "Username available" : "Username not available"}
+                    <p
+                      className={`${
+                        isUsernameAvailable ? "text-green-500" : "text-red-500"
+                      } text-xs mt-2`}
+                    >
+                      {isUsernameAvailable
+                        ? "Username available"
+                        : "Username not available"}
                     </p>
                   )}
                 </div>
@@ -449,7 +491,12 @@ const Profile = () => {
                   <button
                     type="button"
                     onClick={handleSubmitting}
-                    disabled={enableChange || !username?.trim() || isUsernameAvailable === false || isSubmitting}
+                    disabled={
+                      enableChange ||
+                      !username?.trim() ||
+                      isUsernameAvailable === false ||
+                      isSubmitting
+                    }
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Saving..." : "Save"}
@@ -473,9 +520,16 @@ const Profile = () => {
             <div className="lg:text-[70px] font-bold mb-2 font-raleway">
               ${formatCurrency(totalBalance)}
             </div>
-            <div className={`text-sm text-center ${balanceChange.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {balanceChange.amount >= 0 ? '▲' : '▼'} {balanceChange.percentage >= 0 ? '+' : ''}{balanceChange.percentage.toFixed(2)}% 
-              [${balanceChange.amount >= 0 ? '+' : ''}${formatCurrency(Math.abs(balanceChange.amount))}]
+            <div
+              className={`text-sm text-center ${
+                balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
+              {balanceChange.percentage >= 0 ? "+" : ""}
+              {balanceChange.percentage.toFixed(2)}% [$
+              {balanceChange.amount >= 0 ? "+" : ""}$
+              {formatCurrency(Math.abs(balanceChange.amount))}]
             </div>
             <div className="mt-4">{/* Replace with chart component */}</div>
           </div>
@@ -484,19 +538,21 @@ const Profile = () => {
         {/* Tabs */}
         <div className="flex gap-6 text-lg font-semibold mb-6">
           <button
-            className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
-              ? "border-white dark:text-white text-black"
-              : "border-transparent dark:text-white/30 text-black/60"
-              }`}
+            className={`pb-1 transition cursor-pointer ${
+              activeTab === "holdings"
+                ? "border-white dark:text-white text-black"
+                : "border-transparent dark:text-white/30 text-black/60"
+            }`}
             onClick={() => setActiveTab("holdings")}
           >
             Holdings
           </button>
           <button
-            className={`pb-1 transition cursor-pointer ${activeTab === "launched"
-              ? "border-white dark:text-white text-[#141313]/75"
-              : "border-transparent dark:text-white/30 text-black/60"
-              }`}
+            className={`pb-1 transition cursor-pointer ${
+              activeTab === "launched"
+                ? "border-white dark:text-white text-[#141313]/75"
+                : "border-transparent dark:text-white/30 text-black/60"
+            }`}
             onClick={() => setActiveTab("launched")}
           >
             Token Launched
@@ -508,11 +564,15 @@ const Profile = () => {
           <div className="space-y-4">
             {tokenHoldingsLoading ? (
               <div className="text-center py-8">
-                <p className="dark:text-white/70 text-[#141313]/75">Loading token holdings...</p>
+                <p className="dark:text-white/70 text-[#141313]/75">
+                  Loading token holdings...
+                </p>
               </div>
             ) : tokenHoldings.length === 0 ? (
               <div className="text-center py-8">
-                <p className="dark:text-white/70 text-[#141313]/75">No token holdings found</p>
+                <p className="dark:text-white/70 text-[#141313]/75">
+                  No token holdings found
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -529,12 +589,18 @@ const Profile = () => {
                           className="w-6 h-6 rounded-full"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove('hidden');
+                            target.style.display = "none";
+                            target.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
                           }}
                         />
                       ) : null}
-                      <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? 'hidden' : ''}`} />
+                      <div
+                        className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${
+                          token.logo ? "hidden" : ""
+                        }`}
+                      />
                       <div>
                         <span className="font-bold text-sm text-black dark:text-white block">
                           {token.symbol}
@@ -547,13 +613,11 @@ const Profile = () => {
                     <div className="text-sm dark:text-white/70 text-[#141313]/75 text-right">
                       <div>{token.formattedBalance}</div>
                       <div className="text-xs opacity-60">
-                        {token.isLoadingPrice ? (
-                          "Loading..."
-                        ) : token.usdValue && token.usdValue > 0 ? (
-                          `$${formatCurrency(token.usdValue)}`
-                        ) : (
-                          "$0.00"
-                        )}
+                        {token.isLoadingPrice
+                          ? "Loading..."
+                          : token.usdValue && token.usdValue > 0
+                          ? `$${formatCurrency(token.usdValue)}`
+                          : "$0.00"}
                       </div>
                     </div>
                   </div>
@@ -562,8 +626,8 @@ const Profile = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            <div ref={containerRef}>
+          <div>
+            <div ref={containerRef} className="space-y-4">
               {launchedTokens.map(({ name, symbol, createdAt }, i) => (
                 <div
                   key={i}
