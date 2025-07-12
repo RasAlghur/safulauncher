@@ -59,6 +59,7 @@ interface TokenMetadata {
   tokenAddress: string;
   tokenCreator: string;
   logoFilename?: string;
+  percentBundled?: string;
   createdAt?: number;
   expiresAt?: number;
 }
@@ -206,7 +207,11 @@ function formatTokenAmount(
 export default function Trade() {
   const { address, isConnected } = useAccount();
 
-  const { data: userETHBalance, isLoading: isLoadingUserETHBal, refetch: refetchETHBalance } = useBalance({
+  const {
+    data: userETHBalance,
+    isLoading: isLoadingUserETHBal,
+    refetch: refetchETHBalance,
+  } = useBalance({
     address,
   });
   const { tokenAddress } = useParams<{ tokenAddress: `0x${string}` }>();
@@ -311,11 +316,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress as `0x${string}`,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "balanceOf",
+          args: [address as `0x${string}`],
+        }
       : undefined
   );
 
@@ -326,11 +331,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress,
-        functionName: "allowance",
-        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress,
+          functionName: "allowance",
+          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+        }
       : undefined
   );
 
@@ -341,15 +346,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
+          ...LAUNCHER_ABI,
+          address: SAFU_LAUNCHER_CA,
+          functionName: "getAmountOut",
+          args: [
+            tokenAddress,
+            mode === "buy" ? ethValue : tokenValue,
+            mode === "buy" ? true : false,
+          ],
+        }
       : undefined
   );
 
@@ -491,8 +496,10 @@ export default function Trade() {
 
       try {
         console.log(
-          `${isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
+          `${
+            isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
+            selectedTimeframe.value
           }`
         );
 
@@ -743,6 +750,7 @@ export default function Trade() {
     refetchBalance,
     refetchAllowance,
     refetchLatestETHPrice,
+    refetchETHBalance,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1300,7 +1308,8 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
                             }`
                           )}
                         </span>
@@ -1391,7 +1400,9 @@ export default function Trade() {
                         : ""
                         }`}
                       disabled={
-                        isTransactionPending || !amount || parseFloat(amount) <= 0
+                        isTransactionPending ||
+                        !amount ||
+                        parseFloat(amount) <= 0
                       }
                     >
                       {getButtonText()}
@@ -1418,16 +1429,16 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed! You can now sell tokens."
                           : lastTxnType === "sell"
-                            ? "Sell transaction confirmed successfully!"
-                            : lastTxnType === "buy"
-                              ? "Buy transaction confirmed successfully!"
-                              : [
-                                "startTrading",
-                                "addToWhitelist",
-                                "disableWhitelist",
-                              ].includes(lastTxnType!)
-                                ? getAdminTxnMessage()
-                                : "Transaction confirmed successfully!"}
+                          ? "Sell transaction confirmed successfully!"
+                          : lastTxnType === "buy"
+                          ? "Buy transaction confirmed successfully!"
+                          : [
+                              "startTrading",
+                              "addToWhitelist",
+                              "disableWhitelist",
+                            ].includes(lastTxnType!)
+                          ? getAdminTxnMessage()
+                          : "Transaction confirmed successfully!"}
                       </p>
                       <p className="text-sm text-black">
                         Transaction: {txHash}
@@ -1489,8 +1500,9 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${
+                        progress < 100 ? "rounded-l-full" : "rounded-full"
+                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1542,8 +1554,9 @@ export default function Trade() {
                   className={`absolute bottom-0 h-[2px] dark:bg-white bg-black/50 transition-all duration-300 ease-in-out`}
                   style={{
                     width: "64px", // Match tab width or compute dynamically
-                    transform: `translateX(${activeTab2 === "info" ? "72px" : "0"
-                      })`,
+                    transform: `translateX(${
+                      activeTab2 === "info" ? "72px" : "0"
+                    })`,
                   }}
                 />
               </div>
@@ -1561,8 +1574,9 @@ export default function Trade() {
                       />
                       <button
                         type="button"
-                        className={`auto-update-toggle ${isAutoUpdateEnabled ? "active" : ""
-                          }`}
+                        className={`auto-update-toggle ${
+                          isAutoUpdateEnabled ? "active" : ""
+                        }`}
                         onClick={toggleAutoUpdate}
                         title={
                           isAutoUpdateEnabled
@@ -1665,15 +1679,25 @@ export default function Trade() {
                       <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
                         Dev Bundled:
                       </p>{" "}
-                      {isBundled ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                          <FiCheckCircle className="text-white" />
+                      <div className="flex items-center gap-4">
+                        <div>
+                          {isBundled ? (
+                            <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
+                              <FiCheckCircle className="text-white" />
+                            </div>
+                          ) : (
+                            <div className="bg-white flex rounded-full p-3 items-center justify-center">
+                              <MdOutlineCancel className="text-black" />
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
+                        <div className="text-[#27AE60] text-2xl">
+                          {token?.percentBundled !== null
+                            ? token?.percentBundled
+                            : 0}
+                          %
                         </div>
-                      )}
+                      </div>
                     </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                       <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
