@@ -47,6 +47,8 @@ type tokenAll = {
 
 const Profile = () => {
   const { address, isConnected } = useAccount();
+  const [balanceChange, setBalanceChange] = useState<{ amount: number; percentage: number; }>({ amount: 0, percentage: 0 });
+
   const [hasNext, setHasNext] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [tokenHoldingsLoading, setTokenHoldingsLoading] =
@@ -121,10 +123,10 @@ const Profile = () => {
   );
 
   // Fetch token holdings and their prices
-  const fetchTokenHoldings = useCallback(async () => {
+  const fetchTokenHoldings = useCallback(async (silent = false) => {
     if (!address) return;
 
-    setTokenHoldingsLoading(true);
+    if (!silent) setTokenHoldingsLoading(true);
     try {
       // Get all user's token holdings
       const holdings = await AlchemyTokenDiscovery.getAllTokenBalances(address);
@@ -160,7 +162,7 @@ const Profile = () => {
       console.error("Error fetching token holdings:", error);
       setTokenHoldings([]);
     } finally {
-      setTokenHoldingsLoading(false);
+      if (!silent) setTokenHoldingsLoading(false);
     }
   }, [address, fetchTokenPrice, ethPriceUSD]);
 
@@ -190,31 +192,27 @@ const Profile = () => {
     }, 0);
   }, [filteredHoldings]);
 
-  // Previous day balance for percentage calculation (mock data)
-  const previousDayBalance = useMemo(() => {
-    return totalBalance * 0.9; // Assuming 10% increase
-  }, [totalBalance]);
+
+  console.log("Current total balance at 1 index:", totalBalance);
 
   // track balance
-  const trackBalance = async (wallet: string, balance: string) => {
+  const trackBalance = async () => {
     try {
+      console.log("Tracking balance for user:", address);
+      console.log("Current total balance:", totalBalance);
       const request = await base.post("track-balance", {
-        currentBalance: balance,
-        wallet: wallet,
+        currentBalance: totalBalance.toString(),
+        wallet: String(address),
       });
-      const response = request.data;
-      console.log(response);
+      const { balanceChange: apiAmount, percentageChange: apiPct } = request.data.data;
+      console.log("API response:", request.data.data);
+      // update state from API
+      setBalanceChange({ amount: apiAmount, percentage: apiPct });
+      return request.data;
     } catch (error) {
       console.log(error);
     }
   };
-
-  const balanceChange = useMemo(() => {
-    const change = totalBalance - previousDayBalance;
-    const percentage =
-      previousDayBalance > 0 ? (change / previousDayBalance) * 100 : 0;
-    return { amount: change, percentage };
-  }, [totalBalance, previousDayBalance]);
 
   // Days left calculation
   useEffect(() => {
@@ -240,10 +238,14 @@ const Profile = () => {
       }
     };
 
-    findDayLast();
-  }, [user?.updatedAt, user?.username]);
+    if (totalBalance > 0) {
+      trackBalance();
+    }
 
-  // Initialize when wallet connects
+    findDayLast();
+  }, [user?.updatedAt, user?.username, totalBalance]);
+
+  // Initialize when wallet connects and set up real-time fetches
   useEffect(() => {
     let isMounted = true;
     if (isConnected && isMounted) {
@@ -251,10 +253,21 @@ const Profile = () => {
       fetchTokenHoldings();
     }
 
+    // Real-time update every N seconds, but silently (no loader)
+    const AUTO_REFRESH_MS = 15 * 1000; // ← change this to your desired interval
+    let intervalId: NodeJS.Timeout;
+    if (isConnected && address) {
+      intervalId = setInterval(() => {
+        fetchTokenHoldings(/* silent= */ true);
+        fetchAllTokens();
+      }, AUTO_REFRESH_MS);
+    }
+
     return () => {
       isMounted = false;
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [isConnected, address, saveOrFetchUser, fetchTokenHoldings]);
+  }, [isConnected, address, saveOrFetchUser, fetchTokenHoldings, fetchAllTokens]);
 
   // Username search logic
   const abortController = useRef<AbortController | null>(null);
@@ -392,7 +405,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-          container.scrollHeight - 100 &&
+        container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -505,9 +518,8 @@ const Profile = () => {
                   </div>
                   {isUsernameAvailable !== null && (
                     <p
-                      className={`${
-                        isUsernameAvailable ? "text-green-500" : "text-red-500"
-                      } text-xs mt-2`}
+                      className={`${isUsernameAvailable ? "text-green-500" : "text-red-500"
+                        } text-xs mt-2`}
                     >
                       {isUsernameAvailable
                         ? "Username available"
@@ -554,9 +566,8 @@ const Profile = () => {
               ${formatCurrency(totalBalance)}
             </div>
             <div
-              className={`text-sm text-center ${
-                balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
-              }`}
+              className={`text-sm text-center ${balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+                }`}
             >
               {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
               {balanceChange.percentage >= 0 ? "+" : ""}
@@ -570,21 +581,19 @@ const Profile = () => {
         {/* Tabs */}
         <div className="flex gap-6 text-lg font-semibold mb-6">
           <button
-            className={`pb-1 transition cursor-pointer ${
-              activeTab === "holdings"
-                ? "border-white dark:text-white text-black"
-                : "border-transparent dark:text-white/30 text-black/60"
-            }`}
+            className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
+              ? "border-white dark:text-white text-black"
+              : "border-transparent dark:text-white/30 text-black/60"
+              }`}
             onClick={() => setActiveTab("holdings")}
           >
             Platform Token Holdings ({filteredHoldings.length})
           </button>
           <button
-            className={`pb-1 transition cursor-pointer ${
-              activeTab === "launched"
-                ? "border-white dark:text-white text-[#141313]/75"
-                : "border-transparent dark:text-white/30 text-black/60"
-            }`}
+            className={`pb-1 transition cursor-pointer ${activeTab === "launched"
+              ? "border-white dark:text-white text-[#141313]/75"
+              : "border-transparent dark:text-white/30 text-black/60"
+              }`}
             onClick={() => setActiveTab("launched")}
           >
             Token Launched
@@ -632,9 +641,8 @@ const Profile = () => {
                         />
                       ) : null}
                       <div
-                        className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${
-                          token.logo ? "hidden" : ""
-                        }`}
+                        className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? "hidden" : ""
+                          }`}
                       />
                       <div>
                         <span className="font-bold text-sm text-black dark:text-white block">
@@ -651,8 +659,8 @@ const Profile = () => {
                         {token.isLoadingPrice
                           ? "Loading..."
                           : token.usdValue && token.usdValue > 0
-                          ? `$${formatCurrency(token.usdValue)}`
-                          : "$0.00"}
+                            ? `$${formatCurrency(token.usdValue)}`
+                            : "$0.00"}
                       </div>
                     </div>
                   </div>
