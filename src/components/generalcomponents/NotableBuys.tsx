@@ -61,7 +61,7 @@ const NotableBuys = () => {
           params: { ethAmt: ethPriceUSD },
         });
         const { recent, win } = request.data.data;
-        // console.log(recent, win);
+        console.log({ recent, win });
         setAllBuys({ recent, wins: win });
       } catch (error) {
         console.error("Failed to load notable buys:", error);

@@ -9,6 +9,8 @@ import { FaArrowDown } from "react-icons/fa";
 import { socket } from "../lib/socket";
 import { base } from "../lib/api";
 import { IoChevronForward } from "react-icons/io5";
+import { useUser } from "../context/user.context";
+import { processUsername } from "../lib/username";
 
 interface MessagePayload {
   id: string;
@@ -39,13 +41,16 @@ export default function Chat({ address, tokenAddress }: prop) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useUser();
+  const userId = user?.username ?? String(address);
+
   const onMessageSend: FormEventHandler<HTMLButtonElement> = async (e) => {
     e.preventDefault();
     if (message.trim() === "") return;
 
     const payload: Pick<MessagePayload, "groupId" | "text" | "userId"> = {
       groupId: String(tokenAddress),
-      userId: String(address),
+      userId,
       text: message,
     };
 
@@ -161,7 +166,12 @@ export default function Chat({ address, tokenAddress }: prop) {
         style={{ scrollBehavior: "smooth", scrollbarWidth: "none" }}
       >
         {messages.map((msg, index) => {
-          const isUser = address === msg.userId;
+          const isWalletAddress = (value: string | undefined) => {
+            return (
+              typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value)
+            );
+          };
+          const isUser = userId === msg.userId || address === msg.userId;
           const bubbleColor = isUser ? "bg-[#0C2FE0]/75" : "bg-[#0C8CE0]";
           const bubbleAlign = isUser ? "items-end" : "items-start";
           const textAlign = isUser ? "text-right" : "text-left";
@@ -172,7 +182,9 @@ export default function Chat({ address, tokenAddress }: prop) {
               {!isUser && (
                 <div className="flex items-center gap-2 mb-1">
                   <span className="dark:text-white/80 text-black text-sm font-medium">
-                    {msg.userId?.slice(0, 5) + "..." + msg.userId?.slice(-4)}
+                    {isWalletAddress(msg.userId)
+                      ? msg.userId?.slice(0, 5) + "..." + msg.userId?.slice(-4)
+                      : `@${processUsername(msg.userId)}`}
                   </span>
                 </div>
               )}

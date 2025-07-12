@@ -499,6 +499,7 @@ const Profile = () => {
                       value={username}
                       onChange={onchange}
                       disabled={enableChange}
+                      maxLength={10}
                       className="w-full pl-8 pr-4 py-3 dark:bg-white/5 bg-[#141313]/5 border border-white/10 rounded-lg dark:text-white text-black placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#3BC3DB] disabled:opacity-50"
                     />
                   </div>
