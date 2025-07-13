@@ -405,8 +405,9 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -497,8 +498,9 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -629,8 +631,8 @@ export default function Launch(): JSX.Element {
     () =>
       enablePlatformFee
         ? (platformFeeList.map((p) =>
-          Math.floor(p.pct * 100)
-        ) as readonly number[])
+            Math.floor(p.pct * 100)
+          ) as readonly number[])
         : ([] as readonly number[]),
     [enablePlatformFee, platformFeeList]
   );
@@ -761,6 +763,11 @@ export default function Launch(): JSX.Element {
     }
   };
 
+  const percentBundled = (
+    (calculateBundleTokens(bundleEth, supply) / supply) *
+    100
+  ).toFixed(2);
+
   useEffect(() => {
     if (isConfirmed && result) {
       (async () => {
@@ -788,9 +795,9 @@ export default function Launch(): JSX.Element {
         formData.append("createdAt", createdAt);
 
         // Add percentBundled to FormData
-        // if (enableBundle && bundleAddrs.length > 0) {
-        //   formData.append("percentBundled", percentBundled.toString());
-        // }
+        if (enableBundle && bundleAddrs.length > 0) {
+          formData.append("percentBundled", percentBundled.toString());
+        }
 
         const lastLog = result.logs[result.logs.length - 1];
         const topic1 = lastLog?.topics[1] ?? "";
@@ -939,6 +946,8 @@ export default function Launch(): JSX.Element {
     uniV2Router,
     uniV2WETH,
     infoETHCurrentPrice,
+    bundleAddrs.length,
+    percentBundled,
   ]);
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());
@@ -976,11 +985,6 @@ export default function Launch(): JSX.Element {
   ];
 
   const selectedOption = options.find((opt) => opt.value === lpOption)?.label;
-
-  const percentBundled = (
-    (calculateBundleTokens(bundleEth, supply) / supply) *
-    100
-  ).toFixed(2);
 
   return (
     <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
@@ -1137,8 +1141,9 @@ export default function Launch(): JSX.Element {
             </label>
 
             <div
-              className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
+              className={`border-2 border-dashed ${
+                dragActive ? "border-[#3BC3DB]" : "border-Primary"
+              } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
         transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
               onClick={openFilePicker}
@@ -1214,10 +1219,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableTax
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableTax
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableTax ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1355,10 +1361,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableWhitelist
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableWhitelist ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1446,16 +1453,18 @@ export default function Launch(): JSX.Element {
                     <div
                       onClick={() => setEnablePlatformFee(!enablePlatformFee)}
                       className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enablePlatformFee ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+          ${
+            enablePlatformFee ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
                     >
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enablePlatformFee
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enablePlatformFee
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enablePlatformFee ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1602,10 +1611,11 @@ export default function Launch(): JSX.Element {
                           setLpOption(option.value);
                           setIsOpen(false);
                         }}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
-                          ? "rounded-t-xl"
-                          : "rounded-b-xl"
-                          }`}
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                          option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                        }`}
                       >
                         {option.label}
                       </div>
@@ -1634,10 +1644,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${startNow
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {startNow ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1683,10 +1694,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${enableBundle
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            enableBundle
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {enableBundle ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1750,9 +1762,7 @@ export default function Launch(): JSX.Element {
                         ).toLocaleString()}
                       </div>
                       <div className="dark:text-white text-black">
-                        Percentage of supply: ~{" "}
-                        {percentBundled}
-                        %
+                        Percentage of supply: ~ {percentBundled}%
                       </div>
                       <div className="dark:text-white text-black">
                         Max allowed (25%):{" "}
@@ -1760,10 +1770,10 @@ export default function Launch(): JSX.Element {
                       </div>
                       {calculateBundleTokens(bundleEth, supply) >
                         (supply * 25) / 100 && (
-                          <div className="text-red-400 font-semibold">
-                            ⚠️ Exceeds 25% limit!
-                          </div>
-                        )}
+                        <div className="text-red-400 font-semibold">
+                          ⚠️ Exceeds 25% limit!
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="text-gray-400 text-sm mb-2">
