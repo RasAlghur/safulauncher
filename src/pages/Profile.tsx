@@ -7,7 +7,7 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { FaBell, FaEdit, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTimes } from "react-icons/fa";
 import { useAccount, useReadContract } from "wagmi";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
@@ -479,10 +479,6 @@ const Profile = () => {
             )}
           </div>
           <div className="flex items-center gap-3 relative z-30">
-            <div className="relative w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center cursor-pointer">
-              <FaBell className="dark:text-white/70 text-[#141313] text-sm" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
-            </div>
             <button
               onClick={handleEditClick}
               className="w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer relative z-40"
@@ -625,7 +621,7 @@ const Profile = () => {
                 </p>
               </div>
             ) : filteredHoldings.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-8 flex flex-col items-start">
                 <p className="dark:text-white/70 text-[#141313]/75">
                   No platform token holdings found
                 </p>

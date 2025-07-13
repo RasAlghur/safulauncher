@@ -316,11 +316,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress as `0x${string}`,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "balanceOf",
+          args: [address as `0x${string}`],
+        }
       : undefined
   );
 
@@ -331,11 +331,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress,
-        functionName: "allowance",
-        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress,
+          functionName: "allowance",
+          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+        }
       : undefined
   );
 
@@ -346,15 +346,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
+          ...LAUNCHER_ABI,
+          address: SAFU_LAUNCHER_CA,
+          functionName: "getAmountOut",
+          args: [
+            tokenAddress,
+            mode === "buy" ? ethValue : tokenValue,
+            mode === "buy" ? true : false,
+          ],
+        }
       : undefined
   );
 
@@ -496,8 +496,10 @@ export default function Trade() {
 
       try {
         console.log(
-          `${isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
+          `${
+            isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
+            selectedTimeframe.value
           }`
         );
 
@@ -899,16 +901,19 @@ export default function Trade() {
     if (logs.length === 0) return 0;
 
     // Sort logs by timestamp to get chronological order
-    const sortedLogs = [...logs].sort((a, b) =>
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    const sortedLogs = [...logs].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
     const firstTx = sortedLogs[0];
     const lastTx = sortedLogs[sortedLogs.length - 1];
 
     // Calculate implied price (ETH per token) for each transaction
-    const firstPrice = parseFloat(firstTx.ethAmount) / parseFloat(firstTx.tokenAmount);
-    const lastPrice = parseFloat(lastTx.ethAmount) / parseFloat(lastTx.tokenAmount);
+    const firstPrice =
+      parseFloat(firstTx.ethAmount) / parseFloat(firstTx.tokenAmount);
+    const lastPrice =
+      parseFloat(lastTx.ethAmount) / parseFloat(lastTx.tokenAmount);
 
     // Calculate percentage change
     if (firstPrice === 0) return 0;
@@ -1275,6 +1280,18 @@ export default function Trade() {
                 </div>
               )}
             </div>
+            <div>
+              <span
+                className={pricePerf >= 0 ? "text-green-500" : "text-red-500"}
+              >
+                <span className="dark:text-white text-black">{token.name}</span>{" "}
+                <span className="dark:text-white/50 text-black/50">
+                  is {pricePerf >= 0 ? "up" : "down"} by
+                </span>{" "}
+                {pricePerf >= 0 ? "+" : ""}
+                {pricePerf.toFixed(2)}%
+              </span>
+            </div>
 
             <div className="grid mb-2.5 gap-4 mt-2.5">{/* Token info */}</div>
 
@@ -1288,7 +1305,7 @@ export default function Trade() {
                     <label className="md:text-lg dark:text-white text-black font-medium">
                       Sell
                     </label>
-                    <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 px-4 py-1 rounded-xl border border-white/10">
                       <input
                         type="number"
                         id="amount-input"
@@ -1327,7 +1344,8 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
                             }`
                           )}
                         </span>
@@ -1355,12 +1373,12 @@ export default function Trade() {
                       onClick={() =>
                         handleMode(mode === "buy" ? "sell" : "buy")
                       }
-                      className="group relative flex items-center justify-center size-12 rounded-full bg-black/40 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0] overflow-hidden"
+                      className="group relative flex items-center justify-center size-8 rounded-full bg-black/40 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0] overflow-hidden"
                     >
                       <FaArrowDown className="text-xl text-white transition-opacity duration-300 group-hover:opacity-0 absolute" />
 
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ">
-                        <RiArrowUpDownFill className="text-2xl text-white " />
+                        <RiArrowUpDownFill className="text-xl text-white " />
                       </div>
                     </button>
                   </div>
@@ -1370,7 +1388,7 @@ export default function Trade() {
                     <label className="md:text-lg dark:text-white text-black font-medium">
                       Buy
                     </label>
-                    <div className="flex items-center justify-between dark:text-white text-black bg-black/10 dark:bg-white/5 px-4 py-3 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between dark:text-white text-black bg-black/10 dark:bg-white/5 px-4 py-1 rounded-xl border border-white/10">
                       <span className="text-lg">
                         {isLoadingAmountOutSelect ? (
                           <span className="inline-block w-24 h-5 bg-white/20 animate-pulse rounded" />
@@ -1413,10 +1431,11 @@ export default function Trade() {
                     <button
                       type="button"
                       onClick={handleButtonClick}
-                      className={`w-full rounded-xl py-3 text-white font-semibold text-center bg-[#0C8CE0] hover:bg-blue-600 transition ${isTransactionPending
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
-                        }`}
+                      className={`w-full rounded-xl py-2 text-white font-semibold text-center bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                        isTransactionPending
+                          ? "opacity-60 cursor-not-allowed"
+                          : ""
+                      }`}
                       disabled={
                         isTransactionPending ||
                         !amount ||
@@ -1447,16 +1466,16 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed! You can now sell tokens."
                           : lastTxnType === "sell"
-                            ? "Sell transaction confirmed successfully!"
-                            : lastTxnType === "buy"
-                              ? "Buy transaction confirmed successfully!"
-                              : [
-                                "startTrading",
-                                "addToWhitelist",
-                                "disableWhitelist",
-                              ].includes(lastTxnType!)
-                                ? getAdminTxnMessage()
-                                : "Transaction confirmed successfully!"}
+                          ? "Sell transaction confirmed successfully!"
+                          : lastTxnType === "buy"
+                          ? "Buy transaction confirmed successfully!"
+                          : [
+                              "startTrading",
+                              "addToWhitelist",
+                              "disableWhitelist",
+                            ].includes(lastTxnType!)
+                          ? getAdminTxnMessage()
+                          : "Transaction confirmed successfully!"}
                       </p>
                       <p className="text-sm text-black">
                         Transaction: {txHash}
@@ -1518,8 +1537,9 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${
+                        progress < 100 ? "rounded-l-full" : "rounded-full"
+                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1547,19 +1567,21 @@ export default function Trade() {
                 <div className="flex space-x-4 mb-[34px] pb-4 relative z-10">
                   <button
                     onClick={() => setActiveTab2("chart")}
-                    className={`text-[20px] font-raleway font-medium transition ${activeTab2 === "chart"
-                      ? "dark:text-white text-black"
-                      : "dark:text-white/30 dark:hover:text-white text-black/70"
-                      }`}
+                    className={`text-[20px] font-raleway font-medium transition ${
+                      activeTab2 === "chart"
+                        ? "dark:text-white text-black"
+                        : "dark:text-white/30 dark:hover:text-white text-black/70"
+                    }`}
                   >
                     Chart
                   </button>
                   <button
                     onClick={() => setActiveTab2("info")}
-                    className={`text-[20px] font-raleway font-medium transition ${activeTab2 === "info"
-                      ? "dark:text-white text-black"
-                      : "dark:text-white/30 dark:hover:text-white text-black/70"
-                      }`}
+                    className={`text-[20px] font-raleway font-medium transition ${
+                      activeTab2 === "info"
+                        ? "dark:text-white text-black"
+                        : "dark:text-white/30 dark:hover:text-white text-black/70"
+                    }`}
                   >
                     Info
                   </button>
@@ -1571,8 +1593,9 @@ export default function Trade() {
                   className={`absolute bottom-0 h-[2px] dark:bg-white bg-black/50 transition-all duration-300 ease-in-out`}
                   style={{
                     width: "64px", // Match tab width or compute dynamically
-                    transform: `translateX(${activeTab2 === "info" ? "72px" : "0"
-                      })`,
+                    transform: `translateX(${
+                      activeTab2 === "info" ? "72px" : "0"
+                    })`,
                   }}
                 />
               </div>
@@ -1590,8 +1613,9 @@ export default function Trade() {
                       />
                       <button
                         type="button"
-                        className={`auto-update-toggle ${isAutoUpdateEnabled ? "active" : ""
-                          }`}
+                        className={`auto-update-toggle ${
+                          isAutoUpdateEnabled ? "active" : ""
+                        }`}
                         onClick={toggleAutoUpdate}
                         title={
                           isAutoUpdateEnabled
@@ -1601,7 +1625,7 @@ export default function Trade() {
                       >
                         {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
                       </button>
-                      <div className="text-sm text-white/60">
+                      <div className="text-sm dark:text-white/60 text-black">
                         Last updated:{" "}
                         {new Date(lastUpdateTime).toLocaleTimeString()}
                       </div>
@@ -1644,12 +1668,6 @@ export default function Trade() {
                   {/* Token info */}
 
                   <div className="grid sm:grid-cols-2 mb-2.5 gap-4 mt-2.5  ">
-                   
-                    <div>
-                      <span className={pricePerf >= 0 ? "text-green-500" : "text-red-500"}>
-                        {token.name} is {pricePerf >= 0 ? "up" : "down"} by {pricePerf >= 0 ? "+" : ""}{pricePerf.toFixed(2)}%
-                      </span>
-                    </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                       <p className="dark:text-white text-black">
                         <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
@@ -1831,20 +1849,22 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
-                    ? " dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "transactions"
+                      ? " dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
-                    ? "dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "chat"
+                      ? "dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Community Chat
                 </button>
@@ -1869,10 +1889,11 @@ export default function Trade() {
                         {txLogs.map((tx, i) => (
                           <tr key={i} className="mb-4">
                             <td
-                              className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
-                                ? "text-green-500"
-                                : "text-red-500"
-                                }`}
+                              className={`font-medium py-3 flex items-center gap-2 ${
+                                tx.type === "buy"
+                                  ? "text-green-500"
+                                  : "text-red-500"
+                              }`}
                             >
                               {tx.type === "buy" ? (
                                 <MdAddCircleOutline className="text-[22px]" />
