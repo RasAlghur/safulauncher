@@ -316,11 +316,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress as `0x${string}`,
-          functionName: "balanceOf",
-          args: [address as `0x${string}`],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      }
       : undefined
   );
 
@@ -331,11 +331,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress,
-          functionName: "allowance",
-          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress,
+        functionName: "allowance",
+        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+      }
       : undefined
   );
 
@@ -346,15 +346,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-          ...LAUNCHER_ABI,
-          address: SAFU_LAUNCHER_CA,
-          functionName: "getAmountOut",
-          args: [
-            tokenAddress,
-            mode === "buy" ? ethValue : tokenValue,
-            mode === "buy" ? true : false,
-          ],
-        }
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: "getAmountOut",
+        args: [
+          tokenAddress,
+          mode === "buy" ? ethValue : tokenValue,
+          mode === "buy" ? true : false,
+        ],
+      }
       : undefined
   );
 
@@ -496,10 +496,8 @@ export default function Trade() {
 
       try {
         console.log(
-          `${
-            isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
-            selectedTimeframe.value
+          `${isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
           }`
         );
 
@@ -888,6 +886,7 @@ export default function Trade() {
 
   const sumVolume = (logs: TxLog[]) =>
     logs.reduce((sum, tx) => sum + parseFloat(tx.ethAmount), 0);
+
   const volume1dEth = sumVolume(logs1d);
   const volume7dEth = sumVolume(logs7d);
   const volumeAllEth = sumVolume(txLogs);
@@ -896,11 +895,31 @@ export default function Trade() {
   const volume7dUsd = volume7dEth * infoETHCurrentPrice;
   const volumeAllUsd = volumeAllEth * infoETHCurrentPrice;
 
-  // const totals = txLogs.reduce((acc, tx) => {
-  //     acc.totalEthSpent += parseFloat(tx.ethAmount);
-  //     acc.totalTokensTraded += parseFloat(tx.tokenAmount);
-  //     return acc;
-  // }, { totalEthSpent: 0, totalTokensTraded: 0 });
+  const performance1dPrice = (logs: TxLog[]) => {
+    if (logs.length === 0) return 0;
+
+    // Sort logs by timestamp to get chronological order
+    const sortedLogs = [...logs].sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    const firstTx = sortedLogs[0];
+    const lastTx = sortedLogs[sortedLogs.length - 1];
+
+    // Calculate implied price (ETH per token) for each transaction
+    const firstPrice = parseFloat(firstTx.ethAmount) / parseFloat(firstTx.tokenAmount);
+    const lastPrice = parseFloat(lastTx.ethAmount) / parseFloat(lastTx.tokenAmount);
+
+    // Calculate percentage change
+    if (firstPrice === 0) return 0;
+
+    const percentageChange = ((lastPrice - firstPrice) / firstPrice) * 100;
+
+    return percentageChange;
+  };
+
+  const perf1dPrice = performance1dPrice(logs1d);
+  const pricePerf = perf1dPrice;
 
   // Event handlers
   const handleMode = useCallback((m: "buy" | "sell") => {
@@ -1308,8 +1327,7 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${
-                              token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
                             }`
                           )}
                         </span>
@@ -1429,16 +1447,16 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed! You can now sell tokens."
                           : lastTxnType === "sell"
-                          ? "Sell transaction confirmed successfully!"
-                          : lastTxnType === "buy"
-                          ? "Buy transaction confirmed successfully!"
-                          : [
-                              "startTrading",
-                              "addToWhitelist",
-                              "disableWhitelist",
-                            ].includes(lastTxnType!)
-                          ? getAdminTxnMessage()
-                          : "Transaction confirmed successfully!"}
+                            ? "Sell transaction confirmed successfully!"
+                            : lastTxnType === "buy"
+                              ? "Buy transaction confirmed successfully!"
+                              : [
+                                "startTrading",
+                                "addToWhitelist",
+                                "disableWhitelist",
+                              ].includes(lastTxnType!)
+                                ? getAdminTxnMessage()
+                                : "Transaction confirmed successfully!"}
                       </p>
                       <p className="text-sm text-black">
                         Transaction: {txHash}
@@ -1500,9 +1518,8 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${
-                        progress < 100 ? "rounded-l-full" : "rounded-full"
-                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1554,9 +1571,8 @@ export default function Trade() {
                   className={`absolute bottom-0 h-[2px] dark:bg-white bg-black/50 transition-all duration-300 ease-in-out`}
                   style={{
                     width: "64px", // Match tab width or compute dynamically
-                    transform: `translateX(${
-                      activeTab2 === "info" ? "72px" : "0"
-                    })`,
+                    transform: `translateX(${activeTab2 === "info" ? "72px" : "0"
+                      })`,
                   }}
                 />
               </div>
@@ -1574,9 +1590,8 @@ export default function Trade() {
                       />
                       <button
                         type="button"
-                        className={`auto-update-toggle ${
-                          isAutoUpdateEnabled ? "active" : ""
-                        }`}
+                        className={`auto-update-toggle ${isAutoUpdateEnabled ? "active" : ""
+                          }`}
                         onClick={toggleAutoUpdate}
                         title={
                           isAutoUpdateEnabled
@@ -1629,6 +1644,12 @@ export default function Trade() {
                   {/* Token info */}
 
                   <div className="grid sm:grid-cols-2 mb-2.5 gap-4 mt-2.5  ">
+                   
+                    <div>
+                      <span className={pricePerf >= 0 ? "text-green-500" : "text-red-500"}>
+                        {token.name} is {pricePerf >= 0 ? "up" : "down"} by {pricePerf >= 0 ? "+" : ""}{pricePerf.toFixed(2)}%
+                      </span>
+                    </div>
                     <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
                       <p className="dark:text-white text-black">
                         <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
