@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { pureGetLatestETHPrice } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import { base } from "../../lib/api";
+import { processUsername } from "../../lib/username";
 
 export interface TokenMetadata {
   name: string;
@@ -22,9 +23,8 @@ interface BuyTx {
   tokenAmount: string;
   ethAmount: string;
   usdValue: number;
-  token: {
-    symbol: string;
-  };
+  token: { symbol: string };
+  user: { username: string };
   tokenAddress: string;
   txnHash: string;
   type: string;
@@ -111,42 +111,48 @@ const NotableBuys = () => {
 
       {/* Card Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-        {activeData.map((tx, i) => (
-          <div
-            key={i}
-            className="dark:bg-[#151A32]/50 bg-[#01061c0d] p-4 rounded-lg flex items-center gap-4"
-          >
-            {/* Avatar */}
-            <div className="w-10 h-10 flex items-center justify-center rounded-full text-white font-bold text-sm bg-gray-600">
-              {tx.wallet.slice(2, 3).toUpperCase()}
-            </div>
+        {activeData.map((tx, i) => {
+          const username = tx.user.username;
+          const username_ = username !== undefined || username !== null;
+          return (
+            <div
+              key={i}
+              className="dark:bg-[#151A32]/50 bg-[#01061c0d] p-4 rounded-lg flex items-center gap-4"
+            >
+              {/* Avatar */}
+              <div className="w-10 h-10 flex items-center justify-center rounded-full text-white font-bold text-sm bg-gray-600">
+                {tx.wallet.slice(2, 3).toUpperCase()}
+              </div>
 
-            {/* Text */}
-            <div className="text-sm">
-              <div className="dark:text-white text-[#141313] font-medium">
-                {tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-gray-300 flex-wrap">
-                <span className="dark:text-white text-[#141313]/50">
-                  bought
-                </span>
-                {/* Display symbol instead of address */}
-                <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
-                  {tx.token.symbol}
-                </span>
-                <span className="dark:text-white text-[#141313]/50">
-                  with{" "}
-                  <span className="dark:text-white text-[#141313] font-medium">
-                    ${tx?.usdValue.toFixed(0)}
+              {/* Text */}
+              <div className="text-sm">
+                <div className="dark:text-white text-[#141313] font-medium">
+                  {username_
+                    ? `@${processUsername(username)}`
+                    : `${tx.wallet.slice(0, 6)}...${tx.wallet.slice(-4)}`}
+                </div>
+                <div className="flex items-center gap-2 mt-1 text-gray-300 flex-wrap">
+                  <span className="dark:text-white text-[#141313]/50">
+                    bought
                   </span>
-                </span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {new Date(tx.timestamp).toLocaleString()}
+                  {/* Display symbol instead of address */}
+                  <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
+                    {tx.token.symbol}
+                  </span>
+                  <span className="dark:text-white text-[#141313]/50">
+                    with{" "}
+                    <span className="dark:text-white text-[#141313] font-medium">
+                      ${tx?.usdValue.toFixed(0)}
+                    </span>
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(tx.timestamp).toLocaleString()}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {activeData.length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400">
