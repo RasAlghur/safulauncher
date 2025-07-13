@@ -234,14 +234,10 @@ const Profile = () => {
 
       if (daysLeft <= 0) {
         setEnableChange(false);
-      } else if (
-        user?.username === null ||
-        user?.username === undefined ||
-        user?.username === ""
-      ) {
+      } else if (user?.username === undefined || user?.username === null) {
         setEnableChange(false);
       } else {
-        console.log(user?.username);
+        console.log("username", user?.username);
         setEnableChange(true);
         console.log(`There are ${daysLeft} day(s) left to reach 30 days.`);
       }
