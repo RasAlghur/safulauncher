@@ -417,10 +417,10 @@ const TrendingTokens = () => {
                       <td className="p-3">{formatCurrency(data.volume)}</td>
                       <td className="p-3 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          <span className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center text-xs">
+                          <span className="w-6 h-6 bg-gray-700 rounded-full text-white flex items-center justify-center text-xs">
                             {data.token.symbol.charAt(0)}
                           </span>
-                          <span>
+                          <span className="dark:text-white">
                             {data.holders > 1000
                               ? `${(data.holders / 1000).toFixed(1)}k`
                               : data.holders}
