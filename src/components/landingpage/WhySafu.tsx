@@ -6,6 +6,8 @@ import automation from "../../assets/bot.png";
 import trust from "../../assets/handshake.png";
 import ecosystem from "../../assets/ecosystem.png";
 import DustParticles from "../generalcomponents/DustParticles";
+import { Link } from "react-router-dom";
+import rocket from "../../assets/rocket.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -42,24 +44,37 @@ const WhySafu = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate cards with stagger
+      // Start each card off-screen and hidden
+      gsap.set(cardsRef.current, {
+        opacity: 0,
+        y: 50, // start slightly below
+        scale: 0.95,
+      });
+
+      // Slide in with stagger
       gsap.to(cardsRef.current, {
         opacity: 1,
+        y: 0,
         scale: 1,
-
-        duration: 0.7,
+        duration: 0.6,
         ease: "power3.out",
-        stagger: 0.2,
+        stagger: 0.15,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
         },
       });
 
-      // Animate button after cards
+      // Button animation
+      gsap.set(buttonRef.current, {
+        opacity: 0,
+        y: 30,
+        scale: 0.95,
+      });
+
       gsap.to(buttonRef.current, {
         opacity: 1,
-
+        y: 0,
         scale: 1,
         duration: 0.6,
         delay: 0.2,
@@ -108,12 +123,13 @@ const WhySafu = () => {
         </div>
 
         <div className="mt-10 flex items-center justify-center">
-          <button
-            ref={buttonRef}
-            className="text-[1rem] font-bold px-[24px] py-[13px] text-white cursor-pointer gap-3 bg-[#0C8CE0] rounded-full"
+          <Link
+            to={"/launchintro"}
+            className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
           >
-            <p>Connect Wallet</p>
-          </button>
+            <img src={rocket} alt="rocket" className="w-4 h-4" />
+            <p>Launch App</p>
+          </Link>
         </div>
       </div>
     </section>

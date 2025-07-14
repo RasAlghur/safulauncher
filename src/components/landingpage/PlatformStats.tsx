@@ -61,7 +61,7 @@ const PlatformStats = () => {
         if (Array.isArray(data)) {
           // If data is an array of arrays, flatten it
           flattenedTokens = data.flat();
-        } else if (data && typeof data === 'object') {
+        } else if (data && typeof data === "object") {
           // If data is a single object, wrap it in an array
           flattenedTokens = [data];
         }
@@ -83,7 +83,7 @@ const PlatformStats = () => {
     async function fetchTokenMetrics() {
       const newCurve: Record<string, number> = {};
 
-      const validTokens = tokens.filter(token => token && token.tokenAddress);
+      const validTokens = tokens.filter((token) => token && token.tokenAddress);
 
       await Promise.all(
         validTokens.map(async (token) => {
@@ -157,28 +157,30 @@ const PlatformStats = () => {
       title: "Total Volume",
       mainValue: getMainValue(
         pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${pureMetrics[0] !== undefined
-          ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
-      ethValue: getETHDisplay(
-        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0
-      ),
+      // ethValue: getETHDisplay(
+      //   pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0
+      // ),
       icon: VolumeIcon,
     },
     {
       title: "Fee Collected",
       mainValue: getMainValue(
         pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${pureMetrics[1] !== undefined
-          ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-          : 0
+        `${
+          pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
         } ETH`
       ),
-      ethValue: getETHDisplay(
-        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0
-      ),
+      // ethValue: getETHDisplay(
+      //   pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0
+      // ),
       icon: FeeCollected,
     },
     {
@@ -221,9 +223,10 @@ const PlatformStats = () => {
       title: "Dev Reward",
       mainValue: getMainValue(
         pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${pureMetrics[6] !== undefined
-          ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-          : 0
+        `${
+          pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+            : 0
         } ETH`
       ),
       ethValue: getETHDisplay(

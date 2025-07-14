@@ -296,13 +296,10 @@ export default function Leaderboard() {
                       <td className="px-6 py-4 font-medium text-black dark:text-white">
                         {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                       </td>
-                      <td className="px-6 py-4">
-                        <a
-                          href="#"
-                          className=" hover:underline text-black dark:text-white"
-                        >
+                      <td className="px-6 py-4 ">
+                        <p className=" text-black dark:text-white">
                           {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
-                        </a>
+                        </p>
                       </td>
                       <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
                         <div className="flex flex-col">
