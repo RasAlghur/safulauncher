@@ -235,7 +235,6 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState<"transactions" | "chat">(
     "transactions"
   );
-  const [activeTab2, setActiveTab2] = useState<"chart" | "info">("chart");
 
   // Fallback data for non-connected users
   const [fallbackInfoData, setFallbackInfoData] = useState<unknown[] | null>(
@@ -439,8 +438,8 @@ export default function Trade() {
   const marketCapETH =
     oneTokenPriceETH !== null ? oneTokenPriceETH * totalSupplyTokens : 0;
   const marketCapUSD = marketCapETH * infoETHCurrentPrice;
-  const tokenPriceUSD =
-    oneTokenPriceETH !== null ? oneTokenPriceETH * infoETHCurrentPrice : 0;
+  // const tokenPriceUSD =
+  //   oneTokenPriceETH !== null ? oneTokenPriceETH * infoETHCurrentPrice : 0;
 
   // Load fallback data for non-connected users
   useEffect(() => {
@@ -1150,7 +1149,7 @@ export default function Trade() {
           <div className="absolute lg:size-[30rem] lg:w-[55rem] rounded-full bg-[#3BC3DB]/10 blur-3xl top-1/3 left-1/2 -translate-x-1/2 -z-10" />
 
           {/* Message */}
-          <h2 className="font-raleway text-white text-3xl lg:text-5xl font-bold mb-4 drop-shadow-md mt-10">
+          <h2 className="font-raleway text-white text-3xl lg:text-5xl font-bold mb-4  mt-10">
             Token Not Found!
           </h2>
           <p className="text-red-400 text-lg lg:text-xl mb-6">
@@ -1280,7 +1279,7 @@ export default function Trade() {
                 </div>
               )}
             </div>
-            <div>
+            <div className="hidden">
               <span
                 className={pricePerf >= 0 ? "text-green-500" : "text-red-500"}
               >
@@ -1293,22 +1292,111 @@ export default function Trade() {
               </span>
             </div>
 
-            <div className="grid mb-2.5 gap-4 mt-2.5">{/* Token info */}</div>
+            <div className="grid mb-2.5 gap-4 mt-2.5">
+              {/* Token info */}
+
+              <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
+                {[
+                  { label: "Trading Started", value: isStartTrading },
+                  {
+                    label: "Dev Bundled",
+                    value: isBundled,
+                    extra: `${token?.percentBundled ?? 0}%`,
+                  },
+                  { label: "Tax on Dex", value: isTaxedOnDex },
+                  { label: "Tax on SafuLauncher", value: IsTaxedOnSafu },
+                  { label: "Whitelist Ongoing", value: isWhiteListOngoing },
+                  {
+                    label: "Listed on Uniswap",
+                    value: isListed,
+                    link: `https://app.uniswap.org/#/tokens/ethereum/${token.tokenAddress}`,
+                  },
+                ].map(({ label, value, extra, link }, i) => (
+                  <div
+                    key={i}
+                    className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group"
+                  >
+                    <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway text-xs">
+                      {label}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {extra && (
+                        <span className="text-[#27AE60] text-xs font-semibold">
+                          {extra}
+                        </span>
+                      )}
+                      {value ? (
+                        <div className="bg-[#27AE60] rounded-full p-1.5 flex items-center justify-center relative">
+                          <FiCheckCircle className="text-white text-sm" />
+                          {link && (
+                            <a
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-[#3BC3DB] text-white px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-semibold z-20"
+                            >
+                              View
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded-full p-1.5 flex items-center justify-center">
+                          <MdOutlineCancel className="text-black text-sm" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3 hidden">
+                <h2 className="text-xl font-semibold dark:text-white text-black flex items-center font-raleway">
+                  Volume Summary
+                </h2>
+                <div className="space-y-1 ">
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      Today
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volume1dEth.toFixed(4)} ETH ($
+                      {volume1dUsd.toLocaleString()})
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      7 Days
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volume7dEth.toFixed(4)} ETH ($
+                      {volume7dUsd.toLocaleString()})
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                      All Time
+                    </span>
+                    <span className="dark:text-white text-black">
+                      {volumeAllEth.toFixed(4)} ETH ($
+                      {volumeAllUsd.toLocaleString()})
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* right section */}
             <div className="top-section mt-4">
-              <div className="trade-widget dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-2xl p-6 border border-white/10">
-                {/* Swap Interface */}
-                <div className="space-y-4">
+              <div className=" dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-xl p-3 border border-white/10 text-sm max-w-[20rem]">
+                <div className="space-y-3 ">
                   {/* SELL INPUT */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="md:text-lg dark:text-white text-black font-medium">
+                  <div className="flex flex-col space-y-1 ">
+                    <label className="text-xs md:text-sm dark:text-white text-black font-medium">
                       Sell
                     </label>
-                    <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 px-4 py-1 rounded-xl border border-white/10">
+                    <div className="flex items-center justify-between bg-black/10 dark:bg-white/5 px-3 py-1 rounded-lg border border-white/10">
                       <input
                         type="number"
-                        id="amount-input"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.0"
@@ -1316,19 +1404,19 @@ export default function Trade() {
                         step="any"
                         autoComplete="off"
                         disabled={isTransactionPending}
-                        className="bg-transparent w-full text-lg focus:outline-none dark:text-white text-black placeholder-gray-400 "
+                        className="bg-transparent w-full text-sm focus:outline-none dark:text-white text-black placeholder-gray-400"
                       />
-                      <span className="ml-1 dark:text-white text-black font-raleway font-medium flex items-center gap-1">
-                        {mode === "buy" && <FaEthereum className="text-xl" />}
+                      <span className="ml-1 dark:text-white text-black font-raleway font-medium text-xs flex items-center gap-1">
+                        {mode === "buy" && <FaEthereum className="text-base" />}
                         {mode === "buy" ? "ETH" : token.symbol}
                       </span>
                     </div>
 
                     {mode === "buy" && (
-                      <div className="text-sm dark:text-white/70 text-black">
+                      <div className="text-xs dark:text-white/60 text-black">
                         Balance:{" "}
                         {isLoadingUserETHBal ? (
-                          <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
+                          <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                         ) : (
                           `${parseFloat(
                             userETHBalance?.formatted ?? "0"
@@ -1338,11 +1426,11 @@ export default function Trade() {
                     )}
 
                     {mode === "sell" && (
-                      <div className="flex justify-between items-center text-sm dark:text-white/70 text-black">
+                      <div className="flex justify-between items-center text-xs dark:text-white/60 text-black">
                         <span>
                           Balance:{" "}
                           {isLoadingBalance ? (
-                            <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
+                            <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
                             `${parseFloat(tokenBalance).toLocaleString()} ${
                               token.symbol
@@ -1351,14 +1439,13 @@ export default function Trade() {
                         </span>
 
                         <button
-                          type="button"
                           onClick={handleMaxClick}
                           disabled={
                             isTransactionPending ||
                             isLoadingBalance ||
                             !getBalance
                           }
-                          className="bg-Primary font-medium text-sm px-2 py-1 flex items-center justify-center text-white rounded-full"
+                          className="bg-Primary text-white px-2 py-0.5 rounded-full text-xs"
                         >
                           {isLoadingBalance ? "..." : "Max"}
                         </button>
@@ -1366,32 +1453,28 @@ export default function Trade() {
                     )}
                   </div>
 
-                  {/* Arrow */}
+                  {/* Mode Switch */}
                   <div className="flex justify-center">
                     <button
-                      type="button"
                       onClick={() =>
                         handleMode(mode === "buy" ? "sell" : "buy")
                       }
-                      className="group relative flex items-center justify-center size-8 rounded-full bg-black/40 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0] overflow-hidden"
+                      className="group relative flex items-center justify-center size-6 rounded-full bg-black/40 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0]"
                     >
-                      <FaArrowDown className="text-xl text-white transition-opacity duration-300 group-hover:opacity-0 absolute" />
-
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ">
-                        <RiArrowUpDownFill className="text-xl text-white " />
-                      </div>
+                      <FaArrowDown className="text-white text-sm absolute group-hover:opacity-0 transition-opacity" />
+                      <RiArrowUpDownFill className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
 
                   {/* BUY OUTPUT */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="md:text-lg dark:text-white text-black font-medium">
+                  <div className="flex flex-col space-y-1">
+                    <label className="text-xs md:text-sm dark:text-white text-black font-medium">
                       Buy
                     </label>
-                    <div className="flex items-center justify-between dark:text-white text-black bg-black/10 dark:bg-white/5 px-4 py-1 rounded-xl border border-white/10">
-                      <span className="text-lg">
+                    <div className="flex items-center justify-between dark:text-white text-black bg-black/10 dark:bg-white/5 px-3 py-1 rounded-lg border border-white/10">
+                      <span className="text-sm">
                         {isLoadingAmountOutSelect ? (
-                          <span className="inline-block w-24 h-5 bg-white/20 animate-pulse rounded" />
+                          <span className="inline-block w-16 h-4 bg-white/20 animate-pulse rounded" />
                         ) : amountOutSelect ? (
                           formatTokenAmount(
                             Number(amountOutSelect.toString()) / 1e18,
@@ -1401,37 +1484,38 @@ export default function Trade() {
                           "0"
                         )}
                       </span>
-
-                      <span className="ml-1 font-raleway font-medium flex items-center gap-1 dark:text-white text-black">
-                        {mode === "sell" && <FaEthereum className="text-xl" />}
+                      <span className="ml-1 font-raleway font-medium text-xs flex items-center gap-1">
+                        {mode === "sell" && (
+                          <FaEthereum className="text-base" />
+                        )}
                         {mode === "buy" ? token.symbol : "ETH"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Approval Warning */}
+                  {/* Approval warning */}
                   {mode === "sell" && needsApproval && (
-                    <div className="text-xs text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                    <div className="text-[11px] text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded-md">
                       ⚠️ Approval required to sell tokens
                     </div>
                   )}
 
-                  {/* Submit Button */}
+                  {/* Swap Button */}
                   {isListed === 1 ? (
                     <a
                       href={`https://app.uniswap.org/#/tokens/ethereum/${token.tokenAddress}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full rounded-xl py-3 text-white font-semibold text-center bg-[#27AE60] hover:bg-green-600 transition opacity-80 cursor-not-allowed flex items-center justify-center"
+                      className="w-full rounded-lg py-2 text-white text-center text-xs bg-[#27AE60] hover:bg-green-600 transition"
                       style={{ pointerEvents: "auto" }}
                     >
-                      Token is bonded successfully. Click to view on Uniswap
+                      View token on Uniswap
                     </a>
                   ) : (
                     <button
                       type="button"
                       onClick={handleButtonClick}
-                      className={`w-full rounded-xl py-2 text-white font-semibold text-center bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${
                         isTransactionPending
                           ? "opacity-60 cursor-not-allowed"
                           : ""
@@ -1444,46 +1528,38 @@ export default function Trade() {
                     >
                       {getButtonText()}
                       {isTransactionPending && (
-                        <span className="ml-2 animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                        <span className="ml-1 animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full inline-block"></span>
                       )}
                     </button>
                   )}
 
-                  {/* Transaction Status Messages */}
+                  {/* Status messages */}
                   {isWritePending && (
-                    <div className="text-sm text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
+                    <div className="text-[11px] text-yellow-400 bg-yellow-500/10 p-2 rounded-md">
                       Please confirm the transaction in your wallet
                     </div>
                   )}
                   {isConfirming && (
-                    <div className="text-sm text-blue-400 bg-blue-500/10 p-2 rounded-md">
+                    <div className="text-[11px] text-blue-400 bg-blue-500/10 p-2 rounded-md">
                       Transaction submitted. Waiting for confirmation...
                     </div>
                   )}
                   {isConfirmed && txHash && (
-                    <div className="status-message success">
-                      <p className="text-base">
+                    <div className="text-[11px] text-green-500 bg-green-500/10 p-2 rounded-md">
+                      <p>
                         {lastTxnType === "approval"
-                          ? "Approval confirmed! You can now sell tokens."
+                          ? "Approval confirmed!"
                           : lastTxnType === "sell"
-                          ? "Sell transaction confirmed successfully!"
+                          ? "Sell confirmed!"
                           : lastTxnType === "buy"
-                          ? "Buy transaction confirmed successfully!"
-                          : [
-                              "startTrading",
-                              "addToWhitelist",
-                              "disableWhitelist",
-                            ].includes(lastTxnType!)
-                          ? getAdminTxnMessage()
-                          : "Transaction confirmed successfully!"}
+                          ? "Buy confirmed!"
+                          : getAdminTxnMessage()}
                       </p>
-                      <p className="text-sm text-black">
-                        Transaction: {txHash}
-                      </p>
+                      <p className="text-[10px] text-black">Tx: {txHash}</p>
                     </div>
                   )}
                   {errorMsg && (
-                    <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-md">
+                    <div className="text-[11px] text-red-400 bg-red-500/10 p-2 rounded-md">
                       {errorMsg}
                     </div>
                   )}
@@ -1513,7 +1589,7 @@ export default function Trade() {
               </div>
 
               {/* Styled progress bar with dynamic gradient */}
-              <div className="bg-[#031E51] h-[35px] rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden mb-4">
+              <div className="bg-[#031E51] h-[34px] rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden mb-4">
                 <p className="absolute right-4 top-2 text-white text-[13px] font-semibold z-10 flex items-center justify-end">
                   {isLoadingInfoData ? (
                     <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
@@ -1562,285 +1638,72 @@ export default function Trade() {
           <div>
             <div className="">
               {/* Tab Buttons */}
-              <div className="relative">
-                {/* Tab Buttons */}
-                <div className="flex space-x-4 mb-[34px] pb-4 relative z-10">
-                  <button
-                    onClick={() => setActiveTab2("chart")}
-                    className={`text-[20px] font-raleway font-medium transition ${
-                      activeTab2 === "chart"
-                        ? "dark:text-white text-black"
-                        : "dark:text-white/30 dark:hover:text-white text-black/70"
-                    }`}
-                  >
-                    Chart
-                  </button>
-                  <button
-                    onClick={() => setActiveTab2("info")}
-                    className={`text-[20px] font-raleway font-medium transition ${
-                      activeTab2 === "info"
-                        ? "dark:text-white text-black"
-                        : "dark:text-white/30 dark:hover:text-white text-black/70"
-                    }`}
-                  >
-                    Info
-                  </button>
-                </div>
 
-                {/* Active Tab Indicator */}
-                <div className="absolute bottom-0 left-0 w-full h-[2px] dark:bg-white/10 bg-[#141313]/10" />
-                <div
-                  className={`absolute bottom-0 h-[2px] dark:bg-white bg-black/50 transition-all duration-300 ease-in-out`}
-                  style={{
-                    width: "64px", // Match tab width or compute dynamically
-                    transform: `translateX(${
-                      activeTab2 === "info" ? "72px" : "0"
-                    })`,
-                  }}
-                />
-              </div>
+              <h1 className="text-[20px] font-raleway font-medium dark:text-white text-black mb-4">
+                Chart
+              </h1>
 
               {/* Chart Tab Content */}
-              {activeTab2 === "chart" && (
-                <div className="space-y-4">
-                  {/* Chart Header */}
-                  <div className="chart-header flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
-                      <TimeframeSelector
-                        selectedTimeframe={selectedTimeframe}
-                        onTimeframeChange={handleTimeframeChange}
-                        disabled={isLoadingChart}
-                      />
-                      <button
-                        type="button"
-                        className={`auto-update-toggle ${
-                          isAutoUpdateEnabled ? "active" : ""
-                        }`}
-                        onClick={toggleAutoUpdate}
-                        title={
-                          isAutoUpdateEnabled
-                            ? "Disable auto-update"
-                            : "Enable auto-update"
-                        }
-                      >
-                        {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
-                      </button>
-                      <div className="text-sm dark:text-white/60 text-black">
-                        Last updated:{" "}
-                        {new Date(lastUpdateTime).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Chart Container */}
-                  <div className="chart-container">
-                    {isLoadingChart ? (
-                      <div className="chart-loading flex flex-col items-center gap-2">
-                        <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
-                        <p className="text-sm text-white/60">
-                          Loading chart data...
-                        </p>
-                      </div>
-                    ) : (
-                      <LightweightChart
-                        data={ohlc}
-                        timeframe={selectedTimeframe.resolution}
-                        height={500}
-                        ethToUsdRate={infoETHCurrentPrice}
-                        totalSupply={tokenSupply / 1e18}
-                        symbol={token.symbol}
-                      />
-                    )}
-
-                    {/* Auto-update Live Indicator */}
-                    {isAutoUpdateEnabled && (
-                      <div className="absolute top-2 left-2 flex items-center gap-1 text-green-400 text-sm">
-                        <span className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
-                        Live
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activeTab2 === "info" && (
-                <div className="grid mb-2.5 gap-4 mt-2.5">
-                  {/* Token info */}
-
-                  <div className="grid sm:grid-cols-2 mb-2.5 gap-4 mt-2.5  ">
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-white text-black">
-                        <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                          Token Supply:
-                        </span>{" "}
-                        {(tokenSupply / 1e18).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-white text-black">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          Token Price:
-                        </span>{" "}
-                        {tokenPriceUSD > 0 ? (
-                          `$${tokenPriceUSD}`
-                        ) : (
-                          <span className="inline-block w-20 h-5 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
-                        )}
-                      </p>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-white text-black">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          Market Cap:
-                        </span>{" "}
-                        {marketCapUSD > 0 ? (
-                          `$${formatTokenAmount(marketCapUSD)}`
-                        ) : (
-                          <span className="inline-block w-24 h-5 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
-                        )}
-                      </p>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Trading Started:
-                      </p>{" "}
-                      {isStartTrading ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                          <FiCheckCircle className="text-white" />
-                        </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Dev Bundled:
-                      </p>{" "}
-                      <div className="flex items-center gap-4">
-                        <div>
-                          {isBundled ? (
-                            <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                              <FiCheckCircle className="text-white" />
-                            </div>
-                          ) : (
-                            <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                              <MdOutlineCancel className="text-black" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-[#27AE60] text-2xl">
-                          {token?.percentBundled !== null
-                            ? token?.percentBundled
-                            : 0}
-                          %
-                        </div>
-                      </div>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Tax on Dex:
-                      </p>{" "}
-                      {isTaxedOnDex ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                          <FiCheckCircle className="text-white" />
-                        </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Tax on SafuLauncher:
-                      </p>{" "}
-                      {IsTaxedOnSafu ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                          <FiCheckCircle className="text-white" />
-                        </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Whitelist Ongoing:
-                      </p>{" "}
-                      {isWhiteListOngoing ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center">
-                          <FiCheckCircle className="text-black" />
-                        </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/4 rounded-xl p-2.5 flex items-center justify-between relative group">
-                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Listed on Uniswap:
-                      </p>{" "}
-                      {isListed ? (
-                        <div className="bg-[#27AE60] rounded-full p-3 flex items-center justify-center relative">
-                          <FiCheckCircle className="text-black" />
-                          {/* Show Uniswap link on hover */}
-                          <a
-                            href={`https://app.uniswap.org/#/tokens/ethereum/${token.tokenAddress}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-[#3BC3DB] text-white px-3 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold z-20"
-                          >
-                            View on Uniswap
-                          </a>
-                        </div>
-                      ) : (
-                        <div className="bg-white flex rounded-full p-3 items-center justify-center">
-                          <MdOutlineCancel className="text-black" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3">
-                    <h2 className="text-xl font-semibold dark:text-white text-black flex items-center font-raleway">
-                      Volume Summary
-                    </h2>
-                    <div className="space-y-1 ">
-                      <p className="flex justify-between">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          Today
-                        </span>
-                        <span className="dark:text-white text-black">
-                          {volume1dEth.toFixed(4)} ETH ($
-                          {volume1dUsd.toLocaleString()})
-                        </span>
-                      </p>
-                      <p className="flex justify-between">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          7 Days
-                        </span>
-                        <span className="dark:text-white text-black">
-                          {volume7dEth.toFixed(4)} ETH ($
-                          {volume7dUsd.toLocaleString()})
-                        </span>
-                      </p>
-                      <p className="flex justify-between">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          All Time
-                        </span>
-                        <span className="dark:text-white text-black">
-                          {volumeAllEth.toFixed(4)} ETH ($
-                          {volumeAllUsd.toLocaleString()})
-                        </span>
-                      </p>
+              <div className="space-y-4">
+                {/* Chart Header */}
+                <div className="chart-header flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
+                    <TimeframeSelector
+                      selectedTimeframe={selectedTimeframe}
+                      onTimeframeChange={handleTimeframeChange}
+                      disabled={isLoadingChart}
+                    />
+                    <button
+                      type="button"
+                      className={`auto-update-toggle ${
+                        isAutoUpdateEnabled ? "active" : ""
+                      }`}
+                      onClick={toggleAutoUpdate}
+                      title={
+                        isAutoUpdateEnabled
+                          ? "Disable auto-update"
+                          : "Enable auto-update"
+                      }
+                    >
+                      {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
+                    </button>
+                    <div className="text-sm dark:text-white/60 text-black">
+                      Last updated:{" "}
+                      {new Date(lastUpdateTime).toLocaleTimeString()}
                     </div>
                   </div>
                 </div>
-              )}
+
+                {/* Chart Container */}
+                <div className="chart-container">
+                  {isLoadingChart ? (
+                    <div className="chart-loading flex flex-col items-center gap-2">
+                      <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
+                      <p className="text-sm text-white/60">
+                        Loading chart data...
+                      </p>
+                    </div>
+                  ) : (
+                    <LightweightChart
+                      data={ohlc}
+                      timeframe={selectedTimeframe.resolution}
+                      height={500}
+                      ethToUsdRate={infoETHCurrentPrice}
+                      totalSupply={tokenSupply / 1e18}
+                      symbol={token.symbol}
+                    />
+                  )}
+
+                  {/* Auto-update Live Indicator */}
+                  {isAutoUpdateEnabled && (
+                    <div className="absolute top-2 left-2 flex items-center gap-1 text-green-400 text-sm">
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
+                      Live
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="mt-[34px]">

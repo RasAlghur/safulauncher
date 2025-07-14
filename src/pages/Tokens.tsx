@@ -15,7 +15,7 @@ import {
   pureGetLatestETHPrice,
   pureInfoDataRaw,
 } from "../web3/readContracts";
-import Advertisement from "../components/generalcomponents/Advertisement";
+
 import { BsChevronDown } from "react-icons/bs";
 
 interface transaction {
@@ -332,9 +332,45 @@ export default function Tokens() {
           <DustParticles key={i} />
         ))}
       </div>
+      {/* Advertisement */}
+      <div className="lg:pt-[15rem] mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
+        {/* Advertisement */}
+        <section className="fixed top-20 left-0 right-0 z-50 max-w-6xl mx-auto">
+          <h1 className="text-xl font-bold dark:text-white text-[#01061C] my-2">
+            Featured Tokens
+          </h1>
+          <div className="grid grid-cols-2 gap-[9px] sm:grid-cols-3 lg:grid-cols-4">
+            {sortedTokens.slice(0, 4).map((token, idx) => (
+              <Link
+                to={`/trade/${token.tokenAddress}`}
+                key={idx}
+                className="rounded-[10px] px-3 py-5 bg-white
+ dark:bg-[#0B132B] border border-white/10 transition-all hover:scale-[1.01] duration-200 ease-in-out"
+              >
+                <div className="flex flex-col items-center text-center">
+                  {token.tokenImageId && (
+                    <img
+                      src={`${import.meta.env.VITE_API_BASE_URL}${
+                        token.image?.path
+                      }`}
+                      alt={`${token.symbol} logo`}
+                      className="w-12 h-12 rounded-lg mb-2"
+                      crossOrigin=""
+                    />
+                  )}
+                  <h3 className="text-[14px] lg:text-base font-bold text-[#147ABD] dark:text-white mb-1">
+                    {token.name} ({token.symbol})
+                  </h3>
+                  <p className="text-[11px] text-[#141313]/70 dark:text-white/60">
+                    {token.tokenCreator.slice(0, 6)}...
+                    {token.tokenCreator.slice(-4)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      <div className="pt-24 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
-        <Advertisement />
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
@@ -365,7 +401,7 @@ export default function Tokens() {
         {/* Controls */}
         <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
           {/* Search Field Dropdown */}
-          <div className="relative w-full sm:w-[250px]">
+          <div className="relative w-full sm:w-[250px] hidden">
             <div
               onClick={() => setSearchDropdownOpen((prev) => !prev)}
               className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"

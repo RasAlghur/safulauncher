@@ -55,6 +55,7 @@ export default function Launch(): JSX.Element {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [supply, setSupply] = useState<number>(0);
+  const [supplyInput, setSupplyInput] = useState("0");
   const [website, setWebsite] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
@@ -87,8 +88,27 @@ export default function Launch(): JSX.Element {
 
   const openFilePicker = () => inputRef.current?.click();
 
-  const increase = () => setSupply((prev) => prev + 1);
-  const decrease = () => setSupply((prev) => Math.max(1, prev - 1)); // Minimum 1
+  const increase = () =>
+    setSupply((prev) => {
+      const newVal = prev + 1;
+      setSupplyInput(formatNumberWithCommas(newVal));
+      return newVal;
+    });
+
+  const decrease = () =>
+    setSupply((prev) => {
+      const newVal = Math.max(1, prev - 1);
+      setSupplyInput(formatNumberWithCommas(newVal));
+      return newVal;
+    });
+
+  function formatNumberWithCommas(value: number | string) {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function removeCommas(value: string) {
+    return value.replace(/,/g, "");
+  }
 
   const [statusMessage, setStatusMessage] = useState("");
   const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
@@ -980,7 +1000,7 @@ export default function Launch(): JSX.Element {
   type LPOption = "lock" | "burn";
 
   const options: { value: LPOption; label: string }[] = [
-    { value: "lock", label: "Lock" },
+    { value: "lock", label: "Lock LP (3 months)" },
     { value: "burn", label: "Burn" },
   ];
 
@@ -997,21 +1017,6 @@ export default function Launch(): JSX.Element {
 
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
       <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
-        {validationErrors.length > 0 && (
-          <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5">
-            <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
-              Please fix the following issues:
-            </h3>
-            <ul className="space-y-1 text-sm md:text-base">
-              {validationErrors.map((error, index) => (
-                <li key={index}>
-                  <span className="font-semibold">{error.field}:</span>{" "}
-                  {error.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
         <div className="">
           <h1 className="dark:text-white text-[#01061C] text-center text-lg lg:text-[24px] font-raleway font-medium mb-[12px]">
             Launch Your Token
@@ -1076,10 +1081,21 @@ export default function Launch(): JSX.Element {
 
             <div className="relative flex w-full">
               <input
-                type="number"
-                value={supply}
-                onChange={(e) => setSupply(parseInt(e.target.value) || 0)}
-                min="1"
+                type="text"
+                inputMode="numeric"
+                value={supplyInput}
+                onChange={(e) => {
+                  const raw = removeCommas(e.target.value);
+                  const parsed = parseInt(raw, 10);
+
+                  if (!isNaN(parsed)) {
+                    setSupply(parsed); // raw number for backend / logic
+                    setSupplyInput(formatNumberWithCommas(parsed)); // formatted input
+                  } else {
+                    setSupply(0);
+                    setSupplyInput("");
+                  }
+                }}
                 required
                 className="w-full py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none"
               />
@@ -1123,14 +1139,21 @@ export default function Launch(): JSX.Element {
           <div className="flex flex-col gap-[10px] mt-[34px]">
             <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
               Description
-              <span className="mandatory text-Primary"> (Optional)</span>
+              <span className="mandatory text-Primary">
+                {" "}
+                (Optional, max 200 chars)
+              </span>
             </label>
             <textarea
-              placeholder="Enter short description"
+              placeholder="Enter a short description"
               value={description}
-              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+              maxLength={200}
               onChange={(e) => setDescription(e.target.value)}
+              className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
             />
+            <span className="text-sm text-gray-500 dark:text-gray-400 self-end">
+              {description.length}/200
+            </span>
           </div>
 
           {/* Input file and tax toggle */}
@@ -1206,7 +1229,7 @@ export default function Launch(): JSX.Element {
               <div className="flex flex-col gap-2 mt-[34px]">
                 <div className="flex justify-between items-center">
                   <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                    Enable Tax
+                    Enable Tax on DEX
                   </label>
 
                   {/* Hover Group */}
@@ -1344,108 +1367,11 @@ export default function Launch(): JSX.Element {
                 </div>
               )}
 
-              {/* Whitelist Toggle */}
-              <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
-                <div className="flex justify-between items-center">
-                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                    Whitelist Only
-                  </label>
-
-                  {/* Hover group for toggle + tooltip */}
-                  <div className="relative group">
-                    <div
-                      onClick={() => setEnableWhitelist(!enableWhitelist)}
-                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enableWhitelist ? "bg-Primary" : "bg-white"} shadow-inner relative`}
-                    >
-                      <div
-                        className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
-            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableWhitelist
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
-                      >
-                        {enableWhitelist ? (
-                          <CircleCheckBig className="text-Primary w-3 h-3" />
-                        ) : (
-                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
-                            <X className="text-Primary w-3 h-3" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Static x icon on left */}
-                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
-                        <X className="text-white w-3 h-3" />
-                      </div>
-                      {/* Static check icon on right */}
-                      <div className="absolute right-[10px] z-10">
-                        <CircleCheckBig className="text-black w-3 h-3" />
-                      </div>
-                    </div>
-
-                    {/* Tooltip shown on hover */}
-                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                      Only whitelisted addresses can buy initially. (Max 200
-                      addresses)
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Whitelist Section */}
-              {enableWhitelist && (
-                <div
-                  id="wl-section"
-                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-                >
-                  <div className="dark:text-white text-black font-medium mb-2">
-                    Whitelisted Addresses:{" "}
-                    <span className="text-green-400">
-                      {whitelist.length} / 200
-                    </span>
-                  </div>
-                  {whitelist.map((addr, i) => (
-                    <div
-                      key={i}
-                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
-                    >
-                      <input
-                        placeholder="0x..."
-                        value={addr}
-                        onChange={(e) => {
-                          const list = [...whitelist];
-                          list[i] = e.target.value;
-                          setWhitelist(list);
-                        }}
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeItem(whitelist, setWhitelist, i)}
-                        className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => addItem(whitelist, setWhitelist, "", 200)}
-                    disabled={whitelist.length >= 200}
-                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
-                  >
-                    + Add Whitelist Address ({whitelist.length}/200)
-                  </button>
-                </div>
-              )}
               {/* Platform Fee Toggle */}
               <div className="flex flex-col gap-2 mt-[34px] md:mt-[80px]">
                 <div className="flex justify-between items-center">
-                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                    Enable Platform Fees
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway break-all">
+                    Enable Tax on SafuLauncher
                   </label>
 
                   {/* Toggle + Tooltip Group */}
@@ -1578,6 +1504,104 @@ export default function Launch(): JSX.Element {
                     className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
                   >
                     + Add Platform Fee Recipient ({platformFeeList.length}/5)
+                  </button>
+                </div>
+              )}
+
+              {/* Whitelist Toggle */}
+              <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
+                <div className="flex justify-between items-center">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Whitelist Only
+                  </label>
+
+                  {/* Hover group for toggle + tooltip */}
+                  <div className="relative group">
+                    <div
+                      onClick={() => setEnableWhitelist(!enableWhitelist)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${enableWhitelist ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
+                      >
+                        {enableWhitelist ? (
+                          <CircleCheckBig className="text-Primary w-3 h-3" />
+                        ) : (
+                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                            <X className="text-Primary w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Static x icon on left */}
+                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                        <X className="text-white w-3 h-3" />
+                      </div>
+                      {/* Static check icon on right */}
+                      <div className="absolute right-[10px] z-10">
+                        <CircleCheckBig className="text-black w-3 h-3" />
+                      </div>
+                    </div>
+
+                    {/* Tooltip shown on hover */}
+                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Only whitelisted addresses can buy initially. (Max 200
+                      addresses)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Whitelist Section */}
+              {enableWhitelist && (
+                <div
+                  id="wl-section"
+                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
+                >
+                  <div className="dark:text-white text-black font-medium mb-2">
+                    Whitelisted Addresses:{" "}
+                    <span className="text-green-400">
+                      {whitelist.length} / 200
+                    </span>
+                  </div>
+                  {whitelist.map((addr, i) => (
+                    <div
+                      key={i}
+                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                    >
+                      <input
+                        placeholder="0x..."
+                        value={addr}
+                        onChange={(e) => {
+                          const list = [...whitelist];
+                          list[i] = e.target.value;
+                          setWhitelist(list);
+                        }}
+                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(whitelist, setWhitelist, i)}
+                        className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addItem(whitelist, setWhitelist, "", 200)}
+                    disabled={whitelist.length >= 200}
+                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
+                  >
+                    + Add Whitelist Address ({whitelist.length}/200)
                   </button>
                 </div>
               )}
@@ -1860,7 +1884,23 @@ export default function Launch(): JSX.Element {
               "Fix Validation Errors"
             )}
           </button>
+          {validationErrors.length > 0 && (
+            <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
+              <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
+                Please fix the following issues:
+              </h3>
+              <ul className="space-y-1 text-sm md:text-base">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>
+                    <span className="font-semibold">{error.field}:</span>{" "}
+                    {error.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </form>
+
         {error && (
           <p className="text-red-500">Error: {(error as BaseError).message}</p>
         )}

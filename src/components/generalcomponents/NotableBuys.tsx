@@ -91,7 +91,7 @@ const NotableBuys = () => {
                 : "dark:text-white/30 text-black/70"
             }`}
           >
-            Notable Buys
+            Frequent Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
@@ -101,7 +101,7 @@ const NotableBuys = () => {
                 : "dark:text-white/30 text-black/70"
             }`}
           >
-            Big Wins
+            Notable Buys
           </button>
         </div>
         <button className="text-sm text-gray-400 hover:underline">
@@ -156,7 +156,7 @@ const NotableBuys = () => {
 
         {activeData.length === 0 && (
           <div className="col-span-full p-8 text-center text-gray-400">
-            Not found.
+            Nothing to see here
           </div>
         )}
       </div>
