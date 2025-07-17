@@ -162,6 +162,7 @@ export default function Tokens() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
+    inputRef.current?.focus();
     debouncedFetch(value, searchField);
   };
 
@@ -359,7 +360,6 @@ export default function Tokens() {
              w-full max-w-4xl mx-auto mb-[34px] 
              focus:outline-none focus:ring-2 focus:ring-[#0C8CE0] 
              transition-all duration-200"
-          disabled={isLoadingTokens}
         />
 
         {/* Controls */}
