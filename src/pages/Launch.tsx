@@ -30,6 +30,7 @@ import { base } from "../lib/api";
 import { CircleCheckBig, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 /**
  * Description placeholder
@@ -120,6 +121,7 @@ export default function Launch(): JSX.Element {
   const [lpOption, setLpOption] = useState<"lock" | "burn">("lock");
   const [enableBundle, setEnableBundle] = useState(false);
   const [enablePlatformFee, setEnablePlatformFee] = useState(false);
+  const walletInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamic groups...
   const [taxList, setTaxList] = useState<{ addr: string; bps: number }[]>([]);
@@ -163,6 +165,25 @@ export default function Launch(): JSX.Element {
     idx: number
   ) => {
     setter(arr.filter((_, i) => i !== idx));
+  };
+
+  const [newAddr, setNewAddr] = useState("");
+  const [newBps, setNewBps] = useState(0);
+
+  const addTaxRecipient = () => {
+    if (taxList.length >= 5 || !newAddr || newBps <= 0) return;
+    setTaxList([...taxList, { addr: newAddr, bps: newBps }]);
+    setNewAddr("");
+    setNewBps(0);
+
+    // Refocus on wallet input
+    setTimeout(() => {
+      walletInputRef.current?.focus();
+    }, 0);
+  };
+
+  const removeTaxRecipient = (index: number) => {
+    setTaxList(taxList.filter((_, i) => i !== index));
   };
 
   // Address validation helper
@@ -1097,7 +1118,7 @@ export default function Launch(): JSX.Element {
                   }
                 }}
                 required
-                className="w-full py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none"
+                className="py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none w-[95%] lg:w-full"
               />
 
               {/* Buttons container */}
@@ -1226,27 +1247,24 @@ export default function Launch(): JSX.Element {
             {/* enable tax, whitelist only and enable platform fees */}
             <div className="">
               {/* Enable Tax Toggle Styled Similarly */}
-              <div className="flex flex-col gap-2 mt-[34px]">
+              <div className="flex flex-col gap-2 mt-8">
                 <div className="flex justify-between items-center">
-                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                  <label className="text-lg font-semibold dark:text-white text-black">
                     Enable Tax on DEX
                   </label>
-
-                  {/* Hover Group */}
                   <div className="relative group">
                     <div
                       onClick={() => setEnableTax(!enableTax)}
-                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-        ${enableTax ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                      className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
+                        enableTax ? "bg-Primary" : "bg-white"
+                      } shadow-inner relative`}
                     >
                       <div
-                        className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
-            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableTax
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+                        className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
+                          enableTax
+                            ? "translate-x-8 bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                        }`}
                       >
                         {enableTax ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1256,121 +1274,110 @@ export default function Launch(): JSX.Element {
                           </div>
                         )}
                       </div>
-
-                      {/* Static x icon on left */}
                       <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
                         <X className="text-white w-3 h-3" />
                       </div>
-                      {/* Static check icon on right */}
                       <div className="absolute right-[10px] z-10">
                         <CircleCheckBig className="text-black w-3 h-3" />
                       </div>
                     </div>
-
-                    {/* Tooltip-like div shown on hover */}
-                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                      Collect up to 10% tax on Uniswap trades. (Max 5
-                      recipients)
-                    </div>
                   </div>
                 </div>
-              </div>
 
-              {enableTax && (
-                <div
-                  id="tax-section"
-                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
-                >
-                  <div className="dark:text-white text-black font-medium mb-2">
-                    Current Tax total:{" "}
-                    <span className="text-green-400">
-                      {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS (
-                      {(
-                        taxList.reduce((sum, t) => sum + (t.bps || 0), 0) / 100
-                      ).toFixed(1)}
-                      %)
-                    </span>
-                  </div>
+                {enableTax && (
+                  <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                    {/* <div className="text-sm font-medium dark:text-white text-black mb-2">
+                      Current Tax Total:{" "}
+                      <span className="text-green-400">
+                        {taxList.reduce((sum, t) => sum + (t.bps || 0), 0)} BPS
+                        (
+                        {(
+                          taxList.reduce((sum, t) => sum + (t.bps || 0), 0) /
+                          100
+                        ).toFixed(1)}
+                        %)
+                      </span>
+                    </div> */}
 
-                  {/* Add Tax Recipient Button */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addItem(taxList, setTaxList, { addr: "", bps: 0 }, 5)
-                    }
-                    className="w-full bg-Primary hover:bg-Primary/80 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={taxList.length >= 5}
-                  >
-                    Add Tax Recipient ({taxList.length}/5)
-                  </button>
+                    {/* Inputs like uploaded image */}
+                    <div className="flex flex-col gap-4">
+                      <label
+                        htmlFor=""
+                        className="dark:text-white font-raleway text-xl font-semibold"
+                      >
+                        Wallet
+                      </label>
+                      <input
+                        type="text"
+                        ref={walletInputRef}
+                        placeholder="0x.."
+                        value={newAddr}
+                        onChange={(e) => setNewAddr(e.target.value)}
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129]"
+                      />
 
-                  {/* Tax Recipients List */}
-                  {taxList.map((t, i) => (
-                    <div
-                      key={i}
-                      className="group-item flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg border border-gray-700"
-                    >
-                      <div className="flex-1 w-full">
-                        <label className="block text-sm font-medium dark:text-white text-black mb-1">
-                          Recipient Address
-                        </label>
-                        <input
-                          placeholder="0x..."
-                          value={t.addr}
-                          onChange={(e) => {
-                            const list = [...taxList];
-                            list[i].addr = e.target.value;
-                            setTaxList(list);
-                          }}
-                          className="w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                        />
-                      </div>
-
-                      <div className="flex-1 w-full">
-                        <label className="block text-sm font-medium dark:text-white text-black mb-1">
-                          Tax Amount (BPS)
-                        </label>
-                        <input
-                          placeholder="BPS (e.g. 200 = 2%)"
-                          type="number"
-                          value={t.bps || ""}
-                          onChange={(e) => {
-                            const list = [...taxList];
-                            list[i].bps = parseInt(e.target.value) || 0;
-                            setTaxList(list);
-                          }}
-                          min="0"
-                          max="1000"
-                          className="w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
-                        />
-                        <p className="text-xs text-gray-400 mt-1">
-                          {t.bps ? `${(t.bps / 100).toFixed(1)}%` : "0%"}
-                        </p>
-                      </div>
+                      <label
+                        htmlFor=""
+                        className="dark:text-white font-raleway text-xl font-semibold"
+                      >
+                        Percentage
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="%"
+                        min="0"
+                        max="10"
+                        value={newBps / 100 || ""}
+                        onChange={(e) =>
+                          setNewBps(parseFloat(e.target.value) * 100)
+                        }
+                        className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129]"
+                      />
 
                       <button
-                        type="button"
-                        onClick={() => removeItem(taxList, setTaxList, i)}
-                        className="text-red-400 hover:text-red-500 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-500/10 transition-colors duration-200"
+                        onClick={addTaxRecipient}
+                        className="bg-Primary px-3 py-4 dark:text-white text-black rounded-full w-full flex items-center justify-center gap-1"
                       >
-                        Remove
+                        <IoMdAddCircleOutline className="text-xl" />{" "}
+                        <p className="font-raleway font-medium">
+                          Add Recipient
+                        </p>
                       </button>
                     </div>
-                  ))}
 
-                  {/* Help Text */}
-                  <div className="text-xs text-gray-400 mt-2">
-                    <p>• Maximum 5 tax recipients allowed</p>
-                    <p>• Total tax cannot exceed 10% (1000 BPS)</p>
-                    <p>• BPS = Basis Points (100 BPS = 1%)</p>
+                    {/* Tax List */}
+                    <div className="space-y-2">
+                      {taxList.map((t, i) => (
+                        <div
+                          key={i}
+                          className="flex justify-between items-center bg-white/5 dark:bg-white/5 border border-white/10 text-white px-4 py-3 rounded-md"
+                        >
+                          <span className="truncate w-[60%]">{t.addr}</span>
+                          <span>{(t.bps / 100).toFixed(1)}%</span>
+                          <button
+                            onClick={() => removeTaxRecipient(i)}
+                            className="text-red-500 hover:bg-red-500/10 p-2 rounded-full"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Help Text */}
+                    <div className="text-xs text-gray-400 mt-2">
+                      <p>• Maximum 5 tax recipients allowed</p>
+                      <p>• Total tax cannot exceed 10%</p>
+                      {/* <p>• BPS = Basis Points (100 BPS = 1%)</p> */}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Platform Fee Toggle */}
               <div className="flex flex-col gap-2 mt-[34px] md:mt-[80px]">
                 <div className="flex justify-between items-center">
-                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway break-all">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway max-w-[11rem]">
                     Enable Tax on SafuLauncher
                   </label>
 

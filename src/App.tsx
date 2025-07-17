@@ -1,9 +1,9 @@
 // src/App.tsx
 import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Loader from "./components/generalcomponents/Loader";
 import ChatWrapper from "./context/ChatWrapper";
 import "./App.css";
+import RocketLoader from "./components/generalcomponents/Loader";
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
@@ -18,7 +18,7 @@ function App() {
   return (
     <Router>
       <main className="relative bg-[#EDF8FF] dark:bg-[#040a1a]">
-        <Suspense fallback={<Loader />}>
+        <Suspense fallback={<RocketLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/launch" element={<Launch />} />

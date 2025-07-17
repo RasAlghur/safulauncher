@@ -246,13 +246,6 @@ const PlatformStats = () => {
             start: "top 80%",
           },
         })
-        .from(cardRefs.current, {
-          opacity: 0,
-          y: 50,
-          stagger: 0.15,
-          duration: 0.8,
-          ease: "power2.out",
-        })
         .from(
           headlineRef.current,
           {
@@ -262,7 +255,14 @@ const PlatformStats = () => {
             ease: "power2.out",
           },
           "+=0.1"
-        );
+        )
+        .from(cardRefs.current, {
+          opacity: 0,
+          y: 50,
+          stagger: 0.15,
+          duration: 0.8,
+          ease: "power2.out",
+        });
     }, containerRef);
 
     return () => ctx.revert();
