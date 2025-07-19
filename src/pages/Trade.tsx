@@ -9,7 +9,7 @@ import React, {
   type FormEvent,
   useMemo,
 } from "react";
-import * as XLSX from 'xlsx'
+import * as XLSX from "xlsx";
 import { useParams } from "react-router-dom";
 import {
   useAccount,
@@ -251,7 +251,6 @@ export default function Trade() {
     "transactions"
   );
 
-
   const [wlCsvText, setWlCsvText] = useState("");
 
   // Validation state
@@ -342,11 +341,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress as `0x${string}`,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "balanceOf",
+          args: [address as `0x${string}`],
+        }
       : undefined
   );
 
@@ -357,11 +356,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress,
-        functionName: "allowance",
-        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress,
+          functionName: "allowance",
+          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+        }
       : undefined
   );
 
@@ -372,15 +371,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
+          ...LAUNCHER_ABI,
+          address: SAFU_LAUNCHER_CA,
+          functionName: "getAmountOut",
+          args: [
+            tokenAddress,
+            mode === "buy" ? ethValue : tokenValue,
+            mode === "buy" ? true : false,
+          ],
+        }
       : undefined
   );
 
@@ -456,17 +455,19 @@ export default function Trade() {
   const IsTaxedOnSafu = Array.isArray(infoData) ? Number(infoData[19]) : 0;
   const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
-  const taxOnSafuBps = Array.isArray(infoData) ? Number((infoData as unknown[])[16] as number / 100) : 0;
+  const taxOnSafuBps = Array.isArray(infoData)
+    ? Number(((infoData as unknown[])[16] as number) / 100)
+    : 0;
   const isMaxWalletOnSafu = Array.isArray(infoData) ? Number(infoData[20]) : 0;
   const rawMaxWalletBps = Array.isArray(infoData)
-    ? (infoData as unknown[])[21] as bigint
+    ? ((infoData as unknown[])[21] as bigint)
     : BigInt(0);
   const maxWalletAmountOnSafu = Number(rawMaxWalletBps) / 100;
   const ywhitelistBalance = isLoadingWhitelistBalance
     ? 0
     : whitelistBalance !== undefined
-      ? Number(whitelistBalance) / 1e18
-      : 0;
+    ? Number(whitelistBalance) / 1e18
+    : 0;
 
   const curvePercent = infoData
     ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
@@ -544,8 +545,10 @@ export default function Trade() {
 
       try {
         console.log(
-          `${isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
+          `${
+            isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
+            selectedTimeframe.value
           }`
         );
 
@@ -794,6 +797,7 @@ export default function Trade() {
     refetchAllowance,
     refetchLatestETHPrice,
     refetchETHBalance,
+    refetchWhitelistBalance,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1071,14 +1075,16 @@ export default function Trade() {
   const initialCapsBps = React.useMemo(
     () =>
       isWhiteListOngoing
-        ? (whitelistUpload.map((e) => Math.round(e.cap * 100)) as readonly number[])
-        // Default to 100% for each whitelist entry
-        : ([] as readonly number[]),
+        ? (whitelistUpload.map((e) =>
+            Math.round(e.cap * 100)
+          ) as readonly number[])
+        : // Default to 100% for each whitelist entry
+          ([] as readonly number[]),
     [isWhiteListOngoing, whitelistUpload]
   );
 
-  console.log('wlArray', wlArray);
-  console.log('initialCapsBps', initialCapsBps);
+  console.log("wlArray", wlArray);
+  console.log("initialCapsBps", initialCapsBps);
 
   const parseWlCsv = (text: string) => {
     const rawLines = text
@@ -1089,7 +1095,10 @@ export default function Trade() {
     // strip header if present
     if (rawLines.length > 0) {
       const hdr = rawLines[0].split(",").map((s) => s.trim().toLowerCase());
-      if ((hdr[0] === "address" || hdr[0] === "addr") && hdr[1]?.startsWith("cap")) {
+      if (
+        (hdr[0] === "address" || hdr[0] === "addr") &&
+        hdr[1]?.startsWith("cap")
+      ) {
         rawLines.shift();
       }
     }
@@ -1100,12 +1109,18 @@ export default function Trade() {
     rawLines.forEach((line, idx) => {
       const [addr, capStr] = line.split(",").map((s) => s.trim());
       if (!ethers.isAddress(addr)) {
-        errs.push({ field: "whitelist", message: `Line ${idx + 1}: bad address` });
+        errs.push({
+          field: "whitelist",
+          message: `Line ${idx + 1}: bad address`,
+        });
         return;
       }
       const pct = parseFloat(capStr);
       if (isNaN(pct) || pct <= 0 || pct > 100) {
-        errs.push({ field: "whitelist", message: `Line ${idx + 1}: cap must be (0,100]` });
+        errs.push({
+          field: "whitelist",
+          message: `Line ${idx + 1}: cap must be (0,100]`,
+        });
         return;
       }
       parsed.push({ address: addr, cap: pct });
@@ -1116,7 +1131,9 @@ export default function Trade() {
     } else {
       // Replace existing entries instead of appending
       setWhitelistUpload(parsed);
-      setValidationErrors((prev) => prev.filter((e) => e.field !== "whitelist"));
+      setValidationErrors((prev) =>
+        prev.filter((e) => e.field !== "whitelist")
+      );
     }
   };
   // Updated file upload handler with Excel support
@@ -1124,9 +1141,9 @@ export default function Trade() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
-    if (fileExtension === 'csv') {
+    if (fileExtension === "csv") {
       // Handle CSV files
       const reader = new FileReader();
       reader.onload = () => {
@@ -1135,13 +1152,13 @@ export default function Trade() {
         parseWlCsv(text);
       };
       reader.readAsText(file);
-    } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    } else if (fileExtension === "xlsx" || fileExtension === "xls") {
       // Handle Excel files
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
+          const workbook = XLSX.read(data, { type: "binary" });
 
           // Get the first worksheet
           const worksheetName = workbook.SheetNames[0];
@@ -1153,25 +1170,29 @@ export default function Trade() {
           setWlCsvText(csvData);
           parseWlCsv(csvData);
         } catch (error) {
-          console.error('Error parsing Excel file:', error);
-          setValidationErrors([{
-            field: "whitelist",
-            message: "Error parsing Excel file. Please check the file format."
-          }]);
+          console.error("Error parsing Excel file:", error);
+          setValidationErrors([
+            {
+              field: "whitelist",
+              message:
+                "Error parsing Excel file. Please check the file format.",
+            },
+          ]);
         }
       };
       reader.readAsBinaryString(file);
     } else {
-      setValidationErrors([{
-        field: "whitelist",
-        message: "Unsupported file format. Please upload CSV or Excel files."
-      }]);
+      setValidationErrors([
+        {
+          field: "whitelist",
+          message: "Unsupported file format. Please upload CSV or Excel files.",
+        },
+      ]);
     }
 
     // Reset the input so the same file can be uploaded again
-    e.target.value = '';
+    e.target.value = "";
   };
-
 
   // Address validation helper
   const isValidAddress = (addr: string): boolean => {
@@ -1239,12 +1260,19 @@ export default function Trade() {
           });
         }
         if (addr.cap <= 0 || addr.cap > 0.5) {
-          errors.push({ field: "whitelist", message: `Entry ${index + 1}: max buy for whitelisted addrs is 0.5%.` });
+          errors.push({
+            field: "whitelist",
+            message: `Entry ${
+              index + 1
+            }: max buy for whitelisted addrs is 0.5%.`,
+          });
         }
       });
 
       // Check for empty whitelist entries
-      const emptyWhitelistEntries = whitelistUpload.some((addr) => !addr.address.trim());
+      const emptyWhitelistEntries = whitelistUpload.some(
+        (addr) => !addr.address.trim()
+      );
       if (emptyWhitelistEntries) {
         errors.push({
           field: "whitelist",
@@ -1276,10 +1304,7 @@ export default function Trade() {
     }
 
     return errors;
-  }, [
-    isConnected,
-    whitelistUpload
-  ]);
+  }, [isConnected, whitelistUpload, isWhiteListOngoing]);
 
   // Run validation whenever form data changes
   useEffect(() => {
@@ -1331,16 +1356,21 @@ export default function Trade() {
       ...LAUNCHER_ABI,
       address: SAFU_LAUNCHER_CA,
       functionName: "addToWhitelist",
-      args: [tokenAddress as `0x${string}`, wlArray as `0x${string}`[], initialCapsBps as number[]]
+      args: [
+        tokenAddress as `0x${string}`,
+        wlArray as `0x${string}`[],
+        initialCapsBps as number[],
+      ],
     });
     setIsProcessingTxn(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     writeContract,
     tokenAddress,
     wlArray,
     initialCapsBps,
     isTokenCreator,
-    validateWhitelistAddresses
+    validateWhitelistAddresses,
   ]);
 
   const handleDisableWhitelist = useCallback(() => {
@@ -1567,7 +1597,8 @@ export default function Trade() {
                         <div className="bg-slate-800/50 rounded-xl border border-slate-600 overflow-hidden">
                           {whitelistUpload.length === 0 && (
                             <div className="p-8 text-center text-gray-400">
-                              No whitelist entries yet. Add some using the buttons above.
+                              No whitelist entries yet. Add some using the
+                              buttons above.
                             </div>
                           )}
                         </div>
@@ -1587,10 +1618,11 @@ export default function Trade() {
                       type="button"
                       onClick={handleAddToWhitelist}
                       disabled={!isFormValid}
-                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${isFormValid
-                        ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                        : "opacity-50 cursor-not-allowed"
-                        }`}
+                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${
+                        isFormValid
+                          ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                          : "opacity-50 cursor-not-allowed"
+                      }`}
                     >
                       Add to whitelist
                     </button>
@@ -1603,14 +1635,15 @@ export default function Trade() {
                         <ul className="space-y-1 text-sm md:text-base">
                           {validationErrors.map((error, index) => (
                             <li key={index}>
-                              <span className="font-semibold">{error.field}:</span>{" "}
+                              <span className="font-semibold">
+                                {error.field}:
+                              </span>{" "}
                               {error.message}
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
-
                   </div>
                 </div>
               )}
@@ -1640,11 +1673,25 @@ export default function Trade() {
                     extra: `${token?.percentBundled ?? 0}%`,
                   },
                   { label: "Tax on Dex", value: isTaxedOnDex },
-                  { label: "Tax on SafuLauncher", value: IsTaxedOnSafu, extra: `${taxOnSafuBps ?? 0}%` },
+                  {
+                    label: "Tax on SafuLauncher",
+                    value: IsTaxedOnSafu,
+                    extra: `${taxOnSafuBps ?? 0}%`,
+                  },
                   { label: "Whitelist Ongoing", value: isWhiteListOngoing },
-                  { label: "Max wallet size on SafuLauncher", value: isMaxWalletOnSafu, extra: `${maxWalletAmountOnSafu ?? 0}%` },
+                  {
+                    label: "Max wallet size on SafuLauncher",
+                    value: isMaxWalletOnSafu,
+                    extra: `${maxWalletAmountOnSafu ?? 0}%`,
+                  },
                   ...(isWhiteListOngoing && ywhitelistBalance > 0
-                    ? [{ label: "Whitelisted Amount", value: '', extra: `${ywhitelistBalance ?? 0} ${token?.name}` }]
+                    ? [
+                        {
+                          label: "Whitelisted Amount",
+                          value: "",
+                          extra: `${ywhitelistBalance ?? 0} ${token?.name}`,
+                        },
+                      ]
                     : []),
                   {
                     label: "Listed on Uniswap",
@@ -1772,7 +1819,8 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
                             }`
                           )}
                         </span>
@@ -1854,10 +1902,11 @@ export default function Trade() {
                     <button
                       type="button"
                       onClick={handleButtonClick}
-                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${isTransactionPending
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
-                        }`}
+                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                        isTransactionPending
+                          ? "opacity-60 cursor-not-allowed"
+                          : ""
+                      }`}
                       disabled={
                         isTransactionPending ||
                         !amount ||
@@ -1888,10 +1937,10 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed!"
                           : lastTxnType === "sell"
-                            ? "Sell confirmed!"
-                            : lastTxnType === "buy"
-                              ? "Buy confirmed!"
-                              : getAdminTxnMessage()}
+                          ? "Sell confirmed!"
+                          : lastTxnType === "buy"
+                          ? "Buy confirmed!"
+                          : getAdminTxnMessage()}
                       </p>
                       <p className="text-[10px] text-black">Tx: {txHash}</p>
                     </div>
@@ -1951,8 +2000,9 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${
+                        progress < 100 ? "rounded-l-full" : "rounded-full"
+                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1993,8 +2043,9 @@ export default function Trade() {
                     />
                     <button
                       type="button"
-                      className={`auto-update-toggle ${isAutoUpdateEnabled ? "active" : ""
-                        }`}
+                      className={`auto-update-toggle ${
+                        isAutoUpdateEnabled ? "active" : ""
+                      }`}
                       onClick={toggleAutoUpdate}
                       title={
                         isAutoUpdateEnabled
@@ -2048,20 +2099,22 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
-                    ? " dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "transactions"
+                      ? " dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
-                    ? "dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "chat"
+                      ? "dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Community Chat
                 </button>
@@ -2086,10 +2139,11 @@ export default function Trade() {
                         {txLogs.map((tx, i) => (
                           <tr key={i} className="mb-4">
                             <td
-                              className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
-                                ? "text-green-500"
-                                : "text-red-500"
-                                }`}
+                              className={`font-medium py-3 flex items-center gap-2 ${
+                                tx.type === "buy"
+                                  ? "text-green-500"
+                                  : "text-red-500"
+                              }`}
                             >
                               {tx.type === "buy" ? (
                                 <MdAddCircleOutline className="text-[22px]" />
