@@ -1,12 +1,15 @@
+// show { label: "Whitelisted Amount", value: '', extra: `${ywhitelistBalance ?? 0} ${token?.name}` }, when ywhitelistBalance is greater than 0 and when whitelist is ongoing
+
 // safu-dapp/src/pages/Trade.tsx
-import {
+import React, {
+  useCallback,
+  useRef,
   useEffect,
   useState,
-  useCallback,
   type FormEvent,
   useMemo,
-  useRef,
 } from "react";
+import * as XLSX from 'xlsx'
 import { useParams } from "react-router-dom";
 import {
   useAccount,
@@ -39,11 +42,23 @@ import { MdOutlineCancel } from "react-icons/md";
 import { GrSubtractCircle } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
+import { Upload } from "lucide-react";
 import { base } from "../lib/api";
 import { socket } from "../lib/socket";
 import Chat from "./chat";
 import { FaArrowDown, FaEthereum } from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
+
+/**
+ * Description placeholder
+ *
+ * @interface ValidationError
+ * @typedef {ValidationError}
+ */
+interface ValidationError {
+  field: string;
+  message: string;
+}
 
 /**
  * Description placeholder
@@ -236,6 +251,19 @@ export default function Trade() {
     "transactions"
   );
 
+
+  const [wlCsvText, setWlCsvText] = useState("");
+
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    []
+  );
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  const [whitelistUpload, setWhitelistUpload] = useState<
+    { address: string; cap: number }[]
+  >([]);
+
   // Fallback data for non-connected users
   const [fallbackInfoData, setFallbackInfoData] = useState<unknown[] | null>(
     null
@@ -253,7 +281,6 @@ export default function Trade() {
   const [ohlc, setOhlc] = useState<CandlestickData[]>([]);
 
   // Admin state
-  const [whitelistAddresses, setWhitelistAddresses] = useState<string>("");
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [lastTxnType, setLastTxnType] = useState<TransactionType | null>(null);
 
@@ -315,11 +342,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress as `0x${string}`,
-          functionName: "balanceOf",
-          args: [address as `0x${string}`],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      }
       : undefined
   );
 
@@ -330,11 +357,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-          ...TOKEN_ABI,
-          address: tokenAddress,
-          functionName: "allowance",
-          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
-        }
+        ...TOKEN_ABI,
+        address: tokenAddress,
+        functionName: "allowance",
+        args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+      }
       : undefined
   );
 
@@ -345,15 +372,15 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-          ...LAUNCHER_ABI,
-          address: SAFU_LAUNCHER_CA,
-          functionName: "getAmountOut",
-          args: [
-            tokenAddress,
-            mode === "buy" ? ethValue : tokenValue,
-            mode === "buy" ? true : false,
-          ],
-        }
+        ...LAUNCHER_ABI,
+        address: SAFU_LAUNCHER_CA,
+        functionName: "getAmountOut",
+        args: [
+          tokenAddress,
+          mode === "buy" ? ethValue : tokenValue,
+          mode === "buy" ? true : false,
+        ],
+      }
       : undefined
   );
 
@@ -408,6 +435,17 @@ export default function Trade() {
     args: [ETH_USDT_PRICE_FEED!],
   });
 
+  const {
+    data: whitelistBalance,
+    isLoading: isLoadingWhitelistBalance,
+    refetch: refetchWhitelistBalance,
+  } = useReadContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA,
+    functionName: "getRemainingWhitelistBalance",
+    args: [tokenAddress as `0x${string}`, address as `0x${string}`],
+  });
+
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[7]) : 0;
@@ -418,6 +456,17 @@ export default function Trade() {
   const IsTaxedOnSafu = Array.isArray(infoData) ? Number(infoData[19]) : 0;
   const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
+  const taxOnSafuBps = Array.isArray(infoData) ? Number((infoData as unknown[])[16] as number / 100) : 0;
+  const isMaxWalletOnSafu = Array.isArray(infoData) ? Number(infoData[20]) : 0;
+  const rawMaxWalletBps = Array.isArray(infoData)
+    ? (infoData as unknown[])[21] as bigint
+    : BigInt(0);
+  const maxWalletAmountOnSafu = Number(rawMaxWalletBps) / 100;
+  const ywhitelistBalance = isLoadingWhitelistBalance
+    ? 0
+    : whitelistBalance !== undefined
+      ? Number(whitelistBalance) / 1e18
+      : 0;
 
   const curvePercent = infoData
     ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
@@ -495,10 +544,8 @@ export default function Trade() {
 
       try {
         console.log(
-          `${
-            isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
-            selectedTimeframe.value
+          `${isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
           }`
         );
 
@@ -720,6 +767,7 @@ export default function Trade() {
     if (isConfirmed && txHash) {
       refetchInfoData();
       refetchLatestETHPrice();
+      refetchWhitelistBalance();
       refetchAmountOut();
       refetchETHBalance();
       refetchBalance();
@@ -733,10 +781,6 @@ export default function Trade() {
         setTimeout(() => {
           loadChartData(true);
         }, 2000);
-      }
-
-      if (lastTxnType === "addToWhitelist") {
-        setWhitelistAddresses("");
       }
     }
   }, [
@@ -1016,6 +1060,234 @@ export default function Trade() {
     [isConfirming, writeContract, tokenAddress, mode, tokenValue, ethValue]
   );
 
+  const wlArray = React.useMemo(
+    () =>
+      isWhiteListOngoing
+        ? (whitelistUpload.map((e) => e.address) as readonly `0x${string}`[])
+        : ([] as readonly `0x${string}`[]),
+    [isWhiteListOngoing, whitelistUpload]
+  );
+
+  const initialCapsBps = React.useMemo(
+    () =>
+      isWhiteListOngoing
+        ? (whitelistUpload.map((e) => Math.round(e.cap * 100)) as readonly number[])
+        // Default to 100% for each whitelist entry
+        : ([] as readonly number[]),
+    [isWhiteListOngoing, whitelistUpload]
+  );
+
+  console.log('wlArray', wlArray);
+  console.log('initialCapsBps', initialCapsBps);
+
+  const parseWlCsv = (text: string) => {
+    const rawLines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l);
+
+    // strip header if present
+    if (rawLines.length > 0) {
+      const hdr = rawLines[0].split(",").map((s) => s.trim().toLowerCase());
+      if ((hdr[0] === "address" || hdr[0] === "addr") && hdr[1]?.startsWith("cap")) {
+        rawLines.shift();
+      }
+    }
+
+    const parsed: { address: string; cap: number }[] = [];
+    const errs: ValidationError[] = [];
+
+    rawLines.forEach((line, idx) => {
+      const [addr, capStr] = line.split(",").map((s) => s.trim());
+      if (!ethers.isAddress(addr)) {
+        errs.push({ field: "whitelist", message: `Line ${idx + 1}: bad address` });
+        return;
+      }
+      const pct = parseFloat(capStr);
+      if (isNaN(pct) || pct <= 0 || pct > 100) {
+        errs.push({ field: "whitelist", message: `Line ${idx + 1}: cap must be (0,100]` });
+        return;
+      }
+      parsed.push({ address: addr, cap: pct });
+    });
+
+    if (errs.length > 0) {
+      setValidationErrors(errs);
+    } else {
+      // Replace existing entries instead of appending
+      setWhitelistUpload(parsed);
+      setValidationErrors((prev) => prev.filter((e) => e.field !== "whitelist"));
+    }
+  };
+  // Updated file upload handler with Excel support
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+
+    if (fileExtension === 'csv') {
+      // Handle CSV files
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result as string;
+        setWlCsvText(text);
+        parseWlCsv(text);
+      };
+      reader.readAsText(file);
+    } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+      // Handle Excel files
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+
+          // Get the first worksheet
+          const worksheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[worksheetName];
+
+          // Convert to CSV format
+          const csvData = XLSX.utils.sheet_to_csv(worksheet);
+
+          setWlCsvText(csvData);
+          parseWlCsv(csvData);
+        } catch (error) {
+          console.error('Error parsing Excel file:', error);
+          setValidationErrors([{
+            field: "whitelist",
+            message: "Error parsing Excel file. Please check the file format."
+          }]);
+        }
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      setValidationErrors([{
+        field: "whitelist",
+        message: "Unsupported file format. Please upload CSV or Excel files."
+      }]);
+    }
+
+    // Reset the input so the same file can be uploaded again
+    e.target.value = '';
+  };
+
+
+  // Address validation helper
+  const isValidAddress = (addr: string): boolean => {
+    try {
+      return ethers.isAddress(addr) && addr !== ethers.ZeroAddress;
+    } catch {
+      return false;
+    }
+  };
+
+  const findDuplicateAddresses = (
+    addresses: string[]
+  ): { duplicates: string[]; positions: number[][] } => {
+    const addressCount = new Map<string, number[]>();
+    const duplicates: string[] = [];
+    const positions: number[][] = [];
+
+    // Count occurrences and track positions
+    addresses.forEach((addr, index) => {
+      if (!addr || !addr.trim()) return; // Skip empty addresses
+
+      const normalizedAddr = addr.toLowerCase().trim();
+      if (!addressCount.has(normalizedAddr)) {
+        addressCount.set(normalizedAddr, []);
+      }
+      addressCount.get(normalizedAddr)!.push(index);
+    });
+
+    // Find duplicates
+    addressCount.forEach((indices, addr) => {
+      if (indices.length > 1) {
+        duplicates.push(addr);
+        positions.push(indices);
+      }
+    });
+
+    return { duplicates, positions };
+  };
+
+  // Comprehensive validation function
+  const validateForm = useCallback((): ValidationError[] => {
+    const errors: ValidationError[] = [];
+    if (!isConnected) {
+      errors.push({
+        field: "connection",
+        message: "Please connect your wallet to launch a token.",
+      });
+    }
+
+    // Whitelist validation
+    if (isWhiteListOngoing) {
+      if (whitelistUpload.length > 200) {
+        errors.push({
+          field: "whitelist",
+          message: "Maximum 200 whitelist addresses allowed",
+        });
+      }
+
+      // Validate whitelist addresses
+      whitelistUpload.forEach((addr, index) => {
+        if (addr && !isValidAddress(addr.address)) {
+          errors.push({
+            field: "whitelist",
+            message: `Whitelist address ${index + 1}: Invalid address`,
+          });
+        }
+        if (addr.cap <= 0 || addr.cap > 0.5) {
+          errors.push({ field: "whitelist", message: `Entry ${index + 1}: max buy for whitelisted addrs is 0.5%.` });
+        }
+      });
+
+      // Check for empty whitelist entries
+      const emptyWhitelistEntries = whitelistUpload.some((addr) => !addr.address.trim());
+      if (emptyWhitelistEntries) {
+        errors.push({
+          field: "whitelist",
+          message: "All whitelist entries must have valid addresses",
+        });
+      }
+
+      // Check for duplicate whitelist addresses
+      const validWhitelistAddresses = whitelistUpload
+        .filter((addr) => addr && addr.address.trim())
+        .map((addr) => addr.address);
+      if (validWhitelistAddresses.length > 0) {
+        const { duplicates, positions } = findDuplicateAddresses(
+          validWhitelistAddresses
+        );
+        duplicates.forEach((duplicateAddr, index) => {
+          const duplicatePositions = positions[index]
+            .map((pos) => pos + 1)
+            .join(", ");
+          errors.push({
+            field: "whitelist",
+            message: `Duplicate whitelist address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
+              0,
+              6
+            )}...${duplicateAddr.slice(-4)})`,
+          });
+        });
+      }
+    }
+
+    return errors;
+  }, [
+    isConnected,
+    whitelistUpload
+  ]);
+
+  // Run validation whenever form data changes
+  useEffect(() => {
+    const errors = validateForm();
+    setValidationErrors(errors);
+    setIsFormValid(errors.length === 0);
+  }, [validateForm]);
+
   const handleSellProcess = useCallback(() => {
     if (needsApproval) {
       handleApprove();
@@ -1041,30 +1313,34 @@ export default function Trade() {
   }, [writeContract, tokenAddress, isTokenCreator]);
 
   const handleAddToWhitelist = useCallback(() => {
-    if (!tokenAddress || !isTokenCreator || !whitelistAddresses.trim()) {
+    if (!tokenAddress || !isTokenCreator) {
       setErrorMsg("Please enter valid addresses to whitelist");
       return;
     }
 
-    const addresses = validateWhitelistAddresses(whitelistAddresses);
-    if (!addresses) return;
-
     setErrorMsg("");
     setLastTxnType("addToWhitelist");
+
+    console.log("calling addToWhitelist with", {
+      tok: tokenAddress,
+      list: wlArray,
+      caps: initialCapsBps,
+    });
 
     writeContract({
       ...LAUNCHER_ABI,
       address: SAFU_LAUNCHER_CA,
       functionName: "addToWhitelist",
-      args: [tokenAddress as `0x${string}`, addresses as `0x${string}`[]],
+      args: [tokenAddress as `0x${string}`, wlArray as `0x${string}`[], initialCapsBps as number[]]
     });
     setIsProcessingTxn(true);
   }, [
     writeContract,
     tokenAddress,
+    wlArray,
+    initialCapsBps,
     isTokenCreator,
-    whitelistAddresses,
-    validateWhitelistAddresses,
+    validateWhitelistAddresses
   ]);
 
   const handleDisableWhitelist = useCallback(() => {
@@ -1240,32 +1516,63 @@ export default function Trade() {
                       &times;
                     </button>
 
-                    <h4 className="text-lg font-semibold dark:text-white text-black">
-                      Whitelist Management
-                    </h4>
+                    {isWhiteListOngoing && (
+                      <div className="space-y-4 bg-slate-900/30 backdrop-blur-sm p-6 rounded-xl border border-slate-700/50 shadow-md">
+                        <div className="text-white font-medium mb-4">
+                          Whitelisted Addresses:{" "}
+                          <span className="text-green-400">
+                            {whitelistUpload.length} / 200
+                          </span>
+                        </div>
 
-                    <div className="flex flex-col md:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={whitelistAddresses}
-                        onChange={(e) => setWhitelistAddresses(e.target.value)}
-                        placeholder="Enter addresses separated by commas"
-                        disabled={isTransactionPending || isProcessingTxn}
-                        className="flex-1 w-full dark:bg-[#1d1d1d] bg-white dark:text-white text-black border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddToWhitelist}
-                        disabled={
-                          isTransactionPending ||
-                          !whitelistAddresses.trim() ||
-                          isProcessingTxn
-                        }
-                        className="px-4 py-2 bg-[#FFA726] hover:bg-[#e69500] text-white rounded-md disabled:opacity-50"
-                      >
-                        Add
-                      </button>
-                    </div>
+                        {/* CSV Text Input */}
+                        <div className="space-y-2">
+                          <textarea
+                            rows={6}
+                            value={wlCsvText}
+                            onChange={(e) => setWlCsvText(e.target.value)}
+                            placeholder="0xAbc123…,0.5&#10;0xDef456…,0.3"
+                            className="w-full p-3 rounded-lg bg-slate-800/50 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        {/* Upload Button */}
+                        <div className="flex space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => parseWlCsv(wlCsvText)}
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200"
+                          >
+                            Add Whitelist
+                          </button>
+
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept=".csv,.xlsx,.xls"
+                              onChange={handleCSVUpload}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <button
+                              type="button"
+                              className="bg-slate-700 hover:bg-slate-600 text-gray-300 hover:text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+                            >
+                              <Upload className="w-4 h-4" />
+                              <span>Upload CSV/Excel</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Whitelist Entries Table */}
+                        <div className="bg-slate-800/50 rounded-xl border border-slate-600 overflow-hidden">
+                          {whitelistUpload.length === 0 && (
+                            <div className="p-8 text-center text-gray-400">
+                              No whitelist entries yet. Add some using the buttons above.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       type="button"
@@ -1275,6 +1582,35 @@ export default function Trade() {
                     >
                       Disable Whitelist
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={handleAddToWhitelist}
+                      disabled={!isFormValid}
+                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${isFormValid
+                        ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                        : "opacity-50 cursor-not-allowed"
+                        }`}
+                    >
+                      Add to whitelist
+                    </button>
+
+                    {validationErrors.length > 0 && (
+                      <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
+                        <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
+                          Please fix the following issues:
+                        </h3>
+                        <ul className="space-y-1 text-sm md:text-base">
+                          {validationErrors.map((error, index) => (
+                            <li key={index}>
+                              <span className="font-semibold">{error.field}:</span>{" "}
+                              {error.message}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                   </div>
                 </div>
               )}
@@ -1304,8 +1640,12 @@ export default function Trade() {
                     extra: `${token?.percentBundled ?? 0}%`,
                   },
                   { label: "Tax on Dex", value: isTaxedOnDex },
-                  { label: "Tax on SafuLauncher", value: IsTaxedOnSafu },
+                  { label: "Tax on SafuLauncher", value: IsTaxedOnSafu, extra: `${taxOnSafuBps ?? 0}%` },
                   { label: "Whitelist Ongoing", value: isWhiteListOngoing },
+                  { label: "Max wallet size on SafuLauncher", value: isMaxWalletOnSafu, extra: `${maxWalletAmountOnSafu ?? 0}%` },
+                  ...(isWhiteListOngoing && ywhitelistBalance > 0
+                    ? [{ label: "Whitelisted Amount", value: '', extra: `${ywhitelistBalance ?? 0} ${token?.name}` }]
+                    : []),
                   {
                     label: "Listed on Uniswap",
                     value: isListed,
@@ -1432,8 +1772,7 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${
-                              token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
                             }`
                           )}
                         </span>
@@ -1515,11 +1854,10 @@ export default function Trade() {
                     <button
                       type="button"
                       onClick={handleButtonClick}
-                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${
-                        isTransactionPending
-                          ? "opacity-60 cursor-not-allowed"
-                          : ""
-                      }`}
+                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${isTransactionPending
+                        ? "opacity-60 cursor-not-allowed"
+                        : ""
+                        }`}
                       disabled={
                         isTransactionPending ||
                         !amount ||
@@ -1550,10 +1888,10 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed!"
                           : lastTxnType === "sell"
-                          ? "Sell confirmed!"
-                          : lastTxnType === "buy"
-                          ? "Buy confirmed!"
-                          : getAdminTxnMessage()}
+                            ? "Sell confirmed!"
+                            : lastTxnType === "buy"
+                              ? "Buy confirmed!"
+                              : getAdminTxnMessage()}
                       </p>
                       <p className="text-[10px] text-black">Tx: {txHash}</p>
                     </div>
@@ -1613,9 +1951,8 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full ${
-                        progress < 100 ? "rounded-l-full" : "rounded-full"
-                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
+                      className={`h-full ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                        } relative transition-all duration-500 ease-in-out ${gradientClass}`}
                       style={{ width: `${progress}%` }}
                     >
                       {/* Decorative vertical bars */}
@@ -1656,9 +1993,8 @@ export default function Trade() {
                     />
                     <button
                       type="button"
-                      className={`auto-update-toggle ${
-                        isAutoUpdateEnabled ? "active" : ""
-                      }`}
+                      className={`auto-update-toggle ${isAutoUpdateEnabled ? "active" : ""
+                        }`}
                       onClick={toggleAutoUpdate}
                       title={
                         isAutoUpdateEnabled
@@ -1712,22 +2048,20 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
-                    activeTab === "transactions"
-                      ? " dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
-                  } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
+                    ? " dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
-                    activeTab === "chat"
-                      ? "dark:text-white text-[#141314]"
-                      : "dark:text-white/60 text-[#141314]/40"
-                  } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "chat"
+                    ? "dark:text-white text-[#141314]"
+                    : "dark:text-white/60 text-[#141314]/40"
+                    } transition cursor-pointer`}
                 >
                   Community Chat
                 </button>
@@ -1752,11 +2086,10 @@ export default function Trade() {
                         {txLogs.map((tx, i) => (
                           <tr key={i} className="mb-4">
                             <td
-                              className={`font-medium py-3 flex items-center gap-2 ${
-                                tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
-                              }`}
+                              className={`font-medium py-3 flex items-center gap-2 ${tx.type === "buy"
+                                ? "text-green-500"
+                                : "text-red-500"
+                                }`}
                             >
                               {tx.type === "buy" ? (
                                 <MdAddCircleOutline className="text-[22px]" />
