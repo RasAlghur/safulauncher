@@ -27,6 +27,7 @@ const HowItWorks = () => {
       // Animate headline
       gsap.from(".how-heading", {
         opacity: 0,
+        scale: 0,
         y: 40,
         duration: 1,
         delay: 0.2,
@@ -42,11 +43,11 @@ const HowItWorks = () => {
         opacity: 0,
         y: 30,
         duration: 1,
-        delay: 0.4,
+        delay: 0.1,
         ease: "power2.out",
         scrollTrigger: {
           trigger: ".how-it-works-wrapper",
-          start: "top 85%",
+          start: "top 50%",
         },
       });
 
@@ -55,7 +56,7 @@ const HowItWorks = () => {
         opacity: 0,
         y: 50,
         duration: 0.8,
-        stagger: 0.2,
+        stagger: 0.8,
         ease: "power2.out",
         scrollTrigger: {
           trigger: ".how-it-works-wrapper",
@@ -130,7 +131,7 @@ const HowItWorks = () => {
       {/* Main Content */}
       <div className="how-it-works-wrapper text-white px-6 py-12 md:px-20 md:py-10 max-w-[1000px] mx-auto subtract">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl max-w-[20rem] font-bold mb-10 dark:text-[#ECF1F0] text-black font-raleway">
+          <h2 className="how-heading text-3xl md:text-4xl max-w-[20rem] font-bold mb-10 dark:text-[#ECF1F0] text-black font-raleway">
             How It Works in 3 Easy Steps
           </h2>
           <div className="how-grid grid md:grid-cols-2 gap-8 p-6 md:p-10">

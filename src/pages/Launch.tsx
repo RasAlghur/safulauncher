@@ -7,7 +7,7 @@ import React, {
   type FormEvent,
   type JSX,
 } from "react";
-import * as XLSX from 'xlsx'
+import * as XLSX from "xlsx";
 import {
   useWriteContract,
   useReadContract,
@@ -57,7 +57,7 @@ export default function Launch(): JSX.Element {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [supply, setSupply] = useState<number>(0);
-  const [supplyInput, setSupplyInput] = useState("0");
+  const [supplyInput, setSupplyInput] = useState("");
   const [website, setWebsite] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
@@ -127,7 +127,10 @@ export default function Launch(): JSX.Element {
     // strip header if present
     if (rawLines.length > 0) {
       const hdr = rawLines[0].split(",").map((s) => s.trim().toLowerCase());
-      if ((hdr[0] === "address" || hdr[0] === "addr") && hdr[1]?.startsWith("cap")) {
+      if (
+        (hdr[0] === "address" || hdr[0] === "addr") &&
+        hdr[1]?.startsWith("cap")
+      ) {
         rawLines.shift();
       }
     }
@@ -138,12 +141,18 @@ export default function Launch(): JSX.Element {
     rawLines.forEach((line, idx) => {
       const [addr, capStr] = line.split(",").map((s) => s.trim());
       if (!ethers.isAddress(addr)) {
-        errs.push({ field: "whitelist", message: `Line ${idx + 1}: bad address` });
+        errs.push({
+          field: "whitelist",
+          message: `Line ${idx + 1}: bad address`,
+        });
         return;
       }
       const pct = parseFloat(capStr);
       if (isNaN(pct) || pct <= 0 || pct > 100) {
-        errs.push({ field: "whitelist", message: `Line ${idx + 1}: cap must be (0,100]` });
+        errs.push({
+          field: "whitelist",
+          message: `Line ${idx + 1}: cap must be (0,100]`,
+        });
         return;
       }
       parsed.push({ address: addr, cap: pct });
@@ -154,7 +163,9 @@ export default function Launch(): JSX.Element {
     } else {
       // Replace existing entries instead of appending
       setWhitelistUpload(parsed);
-      setValidationErrors((prev) => prev.filter((e) => e.field !== "whitelist"));
+      setValidationErrors((prev) =>
+        prev.filter((e) => e.field !== "whitelist")
+      );
     }
   };
   // Updated file upload handler with Excel support
@@ -162,9 +173,9 @@ export default function Launch(): JSX.Element {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
-    if (fileExtension === 'csv') {
+    if (fileExtension === "csv") {
       // Handle CSV files
       const reader = new FileReader();
       reader.onload = () => {
@@ -173,13 +184,13 @@ export default function Launch(): JSX.Element {
         parseWlCsv(text);
       };
       reader.readAsText(file);
-    } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    } else if (fileExtension === "xlsx" || fileExtension === "xls") {
       // Handle Excel files
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
+          const workbook = XLSX.read(data, { type: "binary" });
 
           // Get the first worksheet
           const worksheetName = workbook.SheetNames[0];
@@ -191,23 +202,28 @@ export default function Launch(): JSX.Element {
           setWlCsvText(csvData);
           parseWlCsv(csvData);
         } catch (error) {
-          console.error('Error parsing Excel file:', error);
-          setValidationErrors([{
-            field: "whitelist",
-            message: "Error parsing Excel file. Please check the file format."
-          }]);
+          console.error("Error parsing Excel file:", error);
+          setValidationErrors([
+            {
+              field: "whitelist",
+              message:
+                "Error parsing Excel file. Please check the file format.",
+            },
+          ]);
         }
       };
       reader.readAsBinaryString(file);
     } else {
-      setValidationErrors([{
-        field: "whitelist",
-        message: "Unsupported file format. Please upload CSV or Excel files."
-      }]);
+      setValidationErrors([
+        {
+          field: "whitelist",
+          message: "Unsupported file format. Please upload CSV or Excel files.",
+        },
+      ]);
     }
 
     // Reset the input so the same file can be uploaded again
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const [statusMessage, setStatusMessage] = useState("");
@@ -218,6 +234,8 @@ export default function Launch(): JSX.Element {
   const [enableWhitelist, setEnableWhitelist] = useState(false);
   const [startNow, setStartNow] = useState(true);
   const [isMaxWalletAmountOnSafu, setIsMaxWalletAmountOnSafu] = useState(false);
+  const [maxWalletAmountOnSafuInput, setMaxWalletAmountOnSafuInput] =
+    useState(""); // raw input
   const [maxWalletAmountOnSafu, setMaxWalletAmountOnSafu] = useState<number>(0);
   const [lpOption, setLpOption] = useState<"lock" | "burn">("lock");
   const [enableBundle, setEnableBundle] = useState(false);
@@ -226,14 +244,17 @@ export default function Launch(): JSX.Element {
 
   // Dynamic groups...
   const [taxList, setTaxList] = useState<{ addr: string; bps: number }[]>([]);
-  const [bundleList, setBundleList] = useState<{ addr: string; pct: number }[]>(
-    []
-  );
-  const [bundleEth, setBundleEth] = useState<number>(0);
-  const [platformFeeList, setPlatformFeeList] = useState<
-    { addr: string; pct: number }[]
+  const [bundleList, setBundleList] = useState<
+    { addr: string; pct: number; pctInput: string }[]
   >([]);
+  const [bundleEthInput, setBundleEthInput] = useState(""); // raw input
+  const [bundleEth, setBundleEth] = useState<number>(0);
+  const [platformFeeList, setPlatformFeeList] = useState([
+    { addr: "", pct: 0, pctInput: "" },
+  ]);
+  const [platformFeeInput, setPlatformFeeInput] = useState("");
   const [platformFeeBps, setPlatformFeeBps] = useState<number>(0);
+  const [dexFeeInput, setDexFeeInput] = useState("");
   const [dexFeeBps, setDexFeeBps] = useState<number>(0);
 
   // Validation state
@@ -398,7 +419,9 @@ export default function Launch(): JSX.Element {
         if (tax.bps < 0 || tax.bps > 1000) {
           errors.push({
             field: "tax",
-            message: `Tax recipient ${index + 1}: pecentage must be between 0-100`,
+            message: `Tax recipient ${
+              index + 1
+            }: pecentage must be between 0-100`,
           });
         }
       });
@@ -462,12 +485,19 @@ export default function Launch(): JSX.Element {
           });
         }
         if (addr.cap <= 0 || addr.cap > 0.5) {
-          errors.push({ field: "whitelist", message: `Entry ${index + 1}: max buy for whitelisted addrs is 0.5%.` });
+          errors.push({
+            field: "whitelist",
+            message: `Entry ${
+              index + 1
+            }: max buy for whitelisted addrs is 0.5%.`,
+          });
         }
       });
 
       // Check for empty whitelist entries
-      const emptyWhitelistEntries = whitelistUpload.some((addr) => !addr.address.trim());
+      const emptyWhitelistEntries = whitelistUpload.some(
+        (addr) => !addr.address.trim()
+      );
       if (emptyWhitelistEntries) {
         errors.push({
           field: "whitelist",
@@ -579,8 +609,9 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -671,8 +702,9 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -740,6 +772,8 @@ export default function Launch(): JSX.Element {
     enableTaxOnSafu,
     platformFeeBps,
     platformFeeList,
+    dexFeeBps,
+    isMaxWalletAmountOnSafu,
   ]);
 
   // Run validation whenever form data changes
@@ -749,63 +783,65 @@ export default function Launch(): JSX.Element {
     setIsFormValid(errors.length === 0);
   }, [validateForm]);
 
-
   // Replace this line:
   // const taxOnSafuBps = enableTaxOnSafu ? platformFeeBps * 100 : 0;
 
   // With this (to convert percentage to BPS, handling decimals):
   const taxOnSafuBps = enableTaxOnSafu ? Math.round(platformFeeBps * 100) : 0;
   const taxOnDexBps = enableTaxOnDex ? Math.floor(dexFeeBps * 100) : 0;
-  const maxWalletAmountOnSafuBps = isMaxWalletAmountOnSafu ? Math.floor(maxWalletAmountOnSafu * 100) : 0;
+  const maxWalletAmountOnSafuBps = isMaxWalletAmountOnSafu
+    ? Math.floor(maxWalletAmountOnSafu * 100)
+    : 0;
 
   // 4. Add an input handler for decimal validation (optional)
   const handlePlatformFeeBpsChange = (value: string) => {
-    // Allow empty string for clearing
-    if (value === '') {
-      setPlatformFeeBps(0);
+    setPlatformFeeInput(value); // Always update the visible input
+
+    if (value === "") {
+      setPlatformFeeBps(0); // Optional: interpret empty input as 0
       return;
     }
 
-    // Parse the value as a float
     const numValue = parseFloat(value);
-
-    // Check if it's a valid number
     if (!isNaN(numValue) && numValue >= 0) {
       setPlatformFeeBps(numValue);
     }
-  }
+  };
 
   const handleDexFeeBpsChange = (value: string) => {
-    // Allow empty string for clearing
-    if (value === '') {
-      setDexFeeBps(0);
+    setDexFeeInput(value); // Always update what the user types
+
+    if (value === "") {
+      setDexFeeBps(0); // Optional fallback for empty input
       return;
     }
 
-    // Parse the value as a float
     const numValue = parseFloat(value);
-
-    // Check if it's a valid number
     if (!isNaN(numValue) && numValue >= 0) {
       setDexFeeBps(numValue);
     }
-  }
+  };
 
   const handleMaxWalletBpsChange = (value: string) => {
-    // Allow empty string for clearing
-    if (value === '') {
-      setMaxWalletAmountOnSafu(0);
-      return;
-    }
+    setMaxWalletAmountOnSafuInput(value);
 
-    // Parse the value as a float
-    const numValue = parseFloat(value);
+    // Attempt parsing
+    const parsed = parseFloat(value);
 
-    // Check if it's a valid number
-    if (!isNaN(numValue) && numValue >= 0) {
-      setMaxWalletAmountOnSafu(numValue);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 0.5) {
+      setMaxWalletAmountOnSafu(parsed);
     }
-  }
+  };
+
+  const handleBundleEthChange = (value: string) => {
+    setBundleEthInput(value);
+
+    const parsed = parseFloat(value);
+
+    if (!isNaN(parsed) && parsed >= 0) {
+      setBundleEth(parsed);
+    }
+  };
 
   const taxOnSafuRecipientsAddrs = React.useMemo(
     () =>
@@ -818,14 +854,11 @@ export default function Launch(): JSX.Element {
     () =>
       enableTaxOnSafu
         ? (platformFeeList.map((p) =>
-          Math.floor(p.pct * 100)
-        ) as readonly number[])
+            Math.floor(p.pct * 100)
+          ) as readonly number[])
         : ([] as readonly number[]),
     [enableTaxOnSafu, platformFeeList]
   );
-
-
-
 
   const taxOnDexRecipientsAddrs = React.useMemo(
     () =>
@@ -837,9 +870,11 @@ export default function Launch(): JSX.Element {
   const initialCapsBps = React.useMemo(
     () =>
       enableWhitelist
-        ? (whitelistUpload.map((e) => Math.round(e.cap * 100)) as readonly number[])
-        // Default to 100% for each whitelist entry
-        : ([] as readonly number[]),
+        ? (whitelistUpload.map((e) =>
+            Math.round(e.cap * 100)
+          ) as readonly number[])
+        : // Default to 100% for each whitelist entry
+          ([] as readonly number[]),
     [enableWhitelist, whitelistUpload]
   );
 
@@ -896,7 +931,7 @@ export default function Launch(): JSX.Element {
         taxOnSafuPercentArray,
         enableWhitelist,
         wlArray,
-        initialCapsBps
+        initialCapsBps,
       ] as unknown as [
         string,
         string,
@@ -935,10 +970,9 @@ export default function Launch(): JSX.Element {
       taxOnSafuPercentArray,
       enableWhitelist,
       wlArray,
-      initialCapsBps
+      initialCapsBps,
     ]
   );
-
 
   const handleSubmit = useCallback(
     (e: FormEvent) => {
@@ -986,7 +1020,6 @@ export default function Launch(): JSX.Element {
 
   const infoETHCurrentPrice =
     isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
-
 
   const handleVerify = async (
     encodedMessageWithoutPrefix: string,
@@ -1199,7 +1232,6 @@ export default function Launch(): JSX.Element {
     percentBundled,
   ]);
 
-
   console.log("bundleAddrs", bundleAddrs);
   console.log("bundleShares", bundleShares);
   console.log("taxOnSafuRecipientsAddrs", taxOnSafuRecipientsAddrs);
@@ -1211,8 +1243,9 @@ export default function Launch(): JSX.Element {
 
   console.log("createToken args:", argArray, "value:", ethValue.toString());
 
-
-  console.log("string calldata name | string calldata symbol | uint256 supply | bool lockLp | bool startNow | bool isMaxWalletOnSafu_ | uint256 maxWalletAmountOnSafu_ | address[] calldata bundleAddrs | uint16[] calldata bundleShares | uint16 taxOnDexBps_ | address[] calldata taxOnDexRecipients | uint16[] calldata taxOnDexPercents | uint16 taxOnSafuBps_ | address[] calldata taxOnSafuRecipients_ | uint16[] calldata taxOnSafuPercents_ | bool whitelistOnly_ | address[] calldata initialWhitelist | uint16[] calldata initialCapsBps")
+  console.log(
+    "string calldata name | string calldata symbol | uint256 supply | bool lockLp | bool startNow | bool isMaxWalletOnSafu_ | uint256 maxWalletAmountOnSafu_ | address[] calldata bundleAddrs | uint16[] calldata bundleShares | uint16 taxOnDexBps_ | address[] calldata taxOnDexRecipients | uint16[] calldata taxOnDexPercents | uint16 taxOnSafuBps_ | address[] calldata taxOnSafuRecipients_ | uint16[] calldata taxOnSafuPercents_ | bool whitelistOnly_ | address[] calldata initialWhitelist | uint16[] calldata initialCapsBps"
+  );
 
   function calculateBundleTokens(bundleEth: number, supply: number): number {
     // Simulate the smart contract calculation
@@ -1264,8 +1297,8 @@ export default function Launch(): JSX.Element {
             Launch Your Token
           </h1>
           <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
-            Use Safu to deploy coins with ease. No fees. Earn 80% creator
-            rewards on trading fees.
+            Launch your token effortlessly — earn 0.2 ETH instantly when it
+            reaches the bonding curv
           </p>
         </div>
         {/* Validation Errors Display */}
@@ -1285,7 +1318,7 @@ export default function Launch(): JSX.Element {
             <input
               id="tokenName"
               type="text"
-              placeholder="Enter your Token Name, e.g (“MoonCat”)"
+              placeholder="Enter your Token Name, e.g “SafuLauncher”"
               className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -1303,7 +1336,7 @@ export default function Launch(): JSX.Element {
             </label>
             <input
               type="text"
-              placeholder="Enter your Ticker Symbol, e.g (“MCAT”)"
+              placeholder="Enter your Ticker Symbol, e.g SAFU"
               className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42] w-[95%] lg:w-full"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
@@ -1325,6 +1358,7 @@ export default function Launch(): JSX.Element {
               <input
                 type="text"
                 inputMode="numeric"
+                placeholder="E.g “1,000,000”"
                 value={supplyInput}
                 onChange={(e) => {
                   const raw = removeCommas(e.target.value);
@@ -1406,8 +1440,9 @@ export default function Launch(): JSX.Element {
             </label>
 
             <div
-              className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
+              className={`border-2 border-dashed ${
+                dragActive ? "border-[#3BC3DB]" : "border-Primary"
+              } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
         transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
               onClick={openFilePicker}
@@ -1425,7 +1460,7 @@ export default function Launch(): JSX.Element {
                     <span className="">Click to upload</span> or drag and drop
                   </p>
                   <p className="text-sm dark:text-white/60 text-black mt-1">
-                    SVG, PNG, JPG or GIF
+                    PNG, JPG
                   </p>
                 </>
               )}
@@ -1466,7 +1501,6 @@ export default function Launch(): JSX.Element {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* enable tax, whitelist only and enable platform fees */}
             <div className="">
-
               {/* Enable Tax Toggle Styled Similarly */}
               <div className="flex flex-col gap-2 mt-8">
                 <div className="flex justify-between items-center">
@@ -1476,14 +1510,16 @@ export default function Launch(): JSX.Element {
                   <div className="relative group">
                     <div
                       onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
-                      className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${enableTaxOnDex ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+                      className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
+                        enableTaxOnDex ? "bg-Primary" : "bg-white"
+                      } shadow-inner relative`}
                     >
                       <div
-                        className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${enableTaxOnDex
-                          ? "translate-x-8 bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+                        className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
+                          enableTaxOnDex
+                            ? "translate-x-8 bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                        }`}
                       >
                         {enableTaxOnDex ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1499,6 +1535,10 @@ export default function Launch(): JSX.Element {
                       <div className="absolute right-[10px] z-10">
                         <CircleCheckBig className="text-black w-3 h-3" />
                       </div>
+                    </div>
+
+                    <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Amount is the tax on buy and sell e.g 10/10 tax
                     </div>
                   </div>
                 </div>
@@ -1517,10 +1557,10 @@ export default function Launch(): JSX.Element {
                       step="0.01"
                       min="0"
                       max="10"
-                      value={dexFeeBps}
+                      value={dexFeeInput}
                       onChange={(e) => handleDexFeeBpsChange(e.target.value)}
                       placeholder="Enter Tax for Dex (e.g., 0.5)"
-                      className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                     />
 
                     <div className="flex flex-col gap-4">
@@ -1536,7 +1576,7 @@ export default function Launch(): JSX.Element {
                         placeholder="0x.."
                         value={newAddr}
                         onChange={(e) => setNewAddr(e.target.value)}
-                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129]"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
 
                       <label
@@ -1551,19 +1591,17 @@ export default function Launch(): JSX.Element {
                         min="0"
                         max="100"
                         value={newBps || ""}
-                        onChange={(e) =>
-                          setNewBps(parseFloat(e.target.value))
-                        }
-                        className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129]"
+                        onChange={(e) => setNewBps(parseFloat(e.target.value))}
+                        className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
 
                       <button
                         type="button"
                         onClick={addTaxRecipient}
-                        className="bg-Primary px-3 py-4 dark:text-white text-black rounded-full w-full flex items-center justify-center gap-1"
+                        className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1"
                       >
-                        <IoMdAddCircleOutline className="text-xl" />{" "}
-                        <p className="font-raleway font-medium">
+                        <IoMdAddCircleOutline className="text-xl text-white" />{" "}
+                        <p className="font-raleway font-medium text-white">
                           Add Recipient
                         </p>
                       </button>
@@ -1574,7 +1612,7 @@ export default function Launch(): JSX.Element {
                       {taxList.map((t, i) => (
                         <div
                           key={i}
-                          className="flex justify-between items-center bg-white/5 dark:bg-white/5 border border-white/10 text-white px-4 py-3 rounded-md"
+                          className="flex justify-between items-center bg-white/5 dark:bg-white/5 border dark:border-white/10 border-gray-900 dark:text-white text-black px-4 py-3 rounded-md"
                         >
                           <span className="truncate w-[60%]">{t.addr}</span>
                           <span>{(t.bps / 10).toFixed(1)}%</span>
@@ -1590,7 +1628,7 @@ export default function Launch(): JSX.Element {
                     </div>
 
                     {/* Help Text */}
-                    <div className="text-xs text-gray-400 mt-2">
+                    <div className="text-xs dark:text-gray-400 text-black/80 mt-2">
                       <p>• Maximum 5 tax recipients allowed</p>
                       <p>• Total tax cannot exceed 10%</p>
                       {/* <p>• BPS = Basis Points (100 BPS = 1%)</p> */}
@@ -1611,16 +1649,16 @@ export default function Launch(): JSX.Element {
                     <div
                       onClick={() => setEnableTaxOnSafu(!enableTaxOnSafu)}
                       className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enableTaxOnSafu ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+          ${enableTaxOnSafu ? "bg-Primary" : "bg-white"} shadow-inner relative`}
                     >
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableTaxOnSafu
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableTaxOnSafu
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableTaxOnSafu ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1652,10 +1690,10 @@ export default function Launch(): JSX.Element {
               {enableTaxOnSafu && (
                 <div
                   id="pf-section"
-                  className="space-y-4 bg-[#d5f2f80a] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
+                  className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
                 >
                   <label className="flex flex-col gap-1 font-medium">
-                    <span className="dark:text-white text-black">
+                    <span className="dark:text-white font-raleway text-xl font-semibold">
                       Tax on SafuLauncher
                     </span>
 
@@ -1664,10 +1702,12 @@ export default function Launch(): JSX.Element {
                       step="0.01"
                       min="0"
                       max="5"
-                      value={platformFeeBps}
-                      onChange={(e) => handlePlatformFeeBpsChange(e.target.value)}
+                      value={platformFeeInput}
+                      onChange={(e) =>
+                        handlePlatformFeeBpsChange(e.target.value)
+                      }
                       placeholder="Enter platform fee percentage (e.g. 0.5)"
-                      className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                     />
                   </label>
                   <div className="dark:text-gray-400 text-gray-700 text-sm">
@@ -1683,7 +1723,7 @@ export default function Launch(): JSX.Element {
                   {platformFeeList.map((p, i) => (
                     <div
                       key={i}
-                      className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                      className="flex flex-col items-start md:items-center gap-4 "
                     >
                       <input
                         placeholder="0x..."
@@ -1693,22 +1733,33 @@ export default function Launch(): JSX.Element {
                           list[i].addr = e.target.value;
                           setPlatformFeeList(list);
                         }}
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none]"
                       />
                       <input
                         placeholder="Percentage (e.g. 50)"
                         type="number"
-                        value={p.pct}
+                        value={p.pctInput}
                         onChange={(e) => {
+                          const input = e.target.value;
                           const list = [...platformFeeList];
-                          list[i].pct = parseFloat(e.target.value) || 0;
+
+                          list[i].pctInput = input; // always reflect what the user typed
+
+                          const parsed = parseFloat(input);
+                          if (!isNaN(parsed)) {
+                            list[i].pct = parsed;
+                          } else if (input === "") {
+                            list[i].pct = 0; // optional: reset to 0 if empty
+                          }
+
                           setPlatformFeeList(list);
                         }}
                         min="0"
                         max="100"
                         step="0.01"
-                        className="w-full md:w-40 dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
+
                       <button
                         type="button"
                         onClick={() =>
@@ -1726,14 +1777,17 @@ export default function Launch(): JSX.Element {
                       addItem(
                         platformFeeList,
                         setPlatformFeeList,
-                        { addr: "", pct: 0 },
+                        { addr: "", pct: 0, pctInput: "" },
                         5
                       )
                     }
                     disabled={platformFeeList.length >= 5}
-                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
+                    className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    + Add Platform Fee Recipient ({platformFeeList.length}/5)
+                    <IoMdAddCircleOutline className="text-xl text-white" />
+                    <p className="font-raleway font-medium text-white ">
+                      Add Recipient ({platformFeeList.length}/5)
+                    </p>
                   </button>
                 </div>
               )}
@@ -1755,10 +1809,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableWhitelist
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                       >
                         {enableWhitelist ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1790,8 +1845,8 @@ export default function Launch(): JSX.Element {
               {/* Whitelist Section */}
               {/* Whitelist Section */}
               {enableWhitelist && (
-                <div className="space-y-4 bg-slate-900/30 backdrop-blur-sm p-6 rounded-xl border border-slate-700/50 shadow-md">
-                  <div className="text-white font-medium mb-4">
+                <div className=" bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                  <div className="dark:text-white text-black font-medium mb-4 font-raleway">
                     Whitelisted Addresses:{" "}
                     <span className="text-green-400">
                       {whitelistUpload.length} / 200
@@ -1799,48 +1854,53 @@ export default function Launch(): JSX.Element {
                   </div>
 
                   {/* CSV Text Input */}
-                  <div className="space-y-2">
+                  <div className="relative">
                     <textarea
                       rows={6}
                       value={wlCsvText}
                       onChange={(e) => setWlCsvText(e.target.value)}
                       placeholder="0xAbc123…,0.5&#10;0xDef456…,0.3"
-                      className="w-full p-3 rounded-lg bg-slate-800/50 border border-slate-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full h-full p-3 dark:text-white text-black dark:bg-[#071129] border border-Primary rounded-t-2xl  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     />
-                  </div>
 
-                  {/* Upload Button */}
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => parseWlCsv(wlCsvText)}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200"
-                    >
-                      Add Whitelist
-                    </button>
-
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleCSVUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <button
-                        type="button"
-                        className="bg-slate-700 hover:bg-slate-600 text-gray-300 hover:text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
-                      >
-                        <Upload className="w-4 h-4" />
-                        <span>Upload CSV/Excel</span>
-                      </button>
+                    {/* Upload Button */}
+                    <div className="flex space-x-2 absolute -bottom-8 right-0">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".csv,.xlsx,.xls"
+                          onChange={handleCSVUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          className="bg-Primary/25 hover:bg-slate-600 text-gray-300 border-Primary hover:text-white py-2 px-4 rounded-b-2xl font-medium transition-all duration-200 flex items-center space-x-2"
+                        >
+                          <span className="dark:text-white text-black text-sm">
+                            Upload CSV/Excel
+                          </span>
+                          <Upload className="w-4 h-4 text-black dark:text-white" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => parseWlCsv(wlCsvText)}
+                    className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1 mt-14"
+                  >
+                    <IoMdAddCircleOutline className="text-xl text-white" />
+                    <p className="font-raleway font-medium text-white ">
+                      Add Whitelist
+                    </p>
+                  </button>
 
                   {/* Whitelist Entries Table */}
-                  <div className="bg-slate-800/50 rounded-xl border border-slate-600 overflow-hidden">
+                  <div className="dark:bg-[#071129] rounded-xl border border-slate-600 overflow-hidden mt-4">
                     {whitelistUpload.length === 0 && (
-                      <div className="p-8 text-center text-gray-400">
-                        No whitelist entries yet. Add some using the buttons above.
+                      <div className="p-8 text-center dark:text-gray-400 text-black">
+                        No whitelist entries yet. Add some using the buttons
+                        above.
                       </div>
                     )}
                   </div>
@@ -1851,7 +1911,7 @@ export default function Launch(): JSX.Element {
             {/* LP option, start trading and enable bundle */}
             <div>
               {/* LP Option */}
-              <div className="flex flex-col gap-2 mt-[34px] relative w-full max-w-xs group">
+              <div className="flex flex-col gap-2 mt-[34px] relative w-full group">
                 <label className="text-[18px] font-semibold dark:text-white text-black font-ralewaye">
                   LP Option <span className="text-white">*</span>
                 </label>
@@ -1877,10 +1937,11 @@ export default function Launch(): JSX.Element {
                           setLpOption(option.value);
                           setIsOpen(false);
                         }}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
-                          ? "rounded-t-xl"
-                          : "rounded-b-xl"
-                          }`}
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                          option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                        }`}
                       >
                         {option.label}
                       </div>
@@ -1909,10 +1970,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${startNow
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {startNow ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1947,41 +2009,58 @@ export default function Launch(): JSX.Element {
                   Enable Max wallet size on SafuLauncher
                 </label>
                 <div
-                  onClick={() => setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)}
-                  className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
-                    } shadow-inner relative`}
+                  onClick={() =>
+                    setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
+                  }
+                  className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${
+            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
                 >
                   <div
-                    className={`absolute z-20 left-1 w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${isMaxWalletAmountOnSafu
-                      ? "translate-x-8 bg-white"
-                      : "translate-x-0 bg-[#D9D9D9]"
-                      }`}
+                    className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              isMaxWalletAmountOnSafu
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                   >
                     {isMaxWalletAmountOnSafu ? (
                       <CircleCheckBig className="text-Primary w-3 h-3" />
                     ) : (
-                      <X className="text-Primary w-3 h-3" />
+                      <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                        <X className="text-Primary w-3 h-3" />
+                      </div>
                     )}
+                  </div>
+
+                  {/* Static icons */}
+                  <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                    <X className="text-white w-3 h-3" />
+                  </div>
+                  <div className="absolute right-[10px] z-10">
+                    <CircleCheckBig className="text-black w-3 h-3" />
                   </div>
                 </div>
               </div>
 
               {isMaxWalletAmountOnSafu && (
-                <div className="mt-4 bg-[#01061c0d] dark:bg-[#060920] p-4 rounded-xl shadow-md">
+                <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
                   <label className="block mb-1 text-sm font-medium dark:text-white text-black">
                     Max Wallet Amount (% of total supply)
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="0.5"
-                    value={maxWalletAmountOnSafu}
-                    onChange={(e) => handleMaxWalletBpsChange(e.target.value)}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
                     placeholder="e.g. 0.5 for 0.5%"
-                    className="w-full px-3 py-2 rounded-md border dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-Primary dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black"
+                    value={maxWalletAmountOnSafuInput}
+                    onChange={(e) => handleMaxWalletBpsChange(e.target.value)}
+                    className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+
+                  <p className="text-xs dark:text-gray-400 text-black/80 mt-1">
                     Must be between 0 and 0.5% of total supply.
                   </p>
                 </div>
@@ -2004,10 +2083,11 @@ export default function Launch(): JSX.Element {
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${enableBundle
-                          ? "translate-x-[32px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+          ${
+            enableBundle
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                     >
                       {enableBundle ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2040,22 +2120,20 @@ export default function Launch(): JSX.Element {
               {enableBundle && (
                 <div
                   id="bundle-section"
-                  className="space-y-4 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-6 rounded-xl dark:border border-gray-800 shadow-md mt-[10px]"
+                  className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
                 >
                   <label className="flex flex-col gap-1 font-medium">
-                    <span className="dark:text-white text-black">
+                    <span className="dark:text-white text-black font-raleway">
                       Bundle ETH
                     </span>
                     <input
-                      type="number"
-                      value={bundleEth}
-                      onChange={(e) =>
-                        setBundleEth(parseFloat(e.target.value) || 0)
-                      }
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={bundleEthInput}
+                      onChange={(e) => handleBundleEthChange(e.target.value)}
                       placeholder="10"
-                      min="0"
-                      step="0.001"
-                      className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                      className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                     />
                   </label>
                   <div className="dark:text-gray-400 text-gray-700 text-sm">
@@ -2079,10 +2157,10 @@ export default function Launch(): JSX.Element {
                       </div>
                       {calculateBundleTokens(bundleEth, supply) >
                         (supply * 25) / 100 && (
-                          <div className="text-red-400 font-semibold">
-                            ⚠️ Exceeds 25% limit!
-                          </div>
-                        )}
+                        <div className="text-red-400 font-semibold">
+                          ⚠️ Exceeds 25% limit!
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="text-gray-400 text-sm mb-2">
@@ -2095,7 +2173,7 @@ export default function Launch(): JSX.Element {
                   {bundleList.map((b, i) => (
                     <div
                       key={i}
-                      className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-[#d5f2f80a] p-4 rounded-lg dark:border border-gray-700"
+                      className="flex flex-col items-start md:items-center gap-4 bg-[#01061c0d] dark:bg-[#060920]"
                     >
                       <input
                         placeholder="0x..."
@@ -2105,22 +2183,29 @@ export default function Launch(): JSX.Element {
                           list[i].addr = e.target.value;
                           setBundleList(list);
                         }}
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
                       <input
-                        placeholder="Percentage (e.g. 50)"
                         type="number"
-                        value={b.pct}
+                        value={b.pctInput}
                         onChange={(e) => {
+                          const value = e.target.value;
                           const list = [...bundleList];
-                          list[i].pct = parseFloat(e.target.value) || 0;
+
+                          list[i].pctInput = value;
+
+                          const parsed = parseFloat(value);
+                          list[i].pct = !isNaN(parsed) ? parsed : 0;
+
                           setBundleList(list);
                         }}
+                        placeholder="Percentage (e.g. 50)"
                         min="0"
                         max="100"
                         step="0.01"
-                        className="flex-1 w-full dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:border border-gray-600 px-3 py-2 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-Primary"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
+
                       <button
                         type="button"
                         onClick={() => removeItem(bundleList, setBundleList, i)}
@@ -2136,14 +2221,17 @@ export default function Launch(): JSX.Element {
                       addItem(
                         bundleList,
                         setBundleList,
-                        { addr: "", pct: 0 },
+                        { addr: "", pct: 0, pctInput: "" },
                         30
                       )
                     }
                     disabled={bundleList.length >= 30}
-                    className="text-green-500 hover:text-green-400 text-sm font-semibold cursor-pointer"
+                    className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    + Add Bundle Entry ({bundleList.length}/30)
+                    <IoMdAddCircleOutline className="text-xl text-white" />
+                    <p className="font-raleway font-medium text-white">
+                      Add Bundle Entry ({bundleList.length}/30)
+                    </p>
                   </button>
                 </div>
               )}
@@ -2153,8 +2241,11 @@ export default function Launch(): JSX.Element {
           {/* Submit */}
           <button
             type="submit"
-            className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${isPending || !isFormValid ? 'opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]'
-              }`}
+            className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${
+              isPending || !isFormValid
+                ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+            }`}
             disabled={isPending || isConfirming || !isFormValid}
             style={{
               opacity: !isFormValid ? 0.5 : 1,
@@ -2163,8 +2254,8 @@ export default function Launch(): JSX.Element {
           >
             {isFormValid ? (
               <>
-
-                <span>{isPending ? 'Pending...' : 'Create Token'}
+                <span>
+                  {isPending ? "Pending..." : "Create Token"}
                   <img src={rocket} alt="rocket" className="w-5 h-5" />
                 </span>
               </>
@@ -2190,7 +2281,9 @@ export default function Launch(): JSX.Element {
         </form>
 
         {error && (
-          <p className="text-red-500">Error: {(error as BaseError).shortMessage}</p>
+          <p className="text-red-500">
+            Error: {(error as BaseError).shortMessage}
+          </p>
         )}
 
         {isConfirmed && (

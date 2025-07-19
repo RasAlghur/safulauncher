@@ -1,9 +1,40 @@
+import { useLayoutEffect } from "react";
+import { gsap } from "gsap";
 import DustParticles from "../generalcomponents/DustParticles";
 import cloudRight from "../../assets/cloud-right.png";
 import cloudLeft from "../../assets/cloud-left.png";
 import topCloud from "../../assets/why-safu-cloud-top.png";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Roadmap = () => {
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const animateFrom = (selector: string, xOffset: number, delay = 0) => {
+        gsap.from(selector, {
+          scrollTrigger: {
+            trigger: selector,
+            start: "top 90%",
+            toggleActions: "play none none none", // animate only once
+          },
+          x: xOffset,
+          opacity: 0,
+          duration: 1,
+          delay,
+          ease: "power3.out",
+        });
+      };
+
+      animateFrom(".first-div", -100, 0);
+      animateFrom(".third-div", -100, 0.2);
+      animateFrom(".second-div", 100, 0.4);
+      animateFrom(".fourth-div", 100, 0.6);
+    });
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="roadmap"
@@ -40,7 +71,7 @@ const Roadmap = () => {
         <div className="grid sm:grid-cols-3 grid-cols-[.4fr_.2fr_.4fr] gap-2 sm:gap-0">
           {/* Left Side */}
           <div className="flex flex-col space-y-16 sm:space-y-32 xl:mt-40 mt-[60px] sm:mt-[60px]">
-            <div>
+            <div className="first-div">
               <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
                 Q2 2025
               </h2>
@@ -54,7 +85,7 @@ const Roadmap = () => {
                 </li>
               </ul>
             </div>
-            <div>
+            <div className="third-div">
               <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
                 Q4 2025
               </h2>
@@ -97,7 +128,7 @@ const Roadmap = () => {
           {/* Right Side */}
           <div className="mt-[180px] sm:mt-[180px] md:mt-[200px] xl:mt-72">
             <div className="flex flex-col space-y-20 sm:space-y-32">
-              <div>
+              <div className="second-div">
                 <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
                   Q3 2025
                 </h2>
@@ -111,7 +142,7 @@ const Roadmap = () => {
                   </li>
                 </ul>
               </div>
-              <div>
+              <div className="fourth-div">
                 <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
                   2026 and Beyond
                 </h2>

@@ -15,6 +15,7 @@ import {
   pureGetLatestETHPrice,
   pureInfoDataRaw,
 } from "../web3/readContracts";
+import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BsChevronDown } from "react-icons/bs";
 
@@ -60,6 +61,9 @@ type searchField = "all" | "address" | "creator" | "name";
  */
 export default function Tokens() {
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
+  const [hasSetFeatured, setHasSetFeatured] = useState(false);
+
   const [curveProgressMap, setCurveProgressMap] = useState<
     Record<string, number>
   >({});
@@ -103,6 +107,8 @@ export default function Tokens() {
     });
   };
 
+  const navigate = useNavigate();
+
   // Fetch list of tokens
   const fetchTokenList = useCallback(
     async (pageNum = 1, query = "", searchTerm = "all", append = false) => {
@@ -144,9 +150,11 @@ export default function Tokens() {
 
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
-        setTokens((prev) =>
-          append ? [...prev, ...apiData.data] : apiData.data
-        );
+        setTokens((prev) => {
+          const newTokens = append ? [...prev, ...apiData.data] : apiData.data;
+
+          return newTokens;
+        });
       } catch (error) {
         if (
           axios.isCancel(error) ||
@@ -193,6 +201,13 @@ export default function Tokens() {
     setPage(1);
     setHasNext(true);
   }, [fetchTokenList, searchField, searchTerm]);
+
+  useEffect(() => {
+    if (!hasSetFeatured && tokens.length > 0) {
+      setFeaturedTokens(tokens.slice(0, 4)); // or pick based on any criteria
+      setHasSetFeatured(true);
+    }
+  }, [tokens, hasSetFeatured]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -374,12 +389,12 @@ export default function Tokens() {
           <div className="relative rounded-xl">
             <div
               ref={sliderRef}
-              className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-5 gap-4 touch-pan-x cursor-grab active:cursor-grabbing"
+              className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-5 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
             >
-              {sortedTokens.map((token, idx) => (
+              {featuredTokens.map((token, idx) => (
                 <div
                   key={idx}
-                  className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4"
+                  className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 relative z-10"
                 >
                   <Link
                     to={`/trade/${token.tokenAddress}`}
@@ -459,7 +474,6 @@ export default function Tokens() {
                w-full max-w-4xl mx-auto mb-[34px]
                focus:outline-none focus:ring-2 focus:ring-[#0C8CE0]
                transition-all duration-200"
-            disabled={isLoadingTokens}
           />
           {/* Controls */}
           <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
@@ -600,8 +614,8 @@ export default function Tokens() {
                   <div key={idx} className="flex flex-col">
                     <li className="rounded-xl lg:px-6 px-2 py-5 ">
                       <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                        <Link
-                          to={`/trade/${t.tokenAddress}`}
+                        <div
+                          onClick={() => navigate(`/trade/${t.tokenAddress}`)}
                           className="flex items-start gap-4"
                         >
                           {t.tokenImageId && (
@@ -650,7 +664,7 @@ export default function Tokens() {
                               )}
                             </div>
                           </div>
-                        </Link>
+                        </div>
                         {/* Stats */}
                         <div className="flex flex-col space-y-1 items-end">
                           <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
@@ -682,7 +696,7 @@ export default function Tokens() {
                         </div>
                       </div>
                     </li>
-                    <div className="w-full max-w-[40rem] bg-[#031E51] h-[35px] rounded-full overflow-hidden relative mt-auto p-1.5">
+                    <div className="w-full max-w-[40rem] bg-[#031E51] h-[30px] rounded-full overflow-hidden relative mt-auto p-1.5">
                       <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."

@@ -8,7 +8,7 @@ import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 
-const options = ["Featured", "Trending", "New", "Top Rated"];
+const options = ["Featured", "Volume", "Most recent Trade"];
 
 /**
  * Description placeholder

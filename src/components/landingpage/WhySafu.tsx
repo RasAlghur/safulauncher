@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import community from "../../assets/community.png";
@@ -42,7 +42,7 @@ const WhySafu = () => {
   const cardsRef = useRef<HTMLDivElement[]>([]);
   const buttonRef = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       // Start each card off-screen and hidden
       gsap.set(cardsRef.current, {
@@ -61,7 +61,7 @@ const WhySafu = () => {
         stagger: 0.15,
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 80%",
+          start: "top 50%",
         },
       });
 

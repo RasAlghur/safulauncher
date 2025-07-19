@@ -127,7 +127,7 @@ const TrendingTokens = () => {
       try {
         // Early return if no logs available
         if (!Array.isArray(logs) || logs.length === 0) {
-          console.warn(`No transaction logs found for ${selectedRange}`);
+          // console.warn(`No transaction logs found for ${selectedRange}`);
           setTrendingData([]);
           setLoading(false);
           return;

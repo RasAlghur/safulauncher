@@ -1,4 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -136,107 +143,113 @@ const PlatformStats = () => {
   }, []);
 
   // Helper function to get USD value as main display
-  const getMainValue = (ethValue: number, fallbackValue: string) => {
-    if (currentETHPrice === 0) return fallbackValue;
-    const usdValue = ethValue * currentETHPrice;
-    return `$${usdValue.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+
+  const getMainValue = useCallback(
+    (ethValue: number, fallbackValue: string) => {
+      if (currentETHPrice === 0) return fallbackValue;
+      const usdValue = ethValue * currentETHPrice;
+      return `$${usdValue.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    },
+    [currentETHPrice] // <- dependency
+  );
 
   // Helper function to get ETH value for display
-  const getETHDisplay = (ethValue: number) => {
-    if (currentETHPrice === 0) return "";
-    return `(${ethValue.toFixed(4)} ETH)`;
-  };
+
+  const getETHDisplay = useCallback(
+    (ethValue: number) => {
+      if (currentETHPrice === 0) return "";
+      return `(${ethValue.toFixed(4)} ETH)`;
+    },
+    [currentETHPrice]
+  );
 
   // Create stats array with real data from pureMetrics
-  const stats = [
-    {
-      title: "Total Volume",
-      mainValue: getMainValue(
-        pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-        `${
-          pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
-        } ETH`
-      ),
-      // ethValue: getETHDisplay(
-      //   pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0
-      // ),
-      icon: VolumeIcon,
-    },
-    {
-      title: "Fee Collected",
-      mainValue: getMainValue(
-        pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-        `${
-          pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
-        } ETH`
-      ),
-      // ethValue: getETHDisplay(
-      //   pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0
-      // ),
-      icon: FeeCollected,
-    },
-    {
-      title: "Tokens Launched",
-      mainValue: `${pureMetrics?.[2] || 0}`,
-      ethValue: "",
-      icon: TokensLaunched,
-    },
-    {
-      title: "Tokens Listed",
-      mainValue: `${pureMetrics?.[3] || 0}`,
-      ethValue: "",
-      icon: TokensListed,
-    },
-    {
-      title: "Avg. Bonding",
-      mainValue: `${averageCurveProgress.toFixed(2) || 0}%`, // This doesn't seem to have a corresponding pureMetrics value
-      ethValue: "",
-      icon: AverageBonding,
-    },
-    {
-      title: "Tax Tokens",
-      mainValue: `${pureMetrics?.[4] || 0}`,
-      ethValue: "",
-      icon: TaxTokens,
-    },
-    {
-      title: "0% - Tax Token",
-      mainValue: `${pureMetrics?.[5] || 0}`,
-      ethValue: "",
-      icon: ZeroTaxTokens,
-    },
-    {
-      title: "$SAFU Holders",
-      mainValue: "234",
-      ethValue: "",
-      icon: SafuHolders,
-    },
-    {
-      title: "Dev Reward",
-      mainValue: getMainValue(
-        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-        `${
-          pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-            : 0
-        } ETH`
-      ),
-      ethValue: getETHDisplay(
-        pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0
-      ),
-      icon: SafuHolders,
-    },
-  ];
+  const stats = useMemo(() => {
+    return [
+      {
+        title: "Total Volume",
+        mainValue: getMainValue(
+          pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
+          `${
+            pureMetrics[0] !== undefined
+              ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+              : 0
+          } ETH`
+        ),
+        icon: VolumeIcon,
+      },
+      {
+        title: "Fee Collected",
+        mainValue: getMainValue(
+          pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
+          `${
+            pureMetrics[1] !== undefined
+              ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+              : 0
+          } ETH`
+        ),
+        icon: FeeCollected,
+      },
+      {
+        title: "Tokens Launched",
+        mainValue: `${pureMetrics?.[2] || 0}`,
+        ethValue: "",
+        icon: TokensLaunched,
+      },
+      {
+        title: "Tokens Listed",
+        mainValue: `${pureMetrics?.[3] || 0}`,
+        ethValue: "",
+        icon: TokensListed,
+      },
+      {
+        title: "Avg. Bonding",
+        mainValue: `${
+          isNaN(averageCurveProgress) ? 0 : averageCurveProgress.toFixed(2)
+        }%`,
+        ethValue: "",
+        icon: AverageBonding,
+      },
+      {
+        title: "Tax Tokens",
+        mainValue: `${pureMetrics?.[4] || 0}`,
+        ethValue: "",
+        icon: TaxTokens,
+      },
+      {
+        title: "0% - Tax Token",
+        mainValue: `${pureMetrics?.[5] || 0}`,
+        ethValue: "",
+        icon: ZeroTaxTokens,
+      },
+      {
+        title: "$SAFU Holders",
+        mainValue: "234",
+        ethValue: "",
+        icon: SafuHolders,
+      },
+      {
+        title: "Dev Reward",
+        mainValue: getMainValue(
+          pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
+          `${
+            pureMetrics[6] !== undefined
+              ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
+              : 0
+          } ETH`
+        ),
+        ethValue: getETHDisplay(
+          pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0
+        ),
+        icon: SafuHolders,
+      },
+    ];
+  }, [averageCurveProgress, getETHDisplay, getMainValue]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       gsap
         .timeline({
@@ -268,10 +281,58 @@ const PlatformStats = () => {
     return () => ctx.revert();
   }, []);
 
+  useEffect(() => {
+    stats.forEach((stat, index) => {
+      const el = document.getElementById(`main-value-${index}`);
+      if (!el) return;
+
+      const raw = stat.mainValue;
+
+      // Extract numeric part of the value
+      const clean = parseFloat(raw.replace(/[^0-9.]/g, ""));
+      const isCurrency = raw.includes("$");
+      const isETH = raw.includes("ETH");
+      const isPercent = raw.includes("%");
+
+      gsap.fromTo(
+        el,
+        { innerText: 0 },
+        {
+          innerText: clean,
+          duration: 2,
+          ease: "power3.out",
+          snap: { innerText: isPercent ? 0.1 : 1 },
+          onUpdate: function () {
+            const val = parseFloat(el.innerText);
+            if (isCurrency) {
+              el.innerText = `$${val.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`;
+            } else if (isETH) {
+              el.innerText = `${val.toFixed(4)} ETH`;
+            } else if (isPercent) {
+              el.innerText = `${val.toFixed(1)}%`;
+            } else {
+              el.innerText = `${Math.floor(val)}`;
+            }
+          },
+          scrollTrigger: {
+            trigger: el,
+            start: "top 90%",
+            once: true,
+          },
+        }
+      );
+    });
+  }, [stats]);
+
   return (
     <section id="stats" className="mt-28 px-6 relative" ref={containerRef}>
-      <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
-        <DustParticles />
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+        {[...Array(3)].map((_, i) => (
+          <DustParticles key={i} />
+        ))}
       </div>
 
       <div className="dark:hidden block">
@@ -313,7 +374,9 @@ const PlatformStats = () => {
                   </div>
                   {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
-                    {stat.mainValue}
+                    <span className="main-value" id={`main-value-${index}`}>
+                      {stat.mainValue}
+                    </span>
                   </div>
                   {/* Title */}
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
