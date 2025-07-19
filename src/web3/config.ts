@@ -1,4 +1,4 @@
-export const SAFU_LAUNCHER_CA = "0xe57Baf425015303a46a05073Eb3B7EA238B5EAbd";
+export const SAFU_LAUNCHER_CA = "0xC02cdc7001240030bd91340eC1D4f80a9AC31580";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -27,7 +27,7 @@ export const mainnetID = 1;
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
 export const LAUNCHER_ABI = {
-  address: "0xe57Baf425015303a46a05073Eb3B7EA238B5EAbd",
+  address: "0xC02cdc7001240030bd91340eC1D4f80a9AC31580",
   abi: [
     {
       "type": "constructor",
@@ -467,7 +467,7 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "function",
-      "name": "disableMaxWalletLimt",
+      "name": "disableMaxWalletLimit",
       "inputs": [
         {
           "name": "tok",
@@ -936,6 +936,30 @@ export const LAUNCHER_ABI = {
           "name": "",
           "type": "bool",
           "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "whitelistAllocationLeft",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
