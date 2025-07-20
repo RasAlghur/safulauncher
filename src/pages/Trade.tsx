@@ -1,5 +1,3 @@
-// show { label: "Whitelisted Amount", value: '', extra: `${ywhitelistBalance ?? 0} ${token?.name}` }, when ywhitelistBalance is greater than 0 and when whitelist is ongoing
-
 // safu-dapp/src/pages/Trade.tsx
 import React, {
   useCallback,
@@ -24,6 +22,7 @@ import {
   SAFU_LAUNCHER_CA,
   ETH_USDT_PRICE_FEED,
   PRICE_GETTER_ABI,
+  SAFU_TOKEN_CA,
 } from "../web3/config";
 import { ethers } from "ethers";
 import "../App.css";
@@ -114,7 +113,8 @@ type TransactionType =
   | "buy"
   | "startTrading"
   | "addToWhitelist"
-  | "disableWhitelist";
+  | "disableWhitelist"
+  | "disableMaxWalletLimit";
 
 /**
  * Description placeholder
@@ -445,17 +445,39 @@ export default function Trade() {
     args: [tokenAddress as `0x${string}`, address as `0x${string}`],
   });
 
+  const {
+    data: is_SafuHolder,
+    isLoading: isLoadingSafuHolder,
+    refetch: refetchSafuHolder,
+  } = useReadContract({
+    ...LAUNCHER_ABI,
+    address: SAFU_LAUNCHER_CA,
+    functionName: "isSafuTokenAutoWL",
+    args: [address as `0x${string}`],
+  });
 
-  // const {
-  //   data: issafuHolder,
-  //   isLoading: isLoadingSafuHolder,
-  //   refetch: refetchSafuHolder,
-  // } = useReadContract({
-  //   ...LAUNCHER_ABI,
-  //   address: SAFU_LAUNCHER_CA,
-  //   functionName: "isSafuTokenAutoWL",
-  //   args: [address as `0x${string}`],
-  // });
+  const {
+    data: _safuHolderBalance,
+    isLoading: isLoadingSafuHolderBalance,
+    refetch: refetchSafuHolderBalance,
+  } = useReadContract({
+    ...TOKEN_ABI,
+    address: SAFU_TOKEN_CA,
+    functionName: "balanceOf",
+    args: [address as `0x${string}`],
+  });
+
+  const {
+    data: _safuSupply,
+    isLoading: isLoadingSafuSupply,
+    refetch: refetchSafuSupply,
+  } = useReadContract({
+    ...TOKEN_ABI,
+    address: SAFU_TOKEN_CA,
+    functionName: "totalSupply"
+  });
+
+
 
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
@@ -475,6 +497,7 @@ export default function Trade() {
     ? ((infoData as unknown[])[21] as bigint)
     : BigInt(0);
   const maxWalletAmountOnSafu = Number(rawMaxWalletBps) / 100;
+  const mwAmountOnSafu = Number(maxWalletAmountOnSafu / 100 * (tokenSupply));
   const ywhitelistBalance = isLoadingWhitelistBalance
     ? 0
     : whitelistBalance !== undefined
@@ -485,6 +508,11 @@ export default function Trade() {
     ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
     : 0;
   const curvePercentClamped = Math.min(Math.max(curvePercent, 0), 100);
+
+  const isSafuHolder = isLoadingSafuHolder ? '' : is_SafuHolder;
+  const safuHolderBalance = isLoadingSafuHolderBalance ? '' : Number(Number(_safuHolderBalance) / 1e18).toFixed(2)
+  const tier1Holder = isLoadingSafuSupply || isLoadingSafuHolderBalance ? '' : Number(_safuHolderBalance) >= (Number(_safuSupply) / 100);
+  const tier2Holder = isLoadingSafuSupply || isLoadingSafuHolderBalance ? '' : Number(_safuHolderBalance) >= (Number(_safuSupply) * 3) / 1000;
 
   const infoETHCurrentPrice =
     isConnected && !isLoadingLatestETHPrice
@@ -780,6 +808,9 @@ export default function Trade() {
     if (isConfirmed && txHash) {
       refetchInfoData();
       refetchLatestETHPrice();
+      refetchSafuHolder();
+      refetchSafuSupply();
+      refetchSafuHolderBalance();
       refetchWhitelistBalance();
       refetchAmountOut();
       refetchETHBalance();
@@ -1397,6 +1428,21 @@ export default function Trade() {
     setIsProcessingTxn(true);
   }, [writeContract, tokenAddress, isTokenCreator]);
 
+  const handleDisableMaxWalletLimit = useCallback(() => {
+    if (!tokenAddress || !isTokenCreator) return;
+
+    setErrorMsg("");
+    setLastTxnType("disableMaxWalletLimit");
+
+    writeContract({
+      ...LAUNCHER_ABI,
+      address: SAFU_LAUNCHER_CA,
+      functionName: "disableMaxWalletLimit",
+      args: [tokenAddress as `0x${string}`],
+    });
+    setIsProcessingTxn(true);
+  }, [writeContract, tokenAddress, isTokenCreator]);
+
   const handleButtonClick = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
@@ -1416,6 +1462,110 @@ export default function Trade() {
     return mode === "buy" ? "Buy" : needsApproval ? "Approve" : "Sell";
   };
 
+
+  const userETHBalanceNumber = parseFloat(userETHBalance?.formatted ?? "0");
+  const userTokenBalanceNumber = parseFloat(tokenBalance);
+  const amountNumber = parseFloat(amount);
+  const amountOutNumber = amountOutSelect ? Number(amountOutSelect.toString()) / 1e18 : 0;
+  const whitelistBalanceNumber = Number(whitelistBalance) / 1e18;
+  const maxWalletTokens = mwAmountOnSafu / 1e18;
+
+  // Calculate tier limits based on total supply
+  const tier2Limit = ((tokenSupply/ 1e18) * 2) / 1000; // 0.2% of total supply
+  const tier1Limit = ((tokenSupply/ 1e18) * 5) / 1000; // 0.5% of total supply
+
+
+  // Validation logic
+  const validationState = useMemo(() => {
+    // Basic validations
+    if (!amount || amountNumber <= 0) {
+      return { isDisabled: true, message: "Enter amount" };
+    }
+
+    if (isTransactionPending) {
+      return { isDisabled: true, message: getButtonText() };
+    }
+
+    // Mode-specific validations
+    if (mode === "buy") {
+      // ETH balance check
+      if (amountNumber > userETHBalanceNumber) {
+        return { isDisabled: true, message: "Insufficient ETH balance" };
+      }
+
+      // Whitelist checks (only if whitelist is active)
+      if (isWhiteListOngoing === 1) {
+        // Check if user is whitelisted (unless they're a tier holder)
+        if (!tier1Holder && !tier2Holder && whitelistBalanceNumber === 0) {
+          return { isDisabled: true, message: "Not whitelisted" };
+        }
+
+        // Check whitelist buy limit
+        if (!tier1Holder && !tier2Holder && amountOutNumber > whitelistBalanceNumber) {
+          return { isDisabled: true, message: "Exceeds whitelist buy limit" };
+        }
+
+        // Tier holder purchase limits
+        if (tier2Holder && !tier1Holder) {
+          // Tier 2 holder: can only buy up to 0.2% of total supply
+          const totalAfterBuy = amountOutNumber + userTokenBalanceNumber;
+          if (totalAfterBuy > tier2Limit) {
+            return {
+              isDisabled: true,
+              message: `Tier 2 limit: ${tier2Limit.toFixed(2)} tokens max`
+            };
+          }
+        } else if (tier1Holder) {
+          // Tier 1 holder: can only buy up to 0.5% of total supply
+          const totalAfterBuy = amountOutNumber + userTokenBalanceNumber;
+          if (totalAfterBuy > tier1Limit) {
+            return {
+              isDisabled: true,
+              message: `Tier 1 limit: ${tier1Limit.toFixed(2)} tokens max`
+            };
+          }
+        }
+      }
+
+      // Max wallet checks (only if max wallet is active)
+      if (isMaxWalletOnSafu === 1) {
+        // Check if buying this amount would exceed max wallet
+        if (amountOutNumber > maxWalletTokens) {
+          return { isDisabled: true, message: "Exceeds max wallet limit" };
+        }
+
+        // Check if user's total balance would exceed max wallet after buy
+        const totalAfterBuy = amountOutNumber + userTokenBalanceNumber;
+        if (totalAfterBuy > maxWalletTokens) {
+          return { isDisabled: true, message: "Would exceed max wallet limit" };
+        }
+      }
+    } else if (mode === "sell") {
+      // Token balance check
+      if (amountNumber > userTokenBalanceNumber) {
+        return { isDisabled: true, message: `Insufficient ${token?.symbol} balance` };
+      }
+    }
+
+    // All validations passed
+    return { isDisabled: false, message: getButtonText() };
+  }, [
+    amount,
+    amountNumber,
+    isTransactionPending,
+    mode,
+    userETHBalanceNumber,
+    userTokenBalanceNumber,
+    isWhiteListOngoing,
+    tier1Holder,
+    tier2Holder,
+    whitelistBalanceNumber,
+    amountOutNumber,
+    isMaxWalletOnSafu,
+    maxWalletTokens,
+    token?.symbol
+  ]);
+
   const getAdminTxnMessage = () => {
     switch (lastTxnType) {
       case "startTrading":
@@ -1424,6 +1574,8 @@ export default function Trade() {
         return "Addresses added to whitelist successfully!";
       case "disableWhitelist":
         return "Whitelist disabled successfully!";
+      case "disableMaxWalletLimit":
+        return "Max wallet limits disabled successfully!";
       default:
         return "Transaction confirmed successfully!";
     }
@@ -1517,7 +1669,7 @@ export default function Trade() {
                     <button
                       type="button"
                       onClick={() => setShowAdminPanel(!showAdminPanel)}
-                      disabled={isTransactionPending}
+                      disabled={isTransactionPending || isWhiteListOngoing === 0}
                       className="p-[10px] rounded-[10px] text-[12px] font-raleway border dark:border-[#EA971C] dark:text-[#EA971C] dark:hover:bg-[#FFA726] border-[#FF0199] text-[#FF0199] hover:bg-[#FF0199] hover:text-white font-semibold transition-all disabled:opacity-50"
                     >
                       Add Whitelist
@@ -1537,6 +1689,38 @@ export default function Trade() {
                       {isStartTrading === 1
                         ? "Trading Started"
                         : "Start Trading"}
+                    </button>
+
+                    {/* disable max wallet limit Button */}
+                    <button
+                      type="button"
+                      onClick={handleDisableWhitelist}
+                      disabled={
+                        isTransactionPending ||
+                        isWhiteListOngoing === 0 ||
+                        isProcessingTxn
+                      }
+                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                    >
+                      {isWhiteListOngoing === 0
+                        ? "Whitelist Disabled"
+                        : "Disable Whitelist"}
+                    </button>
+
+                    {/* disable max wallet limit Button */}
+                    <button
+                      type="button"
+                      onClick={handleDisableMaxWalletLimit}
+                      disabled={
+                        isTransactionPending ||
+                        isMaxWalletOnSafu === 0 ||
+                        isProcessingTxn
+                      }
+                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                    >
+                      {isMaxWalletOnSafu === 0
+                        ? "MaxWallet Limit Disabled"
+                        : "Disable Max Wallet Limit"}
                     </button>
                   </div>
                 )}
@@ -1616,17 +1800,8 @@ export default function Trade() {
 
                     <button
                       type="button"
-                      onClick={handleDisableWhitelist}
-                      disabled={isTransactionPending || isProcessingTxn}
-                      className="w-full px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
-                    >
-                      Disable Whitelist
-                    </button>
-
-                    <button
-                      type="button"
                       onClick={handleAddToWhitelist}
-                      disabled={!isFormValid}
+                      disabled={!isFormValid || isWhiteListOngoing === 0}
                       className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${isFormValid
                         ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
                         : "opacity-50 cursor-not-allowed"
@@ -1692,12 +1867,39 @@ export default function Trade() {
                     value: isMaxWalletOnSafu,
                     extra: `${maxWalletAmountOnSafu ?? 0}%`,
                   },
+                  // {
+                  //   label: "Tier 1",
+                  //   value: `tier1Holder`,
+                  //   extra: `${tier1Holder}`,
+                  // },
+                  // {
+                  //   label: "Tier 2",
+                  //   value: `tier2Holder`,
+                  //   extra: `${tier2Holder}`,
+                  // },
                   ...(isWhiteListOngoing && ywhitelistBalance > 0
                     ? [
                       {
                         label: "Whitelisted Amount",
-                        value: "",
-                        extra: `${ywhitelistBalance ?? 0} ${token?.name}`,
+                        value: {isWhiteListOngoing},
+                        extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${token?.symbol}`,
+                      },
+                    ]
+                    : []),
+                  ...(isWhiteListOngoing && isSafuHolder
+                    ? [
+                      {
+                        label: "Auto Whitelisted",
+                        value: `${isSafuHolder}`,
+                      },
+                    ]
+                    : []),
+                  ...(isWhiteListOngoing && isSafuHolder
+                    ? [
+                      {
+                        label: "Your Safu",
+                        value: `${isSafuHolder}`,
+                        extra: `${safuHolderBalance} SAFU`,
                       },
                     ]
                     : []),
@@ -1909,24 +2111,11 @@ export default function Trade() {
                     <button
                       type="button"
                       onClick={handleButtonClick}
-                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${isTransactionPending
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
+                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${validationState.isDisabled ? "opacity-60 cursor-not-allowed" : ""
                         }`}
-                      disabled={
-                        isTransactionPending ||
-                        !amount ||
-                        mode === 'buy' && (amount > (parseFloat(
-                          userETHBalance?.formatted ?? "0").toFixed(18))) ||
-                        mode === 'sell' && (amount > (parseFloat(tokenBalance).toLocaleString())) ||
-                        // isWhiteListOngoing === 1 && Number(whitelistBalance) === 0 ||
-                        // mode === 'buy' && isWhiteListOngoing === 1 && Number(amountOutSelect!) > Number(whitelistBalance) ||
-                        parseFloat(amount) <= 0
-                      }
+                      disabled={validationState.isDisabled}
                     >
-                      {mode === 'buy' && (amount > (parseFloat(
-                        userETHBalance?.formatted ?? "0").toFixed(18))) ? `Not enough ETH` : (mode === 'sell' && (amount > (parseFloat(tokenBalance).toLocaleString())) ? `Not enough ${token.symbol}` : getButtonText())}
-
+                      {validationState.message}
                       {isTransactionPending && (
                         <span className="ml-1 animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full inline-block"></span>
                       )}
