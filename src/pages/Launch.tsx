@@ -32,7 +32,7 @@ import { CircleCheckBig, Upload, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
 import { IoMdAddCircleOutline } from "react-icons/io";
-import RocketLoader from "../components/generalcomponents/Loader";
+// import RocketLoader from "../components/generalcomponents/Loader";
 
 /**
  * Description placeholder
@@ -65,7 +65,6 @@ export default function Launch(): JSX.Element {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
 
   const [wlCsvText, setWlCsvText] = useState("");
 
@@ -1283,728 +1282,389 @@ export default function Launch(): JSX.Element {
 
   const selectedOption = options.find((opt) => opt.value === lpOption)?.label;
 
-  useEffect(() => {
-    if (
-      isConnected &&
-      !isLoadingLatestETHPrice &&
-      uniV2Router !== undefined &&
-      uniV2WETH !== undefined
-    ) {
-      setIsPageLoading(false);
-    }
-  }, [isConnected, isLoadingLatestETHPrice, uniV2Router, uniV2WETH]);
-
-  const Loader = () => (
-    <>
-      <RocketLoader />
-    </>
-  );
-
   return (
     <>
-      {isPageLoading ? (
-        <Loader />
-      ) : (
-        <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
-          <Navbar />
-          <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-            {[...Array(2)].map((_, i) => (
-              <DustParticles key={i} />
-            ))}
+      <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
+        <Navbar />
+        <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+          {[...Array(2)].map((_, i) => (
+            <DustParticles key={i} />
+          ))}
+        </div>
+
+        <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
+        <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
+          <div className="">
+            <h1 className="dark:text-white text-[#01061C] text-center text-lg lg:text-[24px] font-raleway font-medium mb-[12px]">
+              Launch Your Token
+            </h1>
+            <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
+              Launch your token effortlessly — earn 0.2 ETH instantly when it
+              reaches the bonding curv
+            </p>
           </div>
+          {/* Validation Errors Display */}
 
-          <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-          <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
-            <div className="">
-              <h1 className="dark:text-white text-[#01061C] text-center text-lg lg:text-[24px] font-raleway font-medium mb-[12px]">
-                Launch Your Token
-              </h1>
-              <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
-                Launch your token effortlessly — earn 0.2 ETH instantly when it
-                reaches the bonding curv
-              </p>
+          <form
+            id="launch-form"
+            className=" mt-[40px] relative z-40 max-h-[80vh] lg:pr-20 overflow-y-auto scrollbar-thin scrollbar-track-[#D9D9D9] scrollbar-thumb-[#0C8CE0]"
+            onSubmit={handleSubmit}
+          >
+            {/* Name */}
+            <div className="flex flex-col gap-[10px]">
+              <label htmlFor="tokenName">
+                <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
+                  Token Name
+                </span>
+              </label>
+              <input
+                id="tokenName"
+                type="text"
+                placeholder="Enter your Token Name, e.g “SafuLauncher”"
+                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
-            {/* Validation Errors Display */}
 
-            <form
-              id="launch-form"
-              className=" mt-[40px] relative z-40 max-h-[80vh] lg:pr-20 overflow-y-auto scrollbar-thin scrollbar-track-[#D9D9D9] scrollbar-thumb-[#0C8CE0]"
-              onSubmit={handleSubmit}
-            >
-              {/* Name */}
-              <div className="flex flex-col gap-[10px]">
-                <label htmlFor="tokenName">
-                  <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
-                    Token Name
-                  </span>
-                </label>
-                <input
-                  id="tokenName"
-                  type="text"
-                  placeholder="Enter your Token Name, e.g “SafuLauncher”"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
+            {/* <div className="help">Token name (e.g. "MoonCat")</div> */}
+            {/* Symbol */}
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label>
+                <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
+                  Symbol
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your Ticker Symbol, e.g SAFU"
+                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42] w-[95%] lg:w-full"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                required
+              />
+            </div>
 
-              {/* <div className="help">Token name (e.g. "MoonCat")</div> */}
-              {/* Symbol */}
-              <div className="flex flex-col gap-[10px] mt-[34px]">
-                <label>
-                  <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
-                    Symbol
-                  </span>
-                </label>
+            {/* <div className="help">Ticker symbol (e.g. "MCAT")</div> */}
+            {/* Supply */}
+            {/* Supply */}
+            <div className="flex flex-col gap-[10px] mt-[34px] w-full ">
+              <label>
+                <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
+                  Supply
+                </span>
+              </label>
+
+              <div className="relative flex w-full">
                 <input
                   type="text"
-                  placeholder="Enter your Ticker Symbol, e.g SAFU"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42] w-[95%] lg:w-full"
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="E.g “1,000,000”"
+                  value={supplyInput}
+                  onChange={(e) => {
+                    const raw = removeCommas(e.target.value);
+                    const parsed = parseInt(raw, 10);
+
+                    if (!isNaN(parsed)) {
+                      setSupply(parsed); // raw number for backend / logic
+                      setSupplyInput(formatNumberWithCommas(parsed)); // formatted input
+                    } else {
+                      setSupply(0);
+                      setSupplyInput("");
+                    }
+                  }}
                   required
+                  className="py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none w-[95%] lg:w-full"
                 />
-              </div>
 
-              {/* <div className="help">Ticker symbol (e.g. "MCAT")</div> */}
-              {/* Supply */}
-              {/* Supply */}
-              <div className="flex flex-col gap-[10px] mt-[34px] w-full ">
-                <label>
-                  <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
-                    Supply
-                  </span>
-                </label>
-
-                <div className="relative flex w-full">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="E.g “1,000,000”"
-                    value={supplyInput}
-                    onChange={(e) => {
-                      const raw = removeCommas(e.target.value);
-                      const parsed = parseInt(raw, 10);
-
-                      if (!isNaN(parsed)) {
-                        setSupply(parsed); // raw number for backend / logic
-                        setSupplyInput(formatNumberWithCommas(parsed)); // formatted input
-                      } else {
-                        setSupply(0);
-                        setSupplyInput("");
-                      }
-                    }}
-                    required
-                    className="py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none w-[95%] lg:w-full"
-                  />
-
-                  {/* Buttons container */}
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-[30px] bg-[#0C8CE0] rounded-full overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={decrease}
-                      className="text-white px-4 text-lg cursor-pointer transition"
-                    >
-                      –
-                    </button>
-                    <div className="w-[1px] h-[60%] bg-white/50"></div>
-                    <button
-                      type="button"
-                      onClick={increase}
-                      className="text-white px-4 text-lg cursor-pointer transition"
-                    >
-                      +
-                    </button>
-                  </div>
+                {/* Buttons container */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center h-[30px] bg-[#0C8CE0] rounded-full overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={decrease}
+                    className="text-white px-4 text-lg cursor-pointer transition"
+                  >
+                    –
+                  </button>
+                  <div className="w-[1px] h-[60%] bg-white/50"></div>
+                  <button
+                    type="button"
+                    onClick={increase}
+                    className="text-white px-4 text-lg cursor-pointer transition"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* <div className="help">Total supply (e.g. 1,000,000,000)</div> */}
-              <div className="flex flex-col gap-[10px] mt-[34px]">
-                <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-                  Website
-                  <span className="mandatory text-Primary"> (Optional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
+            {/* <div className="help">Total supply (e.g. 1,000,000,000)</div> */}
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
+                Website
+                <span className="mandatory text-Primary"> (Optional)</span>
+              </label>
+              <input
+                type="url"
+                placeholder="https://example.com"
+                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
 
-              <div className="flex flex-col gap-[10px] mt-[34px]">
-                <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-                  Description
-                  <span className="mandatory text-Primary">
-                    {" "}
-                    (Optional, max 200 chars)
-                  </span>
-                </label>
-                <textarea
-                  placeholder="Enter a short description"
-                  value={description}
-                  maxLength={200}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
-                />
-                <span className="text-sm text-gray-500 dark:text-gray-400 self-end">
-                  {description.length}/200
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
+                Description
+                <span className="mandatory text-Primary">
+                  {" "}
+                  (Optional, max 200 chars)
                 </span>
-              </div>
+              </label>
+              <textarea
+                placeholder="Enter a short description"
+                value={description}
+                maxLength={200}
+                onChange={(e) => setDescription(e.target.value)}
+                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+              />
+              <span className="text-sm text-gray-500 dark:text-gray-400 self-end">
+                {description.length}/200
+              </span>
+            </div>
 
-              {/* Input file and tax toggle */}
-              <div className="flex flex-col gap-[10px] mt-[34px]">
-                <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
-                  Add Logo{" "}
-                  <span className="text-Primary font-medium">(Optional)</span>
-                </label>
+            {/* Input file and tax toggle */}
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
+                Add Logo{" "}
+                <span className="text-Primary font-medium">(Optional)</span>
+              </label>
 
-                <div
-                  className={`border-2 border-dashed ${
-                    dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
+              <div
+                className={`border-2 border-dashed ${
+                  dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
         transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
-                  onClick={openFilePicker}
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={() => setDragActive(false)}
-                  onDrop={handleDrop}
-                >
-                  {!logo && (
-                    <>
-                      <div className="bg-gray-600 p-4 rounded-lg mb-4">
-                        <UploadCloud className="w-8 h-8 text-white" />
-                      </div>
-                      <p className="dark:text-white text-black font-medium">
-                        <span className="">Click to upload</span> or drag and
-                        drop
-                      </p>
-                      <p className="text-sm dark:text-white/60 text-black mt-1">
-                        PNG, JPG
-                      </p>
-                    </>
-                  )}
-
-                  {logo && (
-                    <div className="flex flex-col items-center gap-2">
-                      <img
-                        src={URL.createObjectURL(logo)}
-                        alt="Selected Logo"
-                        className="max-h-32 object-contain rounded-lg"
-                      />
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-[#3BC3DB] font-semibold truncate max-w-[180px]">
-                          {logo.name}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setLogo(null)}
-                          className="text-red-400 hover:text-red-500 "
-                          aria-label="Remove selected logo"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
+                onClick={openFilePicker}
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+              >
+                {!logo && (
+                  <>
+                    <div className="bg-gray-600 p-4 rounded-lg mb-4">
+                      <UploadCloud className="w-8 h-8 text-white" />
                     </div>
-                  )}
-                </div>
+                    <p className="dark:text-white text-black font-medium">
+                      <span className="">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-sm dark:text-white/60 text-black mt-1">
+                      PNG, JPG
+                    </p>
+                  </>
+                )}
 
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleChange}
-                />
+                {logo && (
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={URL.createObjectURL(logo)}
+                      alt="Selected Logo"
+                      className="max-h-32 object-contain rounded-lg"
+                    />
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-[#3BC3DB] font-semibold truncate max-w-[180px]">
+                        {logo.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setLogo(null)}
+                        className="text-red-400 hover:text-red-500 "
+                        aria-label="Remove selected logo"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* enable tax, whitelist only and enable platform fees */}
-                <div className="">
-                  {/* Enable Tax Toggle Styled Similarly */}
-                  <div className="flex flex-col gap-2 mt-8">
-                    <div className="flex justify-between items-center">
-                      <label className="text-lg font-semibold dark:text-white text-black">
-                        Enable Tax on DEX
-                      </label>
-                      <div className="relative group">
-                        <div
-                          onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
-                          className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
-                            enableTaxOnDex ? "bg-Primary" : "bg-white"
-                          } shadow-inner relative`}
-                        >
-                          <div
-                            className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
-                              enableTaxOnDex
-                                ? "translate-x-8 bg-white"
-                                : "translate-x-0 bg-[#D9D9D9]"
-                            }`}
-                          >
-                            {enableTaxOnDex ? (
-                              <CircleCheckBig className="text-Primary w-3 h-3" />
-                            ) : (
-                              <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
-                                <X className="text-Primary w-3 h-3" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
-                            <X className="text-white w-3 h-3" />
-                          </div>
-                          <div className="absolute right-[10px] z-10">
-                            <CircleCheckBig className="text-black w-3 h-3" />
-                          </div>
-                        </div>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleChange}
+              />
+            </div>
 
-                        <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                          Amount is the tax on buy and sell e.g 10/10 tax
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* enable tax, whitelist only and enable platform fees */}
+              <div className="">
+                {/* Enable Tax Toggle Styled Similarly */}
+                <div className="flex flex-col gap-2 mt-8">
+                  <div className="flex justify-between items-center">
+                    <label className="text-lg font-semibold dark:text-white text-black">
+                      Enable Tax on DEX
+                    </label>
+                    <div className="relative group">
+                      <div
+                        onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
+                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
+                          enableTaxOnDex ? "bg-Primary" : "bg-white"
+                        } shadow-inner relative`}
+                      >
+                        <div
+                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
+                            enableTaxOnDex
+                              ? "translate-x-8 bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
+                        >
+                          {enableTaxOnDex ? (
+                            <CircleCheckBig className="text-Primary w-3 h-3" />
+                          ) : (
+                            <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                              <X className="text-Primary w-3 h-3" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                          <X className="text-white w-3 h-3" />
+                        </div>
+                        <div className="absolute right-[10px] z-10">
+                          <CircleCheckBig className="text-black w-3 h-3" />
                         </div>
                       </div>
-                    </div>
 
-                    {enableTaxOnDex && (
-                      <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                      <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                        Amount is the tax on buy and sell e.g 10/10 tax
+                      </div>
+                    </div>
+                  </div>
+
+                  {enableTaxOnDex && (
+                    <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                      <label
+                        htmlFor=""
+                        className="dark:text-white font-raleway text-xl font-semibold"
+                      >
+                        Amount
+                      </label>
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="10"
+                        value={dexFeeInput}
+                        onChange={(e) => handleDexFeeBpsChange(e.target.value)}
+                        placeholder="Enter Tax for Dex (e.g., 0.5)"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                      />
+
+                      <div className="flex flex-col gap-4">
                         <label
                           htmlFor=""
                           className="dark:text-white font-raleway text-xl font-semibold"
                         >
-                          Amount
+                          Wallet
                         </label>
-
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="10"
-                          value={dexFeeInput}
-                          onChange={(e) =>
-                            handleDexFeeBpsChange(e.target.value)
-                          }
-                          placeholder="Enter Tax for Dex (e.g., 0.5)"
+                          type="text"
+                          ref={walletInputRef}
+                          placeholder="0x.."
+                          value={newAddr}
+                          onChange={(e) => setNewAddr(e.target.value)}
                           className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
 
-                        <div className="flex flex-col gap-4">
-                          <label
-                            htmlFor=""
-                            className="dark:text-white font-raleway text-xl font-semibold"
-                          >
-                            Wallet
-                          </label>
-                          <input
-                            type="text"
-                            ref={walletInputRef}
-                            placeholder="0x.."
-                            value={newAddr}
-                            onChange={(e) => setNewAddr(e.target.value)}
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                          />
-
-                          <label
-                            htmlFor=""
-                            className="dark:text-white font-raleway text-xl font-semibold"
-                          >
-                            Percentage
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="%"
-                            min="0"
-                            max="100"
-                            value={newBps || ""}
-                            onChange={(e) =>
-                              setNewBps(parseFloat(e.target.value))
-                            }
-                            className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={addTaxRecipient}
-                            className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1"
-                          >
-                            <IoMdAddCircleOutline className="text-xl text-white" />{" "}
-                            <p className="font-raleway font-medium text-white">
-                              Add Recipient
-                            </p>
-                          </button>
-                        </div>
-
-                        {/* Tax List */}
-                        <div className="space-y-2">
-                          {taxList.map((t, i) => (
-                            <div
-                              key={i}
-                              className="flex justify-between items-center bg-white/5 dark:bg-white/5 border dark:border-white/10 border-gray-900 dark:text-white text-black px-4 py-3 rounded-md"
-                            >
-                              <span className="truncate w-[60%]">{t.addr}</span>
-                              <span>{(t.bps / 10).toFixed(1)}%</span>
-                              <button
-                                type="button"
-                                onClick={() => removeTaxRecipient(i)}
-                                className="text-red-500 hover:bg-red-500/10 p-2 rounded-full"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Help Text */}
-                        <div className="text-xs dark:text-gray-400 text-black/80 mt-2">
-                          <p>• Maximum 5 tax recipients allowed</p>
-                          <p>• Total tax cannot exceed 10%</p>
-                          {/* <p>• BPS = Basis Points (100 BPS = 1%)</p> */}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Platform Fee Toggle */}
-                  <div className="flex flex-col gap-2 mt-[34px] md:mt-[80px]">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[18px] font-semibold dark:text-white text-black font-raleway max-w-[11rem]">
-                        Enable Tax on SafuLauncher
-                      </label>
-
-                      {/* Toggle + Tooltip Group */}
-                      <div className="relative group">
-                        <div
-                          onClick={() => setEnableTaxOnSafu(!enableTaxOnSafu)}
-                          className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enableTaxOnSafu ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                        <label
+                          htmlFor=""
+                          className="dark:text-white font-raleway text-xl font-semibold"
                         >
+                          Percentage
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="%"
+                          min="0"
+                          max="100"
+                          value={newBps || ""}
+                          onChange={(e) =>
+                            setNewBps(parseFloat(e.target.value))
+                          }
+                          className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={addTaxRecipient}
+                          className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1"
+                        >
+                          <IoMdAddCircleOutline className="text-xl text-white" />{" "}
+                          <p className="font-raleway font-medium text-white">
+                            Add Recipient
+                          </p>
+                        </button>
+                      </div>
+
+                      {/* Tax List */}
+                      <div className="space-y-2">
+                        {taxList.map((t, i) => (
                           <div
-                            className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+                            key={i}
+                            className="flex justify-between items-center bg-white/5 dark:bg-white/5 border dark:border-white/10 border-gray-900 dark:text-white text-black px-4 py-3 rounded-md"
+                          >
+                            <span className="truncate w-[60%]">{t.addr}</span>
+                            <span>{(t.bps / 10).toFixed(1)}%</span>
+                            <button
+                              type="button"
+                              onClick={() => removeTaxRecipient(i)}
+                              className="text-red-500 hover:bg-red-500/10 p-2 rounded-full"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Help Text */}
+                      <div className="text-xs dark:text-gray-400 text-black/80 mt-2">
+                        <p>• Maximum 5 tax recipients allowed</p>
+                        <p>• Total tax cannot exceed 10%</p>
+                        {/* <p>• BPS = Basis Points (100 BPS = 1%)</p> */}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Platform Fee Toggle */}
+                <div className="flex flex-col gap-2 mt-[34px] md:mt-[80px]">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[18px] font-semibold dark:text-white text-black font-raleway max-w-[11rem]">
+                      Enable Tax on SafuLauncher
+                    </label>
+
+                    {/* Toggle + Tooltip Group */}
+                    <div className="relative group">
+                      <div
+                        onClick={() => setEnableTaxOnSafu(!enableTaxOnSafu)}
+                        className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${enableTaxOnSafu ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                      >
+                        <div
+                          className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
             ${
               enableTaxOnSafu
                 ? "translate-x-[32px] bg-white"
                 : "translate-x-0 bg-[#D9D9D9]"
             }`}
-                          >
-                            {enableTaxOnSafu ? (
-                              <CircleCheckBig className="text-Primary w-3 h-3" />
-                            ) : (
-                              <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
-                                <X className="text-Primary w-3 h-3" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Static icons */}
-                          <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
-                            <X className="text-white w-3 h-3" />
-                          </div>
-                          <div className="absolute right-[10px] z-10">
-                            <CircleCheckBig className="text-black w-3 h-3" />
-                          </div>
-                        </div>
-
-                        {/* Tooltip shown on hover */}
-                        <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                          Dev/platform fee (max 5%, max 5 recipients).
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Platform Fee Section */}
-                  {enableTaxOnSafu && (
-                    <div
-                      id="pf-section"
-                      className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
-                    >
-                      <label className="flex flex-col gap-1 font-medium">
-                        <span className="dark:text-white font-raleway text-xl font-semibold">
-                          Tax on SafuLauncher
-                        </span>
-
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="5"
-                          value={platformFeeInput}
-                          onChange={(e) =>
-                            handlePlatformFeeBpsChange(e.target.value)
-                          }
-                          placeholder="Enter platform fee percentage (e.g. 0.5)"
-                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                        />
-                      </label>
-                      <div className="dark:text-gray-400 text-gray-700 text-sm">
-                        Max Fee is 5%.
-                      </div>
-                      <div className="dark:text-gray-400 text-gray-700 text-sm mb-2">
-                        Current total:{" "}
-                        {platformFeeList
-                          .reduce((sum, p) => sum + (p.pct || 0), 0)
-                          .toFixed(2)}
-                        %
-                      </div>
-                      {platformFeeList.map((p, i) => (
-                        <div
-                          key={i}
-                          className="flex flex-col items-start md:items-center gap-4 "
                         >
-                          <input
-                            placeholder="0x..."
-                            value={p.addr}
-                            onChange={(e) => {
-                              const list = [...platformFeeList];
-                              list[i].addr = e.target.value;
-                              setPlatformFeeList(list);
-                            }}
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none]"
-                          />
-                          <input
-                            placeholder="Percentage (e.g. 50)"
-                            type="number"
-                            value={p.pctInput}
-                            onChange={(e) => {
-                              const input = e.target.value;
-                              const list = [...platformFeeList];
-
-                              list[i].pctInput = input; // always reflect what the user typed
-
-                              const parsed = parseFloat(input);
-                              if (!isNaN(parsed)) {
-                                list[i].pct = parsed;
-                              } else if (input === "") {
-                                list[i].pct = 0; // optional: reset to 0 if empty
-                              }
-
-                              setPlatformFeeList(list);
-                            }}
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              removeItem(platformFeeList, setPlatformFeeList, i)
-                            }
-                            className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          addItem(
-                            platformFeeList,
-                            setPlatformFeeList,
-                            { addr: "", pct: 0, pctInput: "" },
-                            5
-                          )
-                        }
-                        disabled={platformFeeList.length >= 5}
-                        className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <IoMdAddCircleOutline className="text-xl text-white" />
-                        <p className="font-raleway font-medium text-white ">
-                          Add Recipient ({platformFeeList.length}/5)
-                        </p>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Whitelist Toggle */}
-                  <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                        Whitelist Only
-                      </label>
-
-                      {/* Hover group for toggle + tooltip */}
-                      <div className="relative group">
-                        <div
-                          onClick={() => setEnableWhitelist(!enableWhitelist)}
-                          className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${enableWhitelist ? "bg-Primary" : "bg-white"} shadow-inner relative`}
-                        >
-                          <div
-                            className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
-            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableWhitelist
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
-                          >
-                            {enableWhitelist ? (
-                              <CircleCheckBig className="text-Primary w-3 h-3" />
-                            ) : (
-                              <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
-                                <X className="text-Primary w-3 h-3" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Static x icon on left */}
-                          <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
-                            <X className="text-white w-3 h-3" />
-                          </div>
-                          {/* Static check icon on right */}
-                          <div className="absolute right-[10px] z-10">
-                            <CircleCheckBig className="text-black w-3 h-3" />
-                          </div>
-                        </div>
-
-                        {/* Tooltip shown on hover */}
-                        <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                          Only whitelisted addresses can buy initially. (Max 200
-                          addresses)
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Whitelist Section */}
-                  {/* Whitelist Section */}
-                  {enableWhitelist && (
-                    <div className=" bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
-                      <div className="dark:text-white text-black font-medium mb-4 font-raleway">
-                        Whitelisted Addresses:{" "}
-                        <span className="text-green-400">
-                          {whitelistUpload.length} / 200
-                        </span>
-                      </div>
-
-                      {/* CSV Text Input */}
-                      <div className="relative">
-                        <textarea
-                          rows={6}
-                          value={wlCsvText}
-                          onChange={(e) => setWlCsvText(e.target.value)}
-                          placeholder="0xAbc123…,0.5&#10;0xDef456…,0.3"
-                          className="w-full h-full p-3 dark:text-white text-black dark:bg-[#071129] border border-Primary rounded-t-2xl  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        />
-
-                        {/* Upload Button */}
-                        <div className="flex space-x-2 absolute -bottom-8 right-0">
-                          <div className="relative">
-                            <input
-                              type="file"
-                              accept=".csv,.xlsx,.xls"
-                              onChange={handleCSVUpload}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                            <button
-                              type="button"
-                              className="bg-Primary/25 hover:bg-slate-600 text-gray-300 border-Primary hover:text-white py-2 px-4 rounded-b-2xl font-medium transition-all duration-200 flex items-center space-x-2"
-                            >
-                              <span className="dark:text-white text-black text-sm">
-                                Upload CSV/Excel
-                              </span>
-                              <Upload className="w-4 h-4 text-black dark:text-white" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => parseWlCsv(wlCsvText)}
-                        className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1 mt-14"
-                      >
-                        <IoMdAddCircleOutline className="text-xl text-white" />
-                        <p className="font-raleway font-medium text-white ">
-                          Add Whitelist
-                        </p>
-                      </button>
-
-                      {/* Whitelist Entries Table */}
-                      <div className="dark:bg-[#071129] rounded-xl border border-slate-600 overflow-hidden mt-4">
-                        {whitelistUpload.length === 0 && (
-                          <div className="p-8 text-center dark:text-gray-400 text-black">
-                            No whitelist entries yet. Add some using the buttons
-                            above.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* LP option, start trading and enable bundle */}
-                <div>
-                  {/* LP Option */}
-                  <div className="flex flex-col gap-2 mt-[34px] relative w-full group">
-                    <label className="text-[18px] font-semibold dark:text-white text-black font-ralewaye">
-                      LP Option <span className="text-white">*</span>
-                    </label>
-
-                    {/* Trigger */}
-                    <div
-                      onClick={() => setIsOpen((prev) => !prev)}
-                      className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-3 py-3 rounded-md cursor-pointer flex justify-between items-center"
-                    >
-                      <span className="text-lg">{selectedOption}</span>
-                      <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                        <BsChevronDown className="text-white text-2xl" />
-                      </div>
-                    </div>
-
-                    {/* Dropdown */}
-                    {isOpen && (
-                      <div className="absolute top-[110px] z-60 w-full dark:bg-[#1a2a7f] bg-white dark:text-white rounded-xl shadow-md">
-                        {options.map((option) => (
-                          <div
-                            key={option.value}
-                            onClick={() => {
-                              setLpOption(option.value);
-                              setIsOpen(false);
-                            }}
-                            className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
-                              option.value === "lock"
-                                ? "rounded-t-xl"
-                                : "rounded-b-xl"
-                            }`}
-                          >
-                            {option.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Tooltip on hover */}
-                    <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                      Lock or burn liquidity after bonding.
-                    </div>
-                  </div>
-
-                  {/* Start Now Toggle */}
-                  <div className="flex justify-between items-center mt-[34px] md:mt-[42px] group relative">
-                    <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                      Start Trading Now
-                    </label>
-
-                    <div className="flex items-center gap-2">
-                      <div
-                        onClick={() => setStartNow(!startNow)}
-                        className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-        ${startNow ? " bg-Primary" : "bg-white"} shadow-inner relative`}
-                      >
-                        <div
-                          className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
-          transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${
-            startNow
-              ? "translate-x-[32px] bg-white"
-              : "translate-x-0 bg-[#D9D9D9]"
-          }`}
-                        >
-                          {startNow ? (
+                          {enableTaxOnSafu ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
                           ) : (
                             <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
@@ -2013,48 +1673,314 @@ export default function Launch(): JSX.Element {
                           )}
                         </div>
 
-                        {/* Static check icon on right */}
+                        {/* Static icons */}
                         <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
                           <X className="text-white w-3 h-3" />
                         </div>
-
-                        {/* Static x icon on left */}
                         <div className="absolute right-[10px] z-10">
                           <CircleCheckBig className="text-black w-3 h-3" />
                         </div>
                       </div>
 
-                      {/* Hover-only tooltip */}
-                      <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                        ON = live immediately; OFF = start later.
+                      {/* Tooltip shown on hover */}
+                      <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                        Dev/platform fee (max 5%, max 5 recipients).
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Max Wallet Amount on Safu Toggle */}
-                  <div className="flex justify-between items-center mt-6">
-                    <label className="text-lg font-semibold dark:text-white text-black">
-                      Enable Max wallet size on SafuLauncher
+                {/* Platform Fee Section */}
+                {enableTaxOnSafu && (
+                  <div
+                    id="pf-section"
+                    className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
+                  >
+                    <label className="flex flex-col gap-1 font-medium">
+                      <span className="dark:text-white font-raleway text-xl font-semibold">
+                        Tax on SafuLauncher
+                      </span>
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="5"
+                        value={platformFeeInput}
+                        onChange={(e) =>
+                          handlePlatformFeeBpsChange(e.target.value)
+                        }
+                        placeholder="Enter platform fee percentage (e.g. 0.5)"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                      />
                     </label>
-                    <div
-                      onClick={() =>
-                        setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
-                      }
-                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
-          ${
-            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
-          } shadow-inner relative`}
-                    >
+                    <div className="dark:text-gray-400 text-gray-700 text-sm">
+                      Max Fee is 5%.
+                    </div>
+                    <div className="dark:text-gray-400 text-gray-700 text-sm mb-2">
+                      Current total:{" "}
+                      {platformFeeList
+                        .reduce((sum, p) => sum + (p.pct || 0), 0)
+                        .toFixed(2)}
+                      %
+                    </div>
+                    {platformFeeList.map((p, i) => (
                       <div
-                        className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+                        key={i}
+                        className="flex flex-col items-start md:items-center gap-4 "
+                      >
+                        <input
+                          placeholder="0x..."
+                          value={p.addr}
+                          onChange={(e) => {
+                            const list = [...platformFeeList];
+                            list[i].addr = e.target.value;
+                            setPlatformFeeList(list);
+                          }}
+                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none]"
+                        />
+                        <input
+                          placeholder="Percentage (e.g. 50)"
+                          type="number"
+                          value={p.pctInput}
+                          onChange={(e) => {
+                            const input = e.target.value;
+                            const list = [...platformFeeList];
+
+                            list[i].pctInput = input; // always reflect what the user typed
+
+                            const parsed = parseFloat(input);
+                            if (!isNaN(parsed)) {
+                              list[i].pct = parsed;
+                            } else if (input === "") {
+                              list[i].pct = 0; // optional: reset to 0 if empty
+                            }
+
+                            setPlatformFeeList(list);
+                          }}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeItem(platformFeeList, setPlatformFeeList, i)
+                          }
+                          className="text-red-400 hover:text-red-500 text-sm font-medium cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addItem(
+                          platformFeeList,
+                          setPlatformFeeList,
+                          { addr: "", pct: 0, pctInput: "" },
+                          5
+                        )
+                      }
+                      disabled={platformFeeList.length >= 5}
+                      className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <IoMdAddCircleOutline className="text-xl text-white" />
+                      <p className="font-raleway font-medium text-white ">
+                        Add Recipient ({platformFeeList.length}/5)
+                      </p>
+                    </button>
+                  </div>
+                )}
+
+                {/* Whitelist Toggle */}
+                <div className="flex flex-col gap-2 mt-[34px] md:mt-[100px]">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                      Whitelist Only
+                    </label>
+
+                    {/* Hover group for toggle + tooltip */}
+                    <div className="relative group">
+                      <div
+                        onClick={() => setEnableWhitelist(!enableWhitelist)}
+                        className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${enableWhitelist ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+                      >
+                        <div
+                          className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
             ${
-              isMaxWalletAmountOnSafu
+              enableWhitelist
                 ? "translate-x-[32px] bg-white"
                 : "translate-x-0 bg-[#D9D9D9]"
             }`}
+                        >
+                          {enableWhitelist ? (
+                            <CircleCheckBig className="text-Primary w-3 h-3" />
+                          ) : (
+                            <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                              <X className="text-Primary w-3 h-3" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Static x icon on left */}
+                        <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                          <X className="text-white w-3 h-3" />
+                        </div>
+                        {/* Static check icon on right */}
+                        <div className="absolute right-[10px] z-10">
+                          <CircleCheckBig className="text-black w-3 h-3" />
+                        </div>
+                      </div>
+
+                      {/* Tooltip shown on hover */}
+                      <div className="z-50 absolute top-full -left-[12rem] mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                        Only whitelisted addresses can buy initially. (Max 200
+                        addresses)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Whitelist Section */}
+                {/* Whitelist Section */}
+                {enableWhitelist && (
+                  <div className=" bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                    <div className="dark:text-white text-black font-medium mb-4 font-raleway">
+                      Whitelisted Addresses:{" "}
+                      <span className="text-green-400">
+                        {whitelistUpload.length} / 200
+                      </span>
+                    </div>
+
+                    {/* CSV Text Input */}
+                    <div className="relative">
+                      <textarea
+                        rows={6}
+                        value={wlCsvText}
+                        onChange={(e) => setWlCsvText(e.target.value)}
+                        placeholder="0xAbc123…,0.5&#10;0xDef456…,0.3"
+                        className="w-full h-full p-3 dark:text-white text-black dark:bg-[#071129] border border-Primary rounded-t-2xl  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      />
+
+                      {/* Upload Button */}
+                      <div className="flex space-x-2 absolute -bottom-8 right-0">
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept=".csv,.xlsx,.xls"
+                            onChange={handleCSVUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            className="bg-Primary/25 hover:bg-slate-600 text-gray-300 border-Primary hover:text-white py-2 px-4 rounded-b-2xl font-medium transition-all duration-200 flex items-center space-x-2"
+                          >
+                            <span className="dark:text-white text-black text-sm">
+                              Upload CSV/Excel
+                            </span>
+                            <Upload className="w-4 h-4 text-black dark:text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => parseWlCsv(wlCsvText)}
+                      className="bg-Primary px-3 py-4  rounded-full w-full flex items-center justify-center gap-1 mt-14"
+                    >
+                      <IoMdAddCircleOutline className="text-xl text-white" />
+                      <p className="font-raleway font-medium text-white ">
+                        Add Whitelist
+                      </p>
+                    </button>
+
+                    {/* Whitelist Entries Table */}
+                    <div className="dark:bg-[#071129] rounded-xl border border-slate-600 overflow-hidden mt-4">
+                      {whitelistUpload.length === 0 && (
+                        <div className="p-8 text-center dark:text-gray-400 text-black">
+                          No whitelist entries yet. Add some using the buttons
+                          above.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* LP option, start trading and enable bundle */}
+              <div>
+                {/* LP Option */}
+                <div className="flex flex-col gap-2 mt-[34px] relative w-full group">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-ralewaye">
+                    LP Option <span className="text-white">*</span>
+                  </label>
+
+                  {/* Trigger */}
+                  <div
+                    onClick={() => setIsOpen((prev) => !prev)}
+                    className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-3 py-3 rounded-md cursor-pointer flex justify-between items-center"
+                  >
+                    <span className="text-lg">{selectedOption}</span>
+                    <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                      <BsChevronDown className="text-white text-2xl" />
+                    </div>
+                  </div>
+
+                  {/* Dropdown */}
+                  {isOpen && (
+                    <div className="absolute top-[110px] z-60 w-full dark:bg-[#1a2a7f] bg-white dark:text-white rounded-xl shadow-md">
+                      {options.map((option) => (
+                        <div
+                          key={option.value}
+                          onClick={() => {
+                            setLpOption(option.value);
+                            setIsOpen(false);
+                          }}
+                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                            option.value === "lock"
+                              ? "rounded-t-xl"
+                              : "rounded-b-xl"
+                          }`}
+                        >
+                          {option.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tooltip on hover */}
+                  <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                    Lock or burn liquidity after bonding.
+                  </div>
+                </div>
+
+                {/* Start Now Toggle */}
+                <div className="flex justify-between items-center mt-[34px] md:mt-[42px] group relative">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Start Trading Now
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      onClick={() => setStartNow(!startNow)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+        ${startNow ? " bg-Primary" : "bg-white"} shadow-inner relative`}
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+          transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                       >
-                        {isMaxWalletAmountOnSafu ? (
+                        {startNow ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
                         ) : (
                           <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
@@ -2063,289 +1989,332 @@ export default function Launch(): JSX.Element {
                         )}
                       </div>
 
-                      {/* Static icons */}
+                      {/* Static check icon on right */}
                       <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
                         <X className="text-white w-3 h-3" />
                       </div>
+
+                      {/* Static x icon on left */}
                       <div className="absolute right-[10px] z-10">
                         <CircleCheckBig className="text-black w-3 h-3" />
                       </div>
                     </div>
-                  </div>
 
-                  {isMaxWalletAmountOnSafu && (
-                    <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
-                      <label className="block mb-1 text-sm font-medium dark:text-white text-black">
-                        Max Wallet Amount (% of total supply)
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        pattern="[0-9]*[.,]?[0-9]*"
-                        placeholder="e.g. 0.5 for 0.5%"
-                        value={maxWalletAmountOnSafuInput}
-                        onChange={(e) =>
-                          handleMaxWalletBpsChange(e.target.value)
-                        }
-                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                      />
-
-                      <p className="text-xs dark:text-gray-400 text-black/80 mt-1">
-                        Must be between 0 and 0.5% of total supply.
-                      </p>
+                    {/* Hover-only tooltip */}
+                    <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      ON = live immediately; OFF = start later.
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  {/*
+                {/* Max Wallet Amount on Safu Toggle */}
+                <div className="flex justify-between items-center mt-6">
+                  <label className="text-lg font-semibold dark:text-white text-black">
+                    Enable Max wallet size on SafuLauncher
+                  </label>
+                  <div
+                    onClick={() =>
+                      setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
+                    }
+                    className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+          ${
+            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
+                  >
+                    <div
+                      className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+            transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
+            ${
+              isMaxWalletAmountOnSafu
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
+                    >
+                      {isMaxWalletAmountOnSafu ? (
+                        <CircleCheckBig className="text-Primary w-3 h-3" />
+                      ) : (
+                        <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                          <X className="text-Primary w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Static icons */}
+                    <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                      <X className="text-white w-3 h-3" />
+                    </div>
+                    <div className="absolute right-[10px] z-10">
+                      <CircleCheckBig className="text-black w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
+
+                {isMaxWalletAmountOnSafu && (
+                  <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                    <label className="block mb-1 text-sm font-medium dark:text-white text-black">
+                      Max Wallet Amount (% of total supply)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      placeholder="e.g. 0.5 for 0.5%"
+                      value={maxWalletAmountOnSafuInput}
+                      onChange={(e) => handleMaxWalletBpsChange(e.target.value)}
+                      className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                    />
+
+                    <p className="text-xs dark:text-gray-400 text-black/80 mt-1">
+                      Must be between 0 and 0.5% of total supply.
+                    </p>
+                  </div>
+                )}
+
+                {/*
               
               {/* Bundle Toggle */}
-                  <div className="flex justify-between items-center mt-[34px] md:mt-[80px] group relative">
-                    <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
-                      Enable Bundle
-                    </label>
+                <div className="flex justify-between items-center mt-[34px] md:mt-[80px] group relative">
+                  <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">
+                    Enable Bundle
+                  </label>
 
-                    <div className="flex items-center gap-2">
-                      <div
-                        onClick={() => setEnableBundle(!enableBundle)}
-                        className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+                  <div className="flex items-center gap-2">
+                    <div
+                      onClick={() => setEnableBundle(!enableBundle)}
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
         ${enableBundle ? " bg-Primary" : "bg-white"} shadow-inner relative`}
-                      >
-                        <div
-                          className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
+                    >
+                      <div
+                        className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
           ${
             enableBundle
               ? "translate-x-[32px] bg-white"
               : "translate-x-0 bg-[#D9D9D9]"
           }`}
-                        >
-                          {enableBundle ? (
-                            <CircleCheckBig className="text-Primary w-3 h-3" />
-                          ) : (
-                            <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
-                              <X className="text-Primary w-3 h-3" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Static check icon on right */}
-                        <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
-                          <X className="text-white w-3 h-3" />
-                        </div>
-
-                        {/* Static x icon on left */}
-                        <div className="absolute right-[10px] z-10">
-                          <CircleCheckBig className="text-black w-3 h-3" />
-                        </div>
+                      >
+                        {enableBundle ? (
+                          <CircleCheckBig className="text-Primary w-3 h-3" />
+                        ) : (
+                          <div className="flex items-center justify-center size-3 border border-Primary rounded-full">
+                            <X className="text-Primary w-3 h-3" />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Hover-only explanation */}
-                      <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
-                        Dev pre-buy (max 15% of supply, max 30 recipients).
+                      {/* Static check icon on right */}
+                      <div className="absolute left-[10px] flex items-center justify-center size-3 z-10 border border-white rounded-full">
+                        <X className="text-white w-3 h-3" />
                       </div>
+
+                      {/* Static x icon on left */}
+                      <div className="absolute right-[10px] z-10">
+                        <CircleCheckBig className="text-black w-3 h-3" />
+                      </div>
+                    </div>
+
+                    {/* Hover-only explanation */}
+                    <div className="z-50 absolute top-full left-0 mt-2 bg-white dark:bg-black/80 border border-gray-300 dark:border-none rounded-lg px-2 py-2 text-xs text-black dark:text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300">
+                      Dev pre-buy (max 15% of supply, max 30 recipients).
                     </div>
                   </div>
+                </div>
 
-                  {/* Bundle Section */}
-                  {enableBundle && (
-                    <div
-                      id="bundle-section"
-                      className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
-                    >
-                      <label className="flex flex-col gap-1 font-medium">
-                        <span className="dark:text-white text-black font-raleway">
-                          Bundle ETH
-                        </span>
+                {/* Bundle Section */}
+                {enableBundle && (
+                  <div
+                    id="bundle-section"
+                    className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
+                  >
+                    <label className="flex flex-col gap-1 font-medium">
+                      <span className="dark:text-white text-black font-raleway">
+                        Bundle ETH
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        value={bundleEthInput}
+                        onChange={(e) => handleBundleEthChange(e.target.value)}
+                        placeholder="10"
+                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                      />
+                    </label>
+                    <div className="dark:text-gray-400 text-gray-700 text-sm">
+                      ETH to spend on initial pre-buy.
+                    </div>
+                    {bundleEth > 0 && supply > 0 && (
+                      <div className="space-y-1 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-4 rounded-md dark:border border-gray-700">
+                        <div className="dark:text-white text-black">
+                          Estimated tokens: ~{" "}
+                          {calculateBundleTokens(
+                            bundleEth,
+                            supply
+                          ).toLocaleString()}
+                        </div>
+                        <div className="dark:text-white text-black">
+                          Percentage of supply: ~ {percentBundled}%
+                        </div>
+                        <div className="dark:text-white text-black">
+                          Max allowed (25%):{" "}
+                          {((supply * 25) / 100).toLocaleString()}
+                        </div>
+                        {calculateBundleTokens(bundleEth, supply) >
+                          (supply * 25) / 100 && (
+                          <div className="text-red-400 font-semibold">
+                            ⚠️ Exceeds 25% limit!
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="text-gray-400 text-sm mb-2">
+                      Current total:{" "}
+                      {bundleList
+                        .reduce((sum, b) => sum + (b.pct || 0), 0)
+                        .toFixed(2)}
+                      %
+                    </div>
+                    {bundleList.map((b, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-col items-start md:items-center gap-4 bg-[#01061c0d] dark:bg-[#060920]"
+                      >
                         <input
-                          type="text"
-                          inputMode="decimal"
-                          pattern="[0-9]*[.,]?[0-9]*"
-                          value={bundleEthInput}
-                          onChange={(e) =>
-                            handleBundleEthChange(e.target.value)
-                          }
-                          placeholder="10"
+                          placeholder="0x..."
+                          value={b.addr}
+                          onChange={(e) => {
+                            const list = [...bundleList];
+                            list[i].addr = e.target.value;
+                            setBundleList(list);
+                          }}
                           className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
-                      </label>
-                      <div className="dark:text-gray-400 text-gray-700 text-sm">
-                        ETH to spend on initial pre-buy.
-                      </div>
-                      {bundleEth > 0 && supply > 0 && (
-                        <div className="space-y-1 dark:bg-[#d5f2f80a] bg-[#01061c0d] p-4 rounded-md dark:border border-gray-700">
-                          <div className="dark:text-white text-black">
-                            Estimated tokens: ~{" "}
-                            {calculateBundleTokens(
-                              bundleEth,
-                              supply
-                            ).toLocaleString()}
-                          </div>
-                          <div className="dark:text-white text-black">
-                            Percentage of supply: ~ {percentBundled}%
-                          </div>
-                          <div className="dark:text-white text-black">
-                            Max allowed (25%):{" "}
-                            {((supply * 25) / 100).toLocaleString()}
-                          </div>
-                          {calculateBundleTokens(bundleEth, supply) >
-                            (supply * 25) / 100 && (
-                            <div className="text-red-400 font-semibold">
-                              ⚠️ Exceeds 25% limit!
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="text-gray-400 text-sm mb-2">
-                        Current total:{" "}
-                        {bundleList
-                          .reduce((sum, b) => sum + (b.pct || 0), 0)
-                          .toFixed(2)}
-                        %
-                      </div>
-                      {bundleList.map((b, i) => (
-                        <div
-                          key={i}
-                          className="flex flex-col items-start md:items-center gap-4 bg-[#01061c0d] dark:bg-[#060920]"
+                        <input
+                          type="number"
+                          value={b.pctInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const list = [...bundleList];
+
+                            list[i].pctInput = value;
+
+                            const parsed = parseFloat(value);
+                            list[i].pct = !isNaN(parsed) ? parsed : 0;
+
+                            setBundleList(list);
+                          }}
+                          placeholder="Percentage (e.g. 50)"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeItem(bundleList, setBundleList, i)
+                          }
+                          className="text-red-400 hover:text-red-500 text-sm font-medium"
                         >
-                          <input
-                            placeholder="0x..."
-                            value={b.addr}
-                            onChange={(e) => {
-                              const list = [...bundleList];
-                              list[i].addr = e.target.value;
-                              setBundleList(list);
-                            }}
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                          />
-                          <input
-                            type="number"
-                            value={b.pctInput}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              const list = [...bundleList];
-
-                              list[i].pctInput = value;
-
-                              const parsed = parseFloat(value);
-                              list[i].pct = !isNaN(parsed) ? parsed : 0;
-
-                              setBundleList(list);
-                            }}
-                            placeholder="Percentage (e.g. 50)"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              removeItem(bundleList, setBundleList, i)
-                            }
-                            className="text-red-400 hover:text-red-500 text-sm font-medium"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          addItem(
-                            bundleList,
-                            setBundleList,
-                            { addr: "", pct: 0, pctInput: "" },
-                            30
-                          )
-                        }
-                        disabled={bundleList.length >= 30}
-                        className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <IoMdAddCircleOutline className="text-xl text-white" />
-                        <p className="font-raleway font-medium text-white">
-                          Add Bundle Entry ({bundleList.length}/30)
-                        </p>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${
-                  isPending || !isFormValid
-                    ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                    : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                }`}
-                disabled={isPending || isConfirming || !isFormValid}
-                style={{
-                  opacity: !isFormValid ? 0.5 : 1,
-                  cursor: !isFormValid ? "not-allowed" : "pointer",
-                }}
-              >
-                {isFormValid ? (
-                  <>
-                    <span>
-                      {isPending ? "Pending..." : "Create Token"}
-                      {/* <img src={rocket} alt="rocket" className="w-5 h-5" /> */}
-                    </span>
-                  </>
-                ) : (
-                  "Fix Validation Errors"
-                )}
-              </button>
-              {validationErrors.length > 0 && (
-                <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
-                  <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
-                    Please fix the following issues:
-                  </h3>
-                  <ul className="space-y-1 text-sm md:text-base">
-                    {validationErrors.map((error, index) => (
-                      <li key={index}>
-                        <span className="font-semibold">{error.field}:</span>{" "}
-                        {error.message}
-                      </li>
+                          Remove
+                        </button>
+                      </div>
                     ))}
-                  </ul>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addItem(
+                          bundleList,
+                          setBundleList,
+                          { addr: "", pct: 0, pctInput: "" },
+                          30
+                        )
+                      }
+                      disabled={bundleList.length >= 30}
+                      className="bg-Primary px-3 py-4 rounded-full w-full flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <IoMdAddCircleOutline className="text-xl text-white" />
+                      <p className="font-raleway font-medium text-white">
+                        Add Bundle Entry ({bundleList.length}/30)
+                      </p>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${
+                isPending || !isFormValid
+                  ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                  : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+              }`}
+              disabled={isPending || isConfirming || !isFormValid}
+              style={{
+                opacity: !isFormValid ? 0.5 : 1,
+                cursor: !isFormValid ? "not-allowed" : "pointer",
+              }}
+            >
+              {isFormValid ? (
+                <>
+                  <span>
+                    {isPending ? "Pending..." : "Create Token"}
+                    {/* <img src={rocket} alt="rocket" className="w-5 h-5" /> */}
+                  </span>
+                </>
+              ) : (
+                "Fix Validation Errors"
               )}
-            </form>
-
-            {error && (
-              <p className="text-red-500">
-                Error: {(error as BaseError).shortMessage}
-              </p>
-            )}
-
-            {isConfirmed && (
-              <p className="text-green-500">
-                Token launched! Deployed Hash:{" "}
-                <a
-                  href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Click Here
-                </a>
-              </p>
-            )}
-
-            {waitingForVerification && (
-              <div>
-                Please wait, we are waiting for the block to finalize....
+            </button>
+            {validationErrors.length > 0 && (
+              <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
+                <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
+                  Please fix the following issues:
+                </h3>
+                <ul className="space-y-1 text-sm md:text-base">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>
+                      <span className="font-semibold">{error.field}:</span>{" "}
+                      {error.message}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-            {statusMessage && <div>{statusMessage}</div>}
-          </div>
+          </form>
 
-          <div className="mt-auto">
-            <Footer />
-          </div>
+          {error && (
+            <p className="text-red-500">
+              Error: {(error as BaseError).shortMessage}
+            </p>
+          )}
+
+          {isConfirmed && (
+            <p className="text-green-500">
+              Token launched! Deployed Hash:{" "}
+              <a
+                href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Click Here
+              </a>
+            </p>
+          )}
+
+          {waitingForVerification && (
+            <div>Please wait, we are waiting for the block to finalize....</div>
+          )}
+          {statusMessage && <div>{statusMessage}</div>}
         </div>
-      )}
+
+        <div className="mt-auto">
+          <Footer />
+        </div>
+      </div>
     </>
   );
 }
