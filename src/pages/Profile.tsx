@@ -21,6 +21,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ETH_USDT_PRICE_FEED, PRICE_GETTER_ABI } from "../web3/config";
 import { pureAmountOutMarketCap } from "../web3/readContracts";
 import { processUsername } from "../lib/username";
+import RocketLoader from "../components/generalcomponents/Loader";
 
 interface launchedToken {
   name: string;
@@ -55,6 +56,8 @@ const Profile = () => {
 
   const [hasNext, setHasNext] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
   const [tokenHoldingsLoading, setTokenHoldingsLoading] =
     useState<boolean>(false);
   const [launchedTokens, setLaunchedTokens] = useState<launchedToken[]>([]);
@@ -450,6 +453,41 @@ const Profile = () => {
     });
   };
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      if (isConnected && isMounted) {
+        await saveOrFetchUser(String(address));
+        await fetchTokenHoldings();
+        setPageLoading(false); // Done loading
+      } else {
+        setPageLoading(false); // No wallet connected, but still done "loading"
+      }
+    };
+
+    loadData();
+
+    const AUTO_REFRESH_MS = 15 * 1000;
+    let intervalId: NodeJS.Timeout;
+    if (isConnected && address) {
+      intervalId = setInterval(() => {
+        fetchTokenHoldings(true); // silent fetch
+        fetchAllTokens();
+      }, AUTO_REFRESH_MS);
+    }
+
+    return () => {
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [
+    isConnected,
+    address,
+    saveOrFetchUser,
+    fetchTokenHoldings,
+    fetchAllTokens,
+  ]);
+
   return (
     <div className="px-4 relative mountain ">
       <Navbar />
@@ -461,6 +499,12 @@ const Profile = () => {
           <DustParticles key={i} />
         ))}
       </div>
+
+      {pageLoading && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 dark:bg-[#050A1E]/90 backdrop-blur-sm">
+          <RocketLoader />
+        </div>
+      )}
       <div className="min-h-screen">
         <h1 className="lg:text-3xl font-bold text-center dark:text-white text-black mb-10 font-raleway pt-28 relative z-20">
           My Profile
