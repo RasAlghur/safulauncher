@@ -1670,7 +1670,7 @@ export default function Trade() {
             {/* Heading and Admin Panel */}
             <div>
               {/* Always Visible Heading */}
-              <div className="flex flex-col md:grid grid-cols-2 gap-y-2">
+              <div className="flex flex-col lg:flex-row gap-y-2">
                 <h1 className="text-2xl font-bold dark:text-white text-black font-raleway">
                   Trade {token.name}{" "}
                   <span className="dark:text-white/60 text-black/80">
@@ -1688,7 +1688,7 @@ export default function Trade() {
                       disabled={
                         isTransactionPending || isWhiteListOngoing === 0
                       }
-                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border dark:border-[#EA971C] dark:text-[#EA971C] dark:hover:bg-[#FFA726] border-[#FF0199] text-[#FF0199] hover:bg-[#FF0199] hover:text-white font-semibold transition-all disabled:opacity-50"
+                      className="px-1 py-2 h-fit rounded-[10px] text-[10px] font-raleway border dark:border-[#EA971C] dark:text-[#EA971C] dark:hover:bg-[#FFA726] border-[#FF0199] text-[#FF0199] hover:bg-[#FF0199] hover:text-white font-semibold transition-all disabled:opacity-50"
                     >
                       Add Whitelist
                     </button>
@@ -1702,7 +1702,7 @@ export default function Trade() {
                         isStartTrading === 1 ||
                         isProcessingTxn
                       }
-                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                      className="px-1 py-2 h-fit rounded-[10px] text-[10px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
                     >
                       {isStartTrading === 1
                         ? "Trading Started"
@@ -1718,7 +1718,7 @@ export default function Trade() {
                         isWhiteListOngoing === 0 ||
                         isProcessingTxn
                       }
-                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                      className="px-1 py-2 h-fit rounded-[10px] text-[10px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
                     >
                       {isWhiteListOngoing === 0
                         ? "Whitelist Disabled"
@@ -1734,7 +1734,7 @@ export default function Trade() {
                         isMaxWalletOnSafu === 0 ||
                         isProcessingTxn
                       }
-                      className="p-[10px] rounded-[10px] text-[12px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
+                      className="px-1 py-2 h-fit rounded-[10px] text-[10px] font-raleway border border-[#27AE60] text-[#27AE60] hover:bg-[#00C853] hover:text-white transition-all disabled:opacity-50 font-semibold"
                     >
                       {isMaxWalletOnSafu === 0
                         ? "MaxWallet Limit Disabled"
@@ -1999,7 +1999,7 @@ export default function Trade() {
             </div>
 
             {/* right section */}
-            <div className="top-section mt-2">
+            <div className="top-section mt-1">
               <div className=" dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-xl p-3 border border-white/10 text-sm max-w-[20rem] mx-auto">
                 <div className="space-y-2 ">
                   {/* SELL INPUT */}
@@ -2189,8 +2189,8 @@ export default function Trade() {
             {/* )} */}
 
             {/* Progress Bar */}
-            <div className="progress-section mt-6">
-              <div className="progress-label dark:text-white text-[#141313]/90 font-medium text-lg font-raleway mb-2">
+            <div className="progress-section mt-1">
+              <div className="progress-label dark:text-white text-[#141313]/90 font-medium font-raleway mb-1">
                 Bonding Curve Progress:{" "}
                 {isLoadingInfoData ? (
                   <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
