@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { gsap } from "gsap";
 // import moon from "../../assets/moon.png";
 import spinningMoon from "../../assets/spinning-moon.webm";
-import rocketStartUp from "../../assets/rocket-start-up.png";
+import rocketStartUp from "../../assets/rocket-start-up.webp";
 
 import DustParticles from "../generalcomponents/DustParticles";
 
@@ -143,6 +143,7 @@ const Hero = () => {
             loop
             muted
             playsInline
+            preload="auto"
             className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block z-10"
           >
             <source src={spinningMoon} type="video/webm" />

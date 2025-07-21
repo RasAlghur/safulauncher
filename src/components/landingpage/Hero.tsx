@@ -11,6 +11,11 @@ const Hero = () => {
   const moonRef = useRef(null);
   const ringsRef = useRef<HTMLDivElement[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -144,17 +149,18 @@ const Hero = () => {
 
           {/* Moon Image */}
           {/* Moon Image */}
-          <video
-            ref={moonRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
-          >
-            <source src={spinningMoon} type="video/webm" />
-          </video>
-          {/* Glow */}
+          {isDark && (
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="none"
+              className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
+            >
+              <source src={spinningMoon} type="video/webm" />
+            </video>
+          )}
           <div className="absolute right-10 top-1/3 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#3BC3DB]/10 rounded-full blur-3xl" />
         </div>
       </div>

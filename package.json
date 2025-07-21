@@ -28,6 +28,7 @@
     "react-countup": "^6.5.3",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
+    "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^7.6.1",
     "react-spinners": "^0.17.0",
     "recharts": "^3.0.0",
@@ -35,6 +36,7 @@
     "tailwindcss": "^4.1.10",
     "valtio": "^2.1.5",
     "viem": "^2.30.5",
+    "vite-plugin-compression": "^0.5.1",
     "wagmi": "^2.15.4",
     "xlsx": "^0.18.5"
   },

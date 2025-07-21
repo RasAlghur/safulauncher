@@ -7,7 +7,7 @@ import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
-import RocketLoader from "../components/generalcomponents/Loader";
+// import RocketLoader from "../components/generalcomponents/Loader";
 
 const options = ["Volume", "Recent Trade"];
 
@@ -205,7 +205,12 @@ export default function Leaderboard() {
     return (
       <div className="px-4 relative min-h-screen dark:text-white text-black flex items-center justify-center mountain">
         <Navbar />
-        <RocketLoader />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black dark:border-white mx-auto mb-4"></div>
+          <p className="dark:text-white/70 text-black">
+            Loading leaderboard...
+          </p>
+        </div>
       </div>
     );
   }

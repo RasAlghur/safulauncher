@@ -1306,13 +1306,12 @@ export default function Launch(): JSX.Element {
               <DustParticles key={i} />
             ))}
           </div>
-
+          <h1 className="mb-4 mt-28 dark:text-white text-[#01061C] text-center text-2xl lg:text-[30px] font-raleway font-medium">
+            Launch Your Token
+          </h1>
           <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-          <div className="my-40 bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:py-20 rounded-[10px] ">
+          <div className=" bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:pb-20 rounded-[10px] ">
             <div className="">
-              <h1 className="dark:text-white text-[#01061C] text-center text-lg lg:text-[24px] font-raleway font-medium mb-[12px]">
-                Launch Your Token
-              </h1>
               <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
                 Launch your token effortlessly — earn 0.2 ETH instantly when it
                 reaches the bonding curve
