@@ -258,6 +258,7 @@ const PlatformStats = () => {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 70%",
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -322,7 +323,7 @@ const PlatformStats = () => {
           scrollTrigger: {
             trigger: el,
             start: "top 90%",
-            once: true,
+            once: false,
           },
         }
       );

@@ -22,7 +22,7 @@ const KeyBenefits = () => {
             scrollTrigger: {
               trigger: el,
               start: "top 80%",
-              toggleActions: "play none none reverse",
+              toggleActions: "play reverse play reverse",
             },
             delay: index * 0.1,
           }

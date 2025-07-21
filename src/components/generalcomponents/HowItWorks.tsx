@@ -61,6 +61,7 @@ const HowItWorks = () => {
         scrollTrigger: {
           trigger: ".how-it-works-wrapper",
           start: "top 85%",
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -76,6 +77,7 @@ const HowItWorks = () => {
           scrollTrigger: {
             trigger: ".how-it-works-wrapper",
             start: "top bottom",
+            toggleActions: "play reverse play reverse",
           },
         }
       );
@@ -91,6 +93,7 @@ const HowItWorks = () => {
           scrollTrigger: {
             trigger: ".how-it-works-wrapper",
             start: "top bottom",
+            toggleActions: "play reverse play reverse",
           },
         }
       );

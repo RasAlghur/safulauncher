@@ -16,7 +16,7 @@ const Roadmap = () => {
           scrollTrigger: {
             trigger: selector,
             start: "top 90%",
-            toggleActions: "play none none none", // animate only once
+            toggleActions: "play reverse play reverse",
           },
           x: xOffset,
           opacity: 0,

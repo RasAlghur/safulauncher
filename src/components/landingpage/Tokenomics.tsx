@@ -21,6 +21,7 @@ const Tokenomics = () => {
         scrollTrigger: {
           trigger: ".tokenomics-wrapper",
           start: "top 85%",
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -33,6 +34,7 @@ const Tokenomics = () => {
         scrollTrigger: {
           trigger: ".piechart",
           start: "top 85%",
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -46,6 +48,7 @@ const Tokenomics = () => {
         scrollTrigger: {
           trigger: ".tokenomics-wrapper",
           start: "top 85%",
+          toggleActions: "play reverse play reverse",
         },
       });
     }, sectionRef);

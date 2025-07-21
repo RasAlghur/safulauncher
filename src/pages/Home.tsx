@@ -1,34 +1,19 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
-import { useInView } from "react-intersection-observer";
+import { useEffect, useRef } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
 import { pureMetrics } from "../web3/readContracts";
 import Navbar from "../components/landingpage/Navbar";
 import Hero from "../components/landingpage/Hero";
-// import KeyBenefits from "../components/landingpage/KeyBenefits";
-// import HowItWorks from "../components/generalcomponents/HowItWorks";
-// import Tokenomics from "../components/landingpage/Tokenomics";
-// import WhySafu from "../components/landingpage/WhySafu";
+import KeyBenefits from "../components/landingpage/KeyBenefits";
+import HowItWorks from "../components/generalcomponents/HowItWorks";
+import Tokenomics from "../components/landingpage/Tokenomics";
+import WhySafu from "../components/landingpage/WhySafu";
 import Footer from "../components/generalcomponents/Footer";
-// import Roadmap from "../components/landingpage/Roadmap";
-// import PlatformStats from "../components/landingpage/PlatformStats";
+import Roadmap from "../components/landingpage/Roadmap";
+import PlatformStats from "../components/landingpage/PlatformStats";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useUser } from "../context/user.context";
-const LazyPlatformStats = lazy(
-  () => import("../components/landingpage/PlatformStats")
-);
-const LazyKeyBenefits = lazy(
-  () => import("../components/landingpage/KeyBenefits")
-);
-const LazyTokenomics = lazy(
-  () => import("../components/landingpage/Tokenomics")
-);
-const LazyRoadmap = lazy(() => import("../components/landingpage/Roadmap"));
-const LazyHowItWorks = lazy(
-  () => import("../components/generalcomponents/HowItWorks")
-);
-const LazyWhySafu = lazy(() => import("../components/landingpage/WhySafu"));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -51,30 +36,6 @@ function Home() {
   });
 
   const ringRefs = useRef<HTMLDivElement[]>([]);
-  const { ref: statsRef, inView: showStats } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-  const { ref: benefitsRef, inView: showBenefits } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-  const { ref: tokenomicsRef, inView: showTokenomics } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-  const { ref: roadmapRef, inView: showRoadmap } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-  const { ref: howItWorksRef, inView: showHowItWorks } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-  const { ref: whySafuRef, inView: showWhySafu } = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
 
   const shouldRefetch = !isLoadingMetrics;
 
@@ -212,23 +173,11 @@ function Home() {
       </div>
       <Navbar />
       <Hero />
-      <div ref={statsRef}>
-        {showStats && (
-          <Suspense fallback={null}>
-            <LazyPlatformStats />
-          </Suspense>
-        )}
-      </div>
+      <PlatformStats />
 
       <div className="mountain dark:bg-none">
         <div className="relative z-10 overflow-x-hidden">
-          <div ref={benefitsRef}>
-            {showBenefits && (
-              <Suspense fallback={null}>
-                <LazyKeyBenefits />
-              </Suspense>
-            )}
-          </div>
+          <KeyBenefits />
           {/* Animated orbital rings (dark mode only) */}
           {[500, 650, 800, 950].map((size, i) => (
             <div
@@ -244,37 +193,12 @@ function Home() {
               }}
             />
           ))}
-          <div ref={howItWorksRef}>
-            {showHowItWorks && (
-              <Suspense fallback={null}>
-                <LazyHowItWorks />
-              </Suspense>
-            )}
-          </div>
+          <HowItWorks />
         </div>
-        <div ref={tokenomicsRef}>
-          {showTokenomics && (
-            <Suspense fallback={null}>
-              <LazyTokenomics />
-            </Suspense>
-          )}
-        </div>
+        <Tokenomics />
       </div>
-      <div ref={whySafuRef}>
-        {showWhySafu && (
-          <Suspense fallback={null}>
-            <LazyWhySafu />
-          </Suspense>
-        )}
-      </div>
-
-      <div ref={roadmapRef}>
-        {showRoadmap && (
-          <Suspense fallback={null}>
-            <LazyRoadmap />
-          </Suspense>
-        )}
-      </div>
+      <WhySafu />
+      <Roadmap />
       <Footer />
     </div>
   );

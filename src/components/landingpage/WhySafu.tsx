@@ -62,6 +62,7 @@ const WhySafu = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 50%",
+          toggleActions: "play reverse play reverse",
         },
       });
 
@@ -82,6 +83,7 @@ const WhySafu = () => {
         scrollTrigger: {
           trigger: buttonRef.current,
           start: "top 95%",
+          toggleActions: "play reverse play reverse",
         },
       });
     }, sectionRef);
