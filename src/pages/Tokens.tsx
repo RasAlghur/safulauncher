@@ -185,6 +185,7 @@ export default function Tokens() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
+    inputRef.current?.focus();
     debouncedFetch(value, searchField);
   };
 

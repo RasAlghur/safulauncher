@@ -47,6 +47,7 @@ import { socket } from "../lib/socket";
 import Chat from "./chat";
 import { FaArrowDown, FaEthereum } from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
+import { useUser } from "../context/user.context";
 
 /**
  * Description placeholder
@@ -221,6 +222,7 @@ function formatTokenAmount(
  */
 export default function Trade() {
   const { address, isConnected } = useAccount();
+  const { saveOrFetchUser } = useUser();
 
   const {
     data: userETHBalance,
@@ -382,6 +384,18 @@ export default function Trade() {
         }
       : undefined
   );
+
+  // Initialize when wallet connects and set up real-time fetches
+  useEffect(() => {
+    let isMounted = true;
+    if (isConnected && isMounted) {
+      saveOrFetchUser(String(address));
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isConnected, address, saveOrFetchUser]);
 
   // Add this useEffect to handle the async call
   useEffect(() => {

@@ -32,6 +32,7 @@ import { CircleCheckBig, Upload, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import { useUser } from "../context/user.context";
 // import RocketLoader from "../components/generalcomponents/Loader";
 
 /**
@@ -52,7 +53,8 @@ interface ValidationError {
  * @returns {*}
  */
 export default function Launch(): JSX.Element {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { saveOrFetchUser } = useUser();
 
   // Basic fields
   const [name, setName] = useState("");
@@ -1232,6 +1234,17 @@ export default function Launch(): JSX.Element {
     bundleAddrs.length,
     percentBundled,
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isConnected && isMounted) {
+      saveOrFetchUser(String(address));
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isConnected, address, saveOrFetchUser]);
 
   console.log("bundleAddrs", bundleAddrs);
   console.log("bundleShares", bundleShares);

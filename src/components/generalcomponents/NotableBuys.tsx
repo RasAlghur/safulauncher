@@ -114,6 +114,7 @@ const NotableBuys = () => {
         {activeData.map((tx, i) => {
           const username = tx.user.username;
           const username_ = username !== undefined || username !== null;
+          console.log({ username, username_ });
           return (
             <div
               key={i}
@@ -127,7 +128,7 @@ const NotableBuys = () => {
               {/* Text */}
               <div className="text-sm">
                 <div className="dark:text-white text-[#141313] font-medium">
-                  {username_
+                  {!username_
                     ? `@${processUsername(username)}`
                     : `${tx.wallet.slice(0, 6)}...${tx.wallet.slice(-4)}`}
                 </div>

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ChatWrapper from "./context/ChatWrapper";
 import "./App.css";
 import RocketLoader from "./components/generalcomponents/Loader";
+import ErrorsPage from "./pages/errors";
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
@@ -29,6 +30,7 @@ function App() {
             <Route path="/trade" element={<Trade />} />
             <Route path="/trade/:tokenAddress" element={<Trade />} />
             <Route path="/chat/:tokenAddress" element={<ChatWrapper />} />
+            <Route path="/track-error" element={<ErrorsPage />} />
           </Routes>
         </Suspense>
       </main>

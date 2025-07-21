@@ -13,6 +13,7 @@ import Roadmap from "../components/landingpage/Roadmap";
 import PlatformStats from "../components/landingpage/PlatformStats";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useUser } from "../context/user.context";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,8 +23,8 @@ gsap.registerPlugin(ScrollTrigger);
  * @returns {*}
  */
 function Home() {
-  const { isConnected } = useAccount();
-
+  const { isConnected, address } = useAccount();
+  const { saveOrFetchUser } = useUser();
   const {
     data: getMetrics,
     isLoading: isLoadingMetrics,
@@ -39,10 +40,19 @@ function Home() {
   const shouldRefetch = !isLoadingMetrics;
 
   useEffect(() => {
+    let isMounted = true;
     if (shouldRefetch) {
       refetchMetrics();
     }
-  }, [shouldRefetch, refetchMetrics]);
+
+    if (isConnected && isMounted) {
+      saveOrFetchUser(String(address));
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shouldRefetch, refetchMetrics, isConnected, saveOrFetchUser, address]);
 
   // const { data: totalVolumeETH, isLoading: isLoadingTotalVolumeETH, refetch: refetchTotalVolumeETH } = useReadContract(
   //     {
