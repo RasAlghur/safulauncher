@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { gsap } from "gsap";
-import moon from "../../assets/moon.png";
+// import moon from "../../assets/moon.png";
 import rocket from "../../assets/rocket.png";
 import DustParticles from "../generalcomponents/DustParticles";
+import spinningMoon from "../../assets/spinning-moon.webm";
 
 const Hero = () => {
   const headlineRef = useRef(null);
@@ -77,29 +78,40 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="pb-[50px] pt-[100px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
+    <section className="pb-[50px] pt-[100px] lg:pt-[20px] xl:pt-[50px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(3)].map((_, i) => (
           <DustParticles key={i} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 px-4 lg:px-[80px] lg:py-[28px] gap-10 lg:mt-16">
+      <div className="grid grid-cols-1 xl:grid-cols-2 px-4 lg:px-[80px] lg:py-[28px] gap-10 lg:mt-16">
         {/* Left Text Section */}
         <div className="flex flex-col justify-center items-center lg:items-start text-center lg:text-left">
           <h1
             ref={headlineRef}
-            className="text-[38px] sm:text-[44px] md:text-[60px] xl:text-[70px] font-black mb-6 dark:text-white text-black leading-tight font-raleway"
+            className="text-[38px] sm:text-[44px] md:text-[50px] lg:text-[60px] xl:text-[70px] lg:leading-[1] font-black mb-6 dark:text-white text-black leading-tight font-raleway"
           >
             Launch Your <span className="text-[#0C8CE0]">Token with</span>{" "}
             Confidence
           </h1>
+
           <p
             ref={paragraphRef}
-            className="text-base sm:text-lg md:text-2xl lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md lg:max-w-none"
+            className="text-base sm:text-lg md:text-2xl lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md md:max-w-[700px] lg:max-w-none"
           >
-            Community - powered liquidity, automatic Uniswap listing, and
-            built-in safety — no up-front funding needed.
+            Community - powered liquidity, automatic DEX listing, and built-in
+            safety — no up-front funding needed.
+          </p>
+          <p
+            ref={paragraphRef}
+            className="text-base sm:text-lg md:text-xl lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md md:max-w-[700px] lg:max-w-none"
+          >
+            SafuLauncher is a launchpad and trading platform that makes it easy
+            for anyone to participate in new token launches. It guides a token
+            from its very first sale through to listing on a decentralized
+            exchange—without requiring developers to front-fund liquidity or
+            rely on multiple tools.
           </p>
           <div
             ref={buttonsRef}
@@ -107,14 +119,20 @@ const Hero = () => {
           >
             <Link
               to={"/launchintro"}
-              className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
+              className="w-[200px] text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
             >
               <img src={rocket} alt="rocket" className="w-4 h-4" />
               <p>Launch App</p>
             </Link>
-            <button className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center dark:text-white text-black cursor-pointer gap-3 bg-transparent rounded-full border-2 dark:border-white border-black">
-              <p>View Dashboard</p>
-            </button>
+
+            <a
+              href="https://safulauncher-1.gitbook.io/safulauncher-docs/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-[200px] text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center dark:text-white text-black cursor-pointer gap-3 bg-transparent rounded-full border-2 dark:border-white border-black"
+            >
+              <p>Read Doc</p>
+            </a>
           </div>
         </div>
 
@@ -139,15 +157,17 @@ const Hero = () => {
           })}
 
           {/* Moon Image */}
-          <img
+          {/* Moon Image */}
+          <video
             ref={moonRef}
-            src={moon}
-            alt="moon"
+            autoPlay
+            loop
+            muted
+            playsInline
             className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
-            decoding="async"
-            loading="eager"
-          />
-
+          >
+            <source src={spinningMoon} type="video/webm" />
+          </video>
           {/* Glow */}
           <div className="absolute right-10 top-1/3 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#3BC3DB]/10 rounded-full blur-3xl" />
         </div>

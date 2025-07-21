@@ -222,27 +222,27 @@ const Navbar = () => {
                       {
                         to: "/launchintro",
                         title: "Home",
-                        desc: "Launch tokens with confidence",
-                      },
-                      {
-                        to: "/tokens",
-                        title: "Token",
-                        desc: "Discover tokens through lists",
+                        desc: "Prep for liftoff — your mission starts here",
                       },
                       {
                         to: "/launch",
                         title: "Launch",
-                        desc: "Create tokens to the moon with confidence!",
+                        desc: "Deploy your token and ignite liftoff",
+                      },
+                      {
+                        to: "/tokens",
+                        title: "Tokens",
+                        desc: "Explore tokens with moonshot potential",
                       },
                       {
                         to: "/leaderboard",
                         title: "Leaderboard",
-                        desc: "Find the top trades & traders",
+                        desc: "See who’s leading the lunar race",
                       },
                       {
                         to: "/profile",
                         title: "Profile",
-                        desc: "Keep a pulse on Safu to the World",
+                        desc: "Keep track of your degeneracy!",
                       },
                     ].map((item, index) => (
                       <div

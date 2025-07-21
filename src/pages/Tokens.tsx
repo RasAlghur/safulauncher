@@ -15,7 +15,8 @@ import {
   pureGetLatestETHPrice,
   pureInfoDataRaw,
 } from "../web3/readContracts";
-import Advertisement from "../components/generalcomponents/Advertisement";
+import { useNavigate } from "react-router-dom";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BsChevronDown } from "react-icons/bs";
 
 interface transaction {
@@ -60,6 +61,9 @@ type searchField = "all" | "address" | "creator" | "name";
  */
 export default function Tokens() {
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
+  const [featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
+  const [hasSetFeatured, setHasSetFeatured] = useState(false);
+
   const [curveProgressMap, setCurveProgressMap] = useState<
     Record<string, number>
   >({});
@@ -87,6 +91,23 @@ export default function Tokens() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (!sliderRef.current) return;
+    const { scrollLeft, clientWidth } = sliderRef.current;
+    const scrollAmount = clientWidth * 0.8;
+    sliderRef.current.scrollTo({
+      left:
+        direction === "left"
+          ? scrollLeft - scrollAmount
+          : scrollLeft + scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
+  const navigate = useNavigate();
 
   // Fetch list of tokens
   const fetchTokenList = useCallback(
@@ -129,9 +150,11 @@ export default function Tokens() {
 
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
-        setTokens((prev) =>
-          append ? [...prev, ...apiData.data] : apiData.data
-        );
+        setTokens((prev) => {
+          const newTokens = append ? [...prev, ...apiData.data] : apiData.data;
+
+          return newTokens;
+        });
       } catch (error) {
         if (
           axios.isCancel(error) ||
@@ -179,6 +202,13 @@ export default function Tokens() {
     setPage(1);
     setHasNext(true);
   }, [fetchTokenList, searchField, searchTerm]);
+
+  useEffect(() => {
+    if (!hasSetFeatured && tokens.length > 0) {
+      setFeaturedTokens(tokens.slice(0, 5));
+      setHasSetFeatured(true);
+    }
+  }, [tokens, hasSetFeatured]);
 
   // Fetch on-chain and API data for each token when list updates
   useEffect(() => {
@@ -334,309 +364,429 @@ export default function Tokens() {
         ))}
       </div>
 
-      <div className="pt-24 mb-20 px-4 lg:px-0 relative max-w-6xl mx-auto ">
-        <Advertisement />
-        {/* Background Glow */}
-        <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
-
-        <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
-          Launched Tokens
-          {isLoadingMetrics && (
-            <span className="ml-2 text-sm text-gray-500">
-              (Loading metrics...)
-            </span>
-          )}
-        </h2>
-
-        <input
-          type="text"
-          placeholder="Search tokens..."
-          value={searchTerm}
-          ref={inputRef}
-          onChange={handleChange}
-          className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20 
-             border border-[#E5E7EB] flex justify-center
-             px-4 py-2 rounded-full 
-             w-full max-w-4xl mx-auto mb-[34px] 
-             focus:outline-none focus:ring-2 focus:ring-[#0C8CE0] 
-             transition-all duration-200"
-        />
-
-        {/* Controls */}
-        <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
-          {/* Search Field Dropdown */}
-          <div className="relative w-full sm:w-[250px]">
-            <div
-              onClick={() => setSearchDropdownOpen((prev) => !prev)}
-              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
-            >
-              <span className="text-sm capitalize">{searchField}</span>
-              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                <BsChevronDown className="text-white text-xl" />
+      <div className=" mb-20 px-4 lg:px-0 relative ">
+        {isLoadingTokens || isLoadingMetrics || featuredTokens.length === 0 ? (
+          <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md">
+            <div className="pt-28 max-w-6xl mx-auto">
+              <div className="flex justify-between items-center mb-4 px-4">
+                <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
+                  Featured Tokens
+                </h2>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
+                  <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
+                </div>
               </div>
-            </div>
-            {searchDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
-                {(["all", "address", "creator", "name"] as searchField[]).map(
-                  (field) => (
+
+              <div className="relative rounded-xl">
+                <div className="flex overflow-x-auto no-scrollbar px-4 py-5 gap-4">
+                  {[...Array(5)].map((_, idx) => (
                     <div
-                      key={field}
-                      onClick={() => searchChange(field)}
-                      className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
-                        field === "all"
-                          ? "rounded-t-xl"
-                          : field === "name"
-                          ? "rounded-b-xl"
-                          : ""
-                      }`}
+                      key={idx}
+                      className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl p-4 animate-pulse space-y-3"
                     >
-                      {field === "name" ? "Name/Symbol" : field}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-md bg-gray-300 dark:bg-gray-700" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
+                          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/4" />
+                          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/3" />
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="h-6 w-16 rounded-full bg-gray-400 dark:bg-gray-600" />
+                        <div className="h-4 w-20 rounded bg-gray-300 dark:bg-gray-700" />
+                      </div>
                     </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Sort Field Dropdown */}
-          <div className="relative w-full sm:w-[250px]">
-            <div
-              onClick={() => setSortDropdownOpen((prev) => !prev)}
-              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
-            >
-              <span className="text-sm capitalize">{sortField}</span>
-              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                <BsChevronDown className="text-white text-xl" />
-              </div>
-            </div>
-            {sortDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                {[
-                  { value: "volume", label: "24h Volume (USD)" },
-                  { value: "progress", label: "Curve Progress" },
-                  { value: "createdAt", label: "Date Created" },
-                ].map(({ value, label }) => (
-                  <div
-                    key={value}
-                    onClick={() => {
-                      setSortField(value as any);
-                      setSortDropdownOpen(false);
-                    }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                      value === "volume"
-                        ? "rounded-t-xl"
-                        : value === "createdAt"
-                        ? "rounded-b-xl"
-                        : ""
-                    }`}
-                  >
-                    {label}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sort Order Dropdown */}
-          <div className="relative w-full sm:w-[250px]">
-            <div
-              onClick={() => setOrderDropdownOpen((prev) => !prev)}
-              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
-            >
-              <span className="text-sm">
-                {sortOrder === "desc"
-                  ? "High → Low / New → Old"
-                  : "Low → High / Old → New"}
-              </span>
-              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                <BsChevronDown className="text-white text-xl" />
-              </div>
-            </div>
-            {orderDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                <div
-                  onClick={() => {
-                    setSortOrder("desc");
-                    setOrderDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
-                >
-                  High → Low / New → Old
-                </div>
-                <div
-                  onClick={() => {
-                    setSortOrder("asc");
-                    setOrderDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
-                >
-                  Low → High / Old → New
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Token Grid */}
-        {isLoadingTokens ? (
-          <div className="dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl w-full px-2 py-5 border border-white/10">
-            <div className="grid gap-6 z-10 relative md:grid-cols-2">
-              {[...Array(4)].map((_, idx) => (
-                <TokenSkeleton key={idx} />
-              ))}
             </div>
-          </div>
-        ) : sortedTokens.length === 0 ? (
-          <p className="text-center text-gray-400">No tokens found.</p>
+          </section>
         ) : (
-          <div
-            ref={containerRef}
-            className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
-              sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-            } px-2 py-5 border border-white/10`}
-          >
-            <ul
-              className={`grid gap-6 z-10 relative ${
-                sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-              }`}
-            >
-              {sortedTokens.map((t, idx) => (
-                <div key={idx} className="flex flex-col">
-                  <li className="rounded-xl lg:px-6 px-2 py-5 ">
-                    <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                      <Link
-                        to={`/trade/${t.tokenAddress}`}
-                        className="flex items-start gap-4"
-                      >
-                        {t.tokenImageId && (
-                          <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}${
-                              t.image?.path
-                            }`}
-                            alt={`${t.symbol} logo`}
-                            className="w-14 h-14 rounded-lg"
-                            crossOrigin=""
-                          />
-                        )}
-                        <div>
-                          <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
-                            {t.name} ({t.symbol})
-                          </h3>
-                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#147ABD] mb-2.5">
-                            Created by:{" "}
-                            <span className="text-[#147ABD]">
-                              {t.tokenCreator.slice(0, 6)}...
-                              {t.tokenCreator.slice(-4)}
-                            </span>
-                          </p>
-                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
-                            Address: {t.tokenAddress.slice(0, 6)}...
-                            {t.tokenAddress.slice(-4)}
-                          </p>
-                          {t.website && (
-                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]/60">
-                              Website:{" "}
-                              <a
-                                href={t.website}
-                                className="underline break-all"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {t.website}
-                              </a>
-                            </p>
-                          )}
+          <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md ">
+            <div className="pt-28 max-w-6xl mx-auto">
+              <div className="flex justify-between items-center mb-4 px-4">
+                <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
+                  Featured Tokens
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
+                    onClick={() => scroll("left")}
+                  >
+                    <FaChevronLeft className="text-[#141313] dark:text-white text-sm" />
+                  </button>
+                  <button
+                    className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
+                    onClick={() => scroll("right")}
+                  >
+                    <FaChevronRight className="text-[#141313] dark:text-white text-sm" />
+                  </button>
+                </div>
+              </div>
 
-                          <div className="h-[3rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
-                            {t.description && (
-                              <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
-                                {t.description}
-                              </p>
+              <div className="relative rounded-xl">
+                <div
+                  ref={sliderRef}
+                  className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-5 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
+                >
+                  {featuredTokens.map((token, idx) => (
+                    <div
+                      key={idx}
+                      className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 relative z-10"
+                    >
+                      <Link
+                        to={`/trade/${token.tokenAddress}`}
+                        className="flex flex-col gap-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          {token.tokenImageId && (
+                            <img
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                token.image?.path
+                              }`}
+                              alt={`${token.symbol} logo`}
+                              className="w-10 h-10 rounded-md"
+                              crossOrigin=""
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="text-base font-semibold text-[#01061C] dark:text-white truncate">
+                              {token.name} ({token.symbol})
+                            </h3>
+                            <p className="text-xs text-[#147ABD] truncate">
+                              by {token.tokenCreator.slice(0, 6)}...
+                              {token.tokenCreator.slice(-4)}
+                            </p>
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
+                              Address: {token.tokenAddress.slice(0, 6)}...
+                              {token.tokenAddress.slice(-4)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm text-white mt-2">
+                          <div className="bg-[#064C7A] text-xs px-2 py-1 rounded-full">
+                            $
+                            {marketCapMap[token.tokenAddress]?.toFixed(2) ??
+                              "0.00"}
+                          </div>
+                          <div className="text-xs text-right">
+                            24h Vol:{" "}
+                            {isLoadingMetrics ? (
+                              <span className="text-gray-400">Loading...</span>
+                            ) : (
+                              `$${
+                                volume24hMap[token.tokenAddress]?.toFixed(2) ??
+                                "0.00"
+                              }`
                             )}
                           </div>
                         </div>
                       </Link>
-                      {/* Stats */}
-                      <div className="flex flex-col space-y-1 items-end">
-                        <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
-                          <strong className="">24h Volume:</strong>
-                          {isLoadingMetrics ? (
-                            <span className="ml-1 text-gray-500">
-                              Loading...
-                            </span>
-                          ) : (
-                            ` $${
-                              volume24hMap[t.tokenAddress]?.toFixed(2) ?? "0.00"
-                            }`
-                          )}
-                        </p>
-                        <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
-                          <strong className="text-white">MC</strong>
-                          {isLoadingMetrics ? (
-                            <span className="text-gray-300">Loading...</span>
-                          ) : (
-                            <p className="">
-                              $
-                              {marketCapMap[t.tokenAddress]?.toFixed(2) ??
-                                "0.00"}
-                            </p>
-                          )}
-                        </div>
-                        {/* Progress Bar */}
-                      </div>
                     </div>
-                  </li>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
-                  <div className="w-full max-w-[40rem] bg-[#031E51] h-[35px] rounded-full overflow-hidden relative mt-auto p-1.5">
-                    <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
-                      {isLoadingMetrics
-                        ? "Loading..."
-                        : `${
-                            curveProgressMap[t.tokenAddress]?.toFixed(2) ?? "0"
-                          }%`}
-                    </p>
+        {/* Background Glow */}
+        <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-                    {(() => {
-                      const progress = curveProgressMap[t.tokenAddress] || 0;
-
-                      let gradientClass = "bg-orange-700";
-
-                      if (progress >= 70) {
-                        gradientClass =
-                          "bg-gradient-to-r from-green-500 to-green-300";
-                      } else if (progress >= 40) {
-                        gradientClass =
-                          "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
-                      }
-
-                      return (
-                        <div
-                          className={`h-full ${
-                            progress < 100 ? "rounded-l-full" : "rounded-full"
-                          } relative transition-all duration-500 ease-in-out ${
-                            isLoadingMetrics ? "bg-gray-600" : gradientClass
-                          }`}
-                          style={{
-                            width: `${isLoadingMetrics ? 0 : progress}%`,
-                          }}
-                        >
-                          {!isLoadingMetrics &&
-                            Array.from({ length: 20 }).map((_, i) => (
-                              <div
-                                key={i}
-                                className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
-                                style={{ left: `${31 * (i + 1)}px` }}
-                              ></div>
-                            ))}
-                        </div>
-                      );
-                    })()}
+        <div className="max-w-6xl mx-auto pt-[20rem]">
+          <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
+            Launched Tokens
+            {isLoadingMetrics && (
+              <span className="ml-2 text-sm text-gray-500">
+                (Loading metrics...)
+              </span>
+            )}
+          </h2>
+          <input
+            type="text"
+            placeholder="Search tokens..."
+            value={searchTerm}
+            ref={inputRef}
+            onChange={handleChange}
+            className="bg-white text-[#101B3B] placeholder:text-[#6B7280] relative z-20
+               border border-[#E5E7EB] flex justify-center
+               px-4 py-2 rounded-full
+               w-full max-w-4xl mx-auto mb-[34px]
+               focus:outline-none focus:ring-2 focus:ring-[#0C8CE0]
+               transition-all duration-200"
+          />
+          {/* Controls */}
+          <div className="flex flex-wrap gap-4 justify-center mb-10 z-20 relative">
+            {/* Search Field Dropdown */}
+            <div className="relative w-full sm:w-[250px] hidden">
+              <div
+                onClick={() => setSearchDropdownOpen((prev) => !prev)}
+                className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              >
+                <span className="text-sm capitalize">{searchField}</span>
+                <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                  <BsChevronDown className="text-white text-xl" />
+                </div>
+              </div>
+              {searchDropdownOpen && (
+                <div className="absolute top-full mt-2 z-50 w-full dark:bg-[#1a2a7f] bg-white dark:text-white text-black rounded-xl shadow-md">
+                  {(["all", "address", "creator", "name"] as searchField[]).map(
+                    (field) => (
+                      <div
+                        key={field}
+                        onClick={() => searchChange(field)}
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                          field === "all"
+                            ? "rounded-t-xl"
+                            : field === "name"
+                            ? "rounded-b-xl"
+                            : ""
+                        }`}
+                      >
+                        {field === "name" ? "Name/Symbol" : field}
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Sort Field Dropdown */}
+            <div className="relative w-full sm:w-[250px]">
+              <div
+                onClick={() => setSortDropdownOpen((prev) => !prev)}
+                className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              >
+                <span className="text-sm capitalize">{sortField}</span>
+                <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                  <BsChevronDown className="text-white text-xl" />
+                </div>
+              </div>
+              {sortDropdownOpen && (
+                <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                  {[
+                    { value: "volume", label: "24h Volume (USD)" },
+                    { value: "progress", label: "Curve Progress" },
+                    { value: "createdAt", label: "Date Created" },
+                  ].map(({ value, label }) => (
+                    <div
+                      key={value}
+                      onClick={() => {
+                        setSortField(value as any);
+                        setSortDropdownOpen(false);
+                      }}
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        value === "volume"
+                          ? "rounded-t-xl"
+                          : value === "createdAt"
+                          ? "rounded-b-xl"
+                          : ""
+                      }`}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Sort Order Dropdown */}
+            <div className="relative w-full sm:w-[250px]">
+              <div
+                onClick={() => setOrderDropdownOpen((prev) => !prev)}
+                className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              >
+                <span className="text-sm">
+                  {sortOrder === "desc"
+                    ? "High → Low / New → Old"
+                    : "Low → High / Old → New"}
+                </span>
+                <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                  <BsChevronDown className="text-white text-xl" />
+                </div>
+              </div>
+              {orderDropdownOpen && (
+                <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                  <div
+                    onClick={() => {
+                      setSortOrder("desc");
+                      setOrderDropdownOpen(false);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
+                  >
+                    High → Low / New → Old
+                  </div>
+                  <div
+                    onClick={() => {
+                      setSortOrder("asc");
+                      setOrderDropdownOpen(false);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
+                  >
+                    Low → High / Old → New
                   </div>
                 </div>
-              ))}
-            </ul>
+              )}
+            </div>
           </div>
-        )}
+          {/* Token Grid */}
+          {isLoadingTokens ? (
+            <div className="dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl w-full px-2 py-5 border border-white/10">
+              <div className="grid gap-6 z-10 relative md:grid-cols-2">
+                {[...Array(4)].map((_, idx) => (
+                  <TokenSkeleton key={idx} />
+                ))}
+              </div>
+            </div>
+          ) : sortedTokens.length === 0 ? (
+            <p className="text-center text-gray-400">No tokens found.</p>
+          ) : (
+            <div
+              ref={containerRef}
+              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+                sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+              } px-2 py-5 border border-white/10`}
+            >
+              <ul
+                className={`grid gap-6 z-10 relative ${
+                  sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                }`}
+              >
+                {sortedTokens.map((t, idx) => (
+                  <div key={idx} className="flex flex-col">
+                    <li className="rounded-xl lg:px-6 px-2 py-5 ">
+                      <div className="grid grid-cols-[.7fr_.3fr] justify-between">
+                        <div
+                          onClick={() => navigate(`/trade/${t.tokenAddress}`)}
+                          className="flex items-start gap-4 cursor-pointer"
+                        >
+                          {t.tokenImageId && (
+                            <img
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                t.image?.path
+                              }`}
+                              alt={`${t.symbol} logo`}
+                              className="w-14 h-14 rounded-lg"
+                              crossOrigin=""
+                            />
+                          )}
+                          <div>
+                            <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                              {t.name} ({t.symbol})
+                            </h3>
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#147ABD] mb-2.5">
+                              Created by:{" "}
+                              <span className="text-[#147ABD]">
+                                {t.tokenCreator.slice(0, 6)}...
+                                {t.tokenCreator.slice(-4)}
+                              </span>
+                            </p>
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
+                              Address: {t.tokenAddress.slice(0, 6)}...
+                              {t.tokenAddress.slice(-4)}
+                            </p>
+                            {t.website && (
+                              <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]/60">
+                                Website:{" "}
+                                <a
+                                  href={t.website}
+                                  className="underline break-all"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {t.website}
+                                </a>
+                              </p>
+                            )}
+                            <div className="h-[3rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
+                              {t.description && (
+                                <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
+                                  {t.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Stats */}
+                        <div className="flex flex-col space-y-1 items-end">
+                          <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
+                            <strong className="">24h Volume:</strong>
+                            {isLoadingMetrics ? (
+                              <span className="ml-1 text-gray-500">
+                                Loading...
+                              </span>
+                            ) : (
+                              ` $${
+                                volume24hMap[t.tokenAddress]?.toFixed(2) ??
+                                "0.00"
+                              }`
+                            )}
+                          </p>
+                          <div className="w-fit flex space-x-1 text-[12px] lg:text-sm text-white/80 bg-[#147ABD] text-center rounded-3xl px-2 py-1">
+                            <strong className="text-white">MC</strong>
+                            {isLoadingMetrics ? (
+                              <span className="text-gray-300">Loading...</span>
+                            ) : (
+                              <p className="">
+                                $
+                                {marketCapMap[t.tokenAddress]?.toFixed(2) ??
+                                  "0.00"}
+                              </p>
+                            )}
+                          </div>
+                          {/* Progress Bar */}
+                        </div>
+                      </div>
+                    </li>
+                    <div className="w-full max-w-[40rem] bg-[#031E51] h-[30px] rounded-full overflow-hidden relative mt-auto p-1.5">
+                      <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
+                        {isLoadingMetrics
+                          ? "Loading..."
+                          : `${
+                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
+                              "0"
+                            }%`}
+                      </p>
+                      {(() => {
+                        const progress = curveProgressMap[t.tokenAddress] || 0;
+                        let gradientClass = "bg-orange-700";
+                        if (progress >= 70) {
+                          gradientClass =
+                            "bg-gradient-to-r from-green-500 to-green-300";
+                        } else if (progress >= 40) {
+                          gradientClass =
+                            "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                        }
+                        return (
+                          <div
+                            className={`h-full ${
+                              progress < 100 ? "rounded-l-full" : "rounded-full"
+                            } relative transition-all duration-500 ease-in-out ${
+                              isLoadingMetrics ? "bg-gray-600" : gradientClass
+                            }`}
+                            style={{
+                              width: `${isLoadingMetrics ? 0 : progress}%`,
+                            }}
+                          >
+                            {!isLoadingMetrics &&
+                              Array.from({ length: 20 }).map((_, i) => (
+                                <div
+                                  key={i}
+                                  className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
+                                  style={{ left: `${31 * (i + 1)}px` }}
+                                ></div>
+                              ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       <Footer />

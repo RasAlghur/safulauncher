@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Link } from "react-router-dom";
 import { gsap } from "gsap";
-import moon from "../../assets/moon.png";
+// import moon from "../../assets/moon.png";
+import spinningMoon from "../../assets/spinning-moon.webm";
+import rocketStartUp from "../../assets/rocket-start-up.png";
 
 import DustParticles from "../generalcomponents/DustParticles";
 
@@ -10,6 +12,7 @@ const Hero = () => {
   const paragraphRef = useRef(null);
   const buttonsRef = useRef(null);
   const moonRef = useRef(null);
+  const rocketRef = useRef(null);
   const ringsRef = useRef<HTMLDivElement[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -44,6 +47,19 @@ const Hero = () => {
           },
           "-=0.8"
         );
+      gsap.fromTo(
+        rocketRef.current,
+        { x: -500, y: 300, opacity: 0 },
+        {
+          x: 80,
+          y: -150,
+          opacity: 1,
+          duration: 3,
+          ease: "power1.inOut",
+          repeat: -1,
+          // yoyo: true,
+        }
+      );
 
       // Floating moon animation
       gsap.to(moonRef.current, {
@@ -124,17 +140,25 @@ const Hero = () => {
           })}
 
           {/* Moon Image */}
-          <img
+          <video
             ref={moonRef}
-            src={moon}
-            alt="moon"
-            className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
-            decoding="async"
-            loading="lazy"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block z-10"
+          >
+            <source src={spinningMoon} type="video/webm" />
+          </video>
+          <img
+            ref={rocketRef}
+            src={rocketStartUp}
+            alt="rocket"
+            className="absolute bottom-[-50px] w-[80px] sm:w-[100px] lg:w-[140px] z-0 hidden dark:block"
           />
 
           {/* Glow Effect */}
-          <div className="absolute right-10 top-1/3 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#3BC3DB]/10 rounded-full blur-3xl" />
+          <div className="z-0 absolute right-10 top-1/3 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#3BC3DB]/10 rounded-full blur-3xl" />
         </div>
       </div>
     </section>

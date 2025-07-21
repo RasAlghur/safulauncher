@@ -1,4 +1,4 @@
-export const SAFU_LAUNCHER_CA = "0x11b81Da1A891F0F53A1F7852241d140Dfe67f625";
+export const SAFU_LAUNCHER_CA = "0xC02cdc7001240030bd91340eC1D4f80a9AC31580";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -27,7 +27,7 @@ export const mainnetID = 1;
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
 export const LAUNCHER_ABI = {
-  address: "0x11b81Da1A891F0F53A1F7852241d140Dfe67f625",
+  address: "0xC02cdc7001240030bd91340eC1D4f80a9AC31580",
   abi: [
     {
       "type": "constructor",
@@ -107,6 +107,19 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "function",
+      "name": "MAX_WL_BPS",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "TRADE_FEE_BPS",
       "inputs": [],
       "outputs": [
@@ -170,6 +183,11 @@ export const LAUNCHER_ABI = {
           "name": "list",
           "type": "address[]",
           "internalType": "address[]"
+        },
+        {
+          "name": "capsBps",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
         }
       ],
       "outputs": [],
@@ -221,17 +239,7 @@ export const LAUNCHER_ABI = {
           "internalType": "uint256"
         },
         {
-          "name": "taxBps_",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
           "name": "lockLp",
-          "type": "bool",
-          "internalType": "bool"
-        },
-        {
-          "name": "whitelistOnly_",
           "type": "bool",
           "internalType": "bool"
         },
@@ -239,6 +247,16 @@ export const LAUNCHER_ABI = {
           "name": "startNow",
           "type": "bool",
           "internalType": "bool"
+        },
+        {
+          "name": "isMaxWalletOnSafu_",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "maxWalletAmountOnSafu_",
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "bundleAddrs",
@@ -251,14 +269,39 @@ export const LAUNCHER_ABI = {
           "internalType": "uint16[]"
         },
         {
-          "name": "taxRecipients",
+          "name": "taxOnDexBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "taxOnDexRecipients",
           "type": "address[]",
           "internalType": "address[]"
         },
         {
-          "name": "taxPercents",
+          "name": "taxOnDexPercents",
           "type": "uint16[]",
           "internalType": "uint16[]"
+        },
+        {
+          "name": "taxOnSafuBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "taxOnSafuRecipients_",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "taxOnSafuPercents_",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        },
+        {
+          "name": "whitelistOnly_",
+          "type": "bool",
+          "internalType": "bool"
         },
         {
           "name": "initialWhitelist",
@@ -266,17 +309,7 @@ export const LAUNCHER_ABI = {
           "internalType": "address[]"
         },
         {
-          "name": "platformFeeBps_",
-          "type": "uint16",
-          "internalType": "uint16"
-        },
-        {
-          "name": "platformFeeRecipients_",
-          "type": "address[]",
-          "internalType": "address[]"
-        },
-        {
-          "name": "platformFeePercents_",
+          "name": "initialCapsBps",
           "type": "uint16[]",
           "internalType": "uint16[]"
         }
@@ -387,7 +420,7 @@ export const LAUNCHER_ABI = {
           "internalType": "uint256"
         },
         {
-          "name": "platformFeeBps",
+          "name": "taxOnSafuBps",
           "type": "uint16",
           "internalType": "uint16"
         },
@@ -402,9 +435,19 @@ export const LAUNCHER_ABI = {
           "internalType": "bool"
         },
         {
-          "name": "IsTaxedOnSafu",
+          "name": "isTaxedOnSafu",
           "type": "bool",
           "internalType": "bool"
+        },
+        {
+          "name": "isMaxWalletOnSafu",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "maxWalletAmountOnSafu",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -421,6 +464,19 @@ export const LAUNCHER_ABI = {
         }
       ],
       "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disableMaxWalletLimit",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
     },
     {
       "type": "function",
@@ -554,6 +610,30 @@ export const LAUNCHER_ABI = {
         },
         {
           "name": "_devRewardsEth",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRemainingWhitelistBalance",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -862,6 +942,54 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "function",
+      "name": "whitelistAllocationLeft",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "whitelistMaxWallet",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "withdrawNonNativeToken",
       "inputs": [
         {
@@ -981,6 +1109,11 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "error",
+      "name": "DisAllowed",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "ETHTransferFailed",
       "inputs": []
     },
@@ -991,12 +1124,42 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "error",
+      "name": "ExceedsMaxBalance",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxBalance_AutoWLTier1",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxBalance_AutoWLTier2",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxBalance_Buy",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxBalance_WL",
+      "inputs": []
+    },
+    {
+      "type": "error",
       "name": "FeeTransferFailed",
       "inputs": []
     },
     {
       "type": "error",
       "name": "InvalidBundle",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotAutoWLed",
       "inputs": []
     },
     {
@@ -1045,6 +1208,11 @@ export const LAUNCHER_ABI = {
     {
       "type": "error",
       "name": "TaxConfigFailed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TokenIsListedAlready",
       "inputs": []
     },
     {

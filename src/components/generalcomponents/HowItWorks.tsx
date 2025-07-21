@@ -12,32 +12,59 @@ const HowItWorks = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // Fade in the entire container
+      // Animate section wrapper
       gsap.from(".how-it-works-wrapper", {
         opacity: 0,
-        y: 80,
-        duration: 1.2,
-        ease: "power3.out",
+        y: 100,
+        duration: 1,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: ".how-it-works-wrapper",
           start: "top 85%",
         },
       });
 
-      // Animate each step with stagger
+      // Animate headline
+      gsap.from(".how-heading", {
+        opacity: 0,
+        scale: 0,
+        y: 40,
+        duration: 1,
+        delay: 0.2,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".how-it-works-wrapper",
+          start: "top 85%",
+        },
+      });
+
+      // Animate the grid container
+      gsap.from(".how-grid", {
+        opacity: 0,
+        y: 30,
+        duration: 1,
+        delay: 0.1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".how-it-works-wrapper",
+          start: "top 50%",
+        },
+      });
+
+      // Animate each step
       gsap.from(".step-item", {
         opacity: 0,
         y: 50,
-        duration: 1,
-        stagger: 0.2,
-        ease: "power3.out",
+        duration: 0.8,
+        stagger: 0.8,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: ".how-it-works-wrapper",
           start: "top 85%",
         },
       });
 
-      // Animate chain1 and chain2
+      // Animate chains
       gsap.fromTo(
         "#chain-left",
         { x: -200, opacity: 0 },
@@ -90,13 +117,13 @@ const HowItWorks = () => {
         id="chain-left"
         src={chain1}
         alt=""
-        className="absolute top-0 -left-[23rem] size-[500px] lg:size-[658px] z-10"
+        className="absolute top-0 -left-[23rem] size-[500px] lg:size-[600px] z-10"
       />
       <img
         id="chain-right"
         src={chain2}
         alt=""
-        className="absolute bottom-0 -right-[23rem] size-[500px] lg:size-[658px] z-10"
+        className="absolute bottom-0 -right-[23rem] size-[500px] lg:size-[600px] z-10"
       />
 
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 hidden dark:block blur-3xl"></div>
@@ -104,10 +131,10 @@ const HowItWorks = () => {
       {/* Main Content */}
       <div className="how-it-works-wrapper text-white px-6 py-12 md:px-20 md:py-10 max-w-[1000px] mx-auto subtract">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl max-w-[20rem] font-bold mb-10 dark:text-[#ECF1F0] text-black font-raleway">
+          <h2 className="how-heading text-3xl md:text-4xl max-w-[20rem] font-bold mb-10 dark:text-[#ECF1F0] text-black font-raleway">
             How It Works in 3 Easy Steps
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 p-6 md:p-10">
+          <div className="how-grid grid md:grid-cols-2 gap-8 p-6 md:p-10">
             {/* Step 1 */}
             <div className="flex flex-col gap-[34px] step-item">
               <div>

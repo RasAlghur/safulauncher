@@ -7,8 +7,9 @@ import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
+import RocketLoader from "../components/generalcomponents/Loader";
 
-const options = ["Featured", "Trending", "New", "Top Rated"];
+const options = ["Featured", "Volume", "Most recent Trade"];
 
 /**
  * Description placeholder
@@ -204,12 +205,7 @@ export default function Leaderboard() {
     return (
       <div className="px-4 relative min-h-screen dark:text-white text-black flex items-center justify-center mountain">
         <Navbar />
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black dark:border-white mx-auto mb-4"></div>
-          <p className="dark:text-white/70 text-black">
-            Loading leaderboard...
-          </p>
-        </div>
+        <RocketLoader />
       </div>
     );
   }
@@ -296,13 +292,10 @@ export default function Leaderboard() {
                       <td className="px-6 py-4 font-medium text-black dark:text-white">
                         {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                       </td>
-                      <td className="px-6 py-4">
-                        <a
-                          href="#"
-                          className=" hover:underline text-black dark:text-white"
-                        >
+                      <td className="px-6 py-4 ">
+                        <p className=" text-black dark:text-white">
                           {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
-                        </a>
+                        </p>
                       </td>
                       <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
                         <div className="flex flex-col">

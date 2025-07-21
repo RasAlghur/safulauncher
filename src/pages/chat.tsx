@@ -3,7 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEventHandler,
+  type FormEvent,
 } from "react";
 import { FaArrowDown } from "react-icons/fa";
 import { socket } from "../lib/socket";
@@ -44,7 +44,7 @@ export default function Chat({ address, tokenAddress }: prop) {
   const { user } = useUser();
   const userId = user?.username ?? String(address);
 
-  const onMessageSend: FormEventHandler<HTMLButtonElement> = async (e) => {
+  const onMessageSend = async (e: FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (message.trim() === "") return;
 
@@ -57,7 +57,6 @@ export default function Chat({ address, tokenAddress }: prop) {
     socket.emit("sendMessage", payload);
     setMessage("");
 
-    // Scroll after message is added
     setTimeout(scrollToBottom, 100);
   };
 
@@ -217,9 +216,14 @@ export default function Chat({ address, tokenAddress }: prop) {
         <input
           type="text"
           placeholder="Enter Your Messages"
-          className="flex-1 rounded-full  dark:text-white text-[#141313] dark:placeholder:text-white/60 font-raleway placeholder:text-black/60 px-4 py-2 focus:outline-none "
+          className="flex-1 rounded-full dark:text-white text-[#141313] dark:placeholder:text-white/60 font-raleway placeholder:text-black/60 px-4 py-2 focus:outline-none"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              onMessageSend(e);
+            }
+          }}
         />
 
         <button
