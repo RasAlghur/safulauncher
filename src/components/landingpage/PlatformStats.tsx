@@ -220,7 +220,7 @@ const PlatformStats = () => {
         icon: TaxTokens,
       },
       {
-        title: "0% - Tax Token",
+        title: "0% Tax Token",
         mainValue: `${pureMetrics?.[5] || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
