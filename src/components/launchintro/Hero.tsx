@@ -29,12 +29,7 @@ const Hero = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-      tl.fromTo(
-        headlineRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 1 }
-      )
-        .from(paragraphRef.current, { opacity: 0, y: 30, duration: 1 }, "-=0.5")
+      tl.from(paragraphRef.current, { opacity: 0, y: 30, duration: 1 }, "-=0.5")
         .from(buttonsRef.current, { opacity: 0, y: 20, duration: 1 }, "-=0.6")
         .from(
           ringsRef.current,
@@ -75,7 +70,7 @@ const Hero = () => {
   }, [isMobile]);
 
   return (
-    <section className="pb-[50px] pt-[100px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
+    <section className="pb-[50px] pt-[10px] lg:h-[80vh] overflow-hidden relative z-[10] hero-white-background">
       {/* Background Particles */}
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(3)].map((_, i) => (
@@ -103,8 +98,8 @@ const Hero = () => {
             ref={paragraphRef}
             className="text-base sm:text-lg lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md lg:max-w-none"
           >
-            We bond your community before liftoff, then seamlessly list on
-            Uniswap once you hit orbit.
+            We bond your community before liftoff, then seamlessly list on DEX
+            once you hit orbit.
           </p>
           <div
             ref={buttonsRef}
@@ -140,6 +135,8 @@ const Hero = () => {
           })}
 
           {/* Moon Image */}
+          {/* Moon */}
+
           <video
             ref={moonRef}
             autoPlay
@@ -150,6 +147,7 @@ const Hero = () => {
           >
             <source src={spinningMoon} type="video/webm" />
           </video>
+
           <img
             ref={rocketRef}
             src={rocketStartUp}

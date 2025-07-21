@@ -42,7 +42,7 @@ const Navbar = () => {
         <nav className="flex justify-between items-center">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
-            <img src={logo} alt="Safu Logo" />
+            <img src={logo} alt="Safu Logo" loading="lazy" />
             <p className="text-2xl font-bold dark:text-white text-black hidden lg:block">
               Safu Launcher
             </p>

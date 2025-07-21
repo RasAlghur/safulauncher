@@ -98,6 +98,7 @@ const Tokenomics = () => {
               className="w-full max-w-md hidden dark:block piechart"
               loading="lazy"
               decoding="async"
+              fetchPriority="low"
             />
             <img
               src={piechartWhite}
@@ -105,6 +106,7 @@ const Tokenomics = () => {
               className="w-full max-w-md dark:hidden piechart"
               loading="lazy"
               decoding="async"
+              fetchPriority="low"
             />
 
             {/* Distribution */}

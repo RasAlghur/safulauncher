@@ -91,7 +91,7 @@ const NotableBuys = () => {
                 : "dark:text-white/30 text-black/70"
             }`}
           >
-            Frequent Buys
+            Recent Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}

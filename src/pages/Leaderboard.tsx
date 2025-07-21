@@ -9,7 +9,7 @@ import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import RocketLoader from "../components/generalcomponents/Loader";
 
-const options = ["Featured", "Volume", "Most recent Trade"];
+const options = ["Volume", "Recent Trade"];
 
 /**
  * Description placeholder
@@ -220,8 +220,8 @@ export default function Leaderboard() {
           <DustParticles key={i} />
         ))}
       </div>
-      <div className="max-w-5xl mx-auto pt-40">
-        <div className="text-center  mb-10">
+      <div className="max-w-5xl mx-auto pt-[85px]">
+        <div className="text-center mb-4">
           <h1 className="lg:text-4xl text-3xl font-bold font-raleway text-[#01061C] dark:text-white">
             Leaderboard
           </h1>
@@ -235,7 +235,7 @@ export default function Leaderboard() {
           )}
         </div>
 
-        <div className="mb-[34px] relative w-full sm:w-[200px]">
+        <div className="mb-[20px] relative w-full sm:w-[200px]">
           <div
             onClick={() => setIsOpen((prev) => !prev)}
             className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
@@ -348,7 +348,7 @@ export default function Leaderboard() {
           </div>
         </div>
         {/* Pagination */}
-        <div className="flex justify-start items-center gap-2 py-6 border-t border-white/10">
+        <div className="flex justify-start items-center gap-2 py-4 border-t border-white/10">
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}

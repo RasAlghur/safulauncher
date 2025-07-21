@@ -367,8 +367,8 @@ export default function Tokens() {
       <div className=" mb-20 px-4 lg:px-0 relative ">
         {isLoadingTokens || isLoadingMetrics || featuredTokens.length === 0 ? (
           <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md">
-            <div className="pt-28 max-w-6xl mx-auto">
-              <div className="flex justify-between items-center mb-4 px-4">
+            <div className="pt-20 max-w-6xl mx-auto">
+              <div className="flex justify-between items-center px-4">
                 <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
                   Featured Tokens
                 </h2>
@@ -405,8 +405,8 @@ export default function Tokens() {
           </section>
         ) : (
           <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md ">
-            <div className="pt-28 max-w-6xl mx-auto">
-              <div className="flex justify-between items-center mb-4 px-4">
+            <div className="pt-20 max-w-6xl mx-auto">
+              <div className="flex justify-between items-center px-4">
                 <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
                   Featured Tokens
                 </h2>
@@ -429,7 +429,7 @@ export default function Tokens() {
               <div className="relative rounded-xl">
                 <div
                   ref={sliderRef}
-                  className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-5 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
+                  className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-2 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
                 >
                   {featuredTokens.map((token, idx) => (
                     <div
@@ -438,7 +438,7 @@ export default function Tokens() {
                     >
                       <Link
                         to={`/trade/${token.tokenAddress}`}
-                        className="flex flex-col gap-3"
+                        className="flex flex-col"
                       >
                         <div className="flex items-center gap-3">
                           {token.tokenImageId && (
@@ -459,14 +459,14 @@ export default function Tokens() {
                               by {token.tokenCreator.slice(0, 6)}...
                               {token.tokenCreator.slice(-4)}
                             </p>
-                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
+                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-1">
                               Address: {token.tokenAddress.slice(0, 6)}...
                               {token.tokenAddress.slice(-4)}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center text-sm text-white mt-2">
+                        <div className="flex justify-between items-center text-sm text-white">
                           <div className="bg-[#064C7A] text-xs px-2 py-1 rounded-full">
                             $
                             {marketCapMap[token.tokenAddress]?.toFixed(2) ??
@@ -496,7 +496,7 @@ export default function Tokens() {
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-        <div className="max-w-6xl mx-auto pt-[20rem]">
+        <div className="max-w-6xl mx-auto pt-[14.3rem]">
           <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
             Launched Tokens
             {isLoadingMetrics && (

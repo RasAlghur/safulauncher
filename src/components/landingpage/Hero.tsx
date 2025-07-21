@@ -1,13 +1,11 @@
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { gsap } from "gsap";
-// import moon from "../../assets/moon.png";
 import rocket from "../../assets/rocket.png";
 import DustParticles from "../generalcomponents/DustParticles";
 import spinningMoon from "../../assets/spinning-moon.webm";
 
 const Hero = () => {
-  const headlineRef = useRef(null);
   const paragraphRef = useRef(null);
   const buttonsRef = useRef(null);
   const moonRef = useRef(null);
@@ -18,24 +16,15 @@ const Hero = () => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
-      tl.fromTo(
-        headlineRef.current,
+      tl.from(
+        paragraphRef.current,
         {
           opacity: 0,
-
+          y: 30,
           duration: 1,
         },
-        { opacity: 1 }
-      )
-        .from(
-          paragraphRef.current,
-          {
-            opacity: 0,
-            y: 30,
-            duration: 1,
-          },
-          "-=0.5"
-        ) // starts halfway through the previous animation
+        "-=0.5"
+      ) // starts halfway through the previous animation
         .from(
           buttonsRef.current,
           {
@@ -88,10 +77,7 @@ const Hero = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 px-4 lg:px-[80px] lg:py-[28px] gap-10 lg:mt-16">
         {/* Left Text Section */}
         <div className="flex flex-col justify-center items-center lg:items-start text-center lg:text-left">
-          <h1
-            ref={headlineRef}
-            className="text-[38px] sm:text-[44px] md:text-[50px] lg:text-[60px] xl:text-[70px] lg:leading-[1] font-black mb-6 dark:text-white text-black leading-tight font-raleway"
-          >
+          <h1 className="text-[38px] sm:text-[44px] md:text-[50px] lg:text-[60px] xl:text-[70px] lg:leading-[1] font-black mb-6 dark:text-white text-black leading-tight font-raleway">
             Launch Your <span className="text-[#0C8CE0]">Token with</span>{" "}
             Confidence
           </h1>

@@ -861,6 +861,9 @@ export default function Trade() {
     refetchLatestETHPrice,
     refetchETHBalance,
     refetchWhitelistBalance,
+    refetchSafuHolderBalance,
+    refetchSafuSupply,
+    refetchSafuHolder,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1479,11 +1482,11 @@ export default function Trade() {
   );
 
   // UI helper functions
-  const getButtonText = () => {
+  const getButtonText = useCallback(() => {
     if (isWritePending) return "Confirming...";
     if (isConfirming) return "Processing...";
     return mode === "buy" ? "Buy" : needsApproval ? "Approve" : "Sell";
-  };
+  }, [isWritePending, isConfirming, mode, needsApproval]);
 
   const userETHBalanceNumber = parseFloat(userETHBalance?.formatted ?? "0");
   const userTokenBalanceNumber = parseFloat(tokenBalance);
@@ -1594,6 +1597,9 @@ export default function Trade() {
     isMaxWalletOnSafu,
     maxWalletTokens,
     token?.symbol,
+    getButtonText,
+    tier1Limit,
+    tier2Limit,
   ]);
 
   const getAdminTxnMessage = () => {
@@ -2178,9 +2184,14 @@ export default function Trade() {
                           ? "Buy confirmed!"
                           : getAdminTxnMessage()}
                       </p>
-                      <p className="text-[10px] dark:text-white text-black truncate max-w-[250px]">
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] dark:text-white text-black truncate max-w-[250px] cursor-pointer"
+                      >
                         Tx: {txHash}
-                      </p>
+                      </a>
                     </div>
                   )}
                   {errorMsg && (
@@ -2313,7 +2324,7 @@ export default function Trade() {
                     <LightweightChart
                       data={ohlc}
                       timeframe={selectedTimeframe.resolution}
-                      height={500}
+                      height={350}
                       ethToUsdRate={infoETHCurrentPrice}
                       totalSupply={tokenSupply / 1e18}
                       symbol={token.symbol}
