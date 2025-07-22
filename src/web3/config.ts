@@ -1,4 +1,4 @@
-export const SAFU_LAUNCHER_CA = "0xC02cdc7001240030bd91340eC1D4f80a9AC31580";
+export const SAFU_LAUNCHER_CA = "0xEf9464B4260Ba90C1000C89249F3578d27e9BFcf";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -27,7 +27,7 @@ export const mainnetID = 1;
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
 export const LAUNCHER_ABI = {
-  address: "0xC02cdc7001240030bd91340eC1D4f80a9AC31580",
+  address: "0xEf9464B4260Ba90C1000C89249F3578d27e9BFcf",
   abi: [
     {
       "type": "constructor",
@@ -365,22 +365,12 @@ export const LAUNCHER_ABI = {
           "internalType": "bool"
         },
         {
-          "name": "burnLP",
-          "type": "bool",
-          "internalType": "bool"
-        },
-        {
           "name": "wlCount",
           "type": "uint16",
           "internalType": "uint16"
         },
         {
           "name": "totalSupply",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "reservedTokens",
           "type": "uint256",
           "internalType": "uint256"
         },
@@ -411,11 +401,6 @@ export const LAUNCHER_ABI = {
         },
         {
           "name": "feeCollected",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "initialMarketCap",
           "type": "uint256",
           "internalType": "uint256"
         },
@@ -634,50 +619,6 @@ export const LAUNCHER_ABI = {
       "outputs": [
         {
           "name": "",
-          "type": "uint256",
-          "internalType": "uint256"
-        }
-      ],
-      "stateMutability": "view"
-    },
-    {
-      "type": "function",
-      "name": "getTradeDetails",
-      "inputs": [
-        {
-          "name": "tok",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "amountIn",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "isBuy",
-          "type": "bool",
-          "internalType": "bool"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "amountOut",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "fee",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "priceImpactBps",
-          "type": "uint256",
-          "internalType": "uint256"
-        },
-        {
-          "name": "newPriceInETH",
           "type": "uint256",
           "internalType": "uint256"
         }
@@ -1114,52 +1055,32 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "error",
-      "name": "ETHTransferFailed",
+      "name": "ETHTF",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "ExceedsLimit",
+      "name": "ExceedsL",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "ExceedsMaxBalance",
+      "name": "ExceedsM",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "ExceedsMaxBalance_AutoWLTier1",
+      "name": "FeeTF",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "ExceedsMaxBalance_AutoWLTier2",
+      "name": "InvalidB",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "ExceedsMaxBalance_Buy",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "ExceedsMaxBalance_WL",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "FeeTransferFailed",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "InvalidBundle",
-      "inputs": []
-    },
-    {
-      "type": "error",
-      "name": "NotAutoWLed",
+      "name": "NotAutoWL",
       "inputs": []
     },
     {
@@ -1202,22 +1123,22 @@ export const LAUNCHER_ABI = {
     },
     {
       "type": "error",
-      "name": "ShareMismatch",
+      "name": "ShareM",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "TaxConfigFailed",
+      "name": "TaxCF",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "TokenIsListedAlready",
+      "name": "TokenIL",
       "inputs": []
     },
     {
       "type": "error",
-      "name": "TradingNotLive",
+      "name": "TradingNL",
       "inputs": []
     }
   ],
