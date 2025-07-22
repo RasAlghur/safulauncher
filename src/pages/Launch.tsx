@@ -813,6 +813,7 @@ export default function Launch(): JSX.Element {
     platformFeeBps,
     platformFeeList,
     dexFeeBps,
+    address,
   ]);
 
   // Run validation whenever form data changes
@@ -1353,7 +1354,7 @@ export default function Launch(): JSX.Element {
             Launch Your Token
           </h1>
           <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
-          <div className=" bg-[#01061C]/2 max-w-5xl mx-auto py-10  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:pb-20 rounded-[10px] ">
+          <div className=" bg-[#01061C]/2 max-w-5xl mx-auto py-10 mb-20  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:pb-20 rounded-[10px] ">
             <div className="">
               <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
                 Launch your token effortlessly — earn 0.2 ETH instantly when it
@@ -1383,7 +1384,7 @@ export default function Launch(): JSX.Element {
                   id="tokenName"
                   type="text"
                   placeholder="Enter your Token Name, e.g “SafuLauncher”"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black  dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[13px] sm:placeholder:text-base placeholder:text-[#141313]/42 w-[95%] lg:w-full"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -1406,7 +1407,7 @@ export default function Launch(): JSX.Element {
                 <input
                   type="text"
                   placeholder="Enter your Ticker Symbol, e.g SAFU"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42] w-[95%] lg:w-full"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[13px] sm:placeholder:text-base placeholder:text-[#141313]/42] w-[95%] lg:w-full"
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   required
@@ -1447,7 +1448,7 @@ export default function Launch(): JSX.Element {
                       }
                     }}
                     required
-                    className="py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none w-[95%] lg:w-full"
+                    className="py-[14px] px-4 pr-[90px] rounded-lg dark:bg-[#0c1223] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/60 font-medium outline-none w-[95%] lg:w-full"
                   />
 
                   {/* Buttons container */}
@@ -1485,7 +1486,7 @@ export default function Launch(): JSX.Element {
                 <input
                   type="url"
                   placeholder="https://example.com"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                 />
@@ -1504,7 +1505,7 @@ export default function Launch(): JSX.Element {
                   value={description}
                   maxLength={200}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
                 />
                 <span className="text-sm text-gray-500 dark:text-gray-400 self-end">
                   {description.length}/200
@@ -1597,7 +1598,7 @@ export default function Launch(): JSX.Element {
                           <div
                             className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
                               enableTaxOnDex
-                                ? "translate-x-8 bg-white"
+                                ? "translate-x-[30px] bg-white"
                                 : "translate-x-0 bg-[#D9D9D9]"
                             }`}
                           >
@@ -1641,8 +1642,8 @@ export default function Launch(): JSX.Element {
                           onChange={(e) =>
                             handleDexFeeBpsChange(e.target.value)
                           }
-                          placeholder="Enter Tax for DEX (e.g 5)"
-                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                          placeholder="Enter enter Tax on DEX e.g 5"
+                          className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
 
                         <div className="flex flex-col gap-4">
@@ -1658,7 +1659,7 @@ export default function Launch(): JSX.Element {
                             placeholder="0x.."
                             value={newAddr}
                             onChange={(e) => setNewAddr(e.target.value)}
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                            className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                           />
 
                           <label
@@ -1676,7 +1677,7 @@ export default function Launch(): JSX.Element {
                             onChange={(e) =>
                               setNewBps(parseFloat(e.target.value))
                             }
-                            className="fw-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                            className="fw-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                           />
                           {getErrorMessage("tax") && (
                             <p className="text-red-500 text-sm mt-1 font-medium">
@@ -1794,8 +1795,8 @@ export default function Launch(): JSX.Element {
                           onChange={(e) =>
                             handlePlatformFeeBpsChange(e.target.value)
                           }
-                          placeholder="Tax on SafuLauncher percentage (e.g. 0.5)"
-                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                          placeholder="Enter Tax on SafuLauncher percentage (e.g. 0.5)"
+                          className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base placeholder:whitespace-normal leading-tight pb-7 p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
                       </label>
                       <div className="dark:text-gray-400 text-gray-700 text-sm">
@@ -1811,7 +1812,7 @@ export default function Launch(): JSX.Element {
                       {platformFeeList.map((p, i) => (
                         <div
                           key={i}
-                          className="flex flex-col items-start md:items-center gap-4 "
+                          className="flex flex-col items-center gap-4 "
                         >
                           <input
                             placeholder="0x..."
@@ -1821,7 +1822,7 @@ export default function Launch(): JSX.Element {
                               list[i].addr = e.target.value;
                               setPlatformFeeList(list);
                             }}
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none]"
+                            className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none]"
                           />
                           <input
                             placeholder="Percentage (e.g. 50)"
@@ -1845,7 +1846,7 @@ export default function Launch(): JSX.Element {
                             min="0"
                             max="100"
                             step="0.01"
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                            className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                           />
 
                           <button
@@ -2097,15 +2098,15 @@ export default function Launch(): JSX.Element {
                   </div>
 
                   {/* Max Wallet Amount on Safu Toggle */}
-                  <div className="flex justify-between items-center mt-6">
-                    <label className="text-lg font-semibold dark:text-white text-black">
+                  <div className="grid grid-cols-[.6fr_.4fr] lg:flex justify-between items-center mt-6">
+                    <label className="text-lg font-semibold dark:text-white text-black text-wrap">
                       Enable Max wallet size on SafuLauncher
                     </label>
                     <div
                       onClick={() =>
                         setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
                       }
-                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300
+                      className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center ml-auto transition-colors duration-300
           ${
             isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
           } shadow-inner relative`}
@@ -2115,7 +2116,7 @@ export default function Launch(): JSX.Element {
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
             ${
               isMaxWalletAmountOnSafu
-                ? "translate-x-[32px] bg-white"
+                ? "translate-x-[31px] bg-white"
                 : "translate-x-0 bg-[#D9D9D9]"
             }`}
                       >
@@ -2152,7 +2153,7 @@ export default function Launch(): JSX.Element {
                         onChange={(e) =>
                           handleMaxWalletBpsChange(e.target.value)
                         }
-                        className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                        className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                       />
 
                       <p className="text-xs dark:text-gray-400 text-black/80 mt-1">
@@ -2235,7 +2236,7 @@ export default function Launch(): JSX.Element {
                             handleBundleEthChange(e.target.value)
                           }
                           placeholder="10"
-                          className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                          className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
                       </label>
                       <div className="dark:text-gray-400 text-gray-700 text-sm">
@@ -2311,7 +2312,7 @@ export default function Launch(): JSX.Element {
                             min="0"
                             max="100"
                             step="0.01"
-                            className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
+                            className="w-full text-black placeholder:text-[13px] sm:placeholder:text-base p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                           />
 
                           <button

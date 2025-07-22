@@ -648,7 +648,7 @@ const Profile = () => {
               }`}
               onClick={() => setActiveTab("launched")}
             >
-              Token Launched
+              Tokens Deployed
             </button>
           </div>
           {/* Tab Content */}
