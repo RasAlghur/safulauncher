@@ -1383,7 +1383,7 @@ export default function Launch(): JSX.Element {
                   id="tokenName"
                   type="text"
                   placeholder="Enter your Token Name, e.g “SafuLauncher”"
-                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black  dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-[95%] lg:w-full"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -1641,7 +1641,7 @@ export default function Launch(): JSX.Element {
                           onChange={(e) =>
                             handleDexFeeBpsChange(e.target.value)
                           }
-                          placeholder="Enter Tax for Dex (e.g., 0.5)"
+                          placeholder="Enter Tax for DEX (e.g 5)"
                           className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
 
@@ -1794,7 +1794,7 @@ export default function Launch(): JSX.Element {
                           onChange={(e) =>
                             handlePlatformFeeBpsChange(e.target.value)
                           }
-                          placeholder="Enter platform fee percentage (e.g. 0.5)"
+                          placeholder="Tax on SafuLauncher percentage (e.g. 0.5)"
                           className="w-full text-black p-3 rounded-md dark:text-white dark:bg-[#071129] border border-gray-900 dark:border-none"
                         />
                       </label>
