@@ -24,7 +24,7 @@ import {
   PRICE_GETTER_ABI,
   SAFU_TOKEN_CA,
 } from "../web3/config";
-import { ethers } from "ethers";
+import { MaxUint256, ethers } from "ethers";
 import "../App.css";
 import {
   pureInfoDataRaw,
@@ -1095,7 +1095,7 @@ export default function Trade() {
       ...TOKEN_ABI,
       functionName: "approve",
       address: tokenAddress,
-      args: [SAFU_LAUNCHER_CA as `0x${string}`, tokenValue],
+      args: [SAFU_LAUNCHER_CA as `0x${string}`, MaxUint256 as bigint],
     });
     setIsProcessingTxn(true);
   }, [
@@ -1506,8 +1506,8 @@ export default function Trade() {
   const maxWalletTokens = mwAmountOnSafu / 1e18;
 
   // Calculate tier limits based on total supply
-  const tier2Limit = ((tokenSupply / 1e18) * 2) / 1000; // 0.2% of total supply
-  const tier1Limit = ((tokenSupply / 1e18) * 5) / 1000; // 0.5% of total supply
+  const tier2Limit = ((tokenSupply / 1e18) * 5) / 1000; // 0.5% of total supply
+  const tier1Limit = ((tokenSupply / 1e18) * 1) / 100; // 1% of total supply
 
   // Validation logic
   const validationState = useMemo(() => {
@@ -1554,7 +1554,7 @@ export default function Trade() {
           if (totalAfterBuy > tier2Limit) {
             return {
               isDisabled: true,
-              message: `Tier 2 limit: ${tier2Limit.toFixed(2)} tokens max`,
+              message: `Tier 2 limit: ${tier2Limit.toLocaleString()} tokens max`,
             };
           }
         } else if (tier1Holder) {
@@ -1563,7 +1563,7 @@ export default function Trade() {
           if (totalAfterBuy > tier1Limit) {
             return {
               isDisabled: true,
-              message: `Tier 1 limit: ${tier1Limit.toFixed(2)} tokens max`,
+              message: `Tier 1 limit: ${tier1Limit.toLocaleString()} tokens max`,
             };
           }
         }

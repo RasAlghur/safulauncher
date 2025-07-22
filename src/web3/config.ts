@@ -1,4 +1,4 @@
-export const SAFU_LAUNCHER_CA = "0xEf9464B4260Ba90C1000C89249F3578d27e9BFcf";
+export const SAFU_LAUNCHER_CA = "0x56733fFd5fAd495409704D35967F3b1f9b42EDF8";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -27,7 +27,7 @@ export const mainnetID = 1;
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
 export const LAUNCHER_ABI = {
-  address: "0xEf9464B4260Ba90C1000C89249F3578d27e9BFcf",
+  address: "0x56733fFd5fAd495409704D35967F3b1f9b42EDF8",
   abi: [
     {
       "type": "constructor",
