@@ -155,7 +155,7 @@ const TrendingTokens = () => {
 
               let marketCap = 0;
               if (Array.isArray(info)) {
-                const supply = Number(info[7]);
+                const supply = Number(info[6]);
                 const rawAmt = await pureAmountOutMarketCap(tokenAddress);
                 const pricePerToken = rawAmt
                   ? Number(rawAmt.toString()) / 1e18

@@ -99,8 +99,8 @@ const PlatformStats = () => {
             const info = await pureInfoDataRaw(token.tokenAddress);
 
             if (Array.isArray(info)) {
-              const supply = Number(info[7]);
-              const sold = Number(info[10]);
+              const supply = Number(info[6]);
+              const sold = Number(info[8]);
               const percent = (sold / (0.75 * supply)) * 100;
               newCurve[token.tokenAddress] = Math.min(
                 Math.max(percent, 0),

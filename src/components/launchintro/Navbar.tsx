@@ -115,7 +115,7 @@ const Navbar = () => {
             const info = await pureInfoDataRaw(token.tokenAddress);
             const supply =
               Array.isArray(info) && typeof info[7] !== "undefined"
-                ? Number(info[7])
+                ? Number(info[6])
                 : 0;
 
             const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
