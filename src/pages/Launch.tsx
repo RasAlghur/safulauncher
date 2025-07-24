@@ -167,7 +167,7 @@ export default function Launch(): JSX.Element {
       // Replace existing entries instead of appending
       setWhitelistUpload(parsed);
       setValidationErrors((prev) =>
-        prev.filter((e) => e.field !== "whitelist"),
+        prev.filter((e) => e.field !== "whitelist")
       );
     }
   };
@@ -263,7 +263,7 @@ export default function Launch(): JSX.Element {
 
   // Validation state
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
-    [],
+    []
   );
   const [isFormValid, setIsFormValid] = useState(false);
 
@@ -279,7 +279,7 @@ export default function Launch(): JSX.Element {
     arr: T[],
     setter: React.Dispatch<React.SetStateAction<T[]>>,
     item: T,
-    max: number,
+    max: number
   ) => {
     if (arr.length >= max) return;
     setter([...arr, item]);
@@ -288,7 +288,7 @@ export default function Launch(): JSX.Element {
   const removeItem = <T,>(
     arr: T[],
     setter: React.Dispatch<React.SetStateAction<T[]>>,
-    idx: number,
+    idx: number
   ) => {
     setter(arr.filter((_, i) => i !== idx));
   };
@@ -322,7 +322,7 @@ export default function Launch(): JSX.Element {
   };
 
   const findDuplicateAddresses = (
-    addresses: string[],
+    addresses: string[]
   ): { duplicates: string[]; positions: number[][] } => {
     const addressCount = new Map<string, number[]>();
     const duplicates: string[] = [];
@@ -424,8 +424,9 @@ export default function Launch(): JSX.Element {
         if (tax.bps < 0 || tax.bps > 1000) {
           errors.push({
             field: "tax",
-            message: `Tax recipient ${index + 1
-              }: percentage must be between 0-100`,
+            message: `Tax recipient ${
+              index + 1
+            }: percentage must be between 0-100`,
           });
         }
       });
@@ -440,7 +441,7 @@ export default function Launch(): JSX.Element {
 
       // Check for incomplete tax entries
       const incompleteTaxEntries = taxList.some(
-        (tax) => !tax.addr || tax.bps <= 0,
+        (tax) => !tax.addr || tax.bps <= 0
       );
       if (incompleteTaxEntries) {
         errors.push({
@@ -464,7 +465,7 @@ export default function Launch(): JSX.Element {
             field: "tax",
             message: `Duplicate tax recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
               0,
-              6,
+              6
             )}...${duplicateAddr.slice(-4)})`,
           });
         });
@@ -492,8 +493,9 @@ export default function Launch(): JSX.Element {
           if (addr.cap > maxWalletAmountOnSafu) {
             errors.push({
               field: "whitelist",
-              message: `Entry ${index + 1
-                }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
+              message: `Entry ${
+                index + 1
+              }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
             });
           }
         }
@@ -508,7 +510,7 @@ export default function Launch(): JSX.Element {
 
       // Check for empty whitelist entries
       const emptyWhitelistEntries = whitelistUpload.some(
-        (addr) => !addr.address.trim(),
+        (addr) => !addr.address.trim()
       );
       if (emptyWhitelistEntries) {
         errors.push({
@@ -523,7 +525,7 @@ export default function Launch(): JSX.Element {
         .map((addr) => addr.address);
       if (validWhitelistAddresses.length > 0) {
         const { duplicates, positions } = findDuplicateAddresses(
-          validWhitelistAddresses,
+          validWhitelistAddresses
         );
         duplicates.forEach((duplicateAddr, index) => {
           const duplicatePositions = positions[index]
@@ -533,7 +535,7 @@ export default function Launch(): JSX.Element {
             field: "whitelist",
             message: `Duplicate whitelist address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
               0,
-              6,
+              6
             )}...${duplicateAddr.slice(-4)})`,
           });
         });
@@ -542,7 +544,7 @@ export default function Launch(): JSX.Element {
 
     const calculateBundleTokens = (
       bundleEth: number,
-      supply: number,
+      supply: number
     ): number => {
       // Simulate the smart contract calculation
       // These values should match your smart contract constants
@@ -603,7 +605,7 @@ export default function Launch(): JSX.Element {
           errors.push({
             field: "bundle",
             message: `Bundle would exceed 25% of supply. Maximum ETH for this supply: ~${maxEthForTokens.toFixed(
-              4,
+              4
             )} ETH`,
           });
         }
@@ -627,12 +629,13 @@ export default function Launch(): JSX.Element {
         if (!isCreator && recipientTokens > maxAllowedTokens) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1} (${bundle.addr
-              }) would receive ${recipientTokens.toFixed(
-                0,
-              )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
-                0,
-              )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
+            message: `Bundle recipient ${index + 1} (${
+              bundle.addr
+            }) would receive ${recipientTokens.toFixed(
+              0
+            )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
+              0
+            )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
           });
         }
 
@@ -645,8 +648,9 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -662,7 +666,7 @@ export default function Launch(): JSX.Element {
 
       // Check for incomplete bundle entries
       const incompleteBundleEntries = bundleList.some(
-        (bundle) => !bundle.addr || bundle.pct <= 0,
+        (bundle) => !bundle.addr || bundle.pct <= 0
       );
       if (incompleteBundleEntries) {
         errors.push({
@@ -687,7 +691,7 @@ export default function Launch(): JSX.Element {
             field: "bundle",
             message: `Duplicate bundle recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
               0,
-              6,
+              6
             )}...${duplicateAddr.slice(-4)})`,
           });
         });
@@ -737,8 +741,9 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${index + 1
-              }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${
+              index + 1
+            }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -757,7 +762,7 @@ export default function Launch(): JSX.Element {
 
       // Check for incomplete platform fee entries
       const incompletePlatformEntries = platformFeeList.some(
-        (fee) => !fee.addr || fee.pct <= 0,
+        (fee) => !fee.addr || fee.pct <= 0
       );
       if (incompletePlatformEntries) {
         errors.push({
@@ -782,7 +787,7 @@ export default function Launch(): JSX.Element {
             field: "platformFee",
             message: `Duplicate platform fee recipient address found at positions: ${duplicatePositions} (${duplicateAddr.slice(
               0,
-              6,
+              6
             )}...${duplicateAddr.slice(-4)})`,
           });
         });
@@ -884,16 +889,16 @@ export default function Launch(): JSX.Element {
       enableTaxOnSafu
         ? (platformFeeList.map((p) => p.addr) as readonly `0x${string}`[])
         : ([] as readonly `0x${string}`[]),
-    [enableTaxOnSafu, platformFeeList],
+    [enableTaxOnSafu, platformFeeList]
   );
   const taxOnSafuPercentArray = React.useMemo(
     () =>
       enableTaxOnSafu
         ? (platformFeeList.map((p) =>
-          Math.floor(p.pct * 100),
-        ) as readonly number[])
+            Math.floor(p.pct * 100)
+          ) as readonly number[])
         : ([] as readonly number[]),
-    [enableTaxOnSafu, platformFeeList],
+    [enableTaxOnSafu, platformFeeList]
   );
 
   const taxOnDexRecipientsAddrs = React.useMemo(
@@ -901,17 +906,17 @@ export default function Launch(): JSX.Element {
       enableTaxOnDex
         ? (taxList.map((t) => t.addr) as readonly `0x${string}`[])
         : ([] as readonly `0x${string}`[]),
-    [enableTaxOnDex, taxList],
+    [enableTaxOnDex, taxList]
   );
   const initialCapsBps = React.useMemo(
     () =>
       enableWhitelist
         ? (whitelistUpload.map((e) =>
-          Math.round(e.cap * 100),
-        ) as readonly number[])
+            Math.round(e.cap * 100)
+          ) as readonly number[])
         : // Default to 100% for each whitelist entry
-        ([] as readonly number[]),
-    [enableWhitelist, whitelistUpload],
+          ([] as readonly number[]),
+    [enableWhitelist, whitelistUpload]
   );
 
   const taxOnDexPercentsArray = React.useMemo(
@@ -919,7 +924,7 @@ export default function Launch(): JSX.Element {
       enableTaxOnDex
         ? (taxList.map((t) => t.bps) as readonly number[])
         : ([] as readonly number[]),
-    [enableTaxOnDex, taxList],
+    [enableTaxOnDex, taxList]
   );
 
   const bundleAddrs = React.useMemo(
@@ -927,14 +932,14 @@ export default function Launch(): JSX.Element {
       enableBundle
         ? (bundleList.map((b) => b.addr) as readonly `0x${string}`[])
         : ([] as readonly `0x${string}`[]),
-    [enableBundle, bundleList],
+    [enableBundle, bundleList]
   );
   const bundleShares = React.useMemo(
     () =>
       enableBundle
         ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
         : ([] as readonly number[]),
-    [enableBundle, bundleList],
+    [enableBundle, bundleList]
   );
   const ethValue = enableBundle ? ethers.parseEther(bundleEth.toString()) : 0n;
 
@@ -943,7 +948,7 @@ export default function Launch(): JSX.Element {
       enableWhitelist
         ? (whitelistUpload.map((e) => e.address) as readonly `0x${string}`[])
         : ([] as readonly `0x${string}`[]),
-    [enableWhitelist, whitelistUpload],
+    [enableWhitelist, whitelistUpload]
   );
 
   // Build args
@@ -988,7 +993,7 @@ export default function Launch(): JSX.Element {
         boolean,
         readonly `0x${string}`[],
         readonly number[],
-        string,
+        string
       ],
     [
       name,
@@ -1010,7 +1015,7 @@ export default function Launch(): JSX.Element {
       wlArray,
       initialCapsBps,
       myStringIndex,
-    ],
+    ]
   );
 
   const percentBundled = (
@@ -1080,18 +1085,23 @@ export default function Launch(): JSX.Element {
             "uint16[]",
             "address",
           ],
-          [...message],
+          [...message]
         );
         const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
 
-        console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
+        console.log(
+          "Encoded message at deployToken Func:",
+          encodedMessageWithoutPrefix
+        );
+
+        formData.append("verifyparameter", encodedMessageWithoutPrefix);
 
         const request = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}token`,
           {
             method: "POST",
             body: formData,
-          },
+          }
         );
         const response = await request.json();
         console.log(response);
@@ -1124,10 +1134,9 @@ export default function Launch(): JSX.Element {
       supply,
       taxOnDexRecipientsAddrs,
       taxOnDexPercentsArray,
-      SAFU_LAUNCHER_CA,
       uniV2Router,
-      uniV2WETH
-    ],
+      uniV2WETH,
+    ]
   );
 
   // const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
@@ -1260,7 +1269,7 @@ export default function Launch(): JSX.Element {
   console.log("createToken args:", argArray, "value:", ethValue.toString());
 
   console.log(
-    "string calldata name | string calldata symbol | uint256 supply | bool lockLp | bool startNow | bool isMaxWalletOnSafu_ | uint256 maxWalletAmountOnSafu_ | address[] calldata bundleAddrs | uint16[] calldata bundleShares | uint16 taxOnDexBps_ | address[] calldata taxOnDexRecipients | uint16[] calldata taxOnDexPercents | uint16 taxOnSafuBps_ | address[] calldata taxOnSafuRecipients_ | uint16[] calldata taxOnSafuPercents_ | bool whitelistOnly_ | address[] calldata initialWhitelist | uint16[] calldata initialCapsBps",
+    "string calldata name | string calldata symbol | uint256 supply | bool lockLp | bool startNow | bool isMaxWalletOnSafu_ | uint256 maxWalletAmountOnSafu_ | address[] calldata bundleAddrs | uint16[] calldata bundleShares | uint16 taxOnDexBps_ | address[] calldata taxOnDexRecipients | uint16[] calldata taxOnDexPercents | uint16 taxOnSafuBps_ | address[] calldata taxOnSafuRecipients_ | uint16[] calldata taxOnSafuPercents_ | bool whitelistOnly_ | address[] calldata initialWhitelist | uint16[] calldata initialCapsBps"
   );
 
   function calculateBundleTokens(bundleEth: number, supply: number): number {
@@ -1493,8 +1502,9 @@ export default function Launch(): JSX.Element {
               </label>
 
               <div
-                className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+                className={`border-2 border-dashed ${
+                  dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
         transition duration-200 hover:opacity-80 w-full relative`}
                 onClick={openFilePicker}
@@ -1562,14 +1572,16 @@ export default function Launch(): JSX.Element {
                     <div className="relative group">
                       <div
                         onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
-                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${enableTaxOnDex ? "bg-Primary" : "bg-white"
-                          } shadow-inner relative`}
+                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
+                          enableTaxOnDex ? "bg-Primary" : "bg-white"
+                        } shadow-inner relative`}
                       >
                         <div
-                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${enableTaxOnDex
-                            ? "translate-x-[30px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                            }`}
+                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
+                            enableTaxOnDex
+                              ? "translate-x-[30px] bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
                         >
                           {enableTaxOnDex ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1710,10 +1722,11 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableTaxOnSafu
-                              ? "translate-x-[32px] bg-white"
-                              : "translate-x-0 bg-[#D9D9D9]"
-                            }`}
+            ${
+              enableTaxOnSafu
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                         >
                           {enableTaxOnSafu ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1833,7 +1846,7 @@ export default function Launch(): JSX.Element {
                           platformFeeList,
                           setPlatformFeeList,
                           { addr: "", pct: 0, pctInput: "" },
-                          5,
+                          5
                         )
                       }
                       disabled={platformFeeList.length >= 5}
@@ -1869,10 +1882,11 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${enableWhitelist
-                              ? "translate-x-[32px] bg-white"
-                              : "translate-x-0 bg-[#D9D9D9]"
-                            }`}
+            ${
+              enableWhitelist
+                ? "translate-x-[32px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                         >
                           {enableWhitelist ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1996,10 +2010,11 @@ export default function Launch(): JSX.Element {
                             setLpOption(option.value);
                             setIsOpen(false);
                           }}
-                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
-                            ? "rounded-t-xl"
-                            : "rounded-b-xl"
-                            }`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
+                            option.value === "lock"
+                              ? "rounded-t-xl"
+                              : "rounded-b-xl"
+                          }`}
                         >
                           {option.label}
                         </div>
@@ -2028,10 +2043,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${startNow
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+          ${
+            startNow
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                       >
                         {startNow ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2070,16 +2086,18 @@ export default function Launch(): JSX.Element {
                       setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
                     }
                     className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center ml-auto transition-colors duration-300
-          ${isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
-                      } shadow-inner relative`}
+          ${
+            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
+          } shadow-inner relative`}
                   >
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${isMaxWalletAmountOnSafu
-                          ? "translate-x-[31px] bg-white"
-                          : "translate-x-0 bg-[#D9D9D9]"
-                        }`}
+            ${
+              isMaxWalletAmountOnSafu
+                ? "translate-x-[31px] bg-white"
+                : "translate-x-0 bg-[#D9D9D9]"
+            }`}
                     >
                       {isMaxWalletAmountOnSafu ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2143,10 +2161,11 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${enableBundle
-                            ? "translate-x-[32px] bg-white"
-                            : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+          ${
+            enableBundle
+              ? "translate-x-[32px] bg-white"
+              : "translate-x-0 bg-[#D9D9D9]"
+          }`}
                       >
                         {enableBundle ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2209,7 +2228,7 @@ export default function Launch(): JSX.Element {
                           Estimated tokens: ~{" "}
                           {calculateBundleTokens(
                             bundleEth,
-                            supply,
+                            supply
                           ).toLocaleString()}
                         </div>
                         <div className="dark:text-white text-black">
@@ -2221,10 +2240,10 @@ export default function Launch(): JSX.Element {
                         </div>
                         {calculateBundleTokens(bundleEth, supply) >
                           (supply * 25) / 100 && (
-                            <div className="text-red-400 font-semibold">
-                              ⚠️ Exceeds 25% limit!
-                            </div>
-                          )}
+                          <div className="text-red-400 font-semibold">
+                            ⚠️ Exceeds 25% limit!
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -2289,7 +2308,7 @@ export default function Launch(): JSX.Element {
                           bundleList,
                           setBundleList,
                           { addr: "", pct: 0, pctInput: "" },
-                          30,
+                          30
                         )
                       }
                       disabled={bundleList.length >= 30}
@@ -2308,10 +2327,11 @@ export default function Launch(): JSX.Element {
             {/* Submit */}
             <button
               type="submit"
-              className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${isPending || !isFormValid
-                ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                }`}
+              className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${
+                isPending || !isFormValid
+                  ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                  : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+              }`}
               disabled={isPending || isConfirming || !isFormValid}
               style={{
                 opacity: !isFormValid ? 0.5 : 1,
