@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BsChevronDown } from "react-icons/bs";
+import { socket } from "../lib/socket";
 
 interface transaction {
   id: string;
@@ -325,6 +326,29 @@ export default function Tokens() {
       ? (aVal as number) - (bVal as number)
       : (bVal as number) - (aVal as number);
   });
+
+  // socket to listen to new deloplyed token
+  useEffect(() => {
+    if (!socket.connected) {
+      console.log("socket connected");
+      socket.connect();
+    }
+
+    const handleReceiveNewDeployment = (data: TokenMetadata) => {
+      console.log("called", data);
+      // setTokens((prev) => {
+      //   const newTokens = [data, ...prev];
+      //   return newTokens;
+      // });
+    };
+
+    socket.on("token_deployment", handleReceiveNewDeployment);
+
+    return () => {
+      socket.off("token_deployment", handleReceiveNewDeployment);
+      socket.disconnect();
+    };
+  }, []);
 
   // Handle click events to prevent nested anchor navigation
   // const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
