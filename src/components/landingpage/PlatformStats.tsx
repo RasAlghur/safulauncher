@@ -194,7 +194,7 @@ const PlatformStats = () => {
         icon: FeeCollected,
       },
       {
-        title: "Tokens Launched",
+        title: "Tokens Deployed",
         mainValue: `${pureMetrics?.[2] || 0}`,
         ethValue: "",
         icon: TokensLaunched,
