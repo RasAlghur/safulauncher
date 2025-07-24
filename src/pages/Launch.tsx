@@ -230,6 +230,7 @@ export default function Launch(): JSX.Element {
   };
 
   const [statusMessage, setStatusMessage] = useState("");
+  const [myStringIndex, setMyStringIndex] = useState(Date.now + "wsshwy127");
   const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
@@ -972,6 +973,7 @@ export default function Launch(): JSX.Element {
         enableWhitelist,
         wlArray,
         initialCapsBps,
+        myStringIndex
       ] as unknown as [
         string,
         string,
@@ -990,7 +992,8 @@ export default function Launch(): JSX.Element {
         readonly number[],
         boolean,
         readonly `0x${string}`[],
-        readonly number[]
+        readonly number[],
+        string
       ],
     [
       name,
@@ -1011,6 +1014,7 @@ export default function Launch(): JSX.Element {
       enableWhitelist,
       wlArray,
       initialCapsBps,
+      myStringIndex
     ]
   );
 
@@ -1024,6 +1028,8 @@ export default function Launch(): JSX.Element {
         setValidationErrors(errors);
         return;
       }
+
+      setMyStringIndex(Date.now() + "tshjqij235sh");
 
       try {
         writeContract({
