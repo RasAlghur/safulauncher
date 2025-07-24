@@ -77,6 +77,19 @@
         },
         {
             "type": "function",
+            "name": "MAX_WL_BPS",
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
             "name": "TRADE_FEE_BPS",
             "inputs": [],
             "outputs": [
@@ -140,6 +153,11 @@
                     "name": "list",
                     "type": "address[]",
                     "internalType": "address[]"
+                },
+                {
+                    "name": "capsBps",
+                    "type": "uint16[]",
+                    "internalType": "uint16[]"
                 }
             ],
             "outputs": [],
@@ -191,17 +209,7 @@
                     "internalType": "uint256"
                 },
                 {
-                    "name": "taxBps_",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
                     "name": "lockLp",
-                    "type": "bool",
-                    "internalType": "bool"
-                },
-                {
-                    "name": "whitelistOnly_",
                     "type": "bool",
                     "internalType": "bool"
                 },
@@ -209,6 +217,16 @@
                     "name": "startNow",
                     "type": "bool",
                     "internalType": "bool"
+                },
+                {
+                    "name": "isMaxWalletOnSafu_",
+                    "type": "bool",
+                    "internalType": "bool"
+                },
+                {
+                    "name": "maxWalletAmountOnSafu_",
+                    "type": "uint256",
+                    "internalType": "uint256"
                 },
                 {
                     "name": "bundleAddrs",
@@ -221,14 +239,39 @@
                     "internalType": "uint16[]"
                 },
                 {
-                    "name": "taxRecipients",
+                    "name": "taxOnDexBps_",
+                    "type": "uint16",
+                    "internalType": "uint16"
+                },
+                {
+                    "name": "taxOnDexRecipients",
                     "type": "address[]",
                     "internalType": "address[]"
                 },
                 {
-                    "name": "taxPercents",
+                    "name": "taxOnDexPercents",
                     "type": "uint16[]",
                     "internalType": "uint16[]"
+                },
+                {
+                    "name": "taxOnSafuBps_",
+                    "type": "uint16",
+                    "internalType": "uint16"
+                },
+                {
+                    "name": "taxOnSafuRecipients_",
+                    "type": "address[]",
+                    "internalType": "address[]"
+                },
+                {
+                    "name": "taxOnSafuPercents_",
+                    "type": "uint16[]",
+                    "internalType": "uint16[]"
+                },
+                {
+                    "name": "whitelistOnly_",
+                    "type": "bool",
+                    "internalType": "bool"
                 },
                 {
                     "name": "initialWhitelist",
@@ -236,19 +279,14 @@
                     "internalType": "address[]"
                 },
                 {
-                    "name": "platformFeeBps_",
-                    "type": "uint16",
-                    "internalType": "uint16"
-                },
-                {
-                    "name": "platformFeeRecipients_",
-                    "type": "address[]",
-                    "internalType": "address[]"
-                },
-                {
-                    "name": "platformFeePercents_",
+                    "name": "initialCapsBps",
                     "type": "uint16[]",
                     "internalType": "uint16[]"
+                },
+                {
+                    "name": "myIndex",
+                    "type": "string",
+                    "internalType": "string"
                 }
             ],
             "outputs": [
@@ -302,22 +340,12 @@
                     "internalType": "bool"
                 },
                 {
-                    "name": "burnLP",
-                    "type": "bool",
-                    "internalType": "bool"
-                },
-                {
                     "name": "wlCount",
                     "type": "uint16",
                     "internalType": "uint16"
                 },
                 {
                     "name": "totalSupply",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "reservedTokens",
                     "type": "uint256",
                     "internalType": "uint256"
                 },
@@ -352,12 +380,7 @@
                     "internalType": "uint256"
                 },
                 {
-                    "name": "initialMarketCap",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "platformFeeBps",
+                    "name": "taxOnSafuBps",
                     "type": "uint16",
                     "internalType": "uint16"
                 },
@@ -365,6 +388,26 @@
                     "name": "isBundled",
                     "type": "bool",
                     "internalType": "bool"
+                },
+                {
+                    "name": "isTaxedOnDex",
+                    "type": "bool",
+                    "internalType": "bool"
+                },
+                {
+                    "name": "isTaxedOnSafu",
+                    "type": "bool",
+                    "internalType": "bool"
+                },
+                {
+                    "name": "isMaxWalletOnSafu",
+                    "type": "bool",
+                    "internalType": "bool"
+                },
+                {
+                    "name": "maxWalletAmountOnSafu",
+                    "type": "uint256",
+                    "internalType": "uint256"
                 }
             ],
             "stateMutability": "view"
@@ -381,6 +424,19 @@
                 }
             ],
             "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "disableMaxWalletLimit",
+            "inputs": [
+                {
+                    "name": "tok",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [],
+            "stateMutability": "nonpayable"
         },
         {
             "type": "function",
@@ -522,7 +578,7 @@
         },
         {
             "type": "function",
-            "name": "getTradeDetails",
+            "name": "getRemainingWhitelistBalance",
             "inputs": [
                 {
                     "name": "tok",
@@ -530,34 +586,14 @@
                     "internalType": "address"
                 },
                 {
-                    "name": "amountIn",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "isBuy",
-                    "type": "bool",
-                    "internalType": "bool"
+                    "name": "user",
+                    "type": "address",
+                    "internalType": "address"
                 }
             ],
             "outputs": [
                 {
-                    "name": "amountOut",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "fee",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "priceImpactBps",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                },
-                {
-                    "name": "newPriceInETH",
+                    "name": "",
                     "type": "uint256",
                     "internalType": "uint256"
                 }
@@ -822,6 +858,54 @@
         },
         {
             "type": "function",
+            "name": "whitelistAllocationLeft",
+            "inputs": [
+                {
+                    "name": "",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "whitelistMaxWallet",
+            "inputs": [
+                {
+                    "name": "",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint16",
+                    "internalType": "uint16"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
             "name": "withdrawNonNativeToken",
             "inputs": [
                 {
@@ -898,6 +982,12 @@
                     "type": "address",
                     "indexed": false,
                     "internalType": "address"
+                },
+                {
+                    "name": "myIndex",
+                    "type": "string",
+                    "indexed": false,
+                    "internalType": "string"
                 }
             ],
             "anonymous": false
@@ -941,22 +1031,37 @@
         },
         {
             "type": "error",
-            "name": "ETHTransferFailed",
+            "name": "DisAllowed",
             "inputs": []
         },
         {
             "type": "error",
-            "name": "ExceedsLimit",
+            "name": "ETHTF",
             "inputs": []
         },
         {
             "type": "error",
-            "name": "FeeTransferFailed",
+            "name": "ExceedsL",
             "inputs": []
         },
         {
             "type": "error",
-            "name": "InvalidBundle",
+            "name": "ExceedsM",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "FeeTF",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "InvalidB",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "NotAutoWL",
             "inputs": []
         },
         {
@@ -999,17 +1104,22 @@
         },
         {
             "type": "error",
-            "name": "ShareMismatch",
+            "name": "ShareM",
             "inputs": []
         },
         {
             "type": "error",
-            "name": "TaxConfigFailed",
+            "name": "TaxCF",
             "inputs": []
         },
         {
             "type": "error",
-            "name": "TradingNotLive",
+            "name": "TokenIL",
+            "inputs": []
+        },
+        {
+            "type": "error",
+            "name": "TradingNL",
             "inputs": []
         }
     ]
