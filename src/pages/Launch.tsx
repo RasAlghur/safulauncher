@@ -16,9 +16,9 @@ import {
   useAccount,
 } from "wagmi";
 import {
-  ETH_USDT_PRICE_FEED,
+  // ETH_USDT_PRICE_FEED,
   LAUNCHER_ABI,
-  PRICE_GETTER_ABI,
+  // PRICE_GETTER_ABI,
   SAFU_LAUNCHER_CA,
 } from "../web3/config";
 import { ethers } from "ethers";
@@ -1130,15 +1130,15 @@ export default function Launch(): JSX.Element {
     ],
   );
 
-  const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
-    useReadContract({
-      ...PRICE_GETTER_ABI,
-      functionName: "getLatestETHPrice",
-      args: [ETH_USDT_PRICE_FEED!],
-    });
+  // const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
+  //   useReadContract({
+  //     ...PRICE_GETTER_ABI,
+  //     functionName: "getLatestETHPrice",
+  //     args: [ETH_USDT_PRICE_FEED!],
+  //   });
 
-  const infoETHCurrentPrice =
-    isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
+  // const infoETHCurrentPrice =
+  //   isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
 
   // const handleVerify = async (
   //   encodedMessageWithoutPrefix: string,
