@@ -15,11 +15,18 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
+import {
+  // ETH_USDT_PRICE_FEED,
+  LAUNCHER_ABI,
+  // PRICE_GETTER_ABI,
+  SAFU_LAUNCHER_CA,
+} from "../web3/config";
 import { ethers } from "ethers";
+// import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
+// import rocket from "../assets/rocket.png";
 import { CircleCheckBig, Upload, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
@@ -222,7 +229,9 @@ export default function Launch(): JSX.Element {
     e.target.value = "";
   };
 
+  // const [statusMessage, setStatusMessage] = useState("");
   const [myStringIndex, setMyStringIndex] = useState(`token_${uuidv4()}`);
+  // const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
   const [enableTaxOnDex, setEnableTaxOnDex] = useState(false);
@@ -1026,33 +1035,6 @@ export default function Launch(): JSX.Element {
     functionName: "WETH",
   });
 
-  const message = [
-    name,
-    symbol,
-    ethers.parseUnits(supply.toString(), 18),
-    uniV2Router,
-    uniV2WETH,
-    taxOnDexRecipientsAddrs,
-    taxOnDexPercentsArray,
-    SAFU_LAUNCHER_CA,
-  ];
-  console.log("message", message);
-  const abiCoder = new ethers.AbiCoder();
-
-  // const encodedMessage = abiCoder.encode(
-  //   [
-  //     "string",
-  //     "string",
-  //     "uint256",
-  //     "address",
-  //     "address",
-  //     "address[]",
-  //     "uint16[]",
-  //     "address",
-  //   ],
-  //   [...message]
-  // );
-  const encodedMessageWithoutPrefix = ""; //encodedMessage.slice(2);
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -1077,8 +1059,41 @@ export default function Launch(): JSX.Element {
         }
 
         if (logo) formData.append("logo", logo);
-        if (encodedMessageWithoutPrefix)
-          formData.append("verifyparameter", encodedMessageWithoutPrefix);
+
+        const message = [
+          name,
+          symbol,
+          ethers.parseUnits(supply.toString(), 18),
+          uniV2Router,
+          uniV2WETH,
+          taxOnDexRecipientsAddrs,
+          taxOnDexPercentsArray,
+          SAFU_LAUNCHER_CA,
+        ];
+
+        console.log("message", message);
+        const abiCoder = new ethers.AbiCoder();
+
+        const encodedMessage = abiCoder.encode(
+          [
+            "string",
+            "string",
+            "uint256",
+            "address",
+            "address",
+            "address[]",
+            "uint16[]",
+            "address",
+          ],
+          [...message]
+        );
+        const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
+
+        console.log(
+          "Encoded message at deployToken Func:",
+          encodedMessageWithoutPrefix
+        );
+
         const request = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}token`,
           {
@@ -1110,11 +1125,15 @@ export default function Launch(): JSX.Element {
       enableBundle,
       bundleAddrs.length,
       logo,
-      encodedMessageWithoutPrefix,
       writeContract,
       argArray,
       ethValue,
       percentBundled,
+      supply,
+      taxOnDexRecipientsAddrs,
+      taxOnDexPercentsArray,
+      uniV2Router,
+      uniV2WETH,
     ]
   );
 
@@ -1124,6 +1143,106 @@ export default function Launch(): JSX.Element {
   //     functionName: "getLatestETHPrice",
   //     args: [ETH_USDT_PRICE_FEED!],
   //   });
+
+  // const infoETHCurrentPrice =
+  //   isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
+
+  // const handleVerify = async (
+  //   encodedMessageWithoutPrefix: string,
+  //   tokenAddress: string,
+  // ) => {
+  //   // const handleVerify = async (tokenAddress: any) => {
+  //   try {
+  //     console.log(
+  //       "encodedMessage at handleVerify Func",
+  //       encodedMessageWithoutPrefix,
+  //     );
+  //     console.log("deployedAddress at handleVerify Func", tokenAddress);
+  //     const result = await verifyContract({
+  //       encodedMessageWithoutPrefix,
+  //       tokenAddress,
+  //     });
+  //     // const result = await verifyContract({ tokenAddress });
+  //     setStatusMessage("Verification request sent successfully!");
+  //     console.log(result); // Log the result if needed (status, or further information)
+  //   } catch (error) {
+  //     setStatusMessage("Error during verification. Please try again.");
+  //     console.error(error); // Log the error for debugging
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (result) {
+  //     (async () => {
+  //       const message = [
+  //         name,
+  //         symbol,
+  //         ethers.parseUnits(supply.toString(), 18),
+  //         uniV2Router,
+  //         uniV2WETH,
+  //         taxOnDexRecipientsAddrs,
+  //         taxOnDexPercentsArray,
+  //         SAFU_LAUNCHER_CA,
+  //       ];
+  //       console.log("message", message);
+  //       const abiCoder = new ethers.AbiCoder();
+
+  //       const encodedMessage = abiCoder.encode(
+  //         [
+  //           "string",
+  //           "string",
+  //           "uint256",
+  //           "address",
+  //           "address",
+  //           "address[]",
+  //           "uint16[]",
+  //           "address",
+  //         ],
+  //         [...message],
+  //       );
+  //       const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
+
+  //       console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
+
+  //       // // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
+  //       // if (encodedMessageWithoutPrefix) {
+  //       //   setWaitingForVerification(true); // Show waiting message
+  //       //   setTimeout(async () => {
+  //       //     setWaitingForVerification(false); // Hide waiting message after delay
+  //       //     await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
+  //       //     // await handleVerify(tokenAddress);
+  //       //   }, 120000); // Wait for 30 seconds before verifying
+  //       // } else {
+  //       //   console.error(
+  //       //     "Error: Deployed address or encoded message is missing",
+  //       //   );
+  //       //   setStatusMessage(
+  //       //     "Error: Deployed address or encoded message is missing",
+  //       //   );
+  //       // }
+  //     })().catch(console.error);
+  //   }
+  // }, [
+  //   isConfirmed,
+  //   result,
+  //   name,
+  //   symbol,
+  //   website,
+  //   description,
+  //   txHash,
+  //   logo,
+  //   enableBundle,
+  //   ethValue,
+  //   bundleList,
+  //   supply,
+  //   taxOnDexRecipientsAddrs,
+  //   taxOnDexPercentsArray,
+  //   uniV2Router,
+  //   uniV2WETH,
+  //   infoETHCurrentPrice,
+  //   bundleAddrs.length,
+  //   percentBundled,
+  // ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -2266,8 +2385,8 @@ export default function Launch(): JSX.Element {
 
           {/* {waitingForVerification && (
             <div>Please wait, we are waiting for the block to finalize....</div>
-          )}
-          {statusMessage && <div>{statusMessage}</div>} */}
+          )} */}
+          {/* {statusMessage && <div>{statusMessage}</div>} */}
         </div>
 
         <div className="mt-auto">
