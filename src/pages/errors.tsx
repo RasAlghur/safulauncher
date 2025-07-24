@@ -8,7 +8,7 @@ interface error {
 }
 export default function ErrorsPage() {
   const [errors, setErrors] = useState<error[]>([]);
-
+  const [file, setFile] = useState<File | null>(null);
   const fetchErrors = async () => {
     try {
       const req = await base.get("errors");
@@ -27,15 +27,46 @@ export default function ErrorsPage() {
     return () => clearInterval(intervalId);
   }, []);
 
+  const handleFile = () => {
+    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+    if (fileInput.files) {
+      setFile(fileInput.files[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append("status", "Published");
+    formData.append("title", "Introduction to crypto");
+    formData.append("description", "learn basic crypto data");
+    formData.append("level", "Beginner");
+    formData.append("type", "article");
+    if (file) formData.append("document", file);
+
+    const req = await fetch("http://localhost:3000/learning", {
+      method: "POST",
+      body: formData,
+    });
+
+    const res = await req.json();
+    console.log(res);
+  };
+// 0xbf310e2cb2cb53720a781e6e9e6ccb796c9646df;
+// 0x1F69bE6e06A2E5cFd1D9EF0dd9560f333fEc4518
   return (
-    <div className="space-y-10 p-10">
-      {errors.map((error, idx) => (
-        <div key={idx} className="bg-red-500 shadow-md rounded-md p-4 my-4">
-          <p>{error.timestamp}</p>
-          <p>{error.error}</p>
-          <p>{error.stack}</p>
-        </div>
-      ))}
+    <div>
+      <div className="space-y-10 p-10">
+        {errors.map((error, idx) => (
+          <div key={idx} className="bg-red-500 shadow-md rounded-md p-4 my-4">
+            <p>{error.timestamp}</p>
+            <p>{error.error}</p>
+            <p>{error.stack}</p>
+          </div>
+        ))}
+      </div>
+
+      <input type="file" name="" id="fileInput" onChange={handleFile} />
+      <button onClick={handleSubmit}>Submit Data</button>
     </div>
   );
 }
