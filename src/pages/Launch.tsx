@@ -1015,8 +1015,13 @@ export default function Launch(): JSX.Element {
     ]
   );
 
+  const percentBundled = (
+    (calculateBundleTokens(bundleEth, supply) / supply) *
+    100
+  ).toFixed(2);
+
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault();
 
       // Final validation check before submission
@@ -1027,6 +1032,27 @@ export default function Launch(): JSX.Element {
       }
 
       try {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("symbol", symbol);
+        formData.append("website", website);
+        formData.append("description", description);
+
+        // Add percentBundled to FormData
+        if (enableBundle && bundleAddrs.length > 0) {
+          formData.append("percentBundled", percentBundled.toString());
+        }
+
+        if (logo) formData.append("logo", logo);
+        const request = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}token`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const response = await request.json();
+        console.log(response);
         writeContract({
           ...LAUNCHER_ABI,
           functionName: "createToken",
@@ -1037,7 +1063,20 @@ export default function Launch(): JSX.Element {
         console.error(err);
       }
     },
-    [validateForm, argArray, ethValue, writeContract]
+    [
+      validateForm,
+      name,
+      symbol,
+      website,
+      description,
+      enableBundle,
+      bundleAddrs.length,
+      logo,
+      writeContract,
+      argArray,
+      ethValue,
+      percentBundled,
+    ]
   );
 
   const { data: uniV2Router } = useReadContract({
@@ -1086,61 +1125,24 @@ export default function Launch(): JSX.Element {
     }
   };
 
-  const percentBundled = (
-    (calculateBundleTokens(bundleEth, supply) / supply) *
-    100
-  ).toFixed(2);
-
   useEffect(() => {
-    if (isConfirmed && result) {
+    if (result) {
       (async () => {
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        // const provider = new ethers.BrowserProvider(window.ethereum);
 
-        // 1. fetch the block data by blockNumber
-        const block = await provider.getBlock(result.blockNumber);
+        // // 1. fetch the block data by blockNumber
+        // const block = await provider.getBlock(result.blockNumber);
 
-        // 2. convert UNIX timestamp to ISO string
-        let createdAt = "";
-        if (block && block.timestamp) {
-          // timestamp is in seconds, so multiply by 1 000 to get ms
-          const createdAtMs = block.timestamp * 1_000;
-          createdAt = new Date(createdAtMs).toISOString();
-          console.log("Created at: %s", createdAt);
-        }
+        // // 2. convert UNIX timestamp to ISO string
+        // let createdAt = "";
+        // if (block && block.timestamp) {
+        //   // timestamp is in seconds, so multiply by 1 000 to get ms
+        //   const createdAtMs = block.timestamp * 1_000;
+        //   createdAt = new Date(createdAtMs).toISOString();
+        //   console.log("Created at: %s", createdAt);
+        // }
 
         // 4. build FormData with on-chain timestamp
-        const formData = new FormData();
-        formData.append("name", name);
-        formData.append("symbol", symbol);
-        formData.append("website", website);
-        formData.append("description", description);
-        formData.append("tokenCreator", result.from);
-        formData.append("createdAt", createdAt);
-
-        // Add percentBundled to FormData
-        if (enableBundle && bundleAddrs.length > 0) {
-          formData.append("percentBundled", percentBundled.toString());
-        }
-
-        const lastLog = result.logs[result.logs.length - 1];
-        const topic1 = lastLog?.topics[1] ?? "";
-        const tokenAddress = topic1.length
-          ? ethers.getAddress("0x" + topic1.slice(-40))
-          : "";
-        formData.append("tokenAddress", tokenAddress);
-        if (logo) formData.append("logo", logo);
-
-        // await base.post("token", formData);
-        const request = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}token`,
-          {
-            method: "POST",
-            body: formData,
-            // Don't set Content-Type header - FormData will do it
-          }
-        );
-        const response = await request.json();
-        console.log(response);
 
         // Log bundle transactions for each wallet if bundling is enabled
         if (enableBundle && ethValue > 0n && bundleList.length > 0) {
@@ -1522,8 +1524,8 @@ export default function Launch(): JSX.Element {
                 <div
                   className={`border-2 border-dashed ${
                     dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d] 
-        flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer 
+                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+        flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
         transition duration-200 hover:opacity-80 w-[95%] lg:w-full relative`}
                   onClick={openFilePicker}
                   onDragEnter={handleDrag}
@@ -2168,7 +2170,7 @@ export default function Launch(): JSX.Element {
                   )}
 
                   {/*
-              
+
               {/* Bundle Toggle */}
                   <div className="flex justify-between items-center mt-[34px] md:mt-[80px] group relative">
                     <label className="text-[18px] font-semibold dark:text-white text-black font-raleway">

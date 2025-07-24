@@ -867,6 +867,7 @@ export default function Trade() {
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
+
   // Log transactions
   useEffect(() => {
     if (
@@ -878,8 +879,7 @@ export default function Trade() {
       !loggedTxns.current.has(txHash)
     ) {
       loggedTxns.current.add(txHash);
-
-      (async () => {
+      const postToSocket = async () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const block = await provider.getBlock(result.blockNumber);
@@ -910,25 +910,13 @@ export default function Trade() {
             oldMarketCap: marketCapUSD,
           };
 
-          const response = await base.post(`transaction`, body, {
-            headers: { "Content-Type": "application/json" },
-          });
-
           socket.emit("newTransaction", body);
-
-          if (response.status === 409) {
-            console.warn("Transaction already logged; skipping duplicate.");
-          } else {
-            console.log(
-              "Error logging transaction:",
-              response.status,
-              await response.data
-            );
-          }
         } catch (error) {
           console.error("Error logging transaction:", error);
         }
-      })();
+      };
+
+      postToSocket();
     }
   }, [
     isConfirmed,
@@ -973,7 +961,7 @@ export default function Trade() {
       console.log("called");
       if (tx.type === "buy" || tx.type === "sell") {
         setTxLogs((prevLogs) => {
-          const updated = [...prevLogs, tx];
+          const updated = [tx, ...prevLogs];
           if (isAutoUpdateEnabled) {
             setTimeout(() => loadChartData(true), 100);
           }

@@ -1,9 +1,9 @@
 // src/App.tsx
 import { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ChatWrapper from "./context/ChatWrapper";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import RocketLoader from "./components/generalcomponents/Loader";
+import ChatWrapper from "./context/ChatWrapper";
 import ErrorsPage from "./pages/errors";
 
 // Lazy load pages
