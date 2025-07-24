@@ -155,7 +155,7 @@ const Hero = () => {
               muted
               loop
               playsInline
-              preload="none"
+              preload="auto"
               className="rounded-full w-[300px] sm:size-[350px] lg:w-auto pr-[20px] hidden dark:block"
             >
               <source src={spinningMoon} type="video/webm" />

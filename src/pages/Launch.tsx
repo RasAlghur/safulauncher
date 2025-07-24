@@ -34,6 +34,7 @@ import { IoMdAddCircleOutline } from "react-icons/io";
 import { useUser } from "../context/user.context";
 import RocketLoader from "../components/generalcomponents/Loader";
 import { v4 as uuidv4 } from "uuid";
+import RocketSpinner from "../components/generalcomponents/RocketSpinner";
 
 /**
  * Description placeholder
@@ -1323,6 +1324,8 @@ export default function Launch(): JSX.Element {
 
   if (loading) return <RocketLoader />;
 
+  // const isTxProcessing = isPending || isConfirming;
+
   return (
     <>
       <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
@@ -1344,6 +1347,16 @@ export default function Launch(): JSX.Element {
             </p>
           </div>
           {/* Validation Errors Display */}
+
+          {/* {isTxProcessing && (
+            <RocketSpinner
+              message={
+                isPending
+                  ? "Waiting for wallet confirmation..."
+                  : "Deploying token to the blockchain..."
+              }
+            />
+          )} */}
 
           <form
             id="launch-form"
@@ -2341,7 +2354,14 @@ export default function Launch(): JSX.Element {
               {isFormValid ? (
                 <>
                   <span>
-                    {isPending ? "Pending..." : "Create Token"}
+                    {isPending ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <RocketSpinner />
+                        <span>Pending...</span>
+                      </span>
+                    ) : (
+                      "Create Token"
+                    )}
                     {/* <img src={rocket} alt="rocket" className="w-5 h-5" /> */}
                   </span>
                 </>

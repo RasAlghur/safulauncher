@@ -186,7 +186,7 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "Tokens Deployed",
+        title: "Tokens Deployed", // Change launched to deployed
         mainValue: `${pureMetrics?.[2] || 0}`,
         ethValue: "",
         icon: TokensLaunched,
