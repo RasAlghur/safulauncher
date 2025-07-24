@@ -22,12 +22,11 @@ import {
   SAFU_LAUNCHER_CA,
 } from "../web3/config";
 import { ethers } from "ethers";
-import { verifyContract } from "../web3/etherscan";
+// import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/generalcomponents/Footer";
 // import rocket from "../assets/rocket.png";
-import { base } from "../lib/api";
 import { CircleCheckBig, Upload, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";
 import { BsChevronDown } from "react-icons/bs";
@@ -230,9 +229,9 @@ export default function Launch(): JSX.Element {
     e.target.value = "";
   };
 
-  const [statusMessage, setStatusMessage] = useState("");
+  // const [statusMessage, setStatusMessage] = useState("");
   const [myStringIndex, setMyStringIndex] = useState(`token_${uuidv4()}`);
-  const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
+  // const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
   const [enableTaxOnDex, setEnableTaxOnDex] = useState(false);
@@ -1108,29 +1107,29 @@ export default function Launch(): JSX.Element {
   const infoETHCurrentPrice =
     isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
 
-  const handleVerify = async (
-    encodedMessageWithoutPrefix: string,
-    tokenAddress: string,
-  ) => {
-    // const handleVerify = async (tokenAddress: any) => {
-    try {
-      console.log(
-        "encodedMessage at handleVerify Func",
-        encodedMessageWithoutPrefix,
-      );
-      console.log("deployedAddress at handleVerify Func", tokenAddress);
-      const result = await verifyContract({
-        encodedMessageWithoutPrefix,
-        tokenAddress,
-      });
-      // const result = await verifyContract({ tokenAddress });
-      setStatusMessage("Verification request sent successfully!");
-      console.log(result); // Log the result if needed (status, or further information)
-    } catch (error) {
-      setStatusMessage("Error during verification. Please try again.");
-      console.error(error); // Log the error for debugging
-    }
-  };
+  // const handleVerify = async (
+  //   encodedMessageWithoutPrefix: string,
+  //   tokenAddress: string,
+  // ) => {
+  //   // const handleVerify = async (tokenAddress: any) => {
+  //   try {
+  //     console.log(
+  //       "encodedMessage at handleVerify Func",
+  //       encodedMessageWithoutPrefix,
+  //     );
+  //     console.log("deployedAddress at handleVerify Func", tokenAddress);
+  //     const result = await verifyContract({
+  //       encodedMessageWithoutPrefix,
+  //       tokenAddress,
+  //     });
+  //     // const result = await verifyContract({ tokenAddress });
+  //     setStatusMessage("Verification request sent successfully!");
+  //     console.log(result); // Log the result if needed (status, or further information)
+  //   } catch (error) {
+  //     setStatusMessage("Error during verification. Please try again.");
+  //     console.error(error); // Log the error for debugging
+  //   }
+  // };
 
   useEffect(() => {
     if (result) {
@@ -1163,24 +1162,24 @@ export default function Launch(): JSX.Element {
         );
         const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
 
-        // console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
+        console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
 
-        // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
-        if (encodedMessageWithoutPrefix) {
-          setWaitingForVerification(true); // Show waiting message
-          setTimeout(async () => {
-            setWaitingForVerification(false); // Hide waiting message after delay
-            await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
-            // await handleVerify(tokenAddress);
-          }, 120000); // Wait for 30 seconds before verifying
-        } else {
-          console.error(
-            "Error: Deployed address or encoded message is missing",
-          );
-          setStatusMessage(
-            "Error: Deployed address or encoded message is missing",
-          );
-        }
+        // // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
+        // if (encodedMessageWithoutPrefix) {
+        //   setWaitingForVerification(true); // Show waiting message
+        //   setTimeout(async () => {
+        //     setWaitingForVerification(false); // Hide waiting message after delay
+        //     await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
+        //     // await handleVerify(tokenAddress);
+        //   }, 120000); // Wait for 30 seconds before verifying
+        // } else {
+        //   console.error(
+        //     "Error: Deployed address or encoded message is missing",
+        //   );
+        //   setStatusMessage(
+        //     "Error: Deployed address or encoded message is missing",
+        //   );
+        // }
       })().catch(console.error);
     }
   }, [
@@ -2344,10 +2343,10 @@ export default function Launch(): JSX.Element {
             </p>
           )}
 
-          {waitingForVerification && (
+          {/* {waitingForVerification && (
             <div>Please wait, we are waiting for the block to finalize....</div>
-          )}
-          {statusMessage && <div>{statusMessage}</div>}
+          )} */}
+          {/* {statusMessage && <div>{statusMessage}</div>} */}
         </div>
 
         <div className="mt-auto">
