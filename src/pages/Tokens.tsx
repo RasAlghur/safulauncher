@@ -336,10 +336,15 @@ export default function Tokens() {
 
     const handleReceiveNewDeployment = (data: TokenMetadata) => {
       console.log("called", data);
-      // setTokens((prev) => {
-      //   const newTokens = [data, ...prev];
-      //   return newTokens;
-      // });
+      setFeaturedTokens((prev) => {
+        const newTokens = [data, ...prev];
+        return newTokens;
+      });
+
+      setTokens((prev) => {
+        const newTokens = [data, ...prev];
+        return newTokens;
+      });
     };
 
     socket.on("token_deployment", handleReceiveNewDeployment);

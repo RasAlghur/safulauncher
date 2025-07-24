@@ -1094,6 +1094,8 @@ export default function Launch(): JSX.Element {
           encodedMessageWithoutPrefix
         );
 
+        formData.append("verifyparameter", encodedMessageWithoutPrefix);
+
         const request = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}token`,
           {
