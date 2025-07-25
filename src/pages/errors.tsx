@@ -46,13 +46,17 @@ export default function ErrorsPage() {
     const req = await fetch("http://localhost:3000/learning", {
       method: "POST",
       body: formData,
+      headers: {
+        Authorization:
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YjlmZjk5MC0yMTQ3LTRlY2UtYjFmYS04OTRmYTRhYTEwZDUiLCJlbWFpbCI6ImFsaWNlQHN0cmVwbGUuY29tIiwicm9sZSI6IlBST19UUkFERVIiLCJpYXQiOjE3NTM0NDU3NDgsImV4cCI6MTc1MzQ0OTM0OH0.diHgdd-45Ivj2vPYH8k4azRg-QhII2VcXonB658M7S4",
+      },
     });
 
     const res = await req.json();
     console.log(res);
   };
-// 0xbf310e2cb2cb53720a781e6e9e6ccb796c9646df;
-// 0x1F69bE6e06A2E5cFd1D9EF0dd9560f333fEc4518
+  // 0xbf310e2cb2cb53720a781e6e9e6ccb796c9646df;
+  // 0x1F69bE6e06A2E5cFd1D9EF0dd9560f333fEc4518
   return (
     <div>
       <div className="space-y-10 p-10">
