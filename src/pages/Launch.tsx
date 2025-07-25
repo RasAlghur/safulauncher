@@ -35,6 +35,7 @@ import { useUser } from "../context/user.context";
 import RocketLoader from "../components/generalcomponents/Loader";
 import { v4 as uuidv4 } from "uuid";
 import RocketSpinner from "../components/generalcomponents/RocketSpinner";
+import RocketSpinner2 from "../components/generalcomponents/RocketSpinner2";
 
 /**
  * Description placeholder
@@ -1329,6 +1330,17 @@ export default function Launch(): JSX.Element {
   return (
     <>
       <div className="px-4 relative flex flex-col justify-center min-h-screen mountain">
+        {txHash && !isConfirmed && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 text-white">
+              <RocketSpinner2 />
+              <p className="text-lg md:text-xl lg:text-2xlfont-semibold animate-pulse">
+                Finalizing token deployment, please wait...
+              </p>
+            </div>
+          </div>
+        )}
+
         <Navbar />
         <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
           {[...Array(2)].map((_, i) => (
@@ -1346,17 +1358,6 @@ export default function Launch(): JSX.Element {
               reaches the bonding curve
             </p>
           </div>
-          {/* Validation Errors Display */}
-
-          {/* {isTxProcessing && (
-            <RocketSpinner
-              message={
-                isPending
-                  ? "Waiting for wallet confirmation..."
-                  : "Deploying token to the blockchain..."
-              }
-            />
-          )} */}
 
           <form
             id="launch-form"
@@ -2340,36 +2341,32 @@ export default function Launch(): JSX.Element {
             {/* Submit */}
             <button
               type="submit"
-              className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity ${
-                isPending || !isFormValid
-                  ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                  : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-              }`}
+              className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity
+    ${
+      isPending || isConfirming || !isFormValid
+        ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+        : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] cursor-pointer"
+    }`}
               disabled={isPending || isConfirming || !isFormValid}
-              style={{
-                opacity: !isFormValid ? 0.5 : 1,
-                cursor: !isFormValid ? "not-allowed" : "pointer",
-              }}
             >
               {isFormValid ? (
                 <>
                   <span>
                     {isPending ? (
-                      <span className="flex items-center justify-center gap-2">
+                      <span className="flex items-center justify-center gap-2 ">
                         <RocketSpinner />
                         <span>Pending...</span>
                       </span>
                     ) : (
-                      "Create Token"
+                      <p className="text-[17px]">Create Token</p>
                     )}
-                    {/* <img src={rocket} alt="rocket" className="w-5 h-5" /> */}
                   </span>
                 </>
               ) : (
                 "Fix Validation Errors"
               )}
             </button>
-            {validationErrors.length > 0 && (
+            {/* {validationErrors.length > 0 && (
               <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
                 <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
                   Please fix the following issues:
@@ -2383,7 +2380,7 @@ export default function Launch(): JSX.Element {
                   ))}
                 </ul>
               </div>
-            )}
+            )} */}
           </form>
 
           {error && (
@@ -2392,23 +2389,22 @@ export default function Launch(): JSX.Element {
             </p>
           )}
 
-          {isConfirmed && (
-            <p className="text-green-500 mt-2">
-              Token launched! Deployed Hash:{" "}
-              <a
-                href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Click Here
-              </a>
-            </p>
-          )}
-
-          {/* {waitingForVerification && (
-            <div>Please wait, we are waiting for the block to finalize....</div>
-          )} */}
-          {/* {statusMessage && <div>{statusMessage}</div>} */}
+          <div>
+            {isConfirmed && result?.transactionHash && (
+              <p className="text-white mt-2 text-center">
+                <span className="text-green-400">Token launched!</span> Deployed
+                Hash:{" "}
+                <a
+                  href={`https://sepolia.etherscan.io/tx/${result.transactionHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-blue-800"
+                >
+                  Click Here
+                </a>
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="mt-auto">

@@ -355,6 +355,10 @@ export default function Tokens() {
     };
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   // Handle click events to prevent nested anchor navigation
   // const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
   //   e.preventDefault();
