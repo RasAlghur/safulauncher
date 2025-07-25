@@ -10,6 +10,10 @@ const LaunchIntro = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       setLoading(false);
     }, 2000);

@@ -184,7 +184,7 @@ export default function LightweightChart({
       width: width || containerRef.current.clientWidth,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: "#0A0E17" },
+        background: { type: ColorType.Solid, color: "#0A0E17`" },
         textColor: "#D4D4D8",
         fontSize: 12,
         fontFamily:
@@ -357,72 +357,96 @@ export default function LightweightChart({
   };
 
   return (
-    <div className="chart-container bg-[#0A0E17] text-white relative overflow-hidden">
+    <div className="  text-white relative border border-white/10 rounded-b-xl overflow-hidden text-sm">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
-            <span className="text-lg font-semibold">{symbol}/USD</span>
+
+      {/*Header and Controls */}
+      <div className="flex items-center justify-between px-4 py-1 border-b border-white/10 bg-[#0B132B]">
+        <div className="flex items-center gap-4 ml-10 mt-1">
+          {/* PRICE / MCAP Toggle */}
+          <div className="text-sm text-white/60">
+            <span
+              onClick={() => setMetric("price")}
+              className={`cursor-pointer transition ${
+                metric === "price"
+                  ? "text-white font-semibold"
+                  : "hover:text-white/80"
+              }`}
+            >
+              PRICE
+            </span>
+            <span className="mx-1 text-white/40">/</span>
+            <span
+              onClick={() => setMetric("marketcap")}
+              className={`cursor-pointer transition ${
+                metric === "marketcap"
+                  ? "text-white font-semibold"
+                  : "hover:text-white/80"
+              }`}
+            >
+              MCAP
+            </span>
           </div>
-          {currentPrice && (
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold">
-                {metric === "price"
-                  ? formatPrice(currentPrice)
-                  : formatMarketCap(currentPrice * totalSupply)}
-              </span>
-              {priceChange && priceChangePercent && (
-                <div
-                  className={`flex items-center space-x-1 ${
-                    priceChange >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  <span>
-                    {priceChange >= 0 ? "+" : ""}
-                    {formatPrice(priceChange)}
-                  </span>
-                  <span>
-                    ({priceChange >= 0 ? "+" : ""}
-                    {priceChangePercent.toFixed(2)}%)
-                  </span>
-                </div>
-              )}
-            </div>
+
+          {/* ETH / USD Toggle */}
+          <div className="text-sm text-white/60">
+            <span
+              onClick={() => setCurrency("ETH")}
+              className={`cursor-pointer transition ${
+                currency === "ETH"
+                  ? "text-white font-semibold"
+                  : "hover:text-white/80"
+              }`}
+            >
+              ETH
+            </span>
+            <span className="mx-1 text-white/40">/</span>
+            <span
+              onClick={() => setCurrency("USD")}
+              className={`cursor-pointer transition ${
+                currency === "USD"
+                  ? "text-white font-semibold"
+                  : "hover:text-white/80"
+              }`}
+            >
+              USD
+            </span>
+          </div>
+
+          {/* Timestamp */}
+          <span className="text-white/40 ml-2 text-sm">
+            {new Date().toLocaleTimeString()} UTC
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className="text-white/70 text-base">{symbol}/USD</span>
+          {currentPrice !== undefined && (
+            <span className="text-[18px] font-semibold text-white">
+              {metric === "price"
+                ? formatPrice(currentPrice)
+                : formatMarketCap(currentPrice * totalSupply)}
+            </span>
+          )}
+          {priceChange !== undefined && priceChangePercent !== undefined && (
+            <span
+              className={`text-sm font-medium ${
+                priceChange >= 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {priceChange >= 0 ? "+" : ""}
+              {formatPrice(priceChange)} ({priceChangePercent.toFixed(2)}%)
+            </span>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-400">Volume</span>
-          <span className="text-sm">{volume}</span>
-          <div className="w-4 h-4 bg-gray-600 rounded"></div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center justify-between p-2 border-b border-gray-800">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() =>
-              setMetric((m) => (m === "price" ? "marketcap" : "price"))
-            }
-            className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
-          >
-            {metric === "price" ? "Price" : "MCap"}
-          </button>
-          <button
-            onClick={() => setCurrency((c) => (c === "ETH" ? "USD" : "ETH"))}
-            className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
-          >
-            {currency}
-          </button>
-          <div className="text-xs text-gray-400">
-            {new Date().toLocaleTimeString()} UTC
-          </div>
+        <div className="flex items-center space-x-1 text-xs text-white/60">
+          <span>Vol:</span>
+          <span className="text-white">{volume}</span>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="relative">
+      <div className="relative z-40 dark:bg-[#0B132B] bg-white rounded-b-xl overflow-hidden">
         <div
           ref={containerRef}
           style={{ width: "100%", height: `${height}px` }}

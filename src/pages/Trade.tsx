@@ -45,7 +45,12 @@ import { Upload } from "lucide-react";
 import { base } from "../lib/api";
 import { socket } from "../lib/socket";
 import Chat from "./chat";
-import { FaArrowDown, FaEthereum } from "react-icons/fa";
+import {
+  FaArrowDown,
+  FaChevronLeft,
+  FaChevronRight,
+  FaEthereum,
+} from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
 import { useUser } from "../context/user.context";
 
@@ -252,6 +257,14 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState<"transactions" | "chat">(
     "transactions"
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const transactionsPerPage = 25;
+
+  const indexOfLastTx = currentPage * transactionsPerPage;
+  const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
+  const currentTxLogs = txLogs.slice(indexOfFirstTx, indexOfLastTx);
+
+  const totalPages = Math.ceil(txLogs.length / transactionsPerPage);
 
   const [wlCsvText, setWlCsvText] = useState("");
 
@@ -420,6 +433,10 @@ export default function Trade() {
       setFallbackAmountOut(null);
     }
   }, [isConnected, tokenAddress, ethValue, tokenValue, mode]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [txLogs]);
 
   // Update your amountOutSelect logic
   const amountOutSelect = isConnected ? amountOut : fallbackAmountOut;
@@ -1627,6 +1644,8 @@ export default function Trade() {
     }
   };
 
+  console.log(txLogs);
+
   // Loading state
   if (isLoadingToken) {
     return (
@@ -1694,9 +1713,9 @@ export default function Trade() {
       <div className="lg:size-[30rem] lg:w-[40rem] rounded-full bg-[#3BC3DB]/10 absolute top-[800px] -left-40 blur-3xl hidden dark:block"></div>
 
       <div className="mx-auto pt-24 mb-20 px-4 lg:px-0 relative text-white max-w-[85rem]">
-        <div className="lg:grid lg:grid-cols-[.45fr_.55fr] gap-10">
+        <div className="lg:flex gap-10">
           {/* Left section */}
-          <div>
+          <div className="w-full lg:w-[45%]">
             {/* Heading and Admin Panel */}
             <div>
               {/* Always Visible Heading */}
@@ -2224,7 +2243,7 @@ export default function Trade() {
             {/* )} */}
 
             {/* Progress Bar */}
-            <div className="progress-section mt-1">
+            <div className="progress-section mt-1 ">
               <div className="progress-label dark:text-white text-[#141313]/90 font-medium font-raleway mb-1">
                 Bonding Curve Progress:{" "}
                 {isLoadingInfoData ? (
@@ -2281,7 +2300,7 @@ export default function Trade() {
 
           {/* Right section */}
 
-          <div>
+          <div className="w-full lg:w-[55%]">
             <div className="">
               {/* Tab Buttons */}
 
@@ -2291,32 +2310,38 @@ export default function Trade() {
 
               {/* Chart Tab Content */}
 
-              <div className="space-y-4">
+              <div className="">
                 {/* Chart Header */}
-                <div className="chart-header flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
+                <div className="chart-header bg-[#0B132B] border border-white/10 rounded-t-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between text-white text-sm">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <TimeframeSelector
                       selectedTimeframe={selectedTimeframe}
                       onTimeframeChange={handleTimeframeChange}
                       disabled={isLoadingChart}
                     />
+
                     <button
                       type="button"
-                      className={`auto-update-toggle ${
-                        isAutoUpdateEnabled ? "active" : ""
-                      }`}
                       onClick={toggleAutoUpdate}
                       title={
                         isAutoUpdateEnabled
                           ? "Disable auto-update"
                           : "Enable auto-update"
                       }
+                      className={`px-3 py-[3px] rounded text-xs font-medium ${
+                        isAutoUpdateEnabled
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      } transition duration-150`}
                     >
-                      {isAutoUpdateEnabled ? "🔄 Auto" : "⏸️ Manual"}
+                      {isAutoUpdateEnabled ? "Auto" : "Manual"}
                     </button>
-                    <div className="text-sm dark:text-white/60 text-black">
+
+                    <div className="text-xs text-white/50 ml-1">
                       Last updated:{" "}
-                      {new Date(lastUpdateTime).toLocaleTimeString()}
+                      <span className="text-white">
+                        {new Date(lastUpdateTime).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2324,7 +2349,7 @@ export default function Trade() {
                 {/* Chart Container */}
                 <div className="chart-container">
                   {isLoadingChart ? (
-                    <div className="chart-loading flex flex-col items-center gap-2">
+                    <div className="chart-loading h-[350px] flex flex-col items-center gap-2">
                       <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
                       <p className="text-sm text-white/60">
                         Loading chart data...
@@ -2334,7 +2359,7 @@ export default function Trade() {
                     <LightweightChart
                       data={ohlc}
                       timeframe={selectedTimeframe.resolution}
-                      height={350}
+                      height={390}
                       ethToUsdRate={infoETHCurrentPrice}
                       totalSupply={tokenSupply / 1e18}
                       symbol={token.symbol}
@@ -2380,66 +2405,98 @@ export default function Trade() {
               </div>
 
               {/* Tabs Content */}
-              <div className=" backdrop-blur-md p-4">
+              <div className=" backdrop-blur-md py-4">
                 {activeTab === "transactions" ? (
-                  <div className="tx-table overflow-x-auto">
-                    <table className="min-w-[600px] md:min-w-full text-sm dark:text-white/80">
-                      <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-white/10">
-                        <tr>
-                          <th>Type</th>
-                          <th>Wallet</th>
-                          <th>ETH</th>
-                          <th>{token.symbol}</th>
-                          <th>Txn</th>
-                          <th>Date / Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {txLogs.map((tx, i) => (
-                          <tr key={i} className="mb-4">
-                            <td
-                              className={`font-medium py-3 flex items-center gap-2 ${
-                                tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
-                              }`}
-                            >
-                              {tx.type === "buy" ? (
-                                <MdAddCircleOutline className="text-[22px]" />
-                              ) : (
-                                <GrSubtractCircle className="text-xl" />
-                              )}
-                              {tx.type.charAt(0).toUpperCase() +
-                                tx.type.slice(1)}
-                            </td>
-
-                            <td className="dark:text-white/80 text-[#141313] font-semibold">
-                              {tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}
-                            </td>
-                            <td className="dark:text-white/80 text-[#141313] font-semibold">
-                              {Number(tx.ethAmount).toFixed(4)}
-                            </td>
-                            <td className="dark:text-white/80 text-[#141313] font-semibold">
-                              {Number(tx.tokenAmount).toLocaleString()}
-                            </td>
-                            <td>
-                              <a
-                                href={`https://etherscan.io/tx/${tx.txnHash}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-blue-400 hover:underline"
-                              >
-                                {tx.txnHash.slice(0, 8)}…{tx.txnHash.slice(-6)}
-                              </a>
-                            </td>
-                            <td className="dark:text-white/80 text-[#141313] font-semibold">
-                              {formatUTC(tx.timestamp)}
-                            </td>
+                  <>
+                    <div className="tx-table overflow-x-auto max-h-[500px] overflow-y-auto">
+                      <table className="min-w-[600px] md:min-w-full text-sm dark:text-white/80">
+                        <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-black/10 border-b-2 dark:border-b-white/20 ">
+                          <tr>
+                            <th className="py-3 pl-1">Type</th>
+                            <th className="py-3">Wallet</th>
+                            <th className="py-3">ETH</th>
+                            <th className="py-3">{token.symbol}</th>
+                            <th className="py-3">Txn</th>
+                            <th className="py-3">Date / Time</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {currentTxLogs.map((tx, i) => (
+                            <tr
+                              key={i}
+                              className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none"
+                            >
+                              <td
+                                className={`font-medium py-3 pl-1 flex items-center gap-1 ${
+                                  tx.type === "buy"
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                }`}
+                              >
+                                {tx.type === "buy" ? (
+                                  <MdAddCircleOutline className="text-[22px]" />
+                                ) : (
+                                  <GrSubtractCircle className="text-xl" />
+                                )}
+                                {tx.type.charAt(0).toUpperCase() +
+                                  tx.type.slice(1)}
+                              </td>
+
+                              <td className="dark:text-white/80 text-[#141313] font-semibold">
+                                {tx.wallet.slice(0, 6)}…{tx.wallet.slice(-4)}
+                              </td>
+                              <td className="dark:text-white/80 text-[#141313] font-semibold">
+                                {Number(tx.ethAmount).toFixed(4)}
+                              </td>
+                              <td className="dark:text-white/80 text-[#141313] font-semibold">
+                                {Number(tx.tokenAmount).toLocaleString()}
+                              </td>
+                              <td>
+                                <a
+                                  href={`https://etherscan.io/tx/${tx.txnHash}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-blue-400 hover:underline"
+                                >
+                                  {tx.txnHash.slice(0, 8)}…
+                                  {tx.txnHash.slice(-6)}
+                                </a>
+                              </td>
+                              <td className="dark:text-white/80 text-[#141313] font-semibold">
+                                {formatUTC(tx.timestamp)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex justify-center items-center gap-2 mt-4">
+                      <button
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(p - 1, 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="p-2 bg-[#0C8CE0] text-white rounded-full disabled:opacity-50"
+                      >
+                        <FaChevronLeft />
+                      </button>
+
+                      <span className="px-2 text-sm text-gray-600 dark:text-white/70">
+                        Page {currentPage} of {totalPages}
+                      </span>
+
+                      <button
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(p + 1, totalPages))
+                        }
+                        disabled={currentPage === totalPages}
+                        className="p-2 bg-[#0C8CE0] text-white rounded-full disabled:opacity-50"
+                      >
+                        <FaChevronRight />
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <div className="">
                     <Chat address={address} tokenAddress={tokenAddress} />
