@@ -623,7 +623,9 @@ export default function Trade() {
             t: timestamp,
           },
         });
-        const ohlcData = await ohlcResponse.data.data.data;
+
+        console.log("ohlcResponse", ohlcResponse.data.data);
+        const ohlcData = await ohlcResponse.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
           const formattedData = ohlcData
@@ -842,7 +844,7 @@ export default function Trade() {
 
       // Immediate chart update after successful transaction
       if (lastTxnType === "buy" || lastTxnType === "sell") {
-        console.log("Transaction confirmed, updating chart immediately");
+        // console.log("Transaction confirmed, updating chart immediately");
         // Small delay to ensure backend has processed the transaction
         setTimeout(() => {
           loadChartData(true);
@@ -958,7 +960,7 @@ export default function Trade() {
     }
 
     const handleReceiveTransaction = (tx: TxLog) => {
-      console.log("called");
+      // console.log("called");
       if (tx.type === "buy" || tx.type === "sell") {
         setTxLogs((prevLogs) => {
           const updated = [tx, ...prevLogs];
@@ -1136,8 +1138,8 @@ export default function Trade() {
     [isWhiteListOngoing, whitelistUpload]
   );
 
-  console.log("wlArray", wlArray);
-  console.log("initialCapsBps", initialCapsBps);
+  // console.log("wlArray", wlArray);
+  // console.log("initialCapsBps", initialCapsBps);
 
   const parseWlCsv = (text: string) => {
     const rawLines = text
@@ -1415,11 +1417,11 @@ export default function Trade() {
     setErrorMsg("");
     setLastTxnType("addToWhitelist");
 
-    console.log("calling addToWhitelist with", {
-      tok: tokenAddress,
-      list: wlArray,
-      caps: initialCapsBps,
-    });
+    // console.log("calling addToWhitelist with", {
+    //   tok: tokenAddress,
+    //   list: wlArray,
+    //   caps: initialCapsBps,
+    // });
 
     writeContract({
       ...LAUNCHER_ABI,
