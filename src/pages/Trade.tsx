@@ -957,6 +957,8 @@ export default function Trade() {
       const response = await base.get(
         `transactions?tokenAddress=${tokenAddress}`
       );
+
+      console.log(response);
       const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
