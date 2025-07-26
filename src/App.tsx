@@ -32,7 +32,7 @@ function App() {
             <Route path="/trade/:tokenAddress" element={<Trade />} />
             <Route path="/chat/:tokenAddress" element={<ChatWrapper />} />
             <Route path="/track-error" element={<ErrorsPage />} />
-            <Route path="/track-buy" element={<TrackBuy />} />
+            <Route path="/track-event" element={<TrackBuy />} />
           </Routes>
         </Suspense>
       </main>
