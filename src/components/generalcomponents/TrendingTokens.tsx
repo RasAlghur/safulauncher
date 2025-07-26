@@ -103,10 +103,15 @@ const TrendingTokens = () => {
             params: { timestamp: sinceTime },
           }),
         ]);
+
         const tokenLogs = Logs.status === "fulfilled" ? Logs.value : null;
         const count =
           messageCount.status === "fulfilled" ? messageCount.value : null;
 
+        // 👇—> log the raw data for full inspection
+        console.log("Logs:", tokenLogs?.data.data);
+        console.log("MessageCount:", count?.data.data);
+        
         return {
           token: tokenLogs?.data.data || [],
           messageCount: count?.data.data || [],
@@ -331,11 +336,10 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange
+              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
                   ? "bg-[#1D223E] text-white"
                   : "text-gray-400 hover:text-white"
-              }`}
+                }`}
             >
               {range}
             </button>
@@ -382,9 +386,8 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                data.token.image?.path
-                              }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
+                                }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -406,11 +409,10 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0
+                        className={`p-3 font-semibold ${data.priceChange < 0
                             ? "text-red-500"
                             : "text-green-400"
-                        }`}
+                          }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
