@@ -1,9 +1,10 @@
 import { memo, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import piechart from "../../assets/piechart.png";
-import piechartWhite from "../../assets/piechart-white.png";
+// import piechart from "../../assets/piechart.png";
+// import piechartWhite from "../../assets/piechart-white.png";
 import DustParticles from "../generalcomponents/DustParticles";
+import PieChart from "../generalcomponents/Piechart";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -94,23 +95,7 @@ const Tokenomics = () => {
 
           {/* Chart + Distribution */}
           <div className="flex flex-col md:flex-row items-center justify-between lg:gap-8">
-            {/* Chart */}
-            <img
-              src={piechart}
-              alt="Pie chart dark"
-              className="w-full max-w-md hidden dark:block piechart"
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-            />
-            <img
-              src={piechartWhite}
-              alt="Pie chart light"
-              className="w-full max-w-md dark:hidden piechart"
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-            />
+            <PieChart />
 
             {/* Distribution */}
             <div className="space-y-4">

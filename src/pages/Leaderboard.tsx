@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/launchintro/Navbar";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
@@ -188,17 +188,25 @@ export default function Leaderboard() {
     page * ITEMS_PER_PAGE
   );
 
-  function formatUTC(iso: string) {
-    return new Date(iso).toLocaleString("en-GB", {
+  function formatUTC(isoString: string): string {
+    const date = new Date(isoString);
+
+    const formattedDate = date.toLocaleDateString("en-US", {
       timeZone: "UTC",
-      hour12: true,
-      day: "2-digit",
-      month: "2-digit",
       year: "numeric",
-      hour: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const formattedTime = date.toLocaleTimeString("en-US", {
+      timeZone: "UTC",
+      hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
+      hour12: true,
     });
+
+    return `${formattedDate}, ${formattedTime}`;
   }
 
   if (loading) {
@@ -283,7 +291,7 @@ export default function Leaderboard() {
                   <th className="px-6 py-3">S/N</th>
                   <th className="px-6 py-3">Wallet</th>
                   <th className="px-6 py-3">Volume</th>
-                  <th className="px-6 py-3">Last Purchase</th>
+                  <th className="px-6 py-3">Last Purchase (UTC)</th>
                 </tr>
               </thead>
               <tbody className="text-white/90">

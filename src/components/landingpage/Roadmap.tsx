@@ -73,7 +73,7 @@ const Roadmap = () => {
           <div className="flex flex-col space-y-16 sm:space-y-32 xl:mt-40 mt-[60px] sm:mt-[60px]">
             <div className="first-div">
               <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
-                Q2 2025
+                Q3 2025
               </h2>
               <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
                 <li className="list-disc ">
@@ -87,7 +87,7 @@ const Roadmap = () => {
             </div>
             <div className="third-div">
               <h2 className="font-raleway text-[#0C8CE0] font-semibold text-right text-base sm:text-lg md:text-xl">
-                Q4 2025
+                Q1 2026
               </h2>
               <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
                 <li className="list-disc">
@@ -130,7 +130,7 @@ const Roadmap = () => {
             <div className="flex flex-col space-y-20 sm:space-y-32">
               <div className="second-div">
                 <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
-                  Q3 2025
+                  Q4 2025
                 </h2>
                 <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
                   <li className="list-disc">
@@ -144,7 +144,7 @@ const Roadmap = () => {
               </div>
               <div className="fourth-div">
                 <h2 className="font-raleway text-[#0C8CE0] font-semibold text-left text-base sm:text-lg md:text-xl">
-                  2026 and Beyond
+                  Q2 2026 and Beyond
                 </h2>
                 <ul className="text-black dark:text-[#B6B6B6] space-y-2 text-[13px] lg:text-base leading-relaxed">
                   <li className="list-disc">

@@ -25,7 +25,7 @@ import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
 import DustParticles from "../components/generalcomponents/DustParticles";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 // import rocket from "../assets/rocket.png";
 import { CircleCheckBig, Upload, UploadCloud } from "lucide-react";
 import { X } from "lucide-react";

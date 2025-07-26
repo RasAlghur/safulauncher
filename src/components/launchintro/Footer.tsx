@@ -1,22 +1,10 @@
 import logo from "../../assets/logo.png";
-import DustParticles from "./DustParticles";
-import { useState } from "react";
-
-const menuItems = [
-  { label: "Platform Stats", href: "#stats" },
-  { label: "Key Benefit", href: "#benefit" },
-  { label: "How it works", href: "#howitworks" },
-  { label: "Tokenomics", href: "#tokenomics" },
-  { label: "Why Safu Launcher", href: "#whysafu" },
-  { label: "Roadmap", href: "#roadmap" },
-];
+import DustParticles from "../generalcomponents/DustParticles";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
-  const [activeLink, setActiveLink] = useState("#home");
+  const navigate = useNavigate();
 
-  const handleSetActive = (link: string) => {
-    setActiveLink(link);
-  };
   return (
     <footer className="pt-6 pb-10 footer-snow">
       <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
@@ -25,25 +13,29 @@ const Footer = () => {
         ))}
       </div>
       <div className="lg:size-[30rem] lg:w-[50rem] lg:h-[15rem] rounded-full bg-[#3BC3DB]/10 absolute top-6 -right-40 blur-3xl hidden dark:block"></div>
-      <div className="border-b border-b-black/15 dark:border-b-white/20 max-w-[1300px] mx-auto flex flex-col md:flex-row gap-2 justify-between items-center pb-4">
+      <div className="border-b border-b-black/15 dark:border-b-white/20 max-w-[1200px] mx-auto flex flex-col md:flex-row gap-2 justify-between items-center pb-4">
         <a href="/">
           <img src={logo} alt="logo" className="" />
         </a>
+
         <ul className="flex flex-col md:flex-row items-center gap-6 font-raleway font-medium">
-          {menuItems.map(({ label, href }) => (
-            <li key={href}>
-              <a
-                href={href}
-                className={`transition ${
-                  activeLink === href
-                    ? "text-[#0C8CE0]"
-                    : "dark:text-white text-black"
-                } hover:text-Purple`}
-                onClick={() => handleSetActive(href)}
-              >
-                {label}
-              </a>
-            </li>
+          {[
+            { to: "/launchintro", title: "Home" },
+            { to: "/tokens", title: "Token" },
+            { to: "/launch", title: "Launch" },
+            { to: "/leaderboard", title: "Leaderboard" },
+            { to: "/profile", title: "Profile" },
+          ].map(({ to, title }) => (
+            <a
+              key={title}
+              href={to}
+              className=" dark:text-white text-black font-raleway text-lg"
+              onClick={() => {
+                navigate(to);
+              }}
+            >
+              {title}
+            </a>
           ))}
         </ul>
 

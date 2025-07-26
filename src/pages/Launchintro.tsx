@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import Hero from "../components/launchintro/Hero";
 import PlatformStats from "../components/generalcomponents/PlatformStats";
 import HowItWorks from "../components/generalcomponents/HowItWorks";

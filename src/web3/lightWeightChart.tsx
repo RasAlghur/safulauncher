@@ -446,7 +446,7 @@ export default function LightweightChart({
       </div>
 
       {/* Chart */}
-      <div className="relative z-40 dark:bg-[#0B132B] bg-white rounded-b-xl overflow-hidden">
+      <div className="relative z-20 dark:bg-[#0B132B] bg-white rounded-b-xl overflow-hidden">
         <div
           ref={containerRef}
           style={{ width: "100%", height: `${height}px` }}

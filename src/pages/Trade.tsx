@@ -34,7 +34,7 @@ import {
 } from "../web3/readContracts";
 import LightweightChart from "../web3/lightWeightChart";
 import TimeframeSelector from "../web3/timeframeSelector";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { FiCheckCircle } from "react-icons/fi";
 import { MdOutlineCancel } from "react-icons/md";
@@ -49,10 +49,40 @@ import {
   FaArrowDown,
   FaChevronLeft,
   FaChevronRight,
+  FaChevronDown,
   FaEthereum,
 } from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
 import { useUser } from "../context/user.context";
+// import TopHolders from "../lib/TopHolders";
+
+// Define this function outside your component
+const gradientSteps = [
+  { threshold: 9, color: "#dc2626" }, // Red
+  { threshold: 13, color: "#f87171" }, // Light Red
+  { threshold: 20, color: "#f97316" }, // Orange
+  { threshold: 28, color: "#fb923c" }, // Another Orange
+  { threshold: 38, color: "#60a5fa" }, // Light Blue
+  { threshold: 49, color: "#3b82f6" }, // Darker Blue
+  { threshold: 65, color: "#eab308" }, // Lemon
+  { threshold: 73, color: "#86efac" }, // Light Green
+  { threshold: 85, color: "#22c55e" }, // Medium Green
+  { threshold: 94, color: "#16a34a" }, // Deeper Green
+  { threshold: 100, color: "#14532d" }, // Dark Green
+];
+
+function getProgressGradient(progress: number): string {
+  const activeStops = gradientSteps
+    .filter((step) => progress >= step.threshold)
+    .map((step) => step.color);
+
+  // Always start with the first color, even if progress is 0
+  if (activeStops.length === 0) {
+    activeStops.push(gradientSteps[0].color);
+  }
+
+  return `linear-gradient(to right, ${activeStops.join(", ")})`;
+}
 
 /**
  * Description placeholder
@@ -91,6 +121,7 @@ interface TokenMetadata {
  * @typedef {TxLog}
  */
 interface TxLog {
+  oldMarketCap: number;
   type: "buy" | "sell";
   wallet: string;
   ethAmount: string;
@@ -178,16 +209,24 @@ const TIMEFRAME_OPTIONS: TimeframeOption[] = [
  * @returns {string}
  */
 function formatUTC(isoString: string): string {
-  return new Date(isoString).toLocaleString("en-GB", {
+  const date = new Date(isoString);
+
+  const formattedDate = date.toLocaleDateString("en-US", {
     timeZone: "UTC",
-    hour12: true,
-    day: "2-digit",
-    month: "2-digit",
     year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const formattedTime = date.toLocaleTimeString("en-US", {
+    timeZone: "UTC",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+    hour12: true,
   });
+
+  return `${formattedDate}, ${formattedTime}`;
 }
 
 /**
@@ -213,7 +252,7 @@ function isValidEthereumAddress(address: string): boolean {
 
 function formatTokenAmount(
   amount: string | number,
-  decimals: number = 4
+  decimals: number = 2
 ): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return num.toLocaleString(undefined, { maximumFractionDigits: decimals });
@@ -957,8 +996,6 @@ export default function Trade() {
       const response = await base.get(
         `transactions?tokenAddress=${tokenAddress}`
       );
-
-      console.log(response);
       const all: TxLog[] = await response.data.data.data;
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
@@ -1018,6 +1055,27 @@ export default function Trade() {
   const volume1dUsd = volume1dEth * infoETHCurrentPrice;
   const volume7dUsd = volume7dEth * infoETHCurrentPrice;
   const volumeAllUsd = volumeAllEth * infoETHCurrentPrice;
+
+  const volumeOptions = [
+    {
+      label: "Today",
+      eth: volume1dEth,
+      usd: volume1dUsd,
+    },
+    {
+      label: "7 Days",
+      eth: volume7dEth,
+      usd: volume7dUsd,
+    },
+    {
+      label: "All Time",
+      eth: volumeAllEth,
+      usd: volumeAllUsd,
+    },
+  ];
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedVolume, setSelectedVolume] = useState(volumeOptions[0]);
 
   const performance1dPrice = (logs: TxLog[]) => {
     if (logs.length === 0) return 0;
@@ -1923,20 +1981,26 @@ export default function Trade() {
                   {
                     label: "Dev Bundled",
                     value: isBundled,
-                    extra: `${token?.percentBundled ?? 0}%`,
+                    extra: isBundled
+                      ? `${token?.percentBundled ?? 0}%`
+                      : undefined,
                   },
                   { label: "Tax on Dex", value: isTaxedOnDex },
                   {
                     label: "Tax on SafuLauncher",
                     value: IsTaxedOnSafu,
-                    extra: `${taxOnSafuBps ?? 0}%`,
+                    extra: IsTaxedOnSafu ? `${taxOnSafuBps ?? 0}%` : undefined,
                   },
                   { label: "Whitelist Ongoing", value: isWhiteListOngoing },
                   {
                     label: "Max wallet size on SafuLauncher",
                     value: isMaxWalletOnSafu,
-                    extra: `${maxWalletAmountOnSafu ?? 0}%`,
+                    extra:
+                      isMaxWalletOnSafu !== 0
+                        ? `${maxWalletAmountOnSafu ?? 0}%`
+                        : undefined,
                   },
+
                   // {
                   //   label: "Tier 1",
                   //   value: `tier1Holder`,
@@ -2011,41 +2075,6 @@ export default function Trade() {
                     </div>
                   </div>
                 ))}
-              </div>
-
-              <div className="rounded-xl p-5 mt-6 dark:bg-white/5 bg-[#141313]/4 border border-white/10 backdrop-blur-md space-y-3 hidden">
-                <h2 className="text-xl font-semibold dark:text-white text-black flex items-center font-raleway">
-                  Volume Summary
-                </h2>
-                <div className="space-y-1 ">
-                  <p className="flex justify-between">
-                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                      Today
-                    </span>
-                    <span className="dark:text-white text-black">
-                      {volume1dEth.toFixed(4)} ETH ($
-                      {volume1dUsd.toLocaleString()})
-                    </span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                      7 Days
-                    </span>
-                    <span className="dark:text-white text-black">
-                      {volume7dEth.toFixed(4)} ETH ($
-                      {volume7dUsd.toLocaleString()})
-                    </span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                      All Time
-                    </span>
-                    <span className="dark:text-white text-black">
-                      {volumeAllEth.toFixed(4)} ETH ($
-                      {volumeAllUsd.toLocaleString()})
-                    </span>
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -2256,48 +2285,61 @@ export default function Trade() {
               </div>
 
               {/* Styled progress bar with dynamic gradient */}
-              <div className="bg-[#031E51] h-[30px] rounded-full w-full max-w-[40rem] p-1.5 relative overflow-hidden mb-4">
-                <p className="absolute right-4 top-2 text-white text-[13px] font-semibold z-10 flex items-center justify-end">
-                  {isLoadingInfoData ? (
-                    <span className="inline-block w-16 h-4 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
-                  ) : (
-                    `${curvePercentClamped.toFixed(0)}%`
-                  )}
+              <div className="w-full max-w-[40rem] bg-[#031E51]/95 h-[30px] border-2 border-[#031E51] rounded-full overflow-hidden relative mt-auto p-1.5">
+                {/* Percentage Label */}
+                <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
+                  {isLoadingInfoData
+                    ? "Loading..."
+                    : `${curvePercentClamped.toFixed(2) ?? "0"}%`}
                 </p>
+
+                {!isLoadingInfoData &&
+                  Array.from({ length: 50 }).map((_, i) => {
+                    if (i === 0) return null; // 👈 Skip the first stripe
+                    const stripeWidth = 4;
+                    const spacing = 100 / 50;
+                    return (
+                      <div
+                        key={i}
+                        className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
+                        style={{
+                          width: `${stripeWidth}px`,
+                          left: `calc(${(i * spacing).toFixed(2)}% - ${
+                            stripeWidth / 2
+                          }px)`,
+                        }}
+                      />
+                    );
+                  })}
+
+                {/* Progress Fill */}
                 {(() => {
                   const progress = curveProgressMap[token.tokenAddress] || 0;
+                  const gradientStyle: React.CSSProperties = {};
 
-                  // Choose gradient style based on progress
-                  let gradientClass = "bg-orange-700";
-
-                  if (progress >= 70) {
-                    gradientClass =
-                      "bg-gradient-to-r from-green-500 to-green-300";
-                  } else if (progress >= 40) {
-                    gradientClass =
-                      "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                  if (!isLoadingInfoData) {
+                    gradientStyle.backgroundImage =
+                      getProgressGradient(progress);
                   }
 
                   return (
                     <div
-                      className={`h-full ${
+                      className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
                         progress < 100 ? "rounded-l-full" : "rounded-full"
-                      } relative transition-all duration-500 ease-in-out ${gradientClass}`}
-                      style={{ width: `${progress}%` }}
-                    >
-                      {/* Decorative vertical bars */}
-                      {Array.from({ length: 20 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0"
-                          style={{ left: `${31 * (i + 1)}px` }}
-                        ></div>
-                      ))}
-                    </div>
+                      } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                      style={{
+                        width: `${isLoadingInfoData ? 0 : progress}%`,
+                        ...gradientStyle,
+                      }}
+                    />
                   );
                 })()}
               </div>
             </div>
+
+            {/* Top Holders */}
+            {/* <TopHolders tokenAddress={tokenAddress || "0x...fallback"} /> */}
+            {/* <TopHolders /> */}
           </div>
 
           {/* Right section */}
@@ -2305,10 +2347,32 @@ export default function Trade() {
           <div className="w-full lg:w-[55%]">
             <div className="">
               {/* Tab Buttons */}
+              <div className="flex flex-col md:flex-row gap-2 justify-between md:items-center mb-2">
+                <h1 className="text-left text-[20px] font-raleway font-medium dark:text-white text-black">
+                  Chart
+                </h1>
 
-              <h1 className="text-[20px] font-raleway font-medium dark:text-white text-black mb-4">
-                Chart
-              </h1>
+                <div className="flex items-center gap-2">
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                    <p className="dark:text-white text-black">
+                      <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                        Token Supply:
+                      </span>{" "}
+                      {(tokenSupply / 1e18).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                    <p className="dark:text-white text-black">
+                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                        Market Cap:
+                      </span>{" "}
+                      {marketCapUSD > 0
+                        ? `$${formatTokenAmount(marketCapUSD)}`
+                        : "Calculating..."}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Chart Tab Content */}
 
@@ -2345,6 +2409,51 @@ export default function Trade() {
                         {new Date(lastUpdateTime).toLocaleTimeString()}
                       </span>
                     </div>
+                  </div>
+                  {/* Volume summary */}
+                  {/* Volume dropdown display */}
+                  <div
+                    className="relative z-30"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    <div className="cursor-pointer dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center gap-2">
+                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                        Volume ({selectedVolume.label}):
+                      </span>
+                      <span className="dark:text-white text-black whitespace-nowrap">
+                        {selectedVolume.eth.toFixed(4)} ETH ($
+                        {selectedVolume.usd.toLocaleString()})
+                      </span>
+                      <FaChevronDown
+                        className={`ml-1 text-sm transition-transform cursor-pointer ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </div>
+
+                    {/* Dropdown menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute z-10 mt-1 right-0 bg-white dark:bg-[#0B132B] border border-white/10 rounded-lg shadow-lg w-max">
+                        {volumeOptions.map((option) => (
+                          <div
+                            key={option.label}
+                            onClick={() => {
+                              setSelectedVolume(option);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 text-sm cursor-pointer flex justify-between gap-4"
+                          >
+                            <span className="text-[#FF0199] dark:text-[#EA971C] font-medium">
+                              {option.label}
+                            </span>
+                            <span className="dark:text-white text-black whitespace-nowrap">
+                              {option.eth.toFixed(4)} ETH ($
+                              {option.usd.toLocaleString()})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2415,11 +2524,12 @@ export default function Trade() {
                         <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-black/10 border-b-2 dark:border-b-white/20 ">
                           <tr>
                             <th className="py-3 pl-1">Type</th>
-                            <th className="py-3">Wallet</th>
-                            <th className="py-3">ETH</th>
-                            <th className="py-3">{token.symbol}</th>
-                            <th className="py-3">Txn</th>
-                            <th className="py-3">Date / Time</th>
+                            <th className="py-3">Market Cap</th>
+                            <th className="py-3 px-2">Wallet</th>
+                            <th className="py-3 px-2">ETH</th>
+                            <th className="py-3 px-2">{token.symbol}</th>
+                            <th className="py-3 px-2">Txn</th>
+                            <th className="py-3 px-2">Date / Time (UTC)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2442,6 +2552,18 @@ export default function Trade() {
                                 )}
                                 {tx.type.charAt(0).toUpperCase() +
                                   tx.type.slice(1)}
+                              </td>
+                              <td className="...">
+                                {" "}
+                                {/* ✅ New Market Cap Cell */}
+                                {tx.oldMarketCap
+                                  ? `$${Number(tx.oldMarketCap).toLocaleString(
+                                      undefined,
+                                      {
+                                        maximumFractionDigits: 0,
+                                      }
+                                    )}`
+                                  : "—"}
                               </td>
 
                               <td className="dark:text-white/80 text-[#141313] font-semibold">

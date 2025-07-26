@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
 import DustParticles from "../components/generalcomponents/DustParticles";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { base } from "../lib/api";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
@@ -19,6 +19,34 @@ import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { BsChevronDown } from "react-icons/bs";
 import { socket } from "../lib/socket";
+import { useTrendingTokens } from "../lib/useTrendingTokens";
+
+const gradientSteps = [
+  { threshold: 9, color: "#dc2626" }, // Red
+  { threshold: 13, color: "#f87171" }, // Light Red
+  { threshold: 20, color: "#f97316" }, // Orange
+  { threshold: 28, color: "#fb923c" }, // Another Orange
+  { threshold: 38, color: "#60a5fa" }, // Light Blue
+  { threshold: 49, color: "#3b82f6" }, // Darker Blue
+  { threshold: 65, color: "#eab308" }, // Lemon
+  { threshold: 73, color: "#86efac" }, // Light Green
+  { threshold: 85, color: "#22c55e" }, // Medium Green
+  { threshold: 94, color: "#16a34a" }, // Deeper Green
+  { threshold: 100, color: "#14532d" }, // Dark Green
+];
+
+function getProgressGradient(progress: number): string {
+  const activeStops = gradientSteps
+    .filter((step) => progress >= step.threshold)
+    .map((step) => step.color);
+
+  // Always start with the first color, even if progress is 0
+  if (activeStops.length === 0) {
+    activeStops.push(gradientSteps[0].color);
+  }
+
+  return `linear-gradient(to right, ${activeStops.join(", ")})`;
+}
 
 interface transaction {
   id: string;
@@ -80,9 +108,11 @@ export default function Tokens() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchField, setSearchField] = useState<searchField>("all");
   const [sortField, setSortField] = useState<
-    "volume" | "createdAt" | "progress"
+    "volume" | "Date Created" | "progress" | "bonded"
   >("volume");
+
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
@@ -95,18 +125,42 @@ export default function Tokens() {
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
+  const [isHovered, setIsHovered] = useState(false);
+
   const scroll = (direction: "left" | "right") => {
     if (!sliderRef.current) return;
-    const { scrollLeft, clientWidth } = sliderRef.current;
+    const { scrollLeft, clientWidth, scrollWidth } = sliderRef.current;
     const scrollAmount = clientWidth * 0.8;
+
+    const newScrollLeft =
+      direction === "left"
+        ? scrollLeft - scrollAmount
+        : scrollLeft + scrollAmount;
+
     sliderRef.current.scrollTo({
-      left:
-        direction === "left"
-          ? scrollLeft - scrollAmount
-          : scrollLeft + scrollAmount,
+      left: newScrollLeft,
       behavior: "smooth",
     });
+
+    // Reset after last item
+    if (
+      direction === "right" &&
+      scrollLeft + clientWidth >= scrollWidth - 10 // small buffer
+    ) {
+      setTimeout(() => {
+        sliderRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+      }, 800); // slight delay before reset
+    }
   };
+
+  // Autoplay effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isHovered) scroll("right");
+    }, 4000); // autoplay every 4s
+
+    return () => clearInterval(interval);
+  }, [isHovered]);
 
   const navigate = useNavigate();
 
@@ -206,7 +260,7 @@ export default function Tokens() {
 
   useEffect(() => {
     if (!hasSetFeatured && tokens.length > 0) {
-      setFeaturedTokens(tokens.slice(0, 5));
+      setFeaturedTokens(tokens.slice(0, 10));
       setHasSetFeatured(true);
     }
   }, [tokens, hasSetFeatured]);
@@ -304,24 +358,38 @@ export default function Tokens() {
   }, [fetchTokenList, hasNext, page, searchField, searchTerm]);
 
   // Sort filtered tokens
-  const sortedTokens = [...tokens].sort((a, b) => {
+  const filteredTokens =
+    sortField === "bonded"
+      ? tokens.filter(
+          (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
+        )
+      : tokens;
+
+  const sortedTokens = [...filteredTokens].sort((a, b) => {
     let aVal: number | Date = 0;
     let bVal: number | Date = 0;
+
     if (sortField === "volume") {
       aVal = volume24hMap[a.tokenAddress] || 0;
       bVal = volume24hMap[b.tokenAddress] || 0;
     } else if (sortField === "progress") {
       aVal = curveProgressMap[a.tokenAddress] || 0;
       bVal = curveProgressMap[b.tokenAddress] || 0;
-    } else if (sortField === "createdAt") {
+    } else if (sortField === "Date Created") {
       aVal = a.createdAt ? new Date(a.createdAt) : new Date(0);
       bVal = b.createdAt ? new Date(b.createdAt) : new Date(0);
+    } else if (sortField === "bonded") {
+      // Optional: add sort logic among bonded tokens
+      aVal = volume24hMap[a.tokenAddress] || 0; // or curveProgressMap, etc.
+      bVal = volume24hMap[b.tokenAddress] || 0;
     }
+
     if (aVal instanceof Date && bVal instanceof Date) {
       return sortOrder === "asc"
         ? aVal.getTime() - bVal.getTime()
         : bVal.getTime() - aVal.getTime();
     }
+
     return sortOrder === "asc"
       ? (aVal as number) - (bVal as number)
       : (bVal as number) - (aVal as number);
@@ -387,6 +455,8 @@ export default function Tokens() {
       <div className="w-full max-w-[40rem] bg-gray-300 dark:bg-gray-700 h-10 rounded-full mt-5"></div>
     </div>
   );
+
+  const { trendingData } = useTrendingTokens("24h");
 
   return (
     <div className="mountain ">
@@ -461,40 +531,42 @@ export default function Tokens() {
 
               <div className="relative rounded-xl">
                 <div
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
                   ref={sliderRef}
                   className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-2 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
                 >
-                  {featuredTokens.map((token, idx) => (
+                  {trendingData.map((t, idx) => (
                     <div
                       key={idx}
                       className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 relative z-10"
                     >
                       <Link
-                        to={`/trade/${token.tokenAddress}`}
+                        to={`/trade/${t.token.tokenAddress}`}
                         className="flex flex-col"
                       >
                         <div className="flex items-center gap-3">
-                          {token.tokenImageId && (
+                          {t.token.tokenImageId && (
                             <img
                               src={`${import.meta.env.VITE_API_BASE_URL}${
-                                token.image?.path
+                                t.token.image?.path
                               }`}
-                              alt={`${token.symbol} logo`}
+                              alt={`${t.token.symbol} logo`}
                               className="w-10 h-10 rounded-md"
                               crossOrigin=""
                             />
                           )}
                           <div className="flex-1">
                             <h3 className="text-base font-semibold text-[#01061C] dark:text-white truncate">
-                              {token.name} ({token.symbol})
+                              {t.token.name} ({t.token.symbol})
                             </h3>
                             <p className="text-xs text-[#147ABD] truncate">
-                              by {token.tokenCreator.slice(0, 6)}...
-                              {token.tokenCreator.slice(-4)}
+                              by {t.token.tokenCreator.slice(0, 6)}...
+                              {t.token.tokenCreator.slice(-4)}
                             </p>
                             <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-1">
-                              Address: {token.tokenAddress.slice(0, 6)}...
-                              {token.tokenAddress.slice(-4)}
+                              Address: {t.token.tokenAddress.slice(0, 6)}...
+                              {t.token.tokenAddress.slice(-4)}
                             </p>
                           </div>
                         </div>
@@ -502,8 +574,13 @@ export default function Tokens() {
                         <div className="flex justify-between items-center text-sm text-white">
                           <div className="bg-[#064C7A] text-xs px-2 py-1 rounded-full">
                             $
-                            {marketCapMap[token.tokenAddress]?.toFixed(2) ??
-                              "0.00"}
+                            {marketCapMap[t.token.tokenAddress]?.toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            ) ?? "0.00"}
                           </div>
                           <div className="text-xs text-right">
                             24h Vol:{" "}
@@ -511,8 +588,12 @@ export default function Tokens() {
                               <span className="text-gray-400">Loading...</span>
                             ) : (
                               `$${
-                                volume24hMap[token.tokenAddress]?.toFixed(2) ??
-                                "0.00"
+                                volume24hMap[
+                                  t.token.tokenAddress
+                                ]?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }) ?? "0.00"
                               }`
                             )}
                           </div>
@@ -600,10 +681,11 @@ export default function Tokens() {
               {sortDropdownOpen && (
                 <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                   {[
-                    { value: "volume", label: "24h Volume (USD)" },
-                    { value: "progress", label: "Curve Progress" },
-                    { value: "createdAt", label: "Date Created" },
-                  ].map(({ value, label }) => (
+                    { value: "Volume", label: "24h Volume (USD)" },
+                    { value: "Progress", label: "Curve Progress" },
+                    { value: "Date Created", label: "Date Created" },
+                    { value: "Bonded", label: "Bonded" },
+                  ].map(({ value, label }, idx, arr) => (
                     <div
                       key={value}
                       onClick={() => {
@@ -611,9 +693,9 @@ export default function Tokens() {
                         setSortDropdownOpen(false);
                       }}
                       className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                        value === "volume"
+                        idx === 0
                           ? "rounded-t-xl"
-                          : value === "createdAt"
+                          : idx === arr.length - 1
                           ? "rounded-b-xl"
                           : ""
                       }`}
@@ -751,8 +833,13 @@ export default function Tokens() {
                               </span>
                             ) : (
                               ` $${
-                                volume24hMap[t.tokenAddress]?.toFixed(2) ??
-                                "0.00"
+                                volume24hMap[t.tokenAddress]?.toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                ) ?? "0.00"
                               }`
                             )}
                           </p>
@@ -763,17 +850,23 @@ export default function Tokens() {
                             ) : (
                               <p className="">
                                 $
-                                {marketCapMap[t.tokenAddress]?.toFixed(2) ??
-                                  "0.00"}
+                                {marketCapMap[t.tokenAddress]?.toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                ) ?? "0.00"}
                               </p>
                             )}
                           </div>
-                          {/* Progress Bar */}
                         </div>
                       </div>
                     </li>
-                    <div className="w-full max-w-[40rem] bg-[#031E51] h-[30px] rounded-full overflow-hidden relative mt-auto p-1.5">
-                      <p className="absolute right-4 text-white text-[13px] font-semibold z-10 flex items-center">
+                    {/* Progress Bar */}
+                    <div className="w-full max-w-[40rem] bg-[#031E51]/95 h-[30px] border-2 border-[#031E51] rounded-full overflow-hidden relative mt-auto p-1.5">
+                      {/* Percentage Label */}
+                      <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."
                           : `${
@@ -781,36 +874,46 @@ export default function Tokens() {
                               "0"
                             }%`}
                       </p>
+
+                      {!isLoadingMetrics &&
+                        Array.from({ length: 50 }).map((_, i) => {
+                          if (i === 0) return null; // 👈 Skip the first stripe
+                          const stripeWidth = 4;
+                          const spacing = 100 / 50;
+                          return (
+                            <div
+                              key={i}
+                              className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
+                              style={{
+                                width: `${stripeWidth}px`,
+                                left: `calc(${(i * spacing).toFixed(2)}% - ${
+                                  stripeWidth / 2
+                                }px)`,
+                              }}
+                            />
+                          );
+                        })}
+
+                      {/* Progress Fill */}
                       {(() => {
                         const progress = curveProgressMap[t.tokenAddress] || 0;
-                        let gradientClass = "bg-orange-700";
-                        if (progress >= 70) {
-                          gradientClass =
-                            "bg-gradient-to-r from-green-500 to-green-300";
-                        } else if (progress >= 40) {
-                          gradientClass =
-                            "bg-gradient-to-r from-orange-700 via-yellow-400 to-green-500";
+                        const gradientStyle: React.CSSProperties = {};
+
+                        if (!isLoadingMetrics) {
+                          gradientStyle.backgroundImage =
+                            getProgressGradient(progress);
                         }
+
                         return (
                           <div
-                            className={`h-full ${
+                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
                               progress < 100 ? "rounded-l-full" : "rounded-full"
-                            } relative transition-all duration-500 ease-in-out ${
-                              isLoadingMetrics ? "bg-gray-600" : gradientClass
-                            }`}
+                            } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
                             style={{
                               width: `${isLoadingMetrics ? 0 : progress}%`,
+                              ...gradientStyle,
                             }}
-                          >
-                            {!isLoadingMetrics &&
-                              Array.from({ length: 20 }).map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="bg-[#031E51] h-full w-[5px] -skew-x-[24deg] absolute top-0 "
-                                  style={{ left: `${31 * (i + 1)}px` }}
-                                ></div>
-                              ))}
-                          </div>
+                          />
                         );
                       })()}
                     </div>

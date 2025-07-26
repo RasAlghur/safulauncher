@@ -30,6 +30,21 @@ interface BuyTx {
   type: string;
 }
 
+function formatUTCDate(timestamp: string): string {
+  const date = new Date(timestamp);
+
+  const year = date.getUTCFullYear();
+  const month = date.toLocaleString("en-US", {
+    month: "long",
+    timeZone: "UTC",
+  });
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  const hours = date.getUTCHours().toString().padStart(2, "0");
+  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+
+  return `${month} ${day} ${year} ${hours}:${minutes} UTC`;
+}
+
 const NotableBuys = () => {
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [allBuys, setAllBuys] = useState<{ recent: BuyTx[]; wins: BuyTx[] }>({
@@ -121,9 +136,9 @@ const NotableBuys = () => {
               className="dark:bg-[#151A32]/50 bg-[#01061c0d] p-4 rounded-lg flex items-center gap-4"
             >
               {/* Avatar */}
-              <div className="w-10 h-10 flex items-center justify-center rounded-full text-white font-bold text-sm bg-gray-600">
+              {/* <div className="w-10 h-10 flex items-center justify-center rounded-full text-white font-bold text-sm bg-gray-600">
                 {tx.wallet.slice(2, 3).toUpperCase()}
-              </div>
+              </div> */}
 
               {/* Text */}
               <div className="text-sm">
@@ -148,7 +163,7 @@ const NotableBuys = () => {
                   </span>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {new Date(tx.timestamp).toLocaleString()}
+                  {formatUTCDate(tx.timestamp)}
                 </div>
               </div>
             </div>

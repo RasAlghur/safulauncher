@@ -10,7 +10,7 @@ import {
 import { FaEdit, FaTimes } from "react-icons/fa";
 import { useAccount, useReadContract } from "wagmi";
 import DustParticles from "../components/generalcomponents/DustParticles";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useUser } from "../context/user.context";
 import { base } from "../lib/api";
@@ -612,7 +612,7 @@ const Profile = () => {
               <h2 className="dark:text-white/80 text-[#0C8CE0] lg:text-[20px] mb-2 text-center font-raleway font-semibold">
                 Total Balance (Platform Tokens Only)
               </h2>
-              <div className="lg:text-[50px] font-bold mb-2 font-raleway">
+              <div className="lg:text-[50px] text-[24px] font-bold mb-2 font-raleway text-center">
                 ${formatCurrency(totalBalance)}
               </div>
               <div
@@ -706,7 +706,16 @@ const Profile = () => {
                         </div>
                       </div>
                       <div className="text-sm dark:text-white/70 text-[#141313]/75 text-right">
-                        <div>{token.formattedBalance}</div>
+                        <div>
+                          {Number(token.formattedBalance).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </div>
+
                         <div className="text-xs opacity-60">
                           {token.isLoadingPrice
                             ? "Loading..."
