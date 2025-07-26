@@ -11,7 +11,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   pureMetrics,
   pureGetLatestETHPrice,
-  pureInfoDataRaw,
+  totalTokensListed,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import cloudRight from "../../assets/cloud-right.png";
@@ -47,10 +47,6 @@ const PlatformStats = () => {
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
-
-  const [tokens, setTokens] = useState<TokenMetadata[]>([]);
-  // Add new state for aggregated data
-  const [totalCurveProgress, setTotalCurveProgress] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
   // Fetch list of tokens
@@ -74,59 +70,17 @@ const PlatformStats = () => {
         }
 
         setTotalTokenCount(flattenedTokens.length);
-        setTokens(flattenedTokens);
       } catch (error) {
         console.error("Error fetching tokens:", error);
       }
     })();
   }, []);
 
-  // Fetch on-chain and API data for each token when list updates
-  useEffect(() => {
-    if (tokens.length === 0) {
-      return;
-    }
-
-    async function fetchTokenMetrics() {
-      const newCurve: Record<string, number> = {};
-
-      const validTokens = tokens.filter((token) => token && token.tokenAddress);
-
-      await Promise.all(
-        validTokens.map(async (token) => {
-          try {
-            // Fetch bonding curve data
-            const info = await pureInfoDataRaw(token.tokenAddress);
-
-            if (Array.isArray(info)) {
-              const supply = Number(info[6]);
-              const sold = Number(info[8]);
-              const percent = (sold / (0.75 * supply)) * 100;
-              newCurve[token.tokenAddress] = Math.min(
-                Math.max(percent, 0),
-                100
-              );
-            }
-          } catch (e) {
-            console.error(`Error for ${token.tokenAddress}:`, e);
-          }
-        })
-      );
-
-      // Calculate total curve progress
-      const totalProgress = Object.values(newCurve).reduce(
-        (sum, progress) => sum + progress,
-        0
-      );
-      setTotalCurveProgress(totalProgress);
-    }
-
-    fetchTokenMetrics();
-  }, [tokens]);
-
   // Calculate average curve progress
-  const averageCurveProgress =
-    totalTokenCount > 0 ? totalCurveProgress / totalTokenCount : 0;
+  const averageBondingProgress =
+    totalTokenCount > 0 ? (Number(totalTokensListed) / totalTokenCount) * 100 : 0;
+
+  const averageVolume = totalTokenCount > 0 ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) / totalTokenCount : 0;
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -173,10 +127,9 @@ const PlatformStats = () => {
         title: "Total Volume",
         mainValue: getMainValue(
           pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-          `${
-            pureMetrics[0] !== undefined
-              ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-              : 0
+          `${pureMetrics[0] !== undefined
+            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -185,10 +138,9 @@ const PlatformStats = () => {
         title: "Fee Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-          `${
-            pureMetrics[1] !== undefined
-              ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-              : 0
+          `${pureMetrics[1] !== undefined
+            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: FeeCollected,
@@ -207,9 +159,8 @@ const PlatformStats = () => {
       },
       {
         title: "Avg. Bonding",
-        mainValue: `${
-          isNaN(averageCurveProgress) ? 0 : averageCurveProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+          }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -232,13 +183,18 @@ const PlatformStats = () => {
         icon: SafuHolders,
       },
       {
-        title: "Dev Reward",
+        title: "Average Volume",
+        mainValue: `$${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
+        ethValue: "",
+        icon: SafuHolders,
+      },
+      {
+        title: "Paid Out Dev Reward",
         mainValue: getMainValue(
           pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-          `${
-            pureMetrics[6] !== undefined
-              ? (Number(pureMetrics[6]) / 1e18).toFixed(4)
-              : 0
+          `${pureMetrics[6] !== undefined
+            ? (Number(pureMetrics[6]) / 1e18).toFixed(2)
+            : 0
           } ETH`
         ),
         ethValue: getETHDisplay(
@@ -247,7 +203,7 @@ const PlatformStats = () => {
         icon: SafuHolders,
       },
     ];
-  }, [averageCurveProgress, getETHDisplay, getMainValue]);
+  }, [averageBondingProgress, averageVolume, getETHDisplay, getMainValue]);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {

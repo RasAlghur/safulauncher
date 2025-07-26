@@ -17,6 +17,17 @@ export const pureMetrics = await publicClient.readContract({
 /**
  * Description placeholder
  *
+ * @type {*}
+ */
+export const totalTokensListed = await publicClient.readContract({
+  ...LAUNCHER_ABI,
+  address: SAFU_LAUNCHER_CA as `0x${string}`,
+  functionName: "totalTokensListed",
+});
+
+/**
+ * Description placeholder
+ *
  * @async
  * @param {*} tokenAddress
  * @returns {unknown}
