@@ -550,6 +550,7 @@ export default function Trade() {
   // Computed contract data
   const infoData = isConnected ? infoDataRaw : fallbackInfoData;
   const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 0;
+  const ethRaised = Array.isArray(infoData) ? Number(infoData[7]) : 0;
   const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
   const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
   const isBundled = Array.isArray(infoData) ? Number(infoData[14]) : 0;
@@ -604,6 +605,11 @@ export default function Trade() {
   const marketCapETH =
     oneTokenPriceETH !== null ? oneTokenPriceETH * totalSupplyTokens : 0;
   const marketCapUSD = marketCapETH * infoETHCurrentPrice;
+
+  // Pool valuation
+  const tokenPool = tokenSupply - tokenSold;
+
+
   // const tokenPriceUSD =
   //   oneTokenPriceETH !== null ? oneTokenPriceETH * infoETHCurrentPrice : 0;
 
@@ -1000,6 +1006,7 @@ export default function Trade() {
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
+      console.log("filtered", filtered)
       setTxLogs(filtered);
     } catch (error) {
       console.error("Error fetching logs:", error);
@@ -2369,6 +2376,24 @@ export default function Trade() {
                       {marketCapUSD > 0
                         ? `$${formatTokenAmount(marketCapUSD)}`
                         : "Calculating..."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                    <p className="dark:text-white text-black">
+                      <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                        Pooled ETH:
+                      </span>{" "}
+                      {(ethRaised / 1e18).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                    <p className="dark:text-white text-black">
+                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                        Pooled {token.symbol}:
+                      </span>{" "}
+                      {(tokenPool / 1e18).toLocaleString()}
                     </p>
                   </div>
                 </div>
