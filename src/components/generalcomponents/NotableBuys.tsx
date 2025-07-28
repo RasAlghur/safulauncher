@@ -77,7 +77,7 @@ const NotableBuys = () => {
           params: { ethAmt: ethPriceUSD },
         });
         const { recent, win } = request.data.data;
-        console.log({ recent, win });
+        // console.log({ recent, win });
         setAllBuys({ recent, wins: win });
       } catch (error) {
         console.error("Failed to load notable buys:", error);
@@ -130,7 +130,7 @@ const NotableBuys = () => {
         {activeData.map((tx, i) => {
           const username = tx.user.username;
           const username_ = username !== undefined || username !== null;
-          console.log({ username, username_ });
+          // console.log({ username, username_ });
           return (
             <div
               key={i}
