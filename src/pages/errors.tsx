@@ -36,21 +36,30 @@ export default function ErrorsPage() {
 
   const handleSubmit = async () => {
     const formData = new FormData();
-    formData.append("status", "Published");
-    formData.append("title", "Introduction to crypto");
-    formData.append("description", "learn basic crypto data");
-    formData.append("level", "Beginner");
-    formData.append("type", "article");
-    if (file) formData.append("document", file);
+    formData.append("draft", "false");
+    formData.append("schedule", "false");
+    ["Yes", "No"].forEach((tag) => formData.append("tags", tag));
+    formData.append("content", "what a very long text");
+    formData.append("title", "Its a long Day");
+    formData.append("metatitle", "yes");
+    formData.append("description", "yes");
+    formData.append("scheduleDate", "2025-02-04");
+    if (file) formData.append("thumbnail", file);
 
-    const req = await fetch("http://localhost:3000/learning", {
-      method: "POST",
-      body: formData,
-      headers: {
-        Authorization:
-          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YjlmZjk5MC0yMTQ3LTRlY2UtYjFmYS04OTRmYTRhYTEwZDUiLCJlbWFpbCI6ImFsaWNlQHN0cmVwbGUuY29tIiwicm9sZSI6IlBST19UUkFERVIiLCJpYXQiOjE3NTM0NDU3NDgsImV4cCI6MTc1MzQ0OTM0OH0.diHgdd-45Ivj2vPYH8k4azRg-QhII2VcXonB658M7S4",
+    console.log(file);
+
+    const req = await fetch(
+      "http://localhost:3000/learning/63f46ed1-e67b-4a1f-8289-d557d38a8a0d",
+      {
+        method: "PATCH",
+        headers: {
+          // "Content-Type": "application/json", //remove for formdata
+          Authorization:
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YjlmZjk5MC0yMTQ3LTRlY2UtYjFmYS04OTRmYTRhYTEwZDUiLCJlbWFpbCI6ImFsaWNlQHN0cmVwbGUuY29tIiwicm9sZSI6IlBST19UUkFERVIiLCJpYXQiOjE3NTM2OTg0MjQsImV4cCI6MTc1MzcwMjAyNH0.4VYFvNh3xDeCQirHchD_8kGbukwKBxZwFfvfsrugjSE",
+        },
+        body: formData, //JSON.stringify(data),
       },
-    });
+    );
 
     const res = await req.json();
     console.log(res);
