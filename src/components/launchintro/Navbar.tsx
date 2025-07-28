@@ -197,7 +197,7 @@ const Navbar = () => {
           navBg
             ? "bg-Dark-Purple"
             : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
-        } fixed w-full top-0 left-0 z-50 transition-all duration-300 backdrop-blur-[20px]`}
+        } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
       >
         <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
@@ -358,7 +358,7 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div
-          className="block xl:hidden fixed inset-0 z-30 transition-all duration-300"
+          className="block xl:hidden fixed inset-0 z-50 transition-all duration-300"
           onClick={() => setIsOpen(false)}
         >
           <div

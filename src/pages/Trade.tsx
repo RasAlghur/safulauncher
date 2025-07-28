@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import * as XLSX from "xlsx";
 import { useParams } from "react-router-dom";
+import { TopHoldersTable } from "../web3/topHoldersTable";
 import {
   useAccount,
   useWriteContract,
@@ -573,10 +574,26 @@ export default function Trade() {
     ? Number(whitelistBalance) / 1e18
     : 0;
 
-  const curvePercent = infoData
-    ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
-    : 0;
-  const curvePercentClamped = Math.min(Math.max(curvePercent, 0), 100);
+  const calculateCurvePercent = useCallback(() => {
+    if (!infoData) return 0;
+
+    const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
+    const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 1;
+
+    // Calculate percentage of tokens sold relative to 75% of total supply
+    const percent = (tokenSold / (0.75 * tokenSupply)) * 100;
+    return Math.min(Math.max(percent, 0), 100);
+  }, [infoData]);
+
+  // Use this calculation for curvePercentClamped
+  const curvePercentClamped = useMemo(() => {
+    return calculateCurvePercent();
+  }, [calculateCurvePercent]);
+
+  // const curvePercent = infoData
+  //   ? (Number(tokenSold) / (0.75 * Number(tokenSupply))) * 100
+  //   : 0;
+  // const curvePercentClamped = Math.min(Math.max(curvePercent, 0), 100);
 
   const isSafuHolder = isLoadingSafuHolder ? "" : is_SafuHolder;
   const safuHolderBalance = isLoadingSafuHolderBalance
@@ -647,10 +664,19 @@ export default function Trade() {
 
       setCurveProgressMap((prev) => ({
         ...prev,
+        [tokenAddress]: prev[tokenAddress] || 0,
+      }));
+    }
+  }, [tokenAddress, isLoadingOneTokenPrice]);
+
+  useEffect(() => {
+    if (tokenAddress && curvePercentClamped !== undefined) {
+      setCurveProgressMap((prev) => ({
+        ...prev,
         [tokenAddress]: curvePercentClamped,
       }));
     }
-  }, [tokenAddress, curvePercentClamped, isLoadingOneTokenPrice]);
+  }, [tokenAddress, curvePercentClamped]);
 
   const loadChartData = useCallback(
     async (isAutoUpdate = false) => {
@@ -2339,9 +2365,11 @@ export default function Trade() {
               <div className="w-full max-w-[40rem] bg-[#031E51]/95 h-[30px] border-2 border-[#031E51] rounded-full overflow-hidden relative mt-auto p-1.5">
                 {/* Percentage Label */}
                 <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
-                  {isLoadingInfoData
-                    ? "Loading..."
-                    : `${curvePercentClamped.toFixed(2) ?? "0"}%`}
+                  {isLoadingInfoData ? (
+                    <span className="h-full w-full bg-gray-600 animate-pulse rounded-full" />
+                  ) : (
+                    `${curvePercentClamped.toFixed(2) ?? "0"}%`
+                  )}
                 </p>
 
                 {!isLoadingInfoData &&
@@ -2385,40 +2413,30 @@ export default function Trade() {
                     />
                   );
                 })()}
+
+                <div
+                  className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                    curvePercentClamped < 100
+                      ? "rounded-l-full"
+                      : "rounded-full"
+                  } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                  style={{
+                    width: `${isLoadingInfoData ? 0 : curvePercentClamped}%`,
+                    backgroundImage: isLoadingInfoData
+                      ? undefined
+                      : getProgressGradient(curvePercentClamped),
+                  }}
+                />
               </div>
             </div>
 
             {/* Top Holders */}
             <div className="mt-6">
-              <h2 className="text-lg font-semibold mb-2 dark:text-white text-black">
-                Top Holders
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm dark:text-white/80">
-                  <thead>
-                    <tr>
-                      <th className="py-2 px-2 text-left dark:text-white text-black">
-                        Address
-                      </th>
-                      <th className="py-2 px-2 text-left dark:text-white text-black">
-                        % of Supply
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* {topHolders.map((holder, i) => (
-                      <tr key={i} className="border-b dark:border-white/10">
-                        <td className="py-2 px-2 font-mono">
-                          {holder.owner.slice(0, 6)}…{holder.owner.slice(-4)}
-                        </td>
-                        <td className="py-2 px-2">
-                          {holder.percent.toFixed(4)}%
-                        </td>
-                      </tr>
-                    ))} */}
-                  </tbody>
-                </table>
-              </div>
+              <TopHoldersTable
+                tokenAddress={token.tokenAddress}
+                creatorAdress={token.tokenCreator}
+                bondingAddr={SAFU_LAUNCHER_CA}
+              />
             </div>
           </div>
 

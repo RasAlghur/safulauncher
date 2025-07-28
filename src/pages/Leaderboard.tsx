@@ -262,7 +262,7 @@ export default function Leaderboard() {
         </div>
 
         {/* Sort Field Dropdown */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
+        <div className="flex flex-col sm:flex-row items-center gap-x-6 mb-6">
           <div
             ref={sortDropdownRef}
             className="mb-[20px] relative w-full sm:w-[200px]"
@@ -348,7 +348,7 @@ export default function Leaderboard() {
 
         <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
+            <table className="min-w-[700px] sm:min-w-full text-sm text-left">
               <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
                 <tr className="uppercase lg:text-lg tracking-wider font-raleway font-semibold ">
                   <th className="px-6 py-3">S/N</th>

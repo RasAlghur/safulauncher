@@ -6,6 +6,7 @@ import RocketLoader from "./components/generalcomponents/Loader";
 import ChatWrapper from "./context/ChatWrapper";
 import ErrorsPage from "./pages/errors";
 import TrackBuy from "./pages/track-buy";
+import Admin from "./pages/Admin";
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
@@ -33,6 +34,7 @@ function App() {
             <Route path="/chat/:tokenAddress" element={<ChatWrapper />} />
             <Route path="/track-error" element={<ErrorsPage />} />
             <Route path="/track-event" element={<TrackBuy />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </Suspense>
       </main>
