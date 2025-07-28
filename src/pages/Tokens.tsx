@@ -502,7 +502,7 @@ export default function Tokens() {
 
       <div className=" mb-20 px-4 lg:px-0 relative ">
         {isLoadingTokens || isLoadingMetrics || featuredTokens.length === 0 ? (
-          <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md">
+          <section className="fixed top-0 left-0 right-0 z-10 dark:bg-transparent bg-transparent backdrop-blur-md">
             <div className="pt-20 max-w-6xl mx-auto">
               <div className="flex justify-between items-center px-4">
                 <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
@@ -615,10 +615,10 @@ export default function Tokens() {
                               }
                             ) ?? "0.00"}
                           </div>
-                          <div className="text-xs text-right">
+                          <div className="text-xs text-right dark:text-gray-400 text-black/80">
                             24h Vol:{" "}
                             {isLoadingMetrics ? (
-                              <span className="text-gray-400">Loading...</span>
+                              <span className="">Loading...</span>
                             ) : (
                               `$${
                                 volume24hMap[
