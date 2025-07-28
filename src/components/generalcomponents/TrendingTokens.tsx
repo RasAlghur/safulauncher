@@ -32,6 +32,14 @@ interface TrendingTokenData {
   volume: number;
   priceChange: number;
   holders: number;
+  messageCount: number;
+  criteria: {
+    volumeThreshold: boolean;
+    highGain: boolean;
+    highLoss: boolean;
+    messageCount: boolean;
+  };
+  criteriaCount: number;
 }
 
 type TimeRange = "1h" | "6h" | "24h" | "7d";
@@ -127,49 +135,61 @@ const TrendingTokens = () => {
       const logs: logs[] = result?.token;
       const msgCount = result?.messageCount;
 
-      console.log(msgCount);
-
       try {
-        // Early return if no logs available
-        if (!Array.isArray(logs) || logs.length === 0) {
-          // console.warn(`No transaction logs found for ${selectedRange}`);
+        // Group logs by token address
+        const tokenGroups: Record<string, logs[]> = {};
+        if (Array.isArray(logs)) {
+          logs.forEach((log) => {
+            const tokenAddress = log.tokenAddress;
+            if (!tokenGroups[tokenAddress]) {
+              tokenGroups[tokenAddress] = [];
+            }
+            tokenGroups[tokenAddress].push(log);
+          });
+        }
+
+        // Create message count map for easy lookup
+        const messageCountMap: Record<string, number> = {};
+        if (Array.isArray(msgCount)) {
+          msgCount.forEach((item: any) => {
+            messageCountMap[item.groupId] = item.messageCount || 0;
+          });
+        }
+
+        // Get all unique token addresses from both logs and message count
+        const allTokenAddresses = new Set([
+          ...Object.keys(tokenGroups),
+          ...Object.keys(messageCountMap)
+        ]);
+
+        // Early return if no tokens available
+        if (allTokenAddresses.size === 0) {
           setTrendingData([]);
           setLoading(false);
           return;
         }
 
-        console.log("logs", logs);
-
-        // Group logs by token address
-        const tokenGroups: Record<string, logs[]> = {};
-        logs.forEach((log) => {
-          const tokenAddress = log.tokenAddress;
-          if (!tokenGroups[tokenAddress]) {
-            tokenGroups[tokenAddress] = [];
-          }
-          tokenGroups[tokenAddress].push(log);
-        });
+        // Get platform total volume threshold (4% of total volume)
+        const mainValue = pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0;
+        const usdValue = mainValue * ethPriceUSD;
+        const volumeThreshold = 0.04 * usdValue; // 4% of total volume
 
         // Process each token individually
-        const tokenPromises = Object.entries(tokenGroups).map(
-          async ([tokenAddress, tokenLogs]) => {
+        const tokenPromises = Array.from(allTokenAddresses).map(
+          async (tokenAddress) => {
             try {
+              const tokenLogs = tokenGroups[tokenAddress] || [];
+
               // Get market cap for this token
               const info = await pureInfoDataRaw(tokenAddress);
-              console.log("Fetching marketcap data for token:", tokenAddress);
 
               let marketCap = 0;
               if (Array.isArray(info)) {
                 const supply = Number(info[6]);
                 const rawAmt = await pureAmountOutMarketCap(tokenAddress);
-                const pricePerToken = rawAmt
-                  ? Number(rawAmt.toString()) / 1e18
-                  : 0;
+                const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
                 marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               }
-              console.log(
-                `Market cap for token ${tokenAddress} is ${marketCap}`
-              );
 
               // Calculate volume for this token
               const volumeEth = tokenLogs.reduce(
@@ -181,7 +201,6 @@ const TrendingTokens = () => {
               // Calculate price change for this token
               let priceChange = 0;
               if (tokenLogs.length > 0) {
-                // Sort by timestamp to get the earliest transaction
                 const sortedLogs = tokenLogs.sort(
                   (a, b) => parseInt(a.timestamp) - parseInt(b.timestamp)
                 );
@@ -198,17 +217,41 @@ const TrendingTokens = () => {
                 const amt = parseFloat(tx.tokenAmount);
                 const w = tx.wallet.toLowerCase();
                 if (!balanceMap[w]) balanceMap[w] = 0;
-                // add on buys, subtract on sells
                 balanceMap[w] += tx.type === "buy" ? amt : -amt;
               });
 
-              // Count only those wallets still holding >0 tokens
               const holders = Object.values(balanceMap).filter(
                 (net) => net > 0
               ).length;
 
-              // Get token metadata from the first log (they should all be the same)
-              const token = tokenLogs[0].token;
+              // Get message count for this token
+              const messageCount = messageCountMap[tokenAddress] || 0;
+
+              // Check all 4 criteria
+              const criteria = {
+                volumeThreshold: volume >= volumeThreshold,
+                highGain: priceChange >= 100,
+                highLoss: priceChange <= -90,
+                messageCount: messageCount >= 3
+              };
+
+              // Count how many criteria are met
+              const criteriaCount = Object.values(criteria).filter(Boolean).length;
+
+              let token: TokenMetadata;
+              if (tokenLogs.length > 0) {
+                token = tokenLogs[0].token;
+              } else {
+                const res = await base.get("token", { params: { tokenAddress } });
+                const all: TokenMetadata = res.data.data.data;
+
+                token = {
+                  name: `${all.name}`,
+                  symbol: `${all.symbol}`,
+                  tokenAddress,
+                  tokenCreator: "",
+                };
+              }
 
               return {
                 token,
@@ -216,20 +259,42 @@ const TrendingTokens = () => {
                 volume,
                 priceChange,
                 holders,
+                messageCount,
+                criteria,
+                criteriaCount,
               };
             } catch (e) {
-              console.error(
-                `Error fetching data for token ${tokenAddress}:`,
-                e
-              );
+              console.error(`Error fetching data for token ${tokenAddress}:`, e);
 
-              // Return token with zero values on error
+              // Get token metadata for error case
+              const tokenLogs = tokenGroups[tokenAddress] || [];
+
+              let token: TokenMetadata;
+              if (tokenLogs.length > 0) {
+                token = tokenLogs[0].token;
+              } else {
+                token = {
+                  name: `Token ${tokenAddress.slice(0, 6)}`,
+                  symbol: `T${tokenAddress.slice(-4)}`,
+                  tokenAddress,
+                  tokenCreator: "",
+                };
+              }
+
               return {
-                token: tokenLogs[0]?.token || ({} as TokenMetadata),
+                token,
                 marketCap: 0,
                 volume: 0,
                 priceChange: 0,
                 holders: 0,
+                messageCount: messageCountMap[tokenAddress] || 0,
+                criteria: {
+                  volumeThreshold: false,
+                  highGain: false,
+                  highLoss: false,
+                  messageCount: (messageCountMap[tokenAddress] || 0) >= 3
+                },
+                criteriaCount: (messageCountMap[tokenAddress] || 0) >= 3 ? 1 : 0,
               };
             }
           }
@@ -238,68 +303,37 @@ const TrendingTokens = () => {
         // Wait for all token data to be processed
         const processedTokens = await Promise.all(tokenPromises);
 
-        // After you have `processedTokens: TrendingTokenData[]`
+        // Filter tokens that meet at least 1 criteria
+        const trendingTokens = processedTokens.filter(token => token.criteriaCount > 0);
 
-        const mainValue =
-          pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0;
-        const usdValue = mainValue * ethPriceUSD;
-
-        const volumeCrit = 0.04 * usdValue; // 4% of total volume
-
-        processedTokens.map((t) => {
-          const meetsVolume = t.volume >= volumeCrit;
-          const meetsHighGain = t.priceChange >= 100;
-          const meetsHighLoss = t.priceChange <= -90;
-
-          console.log(
-            `Token ${t.token.symbol} (${t.token.tokenAddress}):`,
-            `volume=${t.volume.toFixed(2)} (${meetsVolume ? "✔️" : "✖️"} ≥4%),`,
-            `Δ=${t.priceChange.toFixed(1)}%`,
-            meetsHighGain ? "✔️+100%" : "",
-            meetsHighLoss ? "✔️-90%" : ""
-          );
-
-          return { ...t, meetsVolume, meetsHighGain, meetsHighLoss };
+        // Sort by criteria count (descending), then by volume (descending) for ties
+        const rankedTokens = trendingTokens.sort((a, b) => {
+          // First, sort by criteria count (higher is better)
+          if (b.criteriaCount !== a.criteriaCount) {
+            return b.criteriaCount - a.criteriaCount;
+          }
+          // If criteria count is the same, sort by volume (higher is better)
+          return b.volume - a.volume;
         });
 
-        const filtered = processedTokens.filter(
-          (t) =>
-            t.volume >= volumeCrit ||
-            t.priceChange >= 100 ||
-            t.priceChange <= -90
-        );
+        // Log the ranking for debugging
+        rankedTokens.forEach((token, index) => {
+          console.log(
+            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress}):`,
+            `Criteria: ${token.criteriaCount}/4`,
+            `[Vol≥4%: ${token.criteria.volumeThreshold ? '✓' : '✗'},`,
+            `Gain≥100%: ${token.criteria.highGain ? '✓' : '✗'},`,
+            `Loss≤-90%: ${token.criteria.highLoss ? '✓' : '✗'},`,
+            `Msg≥3: ${token.criteria.messageCount ? '✓' : '✗'}]`,
+            `Volume: $${token.volume.toFixed(2)},`,
+            `Messages: ${token.messageCount}`
+          );
+        });
 
-        const tier1 = filtered.filter(
-          (t) =>
-            t.volume >= volumeCrit &&
-            (t.priceChange >= 100 || t.priceChange <= -90)
-        );
-        const tier2 = filtered.filter(
-          (t) =>
-            !(
-              t.volume >= volumeCrit &&
-              (t.priceChange >= 100 || t.priceChange <= -90)
-            )
-        );
-
-        // 4. Sort *each* tier by descending volume
-        tier1.sort((a, b) => b.volume - a.volume);
-        tier2.sort((a, b) => b.volume - a.volume);
-
-        // 5. Concatenate tiers (tier1 first), and optionally take top N
-        const ranked = [...tier1, ...tier2].slice(0, 10);
-
-        // 6. Update state
-        setTrendingData(ranked);
+        // Take top 10 and update state
+        setTrendingData(rankedTokens.slice(0, 10));
         setLoading(false);
 
-        // // Sort by volume (descending) and take top 10
-        // const sortedTrending = processedTokens
-        //   .sort((a, b) => b.volume - a.volume)
-        //   .slice(0, 10);
-
-        // setTrendingData(sortedTrending);
-        // setLoading(false);
       } catch (e) {
         console.error(`Error in fetchTrendingData:`, e);
         setTrendingData([]);
@@ -341,11 +375,10 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange
-                  ? "bg-[#1D223E] text-white"
-                  : "text-gray-400 dark:hover:text-white hover:text-black"
-              }`}
+              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
+                ? "bg-[#1D223E] text-white"
+                : "text-gray-400 dark:hover:text-white hover:text-black"
+                }`}
             >
               {range}
             </button>
@@ -392,9 +425,8 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                data.token.image?.path
-                              }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
+                                }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
                             />
@@ -416,11 +448,10 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0
-                            ? "text-red-500"
-                            : "text-green-400"
-                        }`}
+                        className={`p-3 font-semibold ${data.priceChange < 0
+                          ? "text-red-500"
+                          : "text-green-400"
+                          }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
