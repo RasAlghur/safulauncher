@@ -4,6 +4,7 @@ import { pureGetLatestETHPrice } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import { base } from "../../lib/api";
 import { processUsername } from "../../lib/username";
+import { Link } from "react-router-dom";
 
 export interface TokenMetadata {
   name: string;
@@ -152,13 +153,19 @@ const NotableBuys = () => {
                     bought
                   </span>
                   {/* Display symbol instead of address */}
-                  <span className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600">
+                  <Link
+                    to={`/trade/${tx.tokenAddress}`}
+                    className="px-2 py-1 rounded-full dark:text-white text-[#141313] text-xs font-semibold bg-indigo-600"
+                  >
                     {tx.token.symbol}
-                  </span>
+                  </Link>
                   <span className="dark:text-white text-[#141313]/50">
                     with{" "}
                     <span className="dark:text-white text-[#141313] font-medium">
-                      ${tx?.usdValue.toFixed(0)}
+                      $
+                      {tx?.usdValue.toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}
                     </span>
                   </span>
                 </div>

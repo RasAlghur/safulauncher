@@ -122,6 +122,9 @@ export default function Tokens() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const orderDropdownRef = useRef<HTMLDivElement>(null);
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +164,36 @@ export default function Tokens() {
 
     return () => clearInterval(interval);
   }, [isHovered]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchDropdownOpen &&
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(event.target as Node)
+      ) {
+        setSearchDropdownOpen(false);
+      }
+      if (
+        sortDropdownOpen &&
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target as Node)
+      ) {
+        setSortDropdownOpen(false);
+      }
+      if (
+        orderDropdownOpen &&
+        orderDropdownRef.current &&
+        !orderDropdownRef.current.contains(event.target as Node)
+      ) {
+        setOrderDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchDropdownOpen, sortDropdownOpen, orderDropdownOpen]);
 
   const navigate = useNavigate();
 
@@ -456,7 +489,7 @@ export default function Tokens() {
     </div>
   );
 
-  const { trendingData } = useTrendingTokens("24h");
+  const { trendingData } = useTrendingTokens("7d");
 
   return (
     <div className="mountain ">
@@ -668,7 +701,7 @@ export default function Tokens() {
               )}
             </div>
             {/* Sort Field Dropdown */}
-            <div className="relative w-full sm:w-[250px]">
+            <div ref={sortDropdownRef} className="relative w-full sm:w-[250px]">
               <div
                 onClick={() => setSortDropdownOpen((prev) => !prev)}
                 className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
@@ -682,9 +715,9 @@ export default function Tokens() {
                 <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
                   {[
                     { value: "Volume", label: "24h Volume (USD)" },
-                    { value: "Progress", label: "Curve Progress" },
+                    { value: "progress", label: "Curve Progress" },
                     { value: "Date Created", label: "Date Created" },
-                    { value: "Bonded", label: "Bonded" },
+                    { value: "bonded", label: "Bonded" },
                   ].map(({ value, label }, idx, arr) => (
                     <div
                       key={value}
@@ -707,7 +740,10 @@ export default function Tokens() {
               )}
             </div>
             {/* Sort Order Dropdown */}
-            <div className="relative w-full sm:w-[250px]">
+            <div
+              ref={orderDropdownRef}
+              className="relative w-full sm:w-[250px]"
+            >
               <div
                 onClick={() => setOrderDropdownOpen((prev) => !prev)}
                 className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-2 rounded-md cursor-pointer flex justify-between items-center border border-white/10"

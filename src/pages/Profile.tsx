@@ -22,11 +22,13 @@ import { ETH_USDT_PRICE_FEED, PRICE_GETTER_ABI } from "../web3/config";
 import { pureAmountOutMarketCap } from "../web3/readContracts";
 import { processUsername } from "../lib/username";
 import RocketLoader from "../components/generalcomponents/Loader";
+import { Link } from "react-router-dom";
 
 interface launchedToken {
   name: string;
   symbol: string;
   createdAt: string;
+  tokenAddress: string;
 }
 
 interface TokenHolding {
@@ -438,14 +440,20 @@ const Profile = () => {
     };
   }, [address, findHolderToken, hasNext, page]);
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-    });
-  };
+  function formatUTCDate(timestamp: string): string {
+    const date = new Date(timestamp);
 
+    const year = date.getUTCFullYear();
+    const month = date.toLocaleString("en-US", {
+      month: "long",
+      timeZone: "UTC",
+    });
+    const day = date.getUTCDate().toString().padStart(2, "0");
+    const hours = date.getUTCHours().toString().padStart(2, "0");
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+
+    return `${month} ${day} ${year} ${hours}:${minutes} UTC`;
+  }
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -487,6 +495,8 @@ const Profile = () => {
     fetchTokenHoldings,
     fetchAllTokens,
   ]);
+
+  console.log(filteredHoldings);
 
   return (
     <div className="px-4 relative mountain ">
@@ -676,7 +686,10 @@ const Profile = () => {
                       key={i}
                       className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
                     >
-                      <div className="flex items-center gap-3">
+                      <Link
+                        className="flex items-center gap-3"
+                        to={`/trade/${token.contractAddress}`}
+                      >
                         {token.logo ? (
                           <img
                             src={token.logo}
@@ -704,7 +717,7 @@ const Profile = () => {
                             {token.name}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                       <div className="text-sm dark:text-white/70 text-[#141313]/75 text-right">
                         <div>
                           {Number(token.formattedBalance).toLocaleString(
@@ -732,22 +745,27 @@ const Profile = () => {
           ) : (
             <div>
               <div ref={containerRef} className="space-y-4">
-                {launchedTokens.map(({ name, symbol, createdAt }, i) => (
-                  <div
-                    key={i}
-                    className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
-                      <span className="font-bold text-sm text-black dark:text-white">
-                        {name} ({symbol})
-                      </span>
+                {launchedTokens.map(
+                  ({ name, symbol, createdAt, tokenAddress }, i) => (
+                    <div
+                      key={i}
+                      className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                        <Link
+                          to={`/trade/${tokenAddress}`}
+                          className="font-bold text-sm text-black dark:text-white"
+                        >
+                          {name} ({symbol})
+                        </Link>
+                      </div>
+                      <div className="text-sm dark:text-white/70 text-[#141313]/75">
+                        Deployed: {formatUTCDate(createdAt)}
+                      </div>
                     </div>
-                    <div className="text-sm dark:text-white/70 text-[#141313]/75">
-                      Deployed: {formatDate(createdAt)}
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
                 <p>{loading && "Please wait...."}</p>
               </div>
             </div>

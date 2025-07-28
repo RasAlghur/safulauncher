@@ -1,22 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Navbar from "../components/launchintro/Navbar";
-import Footer from "../components/launchintro/Footer";
+import Footer from "../components/generalcomponents/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
-// import RocketLoader from "../components/generalcomponents/Loader";
+import { Link } from "react-router-dom";
 
-const options = ["Volume", "Recent Trade"];
+const options = ["Volume", "Most Recent Trade"];
 
-/**
- * Description placeholder
- *
- * @interface TxLog
- * @typedef {TxLog}
- */
 interface TxLog {
   tokenAddress: string;
   type: "buy" | "sell";
@@ -27,12 +21,6 @@ interface TxLog {
   wallet: string;
 }
 
-/**
- * Description placeholder
- *
- * @interface TokenMetadata
- * @typedef {TokenMetadata}
- */
 interface TokenMetadata {
   name: string;
   symbol: string;
@@ -44,12 +32,6 @@ interface TokenMetadata {
   };
 }
 
-/**
- * Description placeholder
- *
- * @interface LeaderboardEntry
- * @typedef {LeaderboardEntry}
- */
 interface LeaderboardEntry {
   wallet: string;
   volume: number;
@@ -58,19 +40,8 @@ interface LeaderboardEntry {
   lastPurchaseTs: string;
 }
 
-/**
- * Description placeholder
- *
- * @type {25}
- */
 const ITEMS_PER_PAGE = 25;
 
-/**
- * Description placeholder
- *
- * @export
- * @returns {*}
- */
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [tokensMap, setTokensMap] = useState<Record<string, TokenMetadata>>({});
@@ -79,6 +50,34 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState(options[0]);
+  const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const orderDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isOpen &&
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+      if (
+        orderDropdownOpen &&
+        orderDropdownRef.current &&
+        !orderDropdownRef.current.contains(event.target as Node)
+      ) {
+        setOrderDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, orderDropdownOpen]);
 
   // Utility: retry wrapper
   async function retry<T>(
@@ -91,7 +90,6 @@ export default function Leaderboard() {
       try {
         return await fn();
       } catch (error) {
-        // Avoid retrying Axios cancelation or other intentional aborts
         if (
           axios.isCancel(error) ||
           (typeof error === "object" &&
@@ -101,7 +99,6 @@ export default function Leaderboard() {
         ) {
           throw error;
         }
-
         attempt++;
         if (attempt >= retries) throw error;
         await new Promise((res) => setTimeout(res, delay));
@@ -161,15 +158,15 @@ export default function Leaderboard() {
           walletMap[key] = existing;
         });
 
-        const arr = Object.entries(walletMap)
-          .map(([wallet, { volume, lastTs, lastToken }]) => ({
+        const arr = Object.entries(walletMap).map(
+          ([wallet, { volume, lastTs, lastToken }]) => ({
             wallet,
             volume,
             volumeUSD: volume * price,
             lastTokenAddress: lastToken,
             lastPurchaseTs: lastTs,
-          }))
-          .sort((a, b) => b.volumeUSD - a.volumeUSD);
+          })
+        );
 
         setEntries(arr);
         setLoading(false);
@@ -182,8 +179,24 @@ export default function Leaderboard() {
     loadData();
   }, []);
 
-  const totalPages = Math.ceil(entries.length / ITEMS_PER_PAGE);
-  const display = entries.slice(
+  // Sorting logic
+  const sortedEntries = [...entries].sort((a, b) => {
+    if (selected === "Volume") {
+      return sortOrder === "desc"
+        ? b.volumeUSD - a.volumeUSD
+        : a.volumeUSD - b.volumeUSD;
+    } else if (selected === "Most Recent Trade") {
+      return sortOrder === "desc"
+        ? new Date(b.lastPurchaseTs).getTime() -
+            new Date(a.lastPurchaseTs).getTime()
+        : new Date(a.lastPurchaseTs).getTime() -
+            new Date(b.lastPurchaseTs).getTime();
+    }
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedEntries.length / ITEMS_PER_PAGE);
+  const display = sortedEntries.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
@@ -248,39 +261,89 @@ export default function Leaderboard() {
           )}
         </div>
 
-        <div className="mb-[20px] relative w-full sm:w-[200px]">
+        {/* Sort Field Dropdown */}
+        <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
           <div
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            ref={sortDropdownRef}
+            className="mb-[20px] relative w-full sm:w-[200px]"
           >
-            <span className="text-sm capitalize">{selected}</span>
-            <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-              <BsChevronDown className="text-white text-xl" />
+            <div
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            >
+              <span className="text-sm capitalize">{selected}</span>
+              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                <BsChevronDown className="text-white text-xl" />
+              </div>
             </div>
+            {isOpen && (
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                {options.map((option, idx) => (
+                  <div
+                    key={option}
+                    onClick={() => {
+                      setSelected(option);
+                      setIsOpen(false);
+                    }}
+                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                      idx === 0
+                        ? "rounded-t-xl"
+                        : idx === options.length - 1
+                        ? "rounded-b-xl"
+                        : ""
+                    }`}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          {isOpen && (
-            <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-              {options.map((option, idx) => (
-                <div
-                  key={option}
-                  onClick={() => {
-                    setSelected(option);
-                    setIsOpen(false);
-                  }}
-                  className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                    idx === 0
-                      ? "rounded-t-xl"
-                      : idx === options.length - 1
-                      ? "rounded-b-xl"
-                      : ""
-                  }`}
-                >
-                  {option}
-                </div>
-              ))}
+          {/* Sort Order Dropdown */}
+          <div
+            ref={orderDropdownRef}
+            className="mb-[20px] relative w-full sm:w-[200px]"
+          >
+            <div
+              onClick={() => setOrderDropdownOpen((prev) => !prev)}
+              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+            >
+              <span className="text-sm">
+                {sortOrder === "desc"
+                  ? selected === "Volume"
+                    ? "High → Low"
+                    : "New → Old"
+                  : selected === "Volume"
+                  ? "Low → High"
+                  : "Old → New"}
+              </span>
+              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                <BsChevronDown className="text-white text-xl" />
+              </div>
             </div>
-          )}
+            {orderDropdownOpen && (
+              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                <div
+                  onClick={() => {
+                    setSortOrder("desc");
+                    setOrderDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
+                >
+                  {selected === "Volume" ? "High → Low" : "New → Old"}
+                </div>
+                <div
+                  onClick={() => {
+                    setSortOrder("asc");
+                    setOrderDropdownOpen(false);
+                  }}
+                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
+                >
+                  {selected === "Volume" ? "Low → High" : "Old → New"}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
@@ -326,7 +389,10 @@ export default function Leaderboard() {
                       </td>
                       <td className="px-6 py-4">
                         {tokenMeta ? (
-                          <div className="flex items-center gap-3">
+                          <Link
+                            to={`/trade/${tokenMeta.tokenAddress}`}
+                            className="flex items-center gap-3 cursor-pointer"
+                          >
                             {tokenMeta.tokenImageId && (
                               <img
                                 src={`${import.meta.env.VITE_API_BASE_URL}${
@@ -348,7 +414,7 @@ export default function Leaderboard() {
                                 {formatUTC(entry.lastPurchaseTs)}
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         ) : (
                           <span>—</span>
                         )}

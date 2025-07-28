@@ -26,7 +26,9 @@ import TaxTokens from "../svgcomponents/TaxTokens";
 import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "../generalcomponents/DustParticles";
+// import AverageVolumeIcon from "../svgcomponents/AverageVolumeIcon";
 import { base } from "../../lib/api";
+import { TbChartCandleFilled } from "react-icons/tb";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -78,9 +80,15 @@ const PlatformStats = () => {
 
   // Calculate average curve progress
   const averageBondingProgress =
-    totalTokenCount > 0 ? (Number(totalTokensListed) / totalTokenCount) * 100 : 0;
+    totalTokenCount > 0
+      ? (Number(totalTokensListed) / totalTokenCount) * 100
+      : 0;
 
-  const averageVolume = totalTokenCount > 0 ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) / totalTokenCount : 0;
+  const averageVolume =
+    totalTokenCount > 0
+      ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) /
+        totalTokenCount
+      : 0;
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -115,7 +123,7 @@ const PlatformStats = () => {
   const getETHDisplay = useCallback(
     (ethValue: number) => {
       if (currentETHPrice === 0) return "";
-      return `(${ethValue.toFixed(4)} ETH)`;
+      return `(${ethValue.toFixed(2)} ETH)`;
     },
     [currentETHPrice]
   );
@@ -127,80 +135,87 @@ const PlatformStats = () => {
         title: "Total Volume",
         mainValue: getMainValue(
           pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-          `${pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+          `${
+            pureMetrics[0] !== undefined
+              ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
-        icon: VolumeIcon,
+        icon: <VolumeIcon className="w-full h-full" />,
       },
       {
         title: "Fee Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-          `${pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+          `${
+            pureMetrics[1] !== undefined
+              ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
-        icon: FeeCollected,
+        icon: <FeeCollected className="w-full h-full" />,
       },
       {
         title: "Tokens Deployed",
         mainValue: `${pureMetrics?.[2] || 0}`,
         ethValue: "",
-        icon: TokensLaunched,
+        icon: <TokensLaunched className="w-full h-full" />,
       },
       {
         title: "Tokens Listed",
         mainValue: `${pureMetrics?.[3] || 0}`,
         ethValue: "",
-        icon: TokensListed,
+        icon: <TokensListed className="w-full h-full" />,
       },
       {
         title: "Avg. Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
-        icon: AverageBonding,
+        icon: <AverageBonding className="w-full h-full" />,
       },
       {
         title: "Tax Tokens",
         mainValue: `${pureMetrics?.[4] || 0}`,
         ethValue: "",
-        icon: TaxTokens,
+        icon: <TaxTokens className="w-full h-full" />,
       },
       {
         title: "0% Tax Token",
         mainValue: `${pureMetrics?.[5] || 0}`,
         ethValue: "",
-        icon: ZeroTaxTokens,
+        icon: <ZeroTaxTokens className="w-full h-full" />,
       },
       {
         title: "$SAFU Holders",
         mainValue: "234",
         ethValue: "",
-        icon: SafuHolders,
+        icon: <SafuHolders className="w-full h-full" />,
       },
       {
-        title: "Average Volume",
+        title: "Average Volume (Per Token)",
         mainValue: `$${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
         ethValue: "",
-        icon: SafuHolders,
+        icon: <TbChartCandleFilled className="w-full h-full" />,
       },
       {
         title: "Paid Out Dev Reward",
         mainValue: getMainValue(
           pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
-          `${pureMetrics[6] !== undefined
-            ? (Number(pureMetrics[6]) / 1e18).toFixed(2)
+          `${(pureMetrics[6] !== undefined
+            ? Number(pureMetrics[6]) / 1e18
             : 0
-          } ETH`
+          ).toFixed(2)} ETH`
         ),
         ethValue: getETHDisplay(
-          pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0
+          Number(
+            pureMetrics[6] !== undefined
+              ? (Number(pureMetrics[6]) / 1e18).toFixed(2)
+              : 0
+          )
         ),
-        icon: SafuHolders,
+        icon: <SafuHolders className="w-full h-full" />,
       },
     ];
   }, [averageBondingProgress, averageVolume, getETHDisplay, getMainValue]);
@@ -317,7 +332,7 @@ const PlatformStats = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pt-24 pb-8">
             {stats.map((stat, index) => {
-              const Icon = stat.icon;
+              // const Icon = stat.icon;
               return (
                 <div
                   key={index}
@@ -326,9 +341,7 @@ const PlatformStats = () => {
                   }}
                   className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
                 >
-                  <div className="w-16 h-16 mb-4">
-                    <Icon className="w-full h-full" />
-                  </div>
+                  <div className="w-16 h-16 mb-4">{stat.icon}</div>
                   {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     <span className="main-value" id={`main-value-${index}`}>

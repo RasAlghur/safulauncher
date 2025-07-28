@@ -54,7 +54,6 @@ import {
 } from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
 import { useUser } from "../context/user.context";
-// import TopHolders from "../lib/TopHolders";
 
 // Define this function outside your component
 const gradientSteps = [
@@ -296,6 +295,7 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState<"transactions" | "chat">(
     "transactions"
   );
+
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 25;
 
@@ -608,8 +608,6 @@ export default function Trade() {
 
   // Pool valuation
   const tokenPool = tokenSupply - tokenSold;
-
-
   // const tokenPriceUSD =
   //   oneTokenPriceETH !== null ? oneTokenPriceETH * infoETHCurrentPrice : 0;
 
@@ -1006,7 +1004,7 @@ export default function Trade() {
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
-      console.log("filtered", filtered)
+      console.log("filtered", filtered);
       setTxLogs(filtered);
     } catch (error) {
       console.error("Error fetching logs:", error);
@@ -1022,25 +1020,53 @@ export default function Trade() {
       socket.connect();
     }
 
+    // ...existing code...
     const handleReceiveTransaction = (tx: TxLog) => {
-      // console.log("called");
       if (tx.type === "buy" || tx.type === "sell") {
         setTxLogs((prevLogs) => {
           const updated = [tx, ...prevLogs];
-          if (isAutoUpdateEnabled) {
-            setTimeout(() => loadChartData(true), 100);
+          // Update chart and curve progress for all devices
+          setTimeout(() => loadChartData(true), 100);
+
+          // Calculate new curve progress based on updated txLogs
+          // You may need to fetch latest tokenSold and tokenSupply, but here's a simple example:
+          if (tokenAddress && tokenSupply > 0) {
+            // Calculate total tokens sold from updated logs
+            const totalSold = updated.reduce(
+              (sum, log) =>
+                sum + (log.type === "buy" ? Number(log.tokenAmount) : 0),
+              0
+            );
+            const curvePercent = (totalSold / (0.75 * tokenSupply)) * 100;
+            const curvePercentClamped = Math.min(
+              Math.max(curvePercent, 0),
+              100
+            );
+
+            setCurveProgressMap((prev) => ({
+              ...prev,
+              [tokenAddress]: curvePercentClamped,
+            }));
           }
+
           return updated;
         });
       }
     };
+    // ...existing code...
     socket.on("recTransaction", handleReceiveTransaction);
 
     return () => {
       socket.off("recTransaction", handleReceiveTransaction);
       socket.disconnect();
     };
-  }, [fetchLogsWithCallback, isAutoUpdateEnabled, loadChartData]);
+  }, [
+    fetchLogsWithCallback,
+    isAutoUpdateEnabled,
+    loadChartData,
+    tokenAddress,
+    tokenSupply,
+  ]);
 
   // Volume calculations
   const now = Date.now();
@@ -1065,7 +1091,7 @@ export default function Trade() {
 
   const volumeOptions = [
     {
-      label: "Today",
+      label: "24h",
       eth: volume1dEth,
       usd: volume1dUsd,
     },
@@ -1083,6 +1109,24 @@ export default function Trade() {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedVolume, setSelectedVolume] = useState(volumeOptions[0]);
+  const volumeDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close volume dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isDropdownOpen &&
+        volumeDropdownRef.current &&
+        !volumeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const performance1dPrice = (logs: TxLog[]) => {
     if (logs.length === 0) return 0;
@@ -1711,7 +1755,7 @@ export default function Trade() {
     }
   };
 
-  console.log(txLogs);
+  // console.log(txLogs);
 
   // Loading state
   if (isLoadingToken) {
@@ -2206,7 +2250,7 @@ export default function Trade() {
                       href={`https://app.uniswap.org/#/tokens/ethereum/${token.tokenAddress}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full rounded-lg py-2 text-white text-center text-xs bg-[#27AE60] hover:bg-green-600 transition"
+                      className="w-full rounded-lg py-2 px-2 mx-auto flex items-center justify-center text-white text-center text-xs bg-[#27AE60] hover:bg-green-600 transition"
                       style={{ pointerEvents: "auto" }}
                     >
                       View token on Uniswap
@@ -2345,8 +2389,37 @@ export default function Trade() {
             </div>
 
             {/* Top Holders */}
-            {/* <TopHolders tokenAddress={tokenAddress || "0x...fallback"} /> */}
-            {/* <TopHolders /> */}
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold mb-2 dark:text-white text-black">
+                Top Holders
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm dark:text-white/80">
+                  <thead>
+                    <tr>
+                      <th className="py-2 px-2 text-left dark:text-white text-black">
+                        Address
+                      </th>
+                      <th className="py-2 px-2 text-left dark:text-white text-black">
+                        % of Supply
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* {topHolders.map((holder, i) => (
+                      <tr key={i} className="border-b dark:border-white/10">
+                        <td className="py-2 px-2 font-mono">
+                          {holder.owner.slice(0, 6)}…{holder.owner.slice(-4)}
+                        </td>
+                        <td className="py-2 px-2">
+                          {holder.percent.toFixed(4)}%
+                        </td>
+                      </tr>
+                    ))} */}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* Right section */}
@@ -2355,46 +2428,54 @@ export default function Trade() {
             <div className="">
               {/* Tab Buttons */}
               <div className="flex flex-col md:flex-row gap-2 justify-between md:items-center mb-2">
-                <h1 className="text-left text-[20px] font-raleway font-medium dark:text-white text-black">
+                <h1 className="text-left text-[20px] lg:text-[24px] font-raleway font-medium dark:text-white text-black">
                   Chart
                 </h1>
 
-                <div className="flex items-center gap-2">
-                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                    <p className="dark:text-white text-black">
-                      <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                        Token Supply:
-                      </span>{" "}
-                      {(tokenSupply / 1e18).toLocaleString()}
-                    </p>
+                <div className="flex items-start gap-2 w-fit">
+                  <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                      <p className="dark:text-white text-black text-sm">
+                        <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                          Token Supply:
+                        </span>{" "}
+                        {(tokenSupply / 1e18).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                      <p className="dark:text-white text-black text-sm">
+                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                          Market Cap:
+                        </span>{" "}
+                        {marketCapUSD > 0
+                          ? `$${formatTokenAmount(marketCapUSD)}`
+                          : "Calculating..."}
+                      </p>
+                    </div>
                   </div>
-                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                    <p className="dark:text-white text-black">
-                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Market Cap:
-                      </span>{" "}
-                      {marketCapUSD > 0
-                        ? `$${formatTokenAmount(marketCapUSD)}`
-                        : "Calculating..."}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                    <p className="dark:text-white text-black">
-                      <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                        Pooled ETH:
-                      </span>{" "}
-                      {(ethRaised / 1e18).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                    <p className="dark:text-white text-black">
-                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Pooled {token.symbol}:
-                      </span>{" "}
-                      {(tokenPool / 1e18).toLocaleString()}
-                    </p>
+                  <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                      <p className="dark:text-white text-black text-sm">
+                        <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                          Pooled ETH:
+                        </span>{" "}
+                        {(ethRaised / 1e18).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                      <p className="dark:text-white text-black text-sm">
+                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                          Pooled {token.symbol}:
+                        </span>{" "}
+                        {(tokenPool / 1e18).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2438,6 +2519,7 @@ export default function Trade() {
                   {/* Volume summary */}
                   {/* Volume dropdown display */}
                   <div
+                    ref={volumeDropdownRef}
                     className="relative z-30"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
@@ -2446,9 +2528,13 @@ export default function Trade() {
                         Volume ({selectedVolume.label}):
                       </span>
                       <span className="dark:text-white text-black whitespace-nowrap">
-                        {selectedVolume.eth.toFixed(4)} ETH ($
-                        {selectedVolume.usd.toLocaleString()})
+                        $
+                        {selectedVolume.usd.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </span>
+
                       <FaChevronDown
                         className={`ml-1 text-sm transition-transform cursor-pointer ${
                           isDropdownOpen ? "rotate-180" : ""
@@ -2472,8 +2558,11 @@ export default function Trade() {
                               {option.label}
                             </span>
                             <span className="dark:text-white text-black whitespace-nowrap">
-                              {option.eth.toFixed(4)} ETH ($
-                              {option.usd.toLocaleString()})
+                              $
+                              {option.usd.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </span>
                           </div>
                         ))}
@@ -2578,9 +2667,9 @@ export default function Trade() {
                                 {tx.type.charAt(0).toUpperCase() +
                                   tx.type.slice(1)}
                               </td>
-                              <td className="...">
+                              <td className="dark:text-white text-black">
                                 {" "}
-                                {/* ✅ New Market Cap Cell */}
+                                {/* Market Cap Cell */}
                                 {tx.oldMarketCap
                                   ? `$${Number(tx.oldMarketCap).toLocaleString(
                                       undefined,

@@ -17,7 +17,7 @@ import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import {
   pureGetLatestETHPrice,
   pureMetrics,
-  totalTokensListed
+  totalTokensListed,
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
 import { base } from "../../lib/api";
@@ -72,9 +72,15 @@ const PlatformStats = () => {
 
   // Calculate average curve progress
   const averageBondingProgress =
-    totalTokenCount > 0 ? (Number(totalTokensListed) / totalTokenCount) * 100 : 0;
+    totalTokenCount > 0
+      ? (Number(totalTokensListed) / totalTokenCount) * 100
+      : 0;
 
-  const averageVolume = totalTokenCount > 0 ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) / totalTokenCount : 0;
+  const averageVolume =
+    totalTokenCount > 0
+      ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) /
+        totalTokenCount
+      : 0;
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -107,7 +113,7 @@ const PlatformStats = () => {
   const getETHDisplay = useCallback(
     (ethValue: number) => {
       if (currentETHPrice === 0) return "";
-      return `(${ethValue.toFixed(4)} ETH)`;
+      return `(${ethValue.toFixed(2)} ETH)`;
     },
     [currentETHPrice]
   );
@@ -119,9 +125,10 @@ const PlatformStats = () => {
         title: "Total Volume",
         mainValue: getMainValue(
           pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-          `${pureMetrics[0] !== undefined
-            ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-            : 0
+          `${
+            pureMetrics[0] !== undefined
+              ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -131,9 +138,10 @@ const PlatformStats = () => {
         title: "Fee Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-          `${pureMetrics[1] !== undefined
-            ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-            : 0
+          `${
+            pureMetrics[1] !== undefined
+              ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: FeeCollected,
@@ -160,8 +168,9 @@ const PlatformStats = () => {
       {
         id: 1,
         title: "Avg. Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -188,13 +197,13 @@ const PlatformStats = () => {
       },
       {
         id: 5,
-        title: "Average Volume",
-        mainValue: `$${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
+        title: "Average Volume (Per Token)",
+        mainValue: `${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
         ethValue: "",
         icon: SafuHolders,
       },
     ];
-  }, [averageBondingProgress, averageVolume]);
+  }, [averageBondingProgress, averageVolume, getMainValue]);
 
   const stats3 = useMemo(() => {
     const devReward =
