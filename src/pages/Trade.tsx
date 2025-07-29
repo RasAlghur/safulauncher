@@ -625,8 +625,6 @@ export default function Trade() {
 
   // Pool valuation
   const tokenPool = tokenSupply - tokenSold;
-  // const tokenPriceUSD =
-  //   oneTokenPriceETH !== null ? oneTokenPriceETH * infoETHCurrentPrice : 0;
 
   // Load fallback data for non-connected users
   useEffect(() => {
@@ -925,6 +923,12 @@ export default function Trade() {
       refetchAmountOut();
       refetchETHBalance();
       refetchBalance();
+      marketCapUSD;
+      marketCapETH;
+      oneTokenPriceETH;
+      infoETHCurrentPrice;
+      totalSupplyTokens;
+      tokenSupply;
       refetchAllowance();
       setIsProcessingTxn(false);
 
@@ -942,6 +946,12 @@ export default function Trade() {
     txHash,
     lastTxnType,
     loadChartData,
+    marketCapUSD,
+    marketCapETH,
+    oneTokenPriceETH,
+    infoETHCurrentPrice,
+    totalSupplyTokens,
+    tokenSupply,
     refetchInfoData,
     refetchAmountOut,
     refetchBalance,
@@ -972,10 +982,7 @@ export default function Trade() {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const block = await provider.getBlock(result.blockNumber);
 
-          let timestamp = "";
-          if (block?.timestamp) {
-            timestamp = new Date(block.timestamp * 1000).toISOString();
-          }
+          let timestamp = Date.now()
 
           const type = lastTxnType;
           const inputAmountStr =
@@ -1780,8 +1787,6 @@ export default function Trade() {
         return "Transaction confirmed successfully!";
     }
   };
-
-  // console.log(txLogs);
 
   // Loading state
   if (isLoadingToken) {
