@@ -439,7 +439,7 @@ export default function LightweightChart({
             </span>
           )}
         </div>
-        <div className="flex items-center space-x-1 text-xs text-white/60">
+        <div className="hidden">
           <span>Vol:</span>
           <span className="text-white">{volume}</span>
         </div>

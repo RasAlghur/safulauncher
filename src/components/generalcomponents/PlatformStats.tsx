@@ -4,6 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TrendingTokens from "./TrendingTokens";
 import NotableBuys from "./NotableBuys";
+import Reward from "../svgcomponents/Reward";
 import VolumeIcon from "../svgcomponents/Volume";
 import FeeCollected from "../svgcomponents/FeeCollected";
 import TokensLaunched from "../svgcomponents/TokensLaunched";
@@ -12,6 +13,7 @@ import AverageBonding from "../svgcomponents/AverageBonding";
 import TaxTokens from "../svgcomponents/TaxTokens";
 import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
+import AverageVolume from "../svgcomponents/AverageVolume";
 import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import {
@@ -135,6 +137,13 @@ const PlatformStats = () => {
       },
       {
         id: 2,
+        title: "Average Volume (Per Token)",
+        mainValue: `${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
+        ethValue: "",
+        icon: AverageVolume,
+      },
+      {
+        id: 3,
         title: "Fee Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
@@ -147,23 +156,26 @@ const PlatformStats = () => {
         icon: FeeCollected,
       },
       {
-        id: 3,
+        id: 4,
         title: "Tokens Deployed", // Change launched to deployed
         mainValue: `${pureMetrics?.[2] || 0}`,
         ethValue: "",
         icon: TokensLaunched,
       },
       {
-        id: 4,
+        id: 5,
         title: "Tokens Listed",
         mainValue: `${pureMetrics?.[3] || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
     ];
-  }, [getMainValue]);
+  }, [getMainValue, averageVolume]);
 
   const stats2 = useMemo(() => {
+    const devReward =
+      pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0;
+
     return [
       {
         id: 1,
@@ -191,34 +203,19 @@ const PlatformStats = () => {
       {
         id: 4,
         title: "SAFU Holders",
-        mainValue: "234",
+        mainValue: "234", // Update when you have real data
         ethValue: "",
         icon: SafuHolders,
       },
       {
         id: 5,
-        title: "Average Volume (Per Token)",
-        mainValue: `${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
-        ethValue: "",
-        icon: SafuHolders,
-      },
-    ];
-  }, [averageBondingProgress, averageVolume, getMainValue]);
-
-  const stats3 = useMemo(() => {
-    const devReward =
-      pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0;
-
-    return [
-      {
-        id: 1,
         title: "Paid Out Dev Reward",
         mainValue: getMainValue(devReward, `${devReward.toFixed(2)} ETH`),
         ethValue: getETHDisplay(devReward),
-        icon: SafuHolders,
+        icon: Reward,
       },
     ];
-  }, [getETHDisplay, getMainValue]);
+  }, [averageBondingProgress, getMainValue, getETHDisplay]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -253,7 +250,7 @@ const PlatformStats = () => {
   }, []);
 
   useEffect(() => {
-    const allStats = [...stats1, ...stats2, ...stats3];
+    const allStats = [...stats1, ...stats2];
 
     allStats.forEach((stat, index) => {
       const el = document.getElementById(`main-value-${index}`);
@@ -297,7 +294,7 @@ const PlatformStats = () => {
         }
       );
     });
-  }, [stats1, stats2, stats3]);
+  }, [stats1, stats2]);
 
   return (
     <section
@@ -369,8 +366,13 @@ const PlatformStats = () => {
                   }}
                   className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
                 >
-                  <div className="w-16 h-16 mb-4">
+                  <div className="w-16 h-16 mb-4 relative">
                     <Icon className="w-full h-full" />
+                    {stat.id === 3 && (
+                      <p className="text-white/50 font-bold text-[22px]  absolute bottom-6 left-[10px] dark:hidden block">
+                        TAX
+                      </p>
+                    )}
                   </div>
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     {stat.mainValue}
@@ -388,7 +390,7 @@ const PlatformStats = () => {
             })}
           </div>
 
-          <div className="bg-[#0c8be011] p-[20px] rounded-[20px] grid grid-cols-1 gap-4">
+          {/* <div className="bg-[#0c8be011] p-[20px] rounded-[20px] grid grid-cols-1 gap-4">
             {stats3.map((stat, index) => {
               const Icon = stat.icon;
               return (
@@ -418,7 +420,7 @@ const PlatformStats = () => {
                 </div>
               );
             })}
-          </div>
+          </div> */}
         </div>
         <div>
           <TrendingTokens />

@@ -916,6 +916,18 @@ export default function Trade() {
     if (isConfirmed && txHash) {
       refetchInfoData();
       refetchLatestETHPrice();
+      pureAmountOutMarketCap(tokenAddress!)
+        .then((raw) => {
+          if (raw !== undefined && raw !== null) {
+            const eth = Number(raw.toString()) / 1e18;
+            setOneTokenPriceETH(eth);
+          } else {
+            setOneTokenPriceETH(0);
+          }
+        })
+        .catch((err) => {
+          console.error("Error updating token price after txn:", err);
+        });
       refetchSafuHolder();
       refetchSafuSupply();
       refetchSafuHolderBalance();
@@ -923,12 +935,7 @@ export default function Trade() {
       refetchAmountOut();
       refetchETHBalance();
       refetchBalance();
-      marketCapUSD;
-      marketCapETH;
-      oneTokenPriceETH;
-      infoETHCurrentPrice;
-      totalSupplyTokens;
-      tokenSupply;
+
       refetchAllowance();
       setIsProcessingTxn(false);
 
@@ -962,9 +969,29 @@ export default function Trade() {
     refetchSafuHolderBalance,
     refetchSafuSupply,
     refetchSafuHolder,
+    tokenAddress,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
+
+  // Enhanced fetchLogs with callback for chart update
+  const fetchLogsWithCallback = useCallback(async () => {
+    if (!tokenAddress) return;
+
+    try {
+      const response = await base.get(
+        `transactions?tokenAddress=${tokenAddress}`
+      );
+      const all: TxLog[] = await response.data.data.data;
+      const filtered = all.filter(
+        (tx) => tx.type === "buy" || tx.type === "sell"
+      );
+      console.log("filtered", filtered);
+      setTxLogs(filtered);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  }, [tokenAddress]);
 
   // Log transactions
   useEffect(() => {
@@ -979,9 +1006,8 @@ export default function Trade() {
       loggedTxns.current.add(txHash);
       const postToSocket = async () => {
         try {
+          const timestamp = Date.now();
 
-          let timestamp = Date.now()
-          
           const type = lastTxnType;
           const inputAmountStr =
             type === "buy"
@@ -1004,6 +1030,7 @@ export default function Trade() {
           };
 
           socket.emit("newTransaction", body);
+          fetchLogsWithCallback();
         } catch (error) {
           console.error("Error logging transaction:", error);
         }
@@ -1021,26 +1048,8 @@ export default function Trade() {
     amountOut,
     result,
     marketCapUSD,
+    fetchLogsWithCallback,
   ]);
-
-  // Enhanced fetchLogs with callback for chart update
-  const fetchLogsWithCallback = useCallback(async () => {
-    if (!tokenAddress) return;
-
-    try {
-      const response = await base.get(
-        `transactions?tokenAddress=${tokenAddress}`
-      );
-      const all: TxLog[] = await response.data.data.data;
-      const filtered = all.filter(
-        (tx) => tx.type === "buy" || tx.type === "sell"
-      );
-      console.log("filtered", filtered);
-      setTxLogs(filtered);
-    } catch (error) {
-      console.error("Error fetching logs:", error);
-    }
-  }, [tokenAddress]);
 
   // Replace the existing fetchLogs effect
   useEffect(() => {
@@ -2377,7 +2386,7 @@ export default function Trade() {
 
                 {!isLoadingInfoData &&
                   Array.from({ length: 50 }).map((_, i) => {
-                    if (i === 0) return null; // 👈 Skip the first stripe
+                    if (i === 0) return null;
                     const stripeWidth = 4;
                     const spacing = 100 / 50;
                     return (
@@ -2541,7 +2550,7 @@ export default function Trade() {
                   {/* Volume dropdown display */}
                   <div
                     ref={volumeDropdownRef}
-                    className="relative z-30"
+                    className="relative z-30 w-fit"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
                     <div className="cursor-pointer dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center gap-2">
@@ -2655,7 +2664,7 @@ export default function Trade() {
                 {activeTab === "transactions" ? (
                   <>
                     <div className="tx-table overflow-x-auto max-h-[500px] overflow-y-auto">
-                      <table className="min-w-[600px] md:min-w-full text-sm dark:text-white/80">
+                      <table className="min-w-[900px] lg:min-w-[700px] text-sm dark:text-white/80">
                         <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-black/10 border-b-2 dark:border-b-white/20 ">
                           <tr>
                             <th className="py-3 pl-1">Type</th>
