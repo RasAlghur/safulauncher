@@ -979,11 +979,9 @@ export default function Trade() {
       loggedTxns.current.add(txHash);
       const postToSocket = async () => {
         try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const block = await provider.getBlock(result.blockNumber);
 
           let timestamp = Date.now()
-
+          
           const type = lastTxnType;
           const inputAmountStr =
             type === "buy"
