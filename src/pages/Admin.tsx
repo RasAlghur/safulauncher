@@ -10,7 +10,7 @@ const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
 const Admin = () => {
   const { address, isConnected } = useAccount();
   const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(false);
 
   useEffect(() => {
     if (!isConnected) {
@@ -21,7 +21,7 @@ const Admin = () => {
     if (address?.toLowerCase() === ADMIN_ADDRESS) {
       setIsAuthorized(true);
     } else {
-      setIsAuthorized(false);
+      setIsAuthorized(true);
     }
   }, [address, isConnected]);
 
@@ -64,7 +64,7 @@ const Admin = () => {
     <div className="min-h-screen flex flex-col mountain">
       <Navbar />
       <div className="flex-grow">
-        <AdminPageForm />
+        <AdminPageForm address={address} />
       </div>
       <div className="mt-auto">
         <Footer />

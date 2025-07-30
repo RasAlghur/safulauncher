@@ -445,6 +445,7 @@ const TrendingTokens = () => {
                                 }`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"
+                                crossOrigin="anonymous"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#147ABD] flex items-center justify-center text-white font-bold">
