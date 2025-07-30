@@ -155,7 +155,7 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "Fee Collected",
+        title: "Fees Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
           `${
@@ -175,14 +175,14 @@ const PlatformStats = () => {
       },
       {
         id: 5,
-        title: "Tokens Listed",
+        title: "Graduated Tokens",
         mainValue: `${pureMetrics?.[3] || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
       {
         id: 6,
-        title: "Avg. Bonding",
+        title: "Average Bonding",
         mainValue: `${
           isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
         }%`,
@@ -198,7 +198,7 @@ const PlatformStats = () => {
       },
       {
         id: 8,
-        title: "0% Tax Token",
+        title: "0% Tax Tokens",
         mainValue: `${pureMetrics?.[5] || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,

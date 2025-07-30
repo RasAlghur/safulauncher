@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Moralis from "moralis";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const apiKey = import.meta.env.VITE_MORALIS_API_KEY;
 
@@ -23,6 +24,7 @@ export function TopHoldersTable({
   const [topHolders, setTopHolders] = useState<Holder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const fetchTopHolders = useCallback(async () => {
     if (!tokenAddress) return;
@@ -31,7 +33,6 @@ export function TopHoldersTable({
     setError(null);
 
     try {
-      // Initialize Moralis only if it hasn't been started yet
       if (!Moralis.Core.isStarted) {
         await Moralis.start({ apiKey });
       }
@@ -43,14 +44,11 @@ export function TopHoldersTable({
       });
 
       const data = response.raw().result;
-      console.log("response", response.result);
-
       const holders: Holder[] = data.map((h: any) => ({
         owner: h.owner_address,
         percent: h.percentage_relative_to_total_supply,
       }));
 
-      console.log("holders", holders);
       setTopHolders(holders);
     } catch (e: any) {
       console.error(e);
@@ -66,6 +64,70 @@ export function TopHoldersTable({
     }
   }, [tokenAddress, fetchTopHolders]);
 
+  // Add this with other state declarations
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 25;
+
+  // Calculate total pages
+  const totalPages = Math.ceil(topHolders.length / rowsPerPage);
+
+  // Slice holders based on pagination
+  const paginatedHolders = topHolders.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  // Tooltip component (hover on desktop, click on mobile)
+  const IconWithTooltip = ({
+    tooltip,
+    children,
+  }: {
+    tooltip: string;
+    children: React.ReactNode;
+  }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    const handleHover = (val: boolean) => {
+      if (window.innerWidth >= 768) setShowTooltip(val);
+    };
+
+    const handleClick = () => {
+      if (window.innerWidth < 768) setShowTooltip((prev) => !prev);
+    };
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (ref.current && !ref.current.contains(event.target as Node)) {
+          setShowTooltip(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    // console.log(topHolders);
+
+    return (
+      <div
+        className="relative inline-flex items-center ml-2 cursor-pointer"
+        onMouseEnter={() => handleHover(true)}
+        onMouseLeave={() => handleHover(false)}
+        onClick={handleClick}
+      >
+        {children}
+        {showTooltip && (
+          <span className="absolute bottom-full mb-1 px-2 py-1 text-xs text-white bg-black rounded shadow z-10 whitespace-nowrap">
+            {tooltip}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   // Function to check address type and return appropriate icon
   const getAddressIcon = (address: string) => {
     const isCreator = address.toLowerCase() === creatorAdress.toLowerCase();
@@ -73,7 +135,7 @@ export function TopHoldersTable({
 
     if (isCreator) {
       return (
-        <span className="inline-flex items-center ml-2" title="Token Creator">
+        <IconWithTooltip tooltip="Dev Wallet">
           <svg
             className="w-4 h-4 text-blue-500"
             fill="currentColor"
@@ -85,13 +147,13 @@ export function TopHoldersTable({
               clipRule="evenodd"
             />
           </svg>
-        </span>
+        </IconWithTooltip>
       );
     }
 
     if (isBonding) {
       return (
-        <span className="inline-flex items-center ml-2" title="Bonding Address">
+        <IconWithTooltip tooltip="SafuLauncher Pool (tokens available for sale)">
           <svg
             className="w-4 h-4 text-green-500"
             fill="currentColor"
@@ -103,7 +165,7 @@ export function TopHoldersTable({
               clipRule="evenodd"
             />
           </svg>
-        </span>
+        </IconWithTooltip>
       );
     }
 
@@ -137,7 +199,7 @@ export function TopHoldersTable({
             </tr>
           </thead>
           <tbody>
-            {topHolders.map((holder, i) => (
+            {paginatedHolders.map((holder, i) => (
               <tr
                 key={i}
                 className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none"
@@ -155,6 +217,27 @@ export function TopHoldersTable({
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+          className="p-2 bg-[#0C8CE0] text-white rounded-full disabled:opacity-50"
+        >
+          <FaChevronLeft />
+        </button>
+
+        <span className="px-2 text-sm text-gray-600 dark:text-white/70">
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="p-2 bg-[#0C8CE0] text-white rounded-full disabled:opacity-50"
+        >
+          <FaChevronRight />
+        </button>
       </div>
     </div>
   );

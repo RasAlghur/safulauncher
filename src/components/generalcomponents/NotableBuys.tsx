@@ -120,13 +120,13 @@ const NotableBuys = () => {
             Notable Buys
           </button>
         </div>
-        <button className="text-sm text-gray-400 hover:underline">
+        {/* <button className="text-sm text-gray-400 hover:underline">
           All trades
-        </button>
+        </button> */}
       </div>
 
       {/* Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
         {activeData.map((tx, i) => {
           const username = tx.user.username;
           const username_ = username !== undefined || username !== null;

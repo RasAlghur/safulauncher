@@ -1,4 +1,6 @@
 // TrendingTokens.tsx
+
+import { getHoldersFromMoralis } from "../../lib/getHoldersFromMoralis";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -216,17 +218,7 @@ const TrendingTokens = () => {
               }
 
               // Calculate holders for this token
-              const balanceMap: Record<string, number> = {};
-              tokenLogs.forEach((tx) => {
-                const amt = parseFloat(tx.tokenAmount);
-                const w = tx.wallet.toLowerCase();
-                if (!balanceMap[w]) balanceMap[w] = 0;
-                balanceMap[w] += tx.type === "buy" ? amt : -amt;
-              });
-
-              const holders = Object.values(balanceMap).filter(
-                (net) => net > 0
-              ).length;
+              const holders = await getHoldersFromMoralis(tokenAddress);
 
               // Get message count for this token
               const messageCount = messageCountMap[tokenAddress] || 0;

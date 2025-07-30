@@ -58,7 +58,7 @@ export default function ErrorsPage() {
             "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YjlmZjk5MC0yMTQ3LTRlY2UtYjFmYS04OTRmYTRhYTEwZDUiLCJlbWFpbCI6ImFsaWNlQHN0cmVwbGUuY29tIiwicm9sZSI6IlBST19UUkFERVIiLCJpYXQiOjE3NTM2OTg0MjQsImV4cCI6MTc1MzcwMjAyNH0.4VYFvNh3xDeCQirHchD_8kGbukwKBxZwFfvfsrugjSE",
         },
         body: formData, //JSON.stringify(data),
-      },
+      }
     );
 
     const res = await req.json();

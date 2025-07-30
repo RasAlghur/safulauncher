@@ -144,7 +144,7 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "Fee Collected",
+        title: "Fees Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
           `${
@@ -164,7 +164,7 @@ const PlatformStats = () => {
       },
       {
         id: 5,
-        title: "Tokens Listed",
+        title: "Graduated Tokens", // Change listed to graduated
         mainValue: `${pureMetrics?.[3] || 0}`,
         ethValue: "",
         icon: TokensListed,
@@ -179,7 +179,7 @@ const PlatformStats = () => {
     return [
       {
         id: 1,
-        title: "Avg. Bonding",
+        title: "Average Bonding",
         mainValue: `${
           isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
         }%`,
@@ -195,7 +195,7 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "0% Tax Token",
+        title: "0% Tax Tokens",
         mainValue: `${pureMetrics?.[5] || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
@@ -298,7 +298,7 @@ const PlatformStats = () => {
 
   return (
     <section
-      className="lg:px-[80px] lg:pb-20 lg:pt-24 relative z-20 px-4"
+      className="xl:px-[80px] lg:pb-20 lg:pt-24 relative z-20 px-4"
       id="stats"
       ref={containerRef}
     >
@@ -322,7 +322,7 @@ const PlatformStats = () => {
         Platform Stats
       </h1>
       <div className="flex flex-col lg:grid lg:grid-cols-[.3fr_.7fr] gap-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 xl:gap-4 gap-4 md:gap-2">
           <div className="bg-[#0c8be011] p-[20px] rounded-[10px] grid grid-cols-1 gap-4">
             {stats1.map((stat, index) => {
               const Icon = stat.icon;
@@ -339,7 +339,7 @@ const PlatformStats = () => {
                   </div>
                   <div
                     id={`main-value-${index}`}
-                    className="main-value text-lg font-semibold dark:text-white text-black mb-2"
+                    className="main-value xl:text-lg text-base font-semibold dark:text-white text-black mb-2"
                   >
                     {stat.mainValue}
                   </div>
@@ -374,7 +374,7 @@ const PlatformStats = () => {
                       </p>
                     )}
                   </div>
-                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                  <div className="xl:text-lg text-base font-semibold dark:text-white text-black mb-2">
                     {stat.mainValue}
                   </div>
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">

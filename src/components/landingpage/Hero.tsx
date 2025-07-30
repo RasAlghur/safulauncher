@@ -98,11 +98,12 @@ const Hero = () => {
             ref={paragraphRef}
             className="text-base sm:text-lg md:text-xl lg:text-lg mb-6 text-black dark:text-[#B6B6B6] max-w-md md:max-w-[700px] lg:max-w-none"
           >
-            SafuLauncher is a launchpad and trading platform that makes it easy
-            for anyone to participate in new token launches. It guides a token
-            from its very first sale through to listing on a decentralized
-            exchange—without requiring developers to front-fund liquidity or
-            rely on multiple tools.
+            SafuLauncher is a launchpad where users discover and immediately
+            trade freshly minted tokens on a community-funded bonding curve with
+            zero possibility of rug-pull. Developers get a one-click service:
+            mint tokens, enable instant trading, list on Uniswap, lock or burn
+            liquidity—and receive an instant 0.2ETH reward—no upfront capital or
+            manual steps required.
           </p>
           <div
             ref={buttonsRef}

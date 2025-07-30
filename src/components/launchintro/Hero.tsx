@@ -70,7 +70,7 @@ const Hero = () => {
   }, [isMobile]);
 
   return (
-    <section className="pb-[50px] pt-[10px] lg:h-[80vh] overflow-hidden relative z-[10] hero-white-background">
+    <section className="pb-[50px] pt-[60px] lg:h-screen overflow-hidden relative z-[10] hero-white-background">
       {/* Background Particles */}
       <div className="absolute inset-0 pointer-events-none -z-20 overflow-hidden">
         {[...Array(3)].map((_, i) => (

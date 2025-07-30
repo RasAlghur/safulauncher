@@ -64,6 +64,9 @@ export default function Launch(): JSX.Element {
   const [supply, setSupply] = useState<number>(0);
   const [supplyInput, setSupplyInput] = useState("");
   const [website, setWebsite] = useState<string>("");
+  const [telegram, setTelegram] = useState<string>("");
+  const [twitter, setTwitter] = useState<string>("");
+
   const [description, setDescription] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -1486,6 +1489,30 @@ export default function Launch(): JSX.Element {
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
               />
+            </div>
+
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
+                Social Links
+                <span className="mandatory text-Primary"> (Optional)</span>
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="url"
+                  placeholder="Telegram (https://t.me/username)"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                />
+                <input
+                  type="url"
+                  placeholder="X (https://X.com/username)"
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-[10px] mt-[34px]">

@@ -806,12 +806,12 @@ export default function Tokens() {
               >
                 {sortedTokens.map((t, idx) => (
                   <div key={idx} className="flex flex-col">
-                    <li className="rounded-xl lg:px-6 px-2 py-5 ">
+                    <li
+                      onClick={() => navigate(`/trade/${t.tokenAddress}`)}
+                      className="rounded-xl lg:px-6 px-2 py-5 cursor-pointer"
+                    >
                       <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                        <div
-                          onClick={() => navigate(`/trade/${t.tokenAddress}`)}
-                          className="flex items-start gap-4 cursor-pointer"
-                        >
+                        <div className="flex items-start gap-4 ">
                           {t.tokenImageId && (
                             <img
                               src={`${import.meta.env.VITE_API_BASE_URL}${
