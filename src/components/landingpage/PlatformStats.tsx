@@ -28,7 +28,9 @@ import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "../generalcomponents/DustParticles";
 // import AverageVolumeIcon from "../svgcomponents/AverageVolumeIcon";
 import { base } from "../../lib/api";
-import { TbChartCandleFilled } from "react-icons/tb";
+
+import Reward from "../svgcomponents/Reward";
+import AverageVolume from "../svgcomponents/AverageVolume";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -132,6 +134,7 @@ const PlatformStats = () => {
   const stats = useMemo(() => {
     return [
       {
+        id: 1,
         title: "Total Volume",
         mainValue: getMainValue(
           pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
@@ -141,9 +144,17 @@ const PlatformStats = () => {
               : 0
           } ETH`
         ),
-        icon: <VolumeIcon className="w-full h-full" />,
+        icon: VolumeIcon,
       },
       {
+        id: 2,
+        title: "Average Volume (Per Token)",
+        mainValue: `$${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
+        ethValue: "",
+        icon: AverageVolume,
+      },
+      {
+        id: 3,
         title: "Fee Collected",
         mainValue: getMainValue(
           pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
@@ -153,53 +164,55 @@ const PlatformStats = () => {
               : 0
           } ETH`
         ),
-        icon: <FeeCollected className="w-full h-full" />,
+        icon: FeeCollected,
       },
       {
+        id: 4,
         title: "Tokens Deployed",
         mainValue: `${pureMetrics?.[2] || 0}`,
         ethValue: "",
-        icon: <TokensLaunched className="w-full h-full" />,
+        icon: TokensLaunched,
       },
       {
+        id: 5,
         title: "Tokens Listed",
         mainValue: `${pureMetrics?.[3] || 0}`,
         ethValue: "",
-        icon: <TokensListed className="w-full h-full" />,
+        icon: TokensListed,
       },
       {
+        id: 6,
         title: "Avg. Bonding",
         mainValue: `${
           isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
         }%`,
         ethValue: "",
-        icon: <AverageBonding className="w-full h-full" />,
+        icon: AverageBonding,
       },
       {
+        id: 7,
         title: "Tax Tokens",
         mainValue: `${pureMetrics?.[4] || 0}`,
         ethValue: "",
-        icon: <TaxTokens className="w-full h-full" />,
+        icon: TaxTokens,
       },
       {
+        id: 8,
         title: "0% Tax Token",
         mainValue: `${pureMetrics?.[5] || 0}`,
         ethValue: "",
-        icon: <ZeroTaxTokens className="w-full h-full" />,
+        icon: ZeroTaxTokens,
       },
       {
+        id: 9,
         title: "$SAFU Holders",
         mainValue: "234",
         ethValue: "",
-        icon: <SafuHolders className="w-full h-full" />,
+        icon: SafuHolders,
       },
+
       {
-        title: "Average Volume (Per Token)",
-        mainValue: `$${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
-        ethValue: "",
-        icon: <TbChartCandleFilled className="w-full h-full" />,
-      },
-      {
+        id: 10,
         title: "Paid Out Dev Reward",
         mainValue: getMainValue(
           pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0,
@@ -215,7 +228,7 @@ const PlatformStats = () => {
               : 0
           )
         ),
-        icon: <SafuHolders className="w-full h-full" />,
+        icon: Reward,
       },
     ];
   }, [averageBondingProgress, averageVolume, getETHDisplay, getMainValue]);
@@ -332,7 +345,7 @@ const PlatformStats = () => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 pt-24 pb-8">
             {stats.map((stat, index) => {
-              // const Icon = stat.icon;
+              const Icon = stat.icon;
               return (
                 <div
                   key={index}
@@ -341,7 +354,14 @@ const PlatformStats = () => {
                   }}
                   className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
                 >
-                  <div className="w-16 h-16 mb-4">{stat.icon}</div>
+                  <div className="w-16 h-16 mb-4 relative">
+                    <Icon className="w-full h-full" />
+                    {stat.id === 8 && (
+                      <p className="text-white/60 font-bold text-[22px]  absolute bottom-6 left-[10px] dark:hidden block">
+                        TAX
+                      </p>
+                    )}
+                  </div>
                   {/* Main value (USD for ETH values, original for others) */}
                   <div className="text-lg font-semibold dark:text-white text-black mb-2">
                     <span className="main-value" id={`main-value-${index}`}>

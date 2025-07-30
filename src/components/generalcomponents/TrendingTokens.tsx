@@ -151,11 +151,10 @@ const TrendingTokens = () => {
         // Create message count map for easy lookup
         const messageCountMap: Record<string, number> = {};
         if (Array.isArray(msgCount)) {
-          msgCount.forEach(
-            (item: { groupId: string; messageCount: number }) => {
-              messageCountMap[item.groupId] = item.messageCount || 0;
-            }
-          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          msgCount.forEach((item: any) => {
+            messageCountMap[item.groupId] = item.messageCount || 0;
+          });
         }
 
         // Get all unique token addresses from both logs and message count
@@ -248,7 +247,6 @@ const TrendingTokens = () => {
               if (tokenLogs.length > 0) {
                 token = tokenLogs[0].token;
               } else {
-                console.log({ tokenLogs });
                 const res = await base.get("token", {
                   params: { tokenAddress },
                 });
@@ -380,125 +378,127 @@ const TrendingTokens = () => {
   };
 
   return (
-    <section className="w-full max-w-[1300px] mx-auto px-4 sm:px-6 mt-10">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold dark:text-white text-black">
-          Trending
-        </h2>
-        <div className="flex gap-2 text-sm dark:bg-[#141933] bg-white/5 rounded-full p-1">
-          {(["1h", "6h", "24h", "7d"] as TimeRange[]).map((range) => (
-            <button
-              key={range}
-              onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${
-                range === selectedRange
-                  ? "bg-[#1D223E] text-white"
-                  : "text-gray-400 dark:hover:text-white hover:text-black"
-              }`}
-            >
-              {range}
-            </button>
-          ))}
+    <section id="trending-tokens" className="pt-10">
+      <div className="w-full max-w-[1300px] mx-auto px-4 sm:px-6 mt-10">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold dark:text-white text-black">
+            Trending
+          </h2>
+          <div className="flex gap-2 text-sm dark:bg-[#141933] bg-white/5 rounded-full p-1">
+            {(["1h", "6h", "24h", "7d"] as TimeRange[]).map((range) => (
+              <button
+                key={range}
+                onClick={() => setSelectedRange(range)}
+                className={`px-3 py-1 rounded-full transition-colors ${
+                  range === selectedRange
+                    ? "bg-[#1D223E] text-white"
+                    : "text-gray-400 dark:hover:text-white hover:text-black"
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* Table */}
-      <div className="dark:bg-[#0B132B]/50 backdrop-blur-md rounded-xl shadow-xl">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3BC3DB] mx-auto"></div>
-              <p className="mt-2 text-gray-400">Loading trending tokens...</p>
-            </div>
-          ) : (
-            <table className="min-w-[600px] md:min-w-full">
-              <thead>
-                <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45] ">
-                  <th className="p-3">Token</th>
-                  <th className="p-3">Market Cap</th>
-                  <th className="p-3">{selectedRange} %</th>
-                  <th className="p-3">{selectedRange} Volume</th>
-                  <th className="p-3 text-right">Holders</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trendingData.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-400">
-                      No trending tokens found for this time range
-                    </td>
+        {/* Table */}
+        <div className="dark:bg-[#0B132B]/50 backdrop-blur-md rounded-xl shadow-xl">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3BC3DB] mx-auto"></div>
+                <p className="mt-2 text-gray-400">Loading trending tokens...</p>
+              </div>
+            ) : (
+              <table className="min-w-[600px] md:min-w-full">
+                <thead>
+                  <tr className="text-left text-sm md:text-base font-semibold text-gray-400 border-b border-[#2A2F45] ">
+                    <th className="p-3">Token</th>
+                    <th className="p-3">Market Cap</th>
+                    <th className="p-3">{selectedRange} %</th>
+                    <th className="p-3">{selectedRange} Volume</th>
+                    <th className="p-3 text-right">Holders</th>
                   </tr>
-                ) : (
-                  trendingData.map((data) => (
-                    <tr
-                      key={data.token.tokenAddress}
-                      className="border-b border-[#2A2F45] last-of-type:border-b-0 text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
-                    >
-                      <td className="p-3">
-                        <Link
-                          to={`/trade/${data.token.tokenAddress}`}
-                          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                        >
-                          {data.token.tokenImageId ? (
-                            <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                data.token.image?.path
-                              }`}
-                              alt={data.token.name}
-                              className="w-10 h-10 rounded-xl"
-                              crossOrigin="anonymous"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#147ABD] flex items-center justify-center text-white font-bold">
-                              {data.token.symbol.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-medium">
-                              {data.token.name} ({data.token.symbol})
-                            </div>
-                            <div className="text-xs text-black/50 dark:text-white/50">
-                              {data.token.tokenAddress.slice(0, 6)}...
-                              {data.token.tokenAddress.slice(-4)}
-                            </div>
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="p-3">{formatCurrency(data.marketCap)}</td>
-                      <td
-                        className={`p-3 font-semibold ${
-                          data.priceChange < 0
-                            ? "text-red-500"
-                            : "text-green-400"
-                        }`}
-                      >
-                        {formatPercentage(data.priceChange)}
-                      </td>
-                      <td className="p-3">{formatCurrency(data.volume)}</td>
-                      <td className="p-3 text-right">
-                        <div className="flex justify-end items-center gap-2">
-                          <span className="dark:text-white">
-                            {data.holders > 1000
-                              ? `${(data.holders / 1000).toFixed(1)}k`
-                              : data.holders}
-                          </span>
-                        </div>
+                </thead>
+                <tbody>
+                  {trendingData.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-gray-400">
+                        No trending tokens found for this time range
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                  ) : (
+                    trendingData.map((data) => (
+                      <tr
+                        key={data.token.tokenAddress}
+                        className="border-b border-[#2A2F45] last-of-type:border-b-0 text-black dark:text-white text-sm md:text-base hover:bg-white/5 transition-colors"
+                      >
+                        <td className="p-3">
+                          <Link
+                            to={`/trade/${data.token.tokenAddress}`}
+                            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                          >
+                            {data.token.tokenImageId ? (
+                              <img
+                                src={`${import.meta.env.VITE_API_BASE_URL}${
+                                  data.token.image?.path
+                                }`}
+                                alt={data.token.name}
+                                className="w-10 h-10 rounded-xl"
+                                crossOrigin="anonymous"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#147ABD] flex items-center justify-center text-white font-bold">
+                                {data.token.symbol.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium">
+                                {data.token.name} ({data.token.symbol})
+                              </div>
+                              <div className="text-xs text-black/50 dark:text-white/50">
+                                {data.token.tokenAddress.slice(0, 6)}...
+                                {data.token.tokenAddress.slice(-4)}
+                              </div>
+                            </div>
+                          </Link>
+                        </td>
+                        <td className="p-3">
+                          {formatCurrency(data.marketCap)}
+                        </td>
+                        <td
+                          className={`p-3 font-semibold ${
+                            data.priceChange < 0
+                              ? "text-red-500"
+                              : "text-green-400"
+                          }`}
+                        >
+                          {formatPercentage(data.priceChange)}
+                        </td>
+                        <td className="p-3">{formatCurrency(data.volume)}</td>
+                        <td className="p-3 text-right">
+                          <div className="flex justify-end items-center gap-2">
+                            <span className="dark:text-white">
+                              {data.holders > 1000
+                                ? `${(data.holders / 1000).toFixed(1)}k`
+                                : data.holders}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="text-right text-sm text-gray-400 mt-4">
-        <Link to="/tokens" className="hover:underline">
-          Browse All
-        </Link>
+        {/* Footer */}
+        <div className="text-right text-sm text-gray-400 mt-4">
+          <Link to="/tokens" className="hover:underline">
+            Browse All
+          </Link>
+        </div>
       </div>
     </section>
   );

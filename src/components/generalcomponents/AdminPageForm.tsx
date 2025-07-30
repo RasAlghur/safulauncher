@@ -1,17 +1,68 @@
 import { useState, useEffect } from "react";
-// import axios from "axios";
+import { base } from "../../lib/api";
 
-// interface FeaturedToken {
-//   address: string;
-//   start: string; // ISO
-//   end: string; // ISO
-// }
+interface image {
+  createdAt: Date;
+  id: string;
+  mimetype: string;
+  name: string;
+  path: string;
+  siz: string;
+  updatedAt: Date;
+}
+interface FeaturedToken {
+  createAt: Date;
+  endAt: Date;
+  endId: number;
+  id: string;
+  image: image | null;
+  imageId: string;
+  isActive: boolean;
+  startId: number;
+  startOn: Date;
+  token: {
+    createdAt: Date;
+    description: string;
+    expiresAt: Date | null;
+    id: string;
+    identifier: string;
+    name: string;
+    percentageBundled: string | null;
+    supply: string | null;
+    symbol: string;
+    tokenAddress: string;
+    tokenCreator: string;
+    tokenImageId: string;
+    transactionHash: string;
+    updatedAt: Date;
+    verifyParameter: string;
+    website: string;
+  };
+  tokenAddress: string;
+  updatedAt: Date;
+}
 
-const AdminPageForm = () => {
+interface response {
+  data: FeaturedToken[];
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  totalCount: number;
+  totalPages: number;
+}
+
+interface Payload {
+  type: "stop" | "restart";
+  wallet: string | undefined;
+  startOn?: string;
+  endAt?: string;
+}
+
+const AdminPageForm = ({ address }: { address: string | undefined }) => {
   const [tokenAddress, setTokenAddress] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  //   const [featuredTokens, setFeaturedTokens] = useState<FeaturedToken[]>([]);
+  const [featuredTokens, setFeaturedTokens] = useState<FeaturedToken[]>([]);
   //   const [editingAddress, setEditingAddress] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,10 +71,48 @@ const AdminPageForm = () => {
 
   const fetchFeaturedTokens = async () => {
     //    This function fetches the list of featured tokens from the backend
+    const req = await base.get("advertisements?include=image&include=token");
+    const res: response = req.data.data;
+    setFeaturedTokens(res.data);
   };
 
   const handleSubmit = async () => {
     // backend logic will be here
+    const data = {
+      startOn: start,
+      endAt: end,
+      tokenAddress,
+      wallet: address,
+    };
+
+    const res = await base.post("advertisement", data);
+    console.log(res.data);
+  };
+
+  const updateAds = async (payload: Payload) => {
+    try {
+      const req = await base.patch(
+        "advertisement/d5d3296a-0c2a-4fce-9710-14af2c8a08f4",
+        payload
+      );
+
+      console.log(req.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const manuallyStop = async () => {
+    await updateAds({ type: "stop", wallet: address });
+  };
+
+  const restartAds = async () => {
+    await updateAds({
+      type: "restart",
+      wallet: address,
+      startOn: start,
+      endAt: end,
+    });
   };
 
   //   This function is used to edit a featured token
@@ -50,6 +139,8 @@ const AdminPageForm = () => {
   //     setEnd("");
   //     setEditingAddress(null);
   //   };
+
+  console.log(featuredTokens);
 
   return (
     <div className="p-4 max-w-4xl mx-auto mt-28">
@@ -102,6 +193,9 @@ const AdminPageForm = () => {
         >
           Add Advertisement
         </button>
+
+        <button onClick={manuallyStop}>Stop</button>
+        <button onClick={restartAds}>Restart</button>
       </div>
 
       <div className="mt-10">

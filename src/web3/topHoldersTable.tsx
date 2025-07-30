@@ -129,7 +129,7 @@ export function TopHoldersTable({
       </h2>
 
       <div className="tx-table overflow-x-auto max-h-[500px] overflow-y-auto">
-        <table className="min-w-[600px] md:min-w-full text-sm dark:text-white/80">
+        <table className="min-w-[400px] sm:min-w-[600px] md:min-w-full text-sm dark:text-white/80">
           <thead className="text-left dark:text-white/60 text-[#141313]/75 mb-4 border-black/10 border-b-2 dark:border-b-white/20">
             <tr className="text-black dark:text-white">
               <th className="py-3 pl-1">Address</th>

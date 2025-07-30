@@ -103,14 +103,22 @@ const Hero = () => {
           </p>
           <div
             ref={buttonsRef}
-            className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-[34px]"
+            className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-x-[10px]"
           >
             <Link
               to={"/launch"}
-              className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
+              className="w-[200px] text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
             >
-              <p>Get Started</p>
+              Deploy Now
             </Link>
+            <span className="text-[1.1rem] text-black dark:text-white">or</span>
+            <p className="text-[1.1rem] text-black dark:text-white">
+              Explore the{" "}
+              <a href="#trending-tokens" className="underline text-blue-700">
+                Trending Tokens
+              </a>{" "}
+              Below
+            </p>
           </div>
         </div>
 

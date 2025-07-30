@@ -64,7 +64,7 @@ const Admin = () => {
     <div className="min-h-screen flex flex-col mountain">
       <Navbar />
       <div className="flex-grow">
-        <AdminPageForm />
+        <AdminPageForm address={address} />
       </div>
       <div className="mt-auto">
         <Footer />
