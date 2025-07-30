@@ -151,15 +151,17 @@ const TrendingTokens = () => {
         // Create message count map for easy lookup
         const messageCountMap: Record<string, number> = {};
         if (Array.isArray(msgCount)) {
-          msgCount.forEach((item: any) => {
-            messageCountMap[item.groupId] = item.messageCount || 0;
-          });
+          msgCount.forEach(
+            (item: { groupId: string; messageCount: number }) => {
+              messageCountMap[item.groupId] = item.messageCount || 0;
+            }
+          );
         }
 
         // Get all unique token addresses from both logs and message count
         const allTokenAddresses = new Set([
           ...Object.keys(tokenGroups),
-          ...Object.keys(messageCountMap)
+          ...Object.keys(messageCountMap),
         ]);
 
         // Early return if no tokens available
@@ -170,7 +172,8 @@ const TrendingTokens = () => {
         }
 
         // Get platform total volume threshold (4% of total volume)
-        const mainValue = pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0;
+        const mainValue =
+          pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0;
         const usdValue = mainValue * ethPriceUSD;
         const volumeThreshold = 0.04 * usdValue; // 4% of total volume
 
@@ -187,7 +190,9 @@ const TrendingTokens = () => {
               if (Array.isArray(info)) {
                 const supply = Number(info[6]);
                 const rawAmt = await pureAmountOutMarketCap(tokenAddress);
-                const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+                const pricePerToken = rawAmt
+                  ? Number(rawAmt.toString()) / 1e18
+                  : 0;
                 marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               }
 
@@ -232,17 +237,21 @@ const TrendingTokens = () => {
                 volumeThreshold: volume >= volumeThreshold,
                 highGain: priceChange >= 100,
                 highLoss: priceChange <= -90,
-                messageCount: messageCount >= 3
+                messageCount: messageCount >= 3,
               };
 
               // Count how many criteria are met
-              const criteriaCount = Object.values(criteria).filter(Boolean).length;
+              const criteriaCount =
+                Object.values(criteria).filter(Boolean).length;
 
               let token: TokenMetadata;
               if (tokenLogs.length > 0) {
                 token = tokenLogs[0].token;
               } else {
-                const res = await base.get("token", { params: { tokenAddress } });
+                console.log({ tokenLogs });
+                const res = await base.get("token", {
+                  params: { tokenAddress },
+                });
                 const all: TokenMetadata = res.data.data.data;
 
                 token = {
@@ -264,7 +273,10 @@ const TrendingTokens = () => {
                 criteriaCount,
               };
             } catch (e) {
-              console.error(`Error fetching data for token ${tokenAddress}:`, e);
+              console.error(
+                `Error fetching data for token ${tokenAddress}:`,
+                e
+              );
 
               // Get token metadata for error case
               const tokenLogs = tokenGroups[tokenAddress] || [];
@@ -292,9 +304,10 @@ const TrendingTokens = () => {
                   volumeThreshold: false,
                   highGain: false,
                   highLoss: false,
-                  messageCount: (messageCountMap[tokenAddress] || 0) >= 3
+                  messageCount: (messageCountMap[tokenAddress] || 0) >= 3,
                 },
-                criteriaCount: (messageCountMap[tokenAddress] || 0) >= 3 ? 1 : 0,
+                criteriaCount:
+                  (messageCountMap[tokenAddress] || 0) >= 3 ? 1 : 0,
               };
             }
           }
@@ -304,7 +317,9 @@ const TrendingTokens = () => {
         const processedTokens = await Promise.all(tokenPromises);
 
         // Filter tokens that meet at least 1 criteria
-        const trendingTokens = processedTokens.filter(token => token.criteriaCount > 0);
+        const trendingTokens = processedTokens.filter(
+          (token) => token.criteriaCount > 0
+        );
 
         // Sort by criteria count (descending), then by volume (descending) for ties
         const rankedTokens = trendingTokens.sort((a, b) => {
@@ -319,12 +334,14 @@ const TrendingTokens = () => {
         // Log the ranking for debugging
         rankedTokens.forEach((token, index) => {
           console.log(
-            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress}):`,
+            `#${index + 1} ${token.token.symbol} (${
+              token.token.tokenAddress
+            }):`,
             `Criteria: ${token.criteriaCount}/4`,
-            `[Vol≥4%: ${token.criteria.volumeThreshold ? '✓' : '✗'},`,
-            `Gain≥100%: ${token.criteria.highGain ? '✓' : '✗'},`,
-            `Loss≤-90%: ${token.criteria.highLoss ? '✓' : '✗'},`,
-            `Msg≥3: ${token.criteria.messageCount ? '✓' : '✗'}]`,
+            `[Vol≥4%: ${token.criteria.volumeThreshold ? "✓" : "✗"},`,
+            `Gain≥100%: ${token.criteria.highGain ? "✓" : "✗"},`,
+            `Loss≤-90%: ${token.criteria.highLoss ? "✓" : "✗"},`,
+            `Msg≥3: ${token.criteria.messageCount ? "✓" : "✗"}]`,
             `Volume: $${token.volume.toFixed(2)},`,
             `Messages: ${token.messageCount}`
           );
@@ -333,7 +350,6 @@ const TrendingTokens = () => {
         // Take top 10 and update state
         setTrendingData(rankedTokens.slice(0, 10));
         setLoading(false);
-
       } catch (e) {
         console.error(`Error in fetchTrendingData:`, e);
         setTrendingData([]);
@@ -375,10 +391,11 @@ const TrendingTokens = () => {
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
-              className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
-                ? "bg-[#1D223E] text-white"
-                : "text-gray-400 dark:hover:text-white hover:text-black"
-                }`}
+              className={`px-3 py-1 rounded-full transition-colors ${
+                range === selectedRange
+                  ? "bg-[#1D223E] text-white"
+                  : "text-gray-400 dark:hover:text-white hover:text-black"
+              }`}
             >
               {range}
             </button>
@@ -425,10 +442,12 @@ const TrendingTokens = () => {
                         >
                           {data.token.tokenImageId ? (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image?.path
-                                }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${
+                                data.token.image?.path
+                              }`}
                               alt={data.token.name}
                               className="w-10 h-10 rounded-xl"
+                              crossOrigin="anonymous"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3BC3DB] to-[#147ABD] flex items-center justify-center text-white font-bold">
@@ -448,10 +467,11 @@ const TrendingTokens = () => {
                       </td>
                       <td className="p-3">{formatCurrency(data.marketCap)}</td>
                       <td
-                        className={`p-3 font-semibold ${data.priceChange < 0
-                          ? "text-red-500"
-                          : "text-green-400"
-                          }`}
+                        className={`p-3 font-semibold ${
+                          data.priceChange < 0
+                            ? "text-red-500"
+                            : "text-green-400"
+                        }`}
                       >
                         {formatPercentage(data.priceChange)}
                       </td>
