@@ -1065,6 +1065,8 @@ export default function Launch(): JSX.Element {
         formData.append("website", website);
         formData.append("description", description);
         formData.append("identifier", myStringIndex);
+        formData.append("twitter", twitter);
+        formData.append("telegram", telegram);
 
         // Add percentBundled to FormData
         if (enableBundle && bundleAddrs.length > 0) {
