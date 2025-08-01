@@ -9,7 +9,7 @@ import {
   base,
   bscTestnet,
 } from "wagmi/chains";
-import { phantomWallet } from "@rainbow-me/rainbowkit/wallets";
+import { metaMaskWallet, phantomWallet, rainbowWallet, trustWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
 const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
@@ -41,6 +41,10 @@ export const config = getDefaultConfig({
       groupName: "Recommended",
       wallets: [
         phantomWallet,
+        metaMaskWallet,
+        trustWallet,
+        rainbowWallet,
+        walletConnectWallet,
       ],
     },
   ],
