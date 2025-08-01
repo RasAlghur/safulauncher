@@ -955,7 +955,7 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableWhitelist, whitelistUpload]
   );
-  
+
   // Build args
   const argArray = React.useMemo(
     () =>
@@ -1057,6 +1057,8 @@ export default function Launch(): JSX.Element {
         formData.append("website", website);
         formData.append("description", description);
         formData.append("identifier", myStringIndex);
+        formData.append("twitter", twitter);
+        formData.append("telegram", telegram);
 
         // Add percentBundled to FormData
         if (enableBundle && bundleAddrs.length > 0) {
