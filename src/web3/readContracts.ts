@@ -135,3 +135,17 @@ export const pureAmountOut = async (
     args: [tokenAddress, a, b],
   });
 };
+
+export const pureV2AmountOut = async (
+  tokenAddress: any,
+  a: bigint,
+  b: boolean
+) => {
+  if (!tokenAddress) return;
+  return await publicClient.readContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
+    functionName: "getAmountOut",
+    args: [tokenAddress, a, b],
+  });
+};

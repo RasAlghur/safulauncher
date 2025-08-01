@@ -218,7 +218,7 @@ export default function Tokens() {
               { signal: controller.signal }
             );
 
-            console.log("tokens", tokens)
+            console.log("res", res)
             return res;
           } catch (err) {
             lastError = err;

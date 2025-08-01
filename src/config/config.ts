@@ -9,30 +9,23 @@ import {
   base,
   bscTestnet,
 } from "wagmi/chains";
+import { phantomWallet } from "@rainbow-me/rainbowkit/wallets";
 
-// Access environment variables with Vite's import.meta.env
-/**
- * Description placeholder
- *
- * @type {*}
- */
-const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID;
-/**
- * Description placeholder
- *
- * @type {*}
- */
-const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY;
+const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
+const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
 
-/**
- * Description placeholder
- *
- * @type {*}
- */
 export const config = getDefaultConfig({
   appName: "Abyss App",
-  projectId: projectId,
-  chains: [mainnet, polygon, optimism, arbitrum, base, sepolia, bscTestnet],
+  projectId,
+  chains: [
+    mainnet,
+    polygon,
+    optimism,
+    arbitrum,
+    base,
+    sepolia,
+    bscTestnet,
+  ],
   ssr: true,
   transports: {
     [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`),
@@ -43,4 +36,12 @@ export const config = getDefaultConfig({
     [bscTestnet.id]: http(),
     [sepolia.id]: http(`https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`),
   },
+  wallets: [
+    {
+      groupName: "Recommended",
+      wallets: [
+        phantomWallet,
+      ],
+    },
+  ],
 });
