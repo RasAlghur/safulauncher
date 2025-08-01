@@ -19,8 +19,8 @@ import {
 } from "wagmi";
 import {
   TOKEN_ABI,
-  LAUNCHER_ABI,
-  SAFU_LAUNCHER_CA,
+  LAUNCHER_ABI_V1,
+  SAFU_LAUNCHER_CA_V1,
   ETH_USDT_PRICE_FEED,
   PRICE_GETTER_ABI,
   SAFU_TOKEN_CA,
@@ -414,7 +414,7 @@ export default function Trade() {
           ...TOKEN_ABI,
           address: tokenAddress,
           functionName: "allowance",
-          args: [address as `0x${string}`, SAFU_LAUNCHER_CA],
+          args: [address as `0x${string}`, SAFU_LAUNCHER_CA_V1],
         }
       : undefined
   );
@@ -426,8 +426,8 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-          ...LAUNCHER_ABI,
-          address: SAFU_LAUNCHER_CA,
+          ...LAUNCHER_ABI_V1,
+          address: SAFU_LAUNCHER_CA_V1,
           functionName: "getAmountOut",
           args: [
             tokenAddress,
@@ -489,8 +489,8 @@ export default function Trade() {
     isLoading: isLoadingInfoData,
     refetch: refetchInfoData,
   } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
     functionName: "data",
     args: [tokenAddress!],
   });
@@ -510,8 +510,8 @@ export default function Trade() {
     isLoading: isLoadingWhitelistBalance,
     refetch: refetchWhitelistBalance,
   } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
     functionName: "getRemainingWhitelistBalance",
     args: [tokenAddress as `0x${string}`, address as `0x${string}`],
   });
@@ -521,8 +521,8 @@ export default function Trade() {
     isLoading: isLoadingSafuHolder,
     refetch: refetchSafuHolder,
   } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
     functionName: "isSafuTokenAutoWL",
     args: [address as `0x${string}`],
   });
@@ -1255,7 +1255,7 @@ export default function Trade() {
       ...TOKEN_ABI,
       functionName: "approve",
       address: tokenAddress,
-      args: [SAFU_LAUNCHER_CA as `0x${string}`, MaxUint256 as bigint],
+      args: [SAFU_LAUNCHER_CA_V1 as `0x${string}`, MaxUint256 as bigint],
     });
     setIsProcessingTxn(true);
   }, [
@@ -1276,8 +1276,8 @@ export default function Trade() {
       setLastTxnType(mode);
 
       writeContract({
-        ...LAUNCHER_ABI,
-        address: SAFU_LAUNCHER_CA,
+        ...LAUNCHER_ABI_V1,
+        address: SAFU_LAUNCHER_CA_V1,
         functionName: mode,
         args: mode === "sell" ? [tokenAddress, tokenValue] : [tokenAddress],
         value: mode === "buy" ? ethValue : undefined,
@@ -1568,8 +1568,8 @@ export default function Trade() {
     setLastTxnType("startTrading");
 
     writeContract({
-      ...LAUNCHER_ABI,
-      address: SAFU_LAUNCHER_CA,
+      ...LAUNCHER_ABI_V1,
+      address: SAFU_LAUNCHER_CA_V1,
       functionName: "startTrading",
       args: [tokenAddress as `0x${string}`],
     });
@@ -1592,8 +1592,8 @@ export default function Trade() {
     // });
 
     writeContract({
-      ...LAUNCHER_ABI,
-      address: SAFU_LAUNCHER_CA,
+      ...LAUNCHER_ABI_V1,
+      address: SAFU_LAUNCHER_CA_V1,
       functionName: "addToWhitelist",
       args: [
         tokenAddress as `0x${string}`,
@@ -1619,8 +1619,8 @@ export default function Trade() {
     setLastTxnType("disableWhitelist");
 
     writeContract({
-      ...LAUNCHER_ABI,
-      address: SAFU_LAUNCHER_CA,
+      ...LAUNCHER_ABI_V1,
+      address: SAFU_LAUNCHER_CA_V1,
       functionName: "disableWhitelist",
       args: [tokenAddress as `0x${string}`],
     });
@@ -1634,8 +1634,8 @@ export default function Trade() {
     setLastTxnType("disableMaxWalletLimit");
 
     writeContract({
-      ...LAUNCHER_ABI,
-      address: SAFU_LAUNCHER_CA,
+      ...LAUNCHER_ABI_V1,
+      address: SAFU_LAUNCHER_CA_V1,
       functionName: "disableMaxWalletLimit",
       args: [tokenAddress as `0x${string}`],
     });
@@ -2447,7 +2447,7 @@ export default function Trade() {
               <TopHoldersTable
                 tokenAddress={token.tokenAddress}
                 creatorAdress={token.tokenCreator}
-                bondingAddr={SAFU_LAUNCHER_CA}
+                bondingAddr={SAFU_LAUNCHER_CA_V1}
               />
             </div>
           </div>

@@ -18,8 +18,7 @@ import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import {
   pureGetLatestETHPrice,
-  pureMetrics,
-  totalTokensListed,
+  pureCombinedMetrics  // Use the combined metrics directly
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
 import { base } from "../../lib/api";
@@ -47,6 +46,8 @@ const PlatformStats = () => {
   // Add new state for aggregated data
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
+  const metrics = pureCombinedMetrics;
+
   // Fetch list of tokens
   useEffect(() => {
     (async () => {
@@ -72,17 +73,20 @@ const PlatformStats = () => {
     })();
   }, []);
 
-  // Calculate average curve progress
-  const averageBondingProgress =
-    totalTokenCount > 0
-      ? (Number(totalTokensListed) / totalTokenCount) * 100
+  const averageBondingProgress = useMemo(() => {
+    return totalTokenCount > 0
+      ? (Number(metrics[3]) / totalTokenCount) * 100
       : 0;
+  }, [metrics, totalTokenCount]);
 
-  const averageVolume =
-    totalTokenCount > 0
-      ? (pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0) /
-        totalTokenCount
+  // Calculate average volume using metrics[0]
+  const averageVolume = useMemo(() => {
+    return totalTokenCount > 0
+      ? (metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0) /
+      totalTokenCount
       : 0;
+  }, [metrics, totalTokenCount]);
+
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -126,11 +130,10 @@ const PlatformStats = () => {
         id: 1,
         title: "Total Volume",
         mainValue: getMainValue(
-          pureMetrics[0] !== undefined ? Number(pureMetrics[0]) / 1e18 : 0,
-          `${
-            pureMetrics[0] !== undefined
-              ? (Number(pureMetrics[0]) / 1e18).toFixed(8)
-              : 0
+          metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0,
+          `${metrics[0] !== undefined
+            ? (Number(metrics[0]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -146,64 +149,64 @@ const PlatformStats = () => {
         id: 3,
         title: "Fees Collected",
         mainValue: getMainValue(
-          pureMetrics[1] !== undefined ? Number(pureMetrics[1]) / 1e18 : 0,
-          `${
-            pureMetrics[1] !== undefined
-              ? (Number(pureMetrics[1]) / 1e18).toFixed(8)
-              : 0
+          metrics[1] !== undefined ? Number(metrics[1]) / 1e18 : 0,
+          `${metrics[1] !== undefined
+            ? (Number(metrics[1]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: FeeCollected,
       },
       {
         id: 4,
-        title: "Tokens Deployed", // Change launched to deployed
-        mainValue: `${pureMetrics?.[2] || 0}`,
+        title: "Tokens Deployed",
+        mainValue: `${metrics?.[2]?.toString() || 0}`,
         ethValue: "",
         icon: TokensLaunched,
       },
       {
         id: 5,
-        title: "Graduated Tokens", // Change listed to graduated
-        mainValue: `${pureMetrics?.[3] || 0}`,
+        title: "Graduated Tokens",
+        mainValue: `${metrics?.[3]?.toString() || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
     ];
-  }, [getMainValue, averageVolume]);
+  }, [getMainValue, averageVolume, metrics]);
 
+
+  // Stats group 2 using combined metrics
   const stats2 = useMemo(() => {
     const devReward =
-      pureMetrics[6] !== undefined ? Number(pureMetrics[6]) / 1e18 : 0;
+      metrics[6] !== undefined ? Number(metrics[6]) / 1e18 : 0;
 
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${
-          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+          }%`,
         ethValue: "",
         icon: AverageBonding,
       },
       {
         id: 2,
         title: "Tax Tokens",
-        mainValue: `${pureMetrics?.[4] || 0}`,
+        mainValue: `${metrics?.[4]?.toString() || 0}`,
         ethValue: "",
         icon: TaxTokens,
       },
       {
         id: 3,
         title: "0% Tax Tokens",
-        mainValue: `${pureMetrics?.[5] || 0}`,
+        mainValue: `${metrics?.[5]?.toString() || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
       },
       {
         id: 4,
         title: "SAFU Holders",
-        mainValue: "234", // Update when you have real data
+        mainValue: "234",
         ethValue: "",
         icon: SafuHolders,
       },
@@ -215,7 +218,7 @@ const PlatformStats = () => {
         icon: Reward,
       },
     ];
-  }, [averageBondingProgress, getMainValue, getETHDisplay]);
+  }, [averageBondingProgress, getMainValue, getETHDisplay, metrics]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {

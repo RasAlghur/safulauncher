@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/web3/readContracts.ts
 import { publicClient } from "../config/publicConfig";
-import { LAUNCHER_ABI, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA } from "./config";
+import { LAUNCHER_ABI_V1, LAUNCHER_ABI_V2, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA_V1, SAFU_LAUNCHER_CA_V2 } from "./config";
 
 /**
  * Description placeholder
@@ -9,10 +9,21 @@ import { LAUNCHER_ABI, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA } from "./config";
  * @type {*}
  */
 export const pureMetrics = await publicClient.readContract({
-  ...LAUNCHER_ABI,
-  address: SAFU_LAUNCHER_CA as `0x${string}`,
+  ...LAUNCHER_ABI_V1,
+  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
   functionName: "getMetrics",
 });
+
+export const pureV2Metrics = await publicClient.readContract({
+  ...LAUNCHER_ABI_V2,
+  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
+  functionName: "getMetrics",
+});
+
+// Explicitly type as bigint[]
+export const pureCombinedMetrics: bigint[] = pureMetrics.map((val, idx) => 
+  val + (pureV2Metrics[idx] || 0n)
+);
 
 /**
  * Description placeholder
@@ -20,8 +31,14 @@ export const pureMetrics = await publicClient.readContract({
  * @type {*}
  */
 export const totalTokensListed = await publicClient.readContract({
-  ...LAUNCHER_ABI,
-  address: SAFU_LAUNCHER_CA as `0x${string}`,
+  ...LAUNCHER_ABI_V1,
+  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
+  functionName: "totalTokensListed",
+});
+
+export const totalV2TokensListed = await publicClient.readContract({
+  ...LAUNCHER_ABI_V2,
+  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
   functionName: "totalTokensListed",
 });
 
@@ -35,8 +52,18 @@ export const totalTokensListed = await publicClient.readContract({
 export const pureInfoDataRaw = async (tokenAddress: any) => {
   if (!tokenAddress) return;
   return await publicClient.readContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
+    functionName: "data",
+    args: [tokenAddress],
+  });
+};
+
+export const pureInfoV2DataRaw = async (tokenAddress: any) => {
+  if (!tokenAddress) return;
+  return await publicClient.readContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
     functionName: "data",
     args: [tokenAddress],
   });
@@ -69,8 +96,18 @@ export const pureGetLatestETHPrice = async (priceFeed: any) => {
 export const pureAmountOutMarketCap = async (tokenAddress: any) => {
   if (!tokenAddress) return;
   return await publicClient.readContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
+    functionName: "getAmountOut",
+    args: [tokenAddress, 1000000000000000000n, false],
+  });
+};
+
+export const pureV2AmountOutMarketCap = async (tokenAddress: any) => {
+  if (!tokenAddress) return;
+  return await publicClient.readContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
     functionName: "getAmountOut",
     args: [tokenAddress, 1000000000000000000n, false],
   });
@@ -92,8 +129,8 @@ export const pureAmountOut = async (
 ) => {
   if (!tokenAddress) return;
   return await publicClient.readContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1,
     functionName: "getAmountOut",
     args: [tokenAddress, a, b],
   });

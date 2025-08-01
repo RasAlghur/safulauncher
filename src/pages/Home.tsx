@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useAccount, useReadContract } from "wagmi";
-import { LAUNCHER_ABI, SAFU_LAUNCHER_CA } from "../web3/config";
-import { pureMetrics } from "../web3/readContracts";
+import { LAUNCHER_ABI_V1, LAUNCHER_ABI_V2, SAFU_LAUNCHER_CA_V1, SAFU_LAUNCHER_CA_V2 } from "../web3/config";
+import { pureCombinedMetrics } from "../web3/readContracts";
 import Navbar from "../components/landingpage/Navbar";
 import Hero from "../components/landingpage/Hero";
 import KeyBenefits from "../components/landingpage/KeyBenefits";
@@ -17,6 +17,7 @@ import { useUser } from "../context/user.context";
 
 gsap.registerPlugin(ScrollTrigger);
 
+
 /**
  * Description placeholder
  *
@@ -26,12 +27,22 @@ function Home() {
   const { isConnected, address } = useAccount();
   const { saveOrFetchUser } = useUser();
   const {
+    data: getV2Metrics,
+    isLoading: isLoadingV2Metrics,
+    refetch: refetchV2Metrics,
+  } = useReadContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
+    functionName: "getMetrics",
+  });
+
+  const {
     data: getMetrics,
     isLoading: isLoadingMetrics,
     refetch: refetchMetrics,
   } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA as `0x${string}`,
+    ...LAUNCHER_ABI_V1,
+    address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
     functionName: "getMetrics",
   });
 
@@ -39,11 +50,32 @@ function Home() {
 
   const shouldRefetch = !isLoadingMetrics;
 
+  const combinedMetrics = useMemo(() => {
+    if (!getMetrics || !getV2Metrics) return null;
+
+    // Convert to mutable arrays
+    const v1Metrics = Array.from(getMetrics);
+    const v2Metrics = Array.from(getV2Metrics);
+
+    return v1Metrics.map((val, idx) =>
+      val + (v2Metrics[idx] || 0n)
+    );
+  }, [getMetrics, getV2Metrics]);
+
+  // Determine what to display
+  const displayMetrics = useMemo(() => {
+    if (isConnected) {
+      if (combinedMetrics) return combinedMetrics;
+      if (getMetrics) return Array.from(getMetrics) as bigint[];
+    }
+    return pureCombinedMetrics as bigint[];
+  }, [isConnected, combinedMetrics, getMetrics]);
+
   useEffect(() => {
     let isMounted = true;
-    if (shouldRefetch) {
-      refetchMetrics();
-    }
+
+    if (!isLoadingMetrics) refetchMetrics();
+    if (!isLoadingV2Metrics) refetchV2Metrics();
 
     if (isConnected && isMounted) {
       saveOrFetchUser(String(address));
@@ -53,57 +85,6 @@ function Home() {
       isMounted = false;
     };
   }, [shouldRefetch, refetchMetrics, isConnected, saveOrFetchUser, address]);
-
-  // const { data: totalVolumeETH, isLoading: isLoadingTotalVolumeETH, refetch: refetchTotalVolumeETH } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalVolumeETH'
-  //     }
-  // );
-  // const { data: totalFeesETH, isLoading: isLoadingTotalFeesETH, refetch: refetchTotalFeesETH } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalFeesETH'
-  //     }
-  // );
-  // const { data: totalTokensLaunched, isLoading: isLoadingTotalTokensLaunched, refetch: refetchTotalTokensLaunched } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalTokensLaunched'
-  //     }
-  // );
-  // const { data: totalTokensListed, isLoading: isLoadingTotalTokensListed, refetch: refetchTotalTokensListed } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalTokensListed'
-  //     }
-  // );
-  // const { data: totalTaxedTokens, isLoading: isLoadingTotalTaxedTokens, refetch: refetchTotalTaxedTokens } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalTaxedTokens'
-  //     }
-  // );
-  // const { data: totalZeroTaxTokens, isLoading: isLoadingTotalZeroTaxTokens, refetch: refetchTotalZeroTaxTokens } = useReadContract(
-  //     {
-  //         ...LAUNCHER_ABI,
-  //         address: SAFU_LAUNCHER_CA as `0x${string}`,
-  //         functionName: 'totalZeroTaxTokens'
-  //     }
-  // );
-
-  // console.log(getMetrics);
-  // console.log("totalVolumeETH", totalVolumeETH);
-  // console.log("totalFeesETH", totalFeesETH);
-  // console.log("totalTokensLaunched", totalTokensLaunched);
-  // console.log("totalTokensListed", totalTokensListed);
-  // console.log("totalTaxedTokens", totalTaxedTokens);
-  // console.log("totalZeroTaxTokens", totalZeroTaxTokens);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -131,49 +112,30 @@ function Home() {
     <div className="overflow-x-hidden">
       <div className="hidden">
         <p>
-          totalVolumeETH:{" "}
-          {isConnected && getMetrics && getMetrics[0] !== undefined
-            ? Number(getMetrics[0]) / 1e18
-            : pureMetrics[0] !== undefined
-            ? Number(pureMetrics[0]) / 1e18
-            : 0}{" "}
-          ETH
+          totalVolumeETH: {Number(displayMetrics?.[0] || 0) / 1e18} ETH
         </p>
         <p>
-          totalFeesETH:{" "}
-          {isConnected && getMetrics && getMetrics[1] !== undefined
-            ? Number(getMetrics[1]) / 1e18
-            : pureMetrics[1] !== undefined
-            ? Number(pureMetrics[1]) / 1e18
-            : 0}{" "}
-          ETH
+          totalFeesETH: {Number(displayMetrics?.[1] || 0) / 1e18} ETH
         </p>
         <p>
-          totalTokensLaunched:{" "}
-          {isConnected ? getMetrics?.[2] : pureMetrics?.[2]}
+          totalTokensLaunched: {displayMetrics?.[2]?.toString()}
         </p>
         <p>
-          totalTokensListed: {isConnected ? getMetrics?.[3] : pureMetrics?.[3]}
+          totalTokensListed: {displayMetrics?.[3]?.toString()}
         </p>
         <p>
-          totalTaxedTokens: {isConnected ? getMetrics?.[4] : pureMetrics?.[4]}
+          totalTaxedTokens: {displayMetrics?.[4]?.toString()}
         </p>
         <p>
-          totalZeroTaxTokens: {isConnected ? getMetrics?.[5] : pureMetrics?.[5]}
+          totalZeroTaxTokens: {displayMetrics?.[5]?.toString()}
         </p>
         <p>
-          DevRewardETH:{" "}
-          {isConnected && getMetrics && getMetrics[6] !== undefined
-            ? Number(getMetrics[6]) / 1e18
-            : pureMetrics[1] !== undefined
-            ? Number(pureMetrics[6]) / 1e18
-            : 0}{" "}
-          ETH
+          DevRewardETH: {Number(displayMetrics?.[6] || 0) / 1e18} ETH
         </p>
       </div>
       <Navbar />
       <Hero />
-      <PlatformStats />
+      <PlatformStats metrics={displayMetrics} />
 
       <div className="mountain dark:bg-none">
         <div className="relative z-10 overflow-x-hidden">

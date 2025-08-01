@@ -17,9 +17,9 @@ import {
 } from "wagmi";
 import {
   // ETH_USDT_PRICE_FEED,
-  LAUNCHER_ABI,
+  LAUNCHER_ABI_V2,
   // PRICE_GETTER_ABI,
-  SAFU_LAUNCHER_CA,
+  SAFU_LAUNCHER_CA_V2,
 } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
@@ -955,7 +955,7 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableWhitelist, whitelistUpload]
   );
-
+  
   // Build args
   const argArray = React.useMemo(
     () =>
@@ -986,7 +986,7 @@ export default function Launch(): JSX.Element {
         boolean,
         boolean,
         boolean,
-        bigint,
+        number,
         readonly `0x${string}`[],
         readonly number[],
         number,
@@ -1029,14 +1029,14 @@ export default function Launch(): JSX.Element {
   ).toFixed(2);
 
   const { data: uniV2Router } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
     functionName: "_uniV2Router",
   });
 
   const { data: uniV2WETH } = useReadContract({
-    ...LAUNCHER_ABI,
-    address: SAFU_LAUNCHER_CA,
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
     functionName: "WETH",
   });
 
@@ -1073,7 +1073,7 @@ export default function Launch(): JSX.Element {
           uniV2WETH,
           taxOnDexRecipientsAddrs,
           taxOnDexPercentsArray,
-          SAFU_LAUNCHER_CA,
+          SAFU_LAUNCHER_CA_V2,
         ];
 
         console.log("message", message);
@@ -1111,7 +1111,7 @@ export default function Launch(): JSX.Element {
         const response = await request.json();
         console.log(response);
         writeContract({
-          ...LAUNCHER_ABI,
+          ...LAUNCHER_ABI_V2,
           functionName: "createToken",
           args: argArray,
           value: ethValue,
@@ -1143,113 +1143,6 @@ export default function Launch(): JSX.Element {
       uniV2WETH,
     ]
   );
-
-  // const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
-  //   useReadContract({
-  //     ...PRICE_GETTER_ABI,
-  //     functionName: "getLatestETHPrice",
-  //     args: [ETH_USDT_PRICE_FEED!],
-  //   });
-
-  // const infoETHCurrentPrice =
-  //   isConnected && !isLoadingLatestETHPrice ? Number(latestETHPrice) / 1e8 : 0;
-
-  // const handleVerify = async (
-  //   encodedMessageWithoutPrefix: string,
-  //   tokenAddress: string,
-  // ) => {
-  //   // const handleVerify = async (tokenAddress: any) => {
-  //   try {
-  //     console.log(
-  //       "encodedMessage at handleVerify Func",
-  //       encodedMessageWithoutPrefix,
-  //     );
-  //     console.log("deployedAddress at handleVerify Func", tokenAddress);
-  //     const result = await verifyContract({
-  //       encodedMessageWithoutPrefix,
-  //       tokenAddress,
-  //     });
-  //     // const result = await verifyContract({ tokenAddress });
-  //     setStatusMessage("Verification request sent successfully!");
-  //     console.log(result); // Log the result if needed (status, or further information)
-  //   } catch (error) {
-  //     setStatusMessage("Error during verification. Please try again.");
-  //     console.error(error); // Log the error for debugging
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (result) {
-  //     (async () => {
-  //       const message = [
-  //         name,
-  //         symbol,
-  //         ethers.parseUnits(supply.toString(), 18),
-  //         uniV2Router,
-  //         uniV2WETH,
-  //         taxOnDexRecipientsAddrs,
-  //         taxOnDexPercentsArray,
-  //         SAFU_LAUNCHER_CA,
-  //       ];
-  //       console.log("message", message);
-  //       const abiCoder = new ethers.AbiCoder();
-
-  //       const encodedMessage = abiCoder.encode(
-  //         [
-  //           "string",
-  //           "string",
-  //           "uint256",
-  //           "address",
-  //           "address",
-  //           "address[]",
-  //           "uint16[]",
-  //           "address",
-  //         ],
-  //         [...message],
-  //       );
-  //       const encodedMessageWithoutPrefix = encodedMessage.slice(2); // Remove "0x" prefix
-
-  //       console.log("Encoded message at deployToken Func:", encodedMessageWithoutPrefix);
-
-  //       // // Ensure that both `encodedMessage` and `deployedAddress` are not empty before verifying
-  //       // if (encodedMessageWithoutPrefix) {
-  //       //   setWaitingForVerification(true); // Show waiting message
-  //       //   setTimeout(async () => {
-  //       //     setWaitingForVerification(false); // Hide waiting message after delay
-  //       //     await handleVerify(encodedMessageWithoutPrefix, tokenAddress);
-  //       //     // await handleVerify(tokenAddress);
-  //       //   }, 120000); // Wait for 30 seconds before verifying
-  //       // } else {
-  //       //   console.error(
-  //       //     "Error: Deployed address or encoded message is missing",
-  //       //   );
-  //       //   setStatusMessage(
-  //       //     "Error: Deployed address or encoded message is missing",
-  //       //   );
-  //       // }
-  //     })().catch(console.error);
-  //   }
-  // }, [
-  //   isConfirmed,
-  //   result,
-  //   name,
-  //   symbol,
-  //   website,
-  //   description,
-  //   txHash,
-  //   logo,
-  //   enableBundle,
-  //   ethValue,
-  //   bundleList,
-  //   supply,
-  //   taxOnDexRecipientsAddrs,
-  //   taxOnDexPercentsArray,
-  //   uniV2Router,
-  //   uniV2WETH,
-  //   infoETHCurrentPrice,
-  //   bundleAddrs.length,
-  //   percentBundled,
-  // ]);
 
   useEffect(() => {
     let isMounted = true;

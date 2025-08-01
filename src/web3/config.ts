@@ -1,4 +1,5 @@
-export const SAFU_LAUNCHER_CA = "0x9138a694C3B806e26a02554280805FdDeB46fF3F";
+export const SAFU_LAUNCHER_CA_V1 = "0x9138a694C3B806e26a02554280805FdDeB46fF3F";
+export const SAFU_LAUNCHER_CA_V2 = "0xeD9a574579b81bc699F471880b1151e58f117798";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -26,7 +27,31 @@ export const mainnetID = 1;
  *
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
-export const LAUNCHER_ABI = {
+
+// const erc20Abi = [
+//     "function totalSupply() external view returns (uint256)",
+//     "function decimals() external view returns (uint8)"
+// ]
+// getLatestETHPrice [price_getter_abi]
+// allowance [token_abi]
+// balanceOf [token_abi]
+// totalSupply [LAUNCHER_ABI_V1] [token_abi]
+// getMetrics
+// _uniV2Router
+// WETH
+// getAmountOut
+// data
+// getRemainingWhitelistBalance
+// isSafuTokenAutoWL
+// createToken
+// buy
+// sell
+// startTrading
+// addToWhitelist
+// disableWhitelist
+// disableMaxWalletLimit
+
+export const LAUNCHER_ABI_V1 = {
   address: "0x9138a694C3B806e26a02554280805FdDeB46fF3F",
   abi: [
     {
@@ -1152,6 +1177,1347 @@ export const LAUNCHER_ABI = {
       name: "TradingNL",
       inputs: [],
     },
+  ],
+} as const;
+
+export const LAUNCHER_ABI_V2 = {
+  address: "0xeD9a574579b81bc699F471880b1151e58f117798",
+  abi: [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "router_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "locker_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "weth_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "create2factory_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "n_owner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_safuToken",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenPriceGetterAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "priceFeed",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "WETH",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "_uniV2Factory",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "_uniV2Router",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "addToWhitelist",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "list",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "capsBps",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "bundleMaxAmount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "buy",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "create2Factory",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "createToken",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "supply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "lockLp",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "startNow",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "isMaxWalletOnSafu_",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "maxWalletAmountOnSafu_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "bundleAddrs",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "bundleShares",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        },
+        {
+          "name": "taxOnDexBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "taxOnDexRecipients",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "taxOnDexPercents",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        },
+        {
+          "name": "taxOnSafuBps_",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "taxOnSafuRecipients_",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "taxOnSafuPercents_",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        },
+        {
+          "name": "whitelistOnly_",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "initialWhitelist",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "initialCapsBps",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        },
+        {
+          "name": "myIndex",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "_tokenAddr",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenCreator",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "data",
+      "inputs": [
+        {
+          "name": "_tokenAddr",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "creator",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tradingStarted",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "listed",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "whitelistOnly",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "lockLP",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "wlCount",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "totalSupply",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "ethRaised",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "tokensSold",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "virtualEthReserve",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "virtualTokenReserve",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "k",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "feeCollected",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "taxOnSafuBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "taxOnDexBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "isBundled",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "isTaxedOnDex",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "isTaxedOnSafu",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "isMaxWalletOnSafu",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "maxWalletAmountOnSafu",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "devRewardETH",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disableMaxWalletLimit",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "disableWhitelist",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getAmountOut",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "isBuy",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getMetrics",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "_volumeETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_feesETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tokensLaunched",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tokensListed",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_taxedTokens",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_zeroTaxTokens",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_devRewardsEth",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRemainingWhitelistBalance",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "hasTraded",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "initialPoolEth",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isSafuTokenAutoWL",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "listingFeeBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "listingFeeDiv",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "listingMilestone",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "locker",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxWhitelistBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "renounceOwnership",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "reservedEth",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "safuToken",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "sell",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amt",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setTierThreshold",
+      "inputs": [
+        {
+          "name": "_tier1Threshold",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier1ThresholdDiv",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier1WLCap",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier1WLDiv",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier2Threshold",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier2ThresholdDiv",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier2WLCap",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_tier2WLDiv",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setTradeFeeBps",
+      "inputs": [
+        {
+          "name": "_newBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "startTrading",
+      "inputs": [
+        {
+          "name": "tok",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "taxOnDexMaxBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "taxOnSafuMaxBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tier1Threshold",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tier1WLCap",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tier2Threshold",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tier2WLCap",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalDevRewardEth",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalFeesETH",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalTaxedTokens",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalTokensLaunched",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalTokensListed",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalVolumeETH",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalZeroTaxTokens",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tradeFeeBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "uniqueTraderCount",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "updateCreatorConfigs",
+      "inputs": [
+        {
+          "name": "_taxOnSafuMaxBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_taxOnDexMaxBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_bundleMaxAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_listingMilestone",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_maxWhitelistBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateListingFee",
+      "inputs": [
+        {
+          "name": "_newBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_newDiv",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updatePoolConfigs",
+      "inputs": [
+        {
+          "name": "_newPoolETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_newDevRewardETH",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateSafuTokenCA",
+      "inputs": [
+        {
+          "name": "_s",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "whitelist",
+      "inputs": [
+        {
+          "name": "_tokenAddr",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_eoa",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "whitelistAllocationLeft",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "whitelistMaxWallet",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "withdrawStuckETH",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "Listed",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "pair",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TokenDeployed",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "creator",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "myIndex",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Trade",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "buy",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        },
+        {
+          "name": "inAmt",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "outAmt",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "DisAllowed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ETHTF",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsL",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExceedsM",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "FeeTF",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidB",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotAutoWL",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotCreator",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OwnableInvalidOwner",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableUnauthorizedAccount",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ReentrancyGuardReentrantCall",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SafeERC20FailedOperation",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ShareM",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TaxCF",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TokenIL",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TradingNL",
+      "inputs": []
+    }
   ],
 } as const;
 
