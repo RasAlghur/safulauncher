@@ -373,7 +373,7 @@ export default function Launch(): JSX.Element {
     }
     if (supply <= 0) {
       errors.push({
-        field: "supply",
+        field: "supply-basic",
         message: "Supply must be greater than 0",
       });
     }
@@ -588,6 +588,14 @@ export default function Launch(): JSX.Element {
         errors.push({
           field: "bundle",
           message: "Bundle ETH amount must be greater than 0",
+        });
+      }
+
+      if (bundleEth > 0 && supply <= 0) {
+        errors.push({
+          field: "supply-bundle",
+          message:
+            "Please enter the total supply before adding ETH for bundling.",
         });
       }
 
@@ -955,7 +963,7 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableWhitelist, whitelistUpload]
   );
-  
+
   // Build args
   const argArray = React.useMemo(
     () =>
@@ -1362,9 +1370,9 @@ export default function Launch(): JSX.Element {
                   </button>
                 </div>
               </div>
-              {getErrorMessage("supply") && (
+              {getErrorMessage("supply-basic") && (
                 <p className="text-red-500 text-sm mt-1 font-medium">
-                  {getErrorMessage("supply")}
+                  {getErrorMessage("supply-basic")}
                 </p>
               )}
             </div>
@@ -1866,7 +1874,7 @@ export default function Launch(): JSX.Element {
                         rows={6}
                         value={wlCsvText}
                         onChange={(e) => setWlCsvText(e.target.value)}
-                        placeholder="0xAbc123…,0.5&#10;0xDef456…,0.3"
+                        placeholder="Address, percentage of the total supply for each wallet"
                         className="w-full h-full p-3 dark:text-white text-black dark:bg-[#071129] border border-Primary rounded-t-2xl  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       />
 
@@ -2151,6 +2159,11 @@ export default function Launch(): JSX.Element {
                     <div className="dark:text-gray-400 text-gray-700 text-sm">
                       ETH to spend on initial pre-buy.
                     </div>
+                    {getErrorMessage("supply-bundle") && (
+                      <p className="text-red-600 text-sm mt-1 font-medium">
+                        {getErrorMessage("supply-bundle")}
+                      </p>
+                    )}
                     {getErrorMessage("bundle") && (
                       <p className="text-red-500 text-sm mt-1 font-medium">
                         {getErrorMessage("bundle")}
@@ -2286,7 +2299,7 @@ export default function Launch(): JSX.Element {
                 "Fix Validation Errors"
               )}
             </button>
-            {/* {validationErrors.length > 0 && (
+            {validationErrors.length > 0 && (
               <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
                 <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
                   Please fix the following issues:
@@ -2300,7 +2313,7 @@ export default function Launch(): JSX.Element {
                   ))}
                 </ul>
               </div>
-            )} */}
+            )}
           </form>
 
           {error && (

@@ -249,6 +249,8 @@ const TrendingTokens = () => {
                   symbol: `${all.symbol}`,
                   tokenAddress,
                   tokenCreator: "",
+                  tokenImageId: all.tokenImageId,
+                  image: all.image,
                 };
               }
 
@@ -430,10 +432,11 @@ const TrendingTokens = () => {
                             to={`/trade/${data.token.tokenAddress}`}
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                           >
-                            {data.token.tokenImageId ? (
+                            {data.token.tokenImageId &&
+                            data.token.image?.path ? (
                               <img
                                 src={`${import.meta.env.VITE_API_BASE_URL}${
-                                  data.token.image?.path
+                                  data.token.image.path
                                 }`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"
@@ -444,6 +447,7 @@ const TrendingTokens = () => {
                                 {data.token.symbol.charAt(0)}
                               </div>
                             )}
+
                             <div>
                               <div className="font-medium">
                                 {data.token.name} ({data.token.symbol})

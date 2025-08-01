@@ -55,6 +55,8 @@ import {
 } from "react-icons/fa";
 import { RiArrowUpDownFill } from "react-icons/ri";
 import { useUser } from "../context/user.context";
+import { CircleCheckBig } from "lucide-react";
+import { X } from "lucide-react";
 
 // Define this function outside your component
 const gradientSteps = [
@@ -296,6 +298,7 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState<"transactions" | "chat">(
     "transactions"
   );
+  const [showSectionA, setShowSectionA] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 25;
@@ -449,6 +452,14 @@ export default function Trade() {
       isMounted = false;
     };
   }, [isConnected, address, saveOrFetchUser]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSectionA(true); // Flip to SectionA after e.g. 5 seconds
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Add this useEffect to handle the async call
   useEffect(() => {
@@ -1795,6 +1806,20 @@ export default function Trade() {
     }
   };
 
+  function formatRelativeTime(dateInput: string | number): string {
+    const now = new Date();
+    const createdAt = new Date(dateInput);
+    const diff = (now.getTime() - createdAt.getTime()) / 1000;
+
+    if (diff < 60) return `${Math.floor(diff)} seconds ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 86400)} days ago`;
+
+    const months = Math.floor(diff / 2592000);
+    return months === 1 ? `1 month ago` : `${months} months ago`;
+  }
+
   // Loading state
   if (isLoadingToken) {
     return (
@@ -2061,91 +2086,231 @@ export default function Trade() {
               </span>
             </div>
 
-            <div className="grid mb-2.5 gap-4 mt-1">
-              {/* Token info */}
+            <div className="flex items-center gap-1 justify-end my-2 lg:my-0">
+              <span className=" font-medium dark:text-white text-black">
+                {showSectionA ? "Token Info" : "Launch Info"}
+              </span>
 
-              <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
-                {[
-                  { label: "Trading Started", value: isStartTrading },
-                  {
-                    label: "Dev Bundled",
-                    value: isBundled,
-                    extra: isBundled
-                      ? `${token?.percentBundled ?? 0}%`
-                      : undefined,
-                  },
-                  { label: "Tax on Dex", value: isTaxedOnDex },
-                  {
-                    label: "Tax on SafuLauncher",
-                    value: IsTaxedOnSafu,
-                    extra: IsTaxedOnSafu ? `${taxOnSafuBps ?? 0}%` : undefined,
-                  },
-                  { label: "Whitelist Ongoing", value: isWhiteListOngoing },
-                  {
-                    label: "Max wallet size on SafuLauncher",
-                    value: isMaxWalletOnSafu,
-                    extra:
-                      isMaxWalletOnSafu !== 0
-                        ? `${maxWalletAmountOnSafu ?? 0}%`
-                        : undefined,
-                  },
+              <div
+                onClick={() => setShowSectionA((prev) => !prev)}
+                className={`w-[40px] h-[20px] rounded-full p-[2px] cursor-pointer flex items-center transition-colors duration-300
+      ${showSectionA ? "bg-Primary" : "bg-white"} shadow-inner relative`}
+              >
+                <div
+                  className={`absolute z-20 left-[2px] pt-[1px] size-[20px] rounded-full flex items-center justify-center
+        transition-transform duration-300 ease-in-out dark:shadow-[1px_-2px_12px_0px_rgba(71,_71,_77,_0.5)]
+        ${
+          showSectionA
+            ? "translate-x-[17.5px] bg-white"
+            : "translate-x-0 bg-[#D9D9D9]"
+        }`}
+                >
+                  {showSectionA ? (
+                    <CircleCheckBig className="text-Primary w-[12px] h-[12px]" />
+                  ) : (
+                    <div className="flex items-center justify-center  border border-Primary rounded-full">
+                      <X className="text-Primary w-[12px] h-[12px]" />
+                    </div>
+                  )}
+                </div>
 
-                  // {
-                  //   label: "Tier 1",
-                  //   value: `tier1Holder`,
-                  //   extra: `${tier1Holder}`,
-                  // },
-                  // {
-                  //   label: "Tier 2",
-                  //   value: `tier2Holder`,
-                  //   extra: `${tier2Holder}`,
-                  // },
-                  ...(isWhiteListOngoing && ywhitelistBalance > 0
-                    ? [
-                        {
-                          label: "Whitelisted Amount",
-                          value: { isWhiteListOngoing },
-                          extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${
-                            token?.symbol
-                          }`,
-                        },
-                      ]
-                    : []),
-                  ...(isWhiteListOngoing && isSafuHolder
-                    ? [
-                        {
-                          label: "Auto Whitelisted",
-                          value: `${isSafuHolder}`,
-                        },
-                      ]
-                    : []),
-                  ...(isWhiteListOngoing && isSafuHolder
-                    ? [
-                        {
-                          label: "Your Safu",
-                          value: `${isSafuHolder}`,
-                          extra: `${safuHolderBalance} SAFU`,
-                        },
-                      ]
-                    : []),
-                ].map(({ label, value, extra }, i) => (
-                  <div
-                    key={i}
-                    className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group"
-                  >
-                    <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway text-xs">
-                      {label}
+                {/* Static X on left */}
+                <div className="absolute left-[5px] flex items-center justify-center z-10 border border-white rounded-full">
+                  <X className="text-white w-[8px] h-[8px]" />
+                </div>
+
+                {/* Static Check on right */}
+                <div className="absolute right-[5px] z-10">
+                  <CircleCheckBig className="text-black w-[8px] h-[8px]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div
+                className={`transition-opacity duration-700 ${
+                  showSectionA ? "opacity-100" : "opacity-0 absolute inset-0"
+                }`}
+              >
+                {/* ✅ Section A — Token Metadata */}
+                <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
+                  {/* Token Name, Symbol, Address, etc. (your current SectionA content) */}
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col">
+                    <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                      Token Name
+                    </h2>
+                    <p className="text-xs text-black/80 dark:text-white/80">
+                      {token.name}
                     </p>
-                    <div className="flex flex-col items-center gap-2">
-                      {extra && (
-                        <span className="text-[#27AE60] text-xs font-semibold">
-                          {extra}
-                        </span>
-                      )}
-                      {value ? (
-                        <div className="bg-[#27AE60] rounded-full p-1.5 flex items-center justify-center relative">
-                          <FiCheckCircle className="text-white text-sm" />
-                          {/* {link && (
+                  </div>
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col">
+                    <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                      Token Symbol
+                    </h2>
+                    <p className="text-xs text-black/80 dark:text-white/80">
+                      {token.symbol}
+                    </p>
+                  </div>
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col break-all">
+                    <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                      Token Address
+                    </h2>
+                    <p className="text-xs text-black/80 dark:text-white/80">
+                      {token.tokenAddress}
+                    </p>
+                  </div>
+
+                  {token.description && (
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col">
+                      <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                        Token Description
+                      </h2>
+                      <p className="text-xs text-black/80 dark:text-white/80">
+                        {token.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {token.website && (
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col">
+                      <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                        Website
+                      </h2>
+                      <p className="text-xs text-black/80 dark:text-white/80">
+                        {token.website}
+                      </p>
+                    </div>
+                  )}
+                  {token?.createdAt && (
+                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex flex-col">
+                      <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                        Created
+                      </h2>
+                      <p className="text-xs text-black/80 dark:text-white/80">
+                        {(() => {
+                          const createdAt = new Date(token.createdAt);
+                          const absoluteTime = createdAt.toLocaleString(
+                            "en-US",
+                            {
+                              timeZone: "UTC",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                              hour12: true,
+                            }
+                          );
+                          const relativeTime = formatRelativeTime(
+                            token.createdAt
+                          );
+                          return `${absoluteTime} UTC (${relativeTime})`;
+                        })()}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                    <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
+                      Social Links
+                    </h2>
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`transition-opacity duration-700 ${
+                  showSectionA ? "opacity-0 absolute inset-0" : "opacity-100"
+                }`}
+              >
+                {/* 🚀 Section B — Launch Info */}
+                <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
+                  {/* Launch status, isBundled, Max wallet, etc. (your current SectionB content) */}
+                  {[
+                    { label: "Trading Started", value: isStartTrading },
+                    {
+                      label: "Dev Bundled",
+                      value: isBundled,
+                      extra: isBundled
+                        ? `${token?.percentBundled ?? 0}%`
+                        : undefined,
+                    },
+                    { label: "Tax on Dex", value: isTaxedOnDex },
+                    {
+                      label: "Tax on SafuLauncher",
+                      value: IsTaxedOnSafu,
+                      extra: IsTaxedOnSafu
+                        ? `${taxOnSafuBps ?? 0}%`
+                        : undefined,
+                    },
+                    { label: "Whitelist Ongoing", value: isWhiteListOngoing },
+                    {
+                      label: "Max wallet size on SafuLauncher",
+                      value: isMaxWalletOnSafu,
+                      extra:
+                        isMaxWalletOnSafu !== 0
+                          ? `${maxWalletAmountOnSafu ?? 0}%`
+                          : undefined,
+                    },
+
+                    // {
+                    //   label: "Tier 1",
+                    //   value: `tier1Holder`,
+                    //   extra: `${tier1Holder}`,
+                    // },
+                    // {
+                    //   label: "Tier 2",
+                    //   value: `tier2Holder`,
+                    //   extra: `${tier2Holder}`,
+                    // },
+                    ...(isWhiteListOngoing && ywhitelistBalance > 0
+                      ? [
+                          {
+                            label: "Whitelisted Amount",
+                            value: { isWhiteListOngoing },
+                            extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${
+                              token?.symbol
+                            }`,
+                          },
+                        ]
+                      : []),
+                    ...(isWhiteListOngoing && isSafuHolder
+                      ? [
+                          {
+                            label: "Auto Whitelisted",
+                            value: `${isSafuHolder}`,
+                          },
+                        ]
+                      : []),
+                    ...(isWhiteListOngoing && isSafuHolder
+                      ? [
+                          {
+                            label: "Your Safu",
+                            value: `${isSafuHolder}`,
+                            extra: `${safuHolderBalance} SAFU`,
+                          },
+                        ]
+                      : []),
+                  ].map(({ label, value, extra }, i) => (
+                    <div
+                      key={i}
+                      className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group"
+                    >
+                      <p className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway text-xs">
+                        {label}
+                      </p>
+                      <div className="flex flex-col items-center gap-2">
+                        {extra && (
+                          <span className="text-[#27AE60] text-xs font-semibold">
+                            {extra}
+                          </span>
+                        )}
+                        {value ? (
+                          <div className="bg-[#27AE60] rounded-full p-1.5 flex items-center justify-center relative">
+                            <FiCheckCircle className="text-white text-sm" />
+                            {/* {link && (
                             <a
                               href={link}
                               target="_blank"
@@ -2155,15 +2320,16 @@ export default function Trade() {
                               View
                             </a>
                           )} */}
-                        </div>
-                      ) : (
-                        <div className="bg-white rounded-full p-1.5 flex items-center justify-center">
-                          <MdOutlineCancel className="text-black text-sm" />
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <div className="bg-white rounded-full p-1.5 flex items-center justify-center">
+                            <MdOutlineCancel className="text-black text-sm" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
