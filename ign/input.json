@@ -141,7 +141,7 @@
                 ]
             }
         },
-        "evmVersion": "cancun",
+        "evmVersion": "shanghai",
         "viaIR": true,
         "libraries": {}
     }
