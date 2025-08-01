@@ -1151,6 +1151,8 @@ export default function Launch(): JSX.Element {
       taxOnDexPercentsArray,
       uniV2Router,
       uniV2WETH,
+      telegram,
+      twitter,
     ]
   );
 
