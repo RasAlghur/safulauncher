@@ -12,8 +12,10 @@ import { base } from "../lib/api";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import {
   pureAmountOutMarketCap,
+  pureV2AmountOutMarketCap,
   pureGetLatestETHPrice,
   pureInfoDataRaw,
+  pureInfoV2DataRaw
 } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -73,6 +75,7 @@ export interface TokenMetadata {
   tokenCreator: string;
   transactions: transaction[];
   tokenImageId?: string;
+  tokenVersion?: string;
   image?: {
     name: string;
     path: string;
@@ -214,6 +217,8 @@ export default function Tokens() {
               `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
               { signal: controller.signal }
             );
+
+            console.log("tokens", tokens)
             return res;
           } catch (err) {
             lastError = err;
@@ -323,8 +328,12 @@ export default function Tokens() {
       await Promise.all(
         tokens.map(async (token) => {
           try {
+            const isV2 = token.tokenVersion === "token_v2";
+
             // Fetch bonding curve data
-            const info = await pureInfoDataRaw(token.tokenAddress);
+            const info = isV2
+              ? await pureInfoV2DataRaw(token.tokenAddress)
+              : await pureInfoDataRaw(token.tokenAddress);
             if (Array.isArray(info)) {
               const supply = Number(info[6]);
               const sold = Number(info[8]);
@@ -334,8 +343,12 @@ export default function Tokens() {
                 100
               );
 
+              const rawAmt = isV2
+                ? await pureV2AmountOutMarketCap(token.tokenAddress)
+                : await pureAmountOutMarketCap(token.tokenAddress);
+
+
               // Price per token in ETH
-              const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
               const pricePerToken = rawAmt
                 ? Number(rawAmt.toString()) / 1e18
                 : 0;
@@ -374,7 +387,7 @@ export default function Tokens() {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-          container.scrollHeight - 100
+        container.scrollHeight - 100
       ) {
         fetchTokenList(page + 1, searchTerm, searchField, true);
       }
@@ -394,8 +407,8 @@ export default function Tokens() {
   const filteredTokens =
     sortField === "bonded"
       ? tokens.filter(
-          (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
-        )
+        (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
+      )
       : tokens;
 
   const sortedTokens = [...filteredTokens].sort((a, b) => {
@@ -437,6 +450,7 @@ export default function Tokens() {
 
     const handleReceiveNewDeployment = (data: TokenMetadata) => {
       console.log("called", data);
+      if (tokens.some(t => t.tokenAddress === data.tokenAddress)) return;
       setFeaturedTokens((prev) => {
         const newTokens = [data, ...prev];
         return newTokens;
@@ -581,9 +595,8 @@ export default function Tokens() {
                         <div className="flex items-center gap-3">
                           {t.token.tokenImageId && (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                t.token.image?.path
-                              }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${t.token.image?.path
+                                }`}
                               alt={`${t.token.symbol} logo`}
                               className="w-10 h-10 rounded-md"
                               crossOrigin=""
@@ -620,13 +633,12 @@ export default function Tokens() {
                             {isLoadingMetrics ? (
                               <span className="">Loading...</span>
                             ) : (
-                              `$${
-                                volume24hMap[
-                                  t.token.tokenAddress
-                                ]?.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }) ?? "0.00"
+                              `$${volume24hMap[
+                                t.token.tokenAddress
+                              ]?.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }) ?? "0.00"
                               }`
                             )}
                           </div>
@@ -685,13 +697,12 @@ export default function Tokens() {
                       <div
                         key={field}
                         onClick={() => searchChange(field)}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
-                          field === "all"
-                            ? "rounded-t-xl"
-                            : field === "name"
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${field === "all"
+                          ? "rounded-t-xl"
+                          : field === "name"
                             ? "rounded-b-xl"
                             : ""
-                        }`}
+                          }`}
                       >
                         {field === "name" ? "Name/Symbol" : field}
                       </div>
@@ -725,13 +736,12 @@ export default function Tokens() {
                         setSortField(value as any);
                         setSortDropdownOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                        idx === 0
-                          ? "rounded-t-xl"
-                          : idx === arr.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
+                        ? "rounded-t-xl"
+                        : idx === arr.length - 1
                           ? "rounded-b-xl"
                           : ""
-                      }`}
+                        }`}
                     >
                       {label}
                     </div>
@@ -795,14 +805,12 @@ export default function Tokens() {
           ) : (
             <div
               ref={containerRef}
-              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
-                sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-              } px-2 py-5 border border-white/10`}
+              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+                } px-2 py-5 border border-white/10`}
             >
               <ul
-                className={`grid gap-6 z-10 relative ${
-                  sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-                }`}
+                className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                  }`}
               >
                 {sortedTokens.map((t, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -814,9 +822,8 @@ export default function Tokens() {
                         <div className="flex items-start gap-4 ">
                           {t.tokenImageId && (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${
-                                t.image?.path
-                              }`}
+                              src={`${import.meta.env.VITE_API_BASE_URL}${t.image?.path
+                                }`}
                               alt={`${t.symbol} logo`}
                               className="w-14 h-14 rounded-lg"
                               crossOrigin=""
@@ -868,14 +875,13 @@ export default function Tokens() {
                                 Loading...
                               </span>
                             ) : (
-                              ` $${
-                                volume24hMap[t.tokenAddress]?.toLocaleString(
-                                  undefined,
-                                  {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  }
-                                ) ?? "0.00"
+                              ` $${volume24hMap[t.tokenAddress]?.toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              ) ?? "0.00"
                               }`
                             )}
                           </p>
@@ -905,10 +911,9 @@ export default function Tokens() {
                       <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."
-                          : `${
-                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
-                              "0"
-                            }%`}
+                          : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ??
+                          "0"
+                          }%`}
                       </p>
 
                       {!isLoadingMetrics &&
@@ -922,9 +927,8 @@ export default function Tokens() {
                               className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                               style={{
                                 width: `${stripeWidth}px`,
-                                left: `calc(${(i * spacing).toFixed(2)}% - ${
-                                  stripeWidth / 2
-                                }px)`,
+                                left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
+                                  }px)`,
                               }}
                             />
                           );
@@ -942,9 +946,8 @@ export default function Tokens() {
 
                         return (
                           <div
-                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
-                              progress < 100 ? "rounded-l-full" : "rounded-full"
-                            } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
+                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
+                              } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
                             style={{
                               width: `${isLoadingMetrics ? 0 : progress}%`,
                               ...gradientStyle,

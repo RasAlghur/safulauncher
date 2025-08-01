@@ -1,5 +1,5 @@
 export const SAFU_LAUNCHER_CA_V1 = "0x9138a694C3B806e26a02554280805FdDeB46fF3F";
-export const SAFU_LAUNCHER_CA_V2 = "0xeD9a574579b81bc699F471880b1151e58f117798";
+export const SAFU_LAUNCHER_CA_V2 = "0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01";
 
 export const SAFU_TOKEN_CA = "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8";
 
@@ -1181,7 +1181,7 @@ export const LAUNCHER_ABI_V1 = {
 } as const;
 
 export const LAUNCHER_ABI_V2 = {
-  address: "0xeD9a574579b81bc699F471880b1151e58f117798",
+  address: "0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01",
   abi: [
     {
       "type": "constructor",

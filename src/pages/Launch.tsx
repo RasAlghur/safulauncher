@@ -246,6 +246,8 @@ export default function Launch(): JSX.Element {
   const [maxWalletAmountOnSafuInput, setMaxWalletAmountOnSafuInput] =
     useState(""); // raw input
   const [maxWalletAmountOnSafu, setMaxWalletAmountOnSafu] = useState<number>(0);
+  const [maxWhitelist, setMaxWhitelist] = useState<number>(0);
+  const [initialPool, setInitialPool] = useState<number>(0);
   const [lpOption, setLpOption] = useState<"lock" | "burn">("lock");
   const [enableBundle, setEnableBundle] = useState(false);
   const [enableTaxOnSafu, setEnableTaxOnSafu] = useState(false);
@@ -303,7 +305,7 @@ export default function Launch(): JSX.Element {
 
   const addTaxRecipient = () => {
     if (taxList.length >= 5 || !newAddr || newBps <= 0) return;
-    setTaxList([...taxList, { addr: newAddr, bps: newBps * 10 }]);
+    setTaxList([...taxList, { addr: newAddr, bps: newBps * 100 }]);
     setNewAddr("");
     setNewBps(0);
 
@@ -380,10 +382,10 @@ export default function Launch(): JSX.Element {
 
     // Max wallet amount validation
     if (isMaxWalletAmountOnSafu) {
-      if (maxWalletAmountOnSafu > 2) {
+      if (maxWalletAmountOnSafu > maxWhitelist) {
         errors.push({
           field: "maxWalletAmountOnSafu",
-          message: "Max wallet amount on Safu must be less than than 2%",
+          message: `Max wallet amount on Safu must be less than ${maxWhitelist}%`,
         });
       }
 
@@ -426,18 +428,17 @@ export default function Launch(): JSX.Element {
             message: `Tax recipient ${index + 1}: Invalid address`,
           });
         }
-        if (tax.bps < 0 || tax.bps > 1000) {
+        if (tax.bps < 0 || tax.bps > 10000) {
           errors.push({
             field: "tax",
-            message: `Tax recipient ${
-              index + 1
-            }: percentage must be between 0-100`,
+            message: `Tax recipient ${index + 1
+              }: percentage must be between 0-100`,
           });
         }
       });
 
       const totalTaxDistBps = taxList.reduce((sum, t) => sum + t.bps, 0);
-      if (totalTaxDistBps !== 1000) {
+      if (totalTaxDistBps !== 10000) {
         errors.push({
           field: "tax",
           message: "Tax recipients’ total percentage must sum to 100%",
@@ -498,17 +499,16 @@ export default function Launch(): JSX.Element {
           if (addr.cap > maxWalletAmountOnSafu) {
             errors.push({
               field: "whitelist",
-              message: `Entry ${
-                index + 1
-              }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
+              message: `Entry ${index + 1
+                }: max cap for whitelisted addrs must not be greater than max Wallet Amount On Safu: ${maxWalletAmountOnSafu}%.`,
             });
           }
         }
 
-        if (addr.cap <= 0 || addr.cap > 2) {
+        if (addr.cap <= 0 || addr.cap > maxWhitelist) {
           errors.push({
             field: "whitelist",
-            message: `Entry ${index + 1}: max cap for whitelisted addrs is 2%.`,
+            message: `Entry ${index + 1}: max cap for whitelisted addrs is ${maxWhitelist}%.`,
           });
         }
       });
@@ -554,7 +554,7 @@ export default function Launch(): JSX.Element {
       // Simulate the smart contract calculation
       // These values should match your smart contract constants
       const TRADE_FEE_BPS = 30; // 0.3% - adjust to match your contract
-      const virtualEthReserve = 2; // 2 ETH - from your contract
+      const virtualEthReserve = initialPool; // 2 ETH - from your contract
 
       if (bundleEth <= 0) return 0;
 
@@ -624,7 +624,7 @@ export default function Launch(): JSX.Element {
         }
       }
 
-      const capPercent = isMaxWalletAmountOnSafu ? maxWalletAmountOnSafu : 2; // default 2% when custom cap is off
+      const capPercent = isMaxWalletAmountOnSafu ? maxWalletAmountOnSafu : maxWhitelist; // default 2% when custom cap is off
 
       // Precompute total tokens from the bundle
       const totalBundleTokens = calculateBundleTokens(bundleEth, supply);
@@ -642,13 +642,12 @@ export default function Launch(): JSX.Element {
         if (!isCreator && recipientTokens > maxAllowedTokens) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1} (${
-              bundle.addr
-            }) would receive ${recipientTokens.toFixed(
-              0
-            )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
-              0
-            )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
+            message: `Bundle recipient ${index + 1} (${bundle.addr
+              }) would receive ${recipientTokens.toFixed(
+                0
+              )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
+                0
+              )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
           });
         }
 
@@ -661,9 +660,8 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${
-              index + 1
-            }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${index + 1
+              }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -754,9 +752,8 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${
-              index + 1
-            }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${index + 1
+              }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -818,6 +815,7 @@ export default function Launch(): JSX.Element {
     enableWhitelist,
     isMaxWalletAmountOnSafu,
     maxWalletAmountOnSafu,
+    maxWhitelist,
     whitelistUpload,
     enableBundle,
     bundleList,
@@ -845,6 +843,24 @@ export default function Launch(): JSX.Element {
   const maxWalletAmountOnSafuBps = isMaxWalletAmountOnSafu
     ? Math.floor(maxWalletAmountOnSafu * 100)
     : 0;
+
+  const { data: maxWhitelistBps } = useReadContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
+    functionName: "maxWhitelistBps",
+    query: {
+      enabled: isConnected,
+    },
+  });
+
+  const { data: initialPoolEth } = useReadContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
+    functionName: "initialPoolEth",
+    query: {
+      enabled: isConnected,
+    },
+  });
 
   // 4. Add an input handler for decimal validation (optional)
   const handlePlatformFeeBpsChange = (value: string) => {
@@ -908,8 +924,8 @@ export default function Launch(): JSX.Element {
     () =>
       enableTaxOnSafu
         ? (platformFeeList.map((p) =>
-            Math.floor(p.pct * 100)
-          ) as readonly number[])
+          Math.floor(p.pct * 100)
+        ) as readonly number[])
         : ([] as readonly number[]),
     [enableTaxOnSafu, platformFeeList]
   );
@@ -925,10 +941,10 @@ export default function Launch(): JSX.Element {
     () =>
       enableWhitelist
         ? (whitelistUpload.map((e) =>
-            Math.round(e.cap * 100)
-          ) as readonly number[])
+          Math.round(e.cap * 100)
+        ) as readonly number[])
         : // Default to 100% for each whitelist entry
-          ([] as readonly number[]),
+        ([] as readonly number[]),
     [enableWhitelist, whitelistUpload]
   );
 
@@ -1083,6 +1099,7 @@ export default function Launch(): JSX.Element {
           uniV2WETH,
           taxOnDexRecipientsAddrs,
           taxOnDexPercentsArray,
+          taxOnDexBps,
           SAFU_LAUNCHER_CA_V2,
         ];
 
@@ -1098,6 +1115,7 @@ export default function Launch(): JSX.Element {
             "address",
             "address[]",
             "uint16[]",
+            "uint16",
             "address",
           ],
           [...message]
@@ -1155,11 +1173,25 @@ export default function Launch(): JSX.Element {
       twitter,
     ]
   );
+  useEffect(() => {
+    if (initialPoolEth !== undefined) {
+      const ethValue = ethers.formatUnits(initialPoolEth, 18);
+      setInitialPool(parseFloat(ethValue));
+    }
+    if (maxWhitelistBps !== undefined) {
+      setMaxWhitelist(Number(maxWhitelistBps) / 100);
+    }
+  }, [initialPoolEth, maxWhitelistBps]);
 
   useEffect(() => {
     let isMounted = true;
     if (isConnected && isMounted) {
       saveOrFetchUser(String(address));
+    }
+
+    if (!isConnected) {
+      setInitialPool(0);
+      setMaxWhitelist(0);
     }
 
     return () => {
@@ -1448,9 +1480,8 @@ export default function Launch(): JSX.Element {
               </label>
 
               <div
-                className={`border-2 border-dashed ${
-                  dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+                className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
         transition duration-200 hover:opacity-80 w-full relative`}
                 onClick={openFilePicker}
@@ -1518,16 +1549,14 @@ export default function Launch(): JSX.Element {
                     <div className="relative group">
                       <div
                         onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
-                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
-                          enableTaxOnDex ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${enableTaxOnDex ? "bg-Primary" : "bg-white"
+                          } shadow-inner relative`}
                       >
                         <div
-                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
-                            enableTaxOnDex
-                              ? "translate-x-[30px] bg-white"
-                              : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${enableTaxOnDex
+                            ? "translate-x-[30px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableTaxOnDex ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1629,7 +1658,7 @@ export default function Launch(): JSX.Element {
                             className="flex justify-between items-center bg-white/5 dark:bg-white/5 border dark:border-white/10 border-gray-900 dark:text-white text-black px-4 py-3 rounded-md"
                           >
                             <span className="truncate w-[60%]">{t.addr}</span>
-                            <span>{(t.bps / 10).toFixed(1)}%</span>
+                            <span>{(t.bps / 100).toFixed(1)}%</span>
                             <button
                               type="button"
                               onClick={() => removeTaxRecipient(i)}
@@ -1668,11 +1697,10 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableTaxOnSafu
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${enableTaxOnSafu
+                              ? "translate-x-[32px] bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableTaxOnSafu ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1828,11 +1856,10 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableWhitelist
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${enableWhitelist
+                              ? "translate-x-[32px] bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableWhitelist ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1956,11 +1983,10 @@ export default function Launch(): JSX.Element {
                             setLpOption(option.value);
                             setIsOpen(false);
                           }}
-                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
-                            option.value === "lock"
-                              ? "rounded-t-xl"
-                              : "rounded-b-xl"
-                          }`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                            }`}
                         >
                           {option.label}
                         </div>
@@ -1989,11 +2015,10 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${
-            startNow
-              ? "translate-x-[32px] bg-white"
-              : "translate-x-0 bg-[#D9D9D9]"
-          }`}
+          ${startNow
+                            ? "translate-x-[32px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
                       >
                         {startNow ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2032,18 +2057,16 @@ export default function Launch(): JSX.Element {
                       setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
                     }
                     className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center ml-auto transition-colors duration-300
-          ${
-            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
-          } shadow-inner relative`}
+          ${isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
+                      } shadow-inner relative`}
                   >
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              isMaxWalletAmountOnSafu
-                ? "translate-x-[31px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${isMaxWalletAmountOnSafu
+                          ? "translate-x-[31px] bg-white"
+                          : "translate-x-0 bg-[#D9D9D9]"
+                        }`}
                     >
                       {isMaxWalletAmountOnSafu ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2107,11 +2130,10 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${
-            enableBundle
-              ? "translate-x-[32px] bg-white"
-              : "translate-x-0 bg-[#D9D9D9]"
-          }`}
+          ${enableBundle
+                            ? "translate-x-[32px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
                       >
                         {enableBundle ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2191,10 +2213,10 @@ export default function Launch(): JSX.Element {
                         </div>
                         {calculateBundleTokens(bundleEth, supply) >
                           (supply * 25) / 100 && (
-                          <div className="text-red-400 font-semibold">
-                            ⚠️ Exceeds 25% limit!
-                          </div>
-                        )}
+                            <div className="text-red-400 font-semibold">
+                              ⚠️ Exceeds 25% limit!
+                            </div>
+                          )}
                       </div>
                     )}
 
@@ -2279,11 +2301,10 @@ export default function Launch(): JSX.Element {
             <button
               type="submit"
               className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity
-    ${
-      isPending || isConfirming || !isFormValid
-        ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-        : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] cursor-pointer"
-    }`}
+    ${isPending || isConfirming || !isFormValid
+                  ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                  : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] cursor-pointer"
+                }`}
               disabled={isPending || isConfirming || !isFormValid}
             >
               {isFormValid ? (
