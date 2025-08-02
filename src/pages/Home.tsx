@@ -1,6 +1,11 @@
 import { useEffect, useRef, useMemo } from "react";
 import { useAccount, useReadContract } from "wagmi";
-import { LAUNCHER_ABI_V1, LAUNCHER_ABI_V2, SAFU_LAUNCHER_CA_V1, SAFU_LAUNCHER_CA_V2 } from "../web3/config";
+import {
+  LAUNCHER_ABI_V1,
+  LAUNCHER_ABI_V2,
+  SAFU_LAUNCHER_CA_V1,
+  SAFU_LAUNCHER_CA_V2,
+} from "../web3/config";
 import { pureCombinedMetrics } from "../web3/readContracts";
 import Navbar from "../components/landingpage/Navbar";
 import Hero from "../components/landingpage/Hero";
@@ -16,7 +21,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useUser } from "../context/user.context";
 
 gsap.registerPlugin(ScrollTrigger);
-
 
 /**
  * Description placeholder
@@ -57,9 +61,7 @@ function Home() {
     const v1Metrics = Array.from(getMetrics);
     const v2Metrics = Array.from(getV2Metrics);
 
-    return v1Metrics.map((val, idx) =>
-      val + (v2Metrics[idx] || 0n)
-    );
+    return v1Metrics.map((val, idx) => val + (v2Metrics[idx] || 0n));
   }, [getMetrics, getV2Metrics]);
 
   // Determine what to display
@@ -84,7 +86,16 @@ function Home() {
     return () => {
       isMounted = false;
     };
-  }, [shouldRefetch, refetchMetrics, isConnected, saveOrFetchUser, address]);
+  }, [
+    shouldRefetch,
+    refetchMetrics,
+    isConnected,
+    saveOrFetchUser,
+    address,
+    isLoadingMetrics,
+    isLoadingV2Metrics,
+    refetchV2Metrics,
+  ]);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -111,27 +122,13 @@ function Home() {
   return (
     <div className="overflow-x-hidden">
       <div className="hidden">
-        <p>
-          totalVolumeETH: {Number(displayMetrics?.[0] || 0) / 1e18} ETH
-        </p>
-        <p>
-          totalFeesETH: {Number(displayMetrics?.[1] || 0) / 1e18} ETH
-        </p>
-        <p>
-          totalTokensLaunched: {displayMetrics?.[2]?.toString()}
-        </p>
-        <p>
-          totalTokensListed: {displayMetrics?.[3]?.toString()}
-        </p>
-        <p>
-          totalTaxedTokens: {displayMetrics?.[4]?.toString()}
-        </p>
-        <p>
-          totalZeroTaxTokens: {displayMetrics?.[5]?.toString()}
-        </p>
-        <p>
-          DevRewardETH: {Number(displayMetrics?.[6] || 0) / 1e18} ETH
-        </p>
+        <p>totalVolumeETH: {Number(displayMetrics?.[0] || 0) / 1e18} ETH</p>
+        <p>totalFeesETH: {Number(displayMetrics?.[1] || 0) / 1e18} ETH</p>
+        <p>totalTokensLaunched: {displayMetrics?.[2]?.toString()}</p>
+        <p>totalTokensListed: {displayMetrics?.[3]?.toString()}</p>
+        <p>totalTaxedTokens: {displayMetrics?.[4]?.toString()}</p>
+        <p>totalZeroTaxTokens: {displayMetrics?.[5]?.toString()}</p>
+        <p>DevRewardETH: {Number(displayMetrics?.[6] || 0) / 1e18} ETH</p>
       </div>
       <Navbar />
       <Hero />

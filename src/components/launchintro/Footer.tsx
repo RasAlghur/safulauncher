@@ -42,7 +42,7 @@ const Footer = () => {
         <div className="flex gap-2 items-center justify-center">
           {/* Twitter */}
           <a
-            href="#"
+            href="https://x.com/SafuLauncher"
             className="p-2 rounded-full border border-black/50 dark:border-white/50 dark:text-white"
             target="_blank"
             rel="noopener noreferrer"
@@ -61,7 +61,7 @@ const Footer = () => {
           </a>
           {/* Telegram */}
           <a
-            href="#"
+            href="https://t.me/Safu_Launcher"
             className="p-2 rounded-full border border-black/50 dark:border-white/50 dark:text-white"
             target="_blank"
             rel="noopener noreferrer"
@@ -78,28 +78,10 @@ const Footer = () => {
               <path d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"></path>
             </svg>
           </a>
-          {/* Medium */}
-          <a
-            href="#"
-            className="p-2 rounded-full border border-black/50 dark:border-white/50 dark:text-white"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg
-              stroke="currentColor"
-              fill="currentColor"
-              stroke-width="0"
-              viewBox="0 0 640 512"
-              height="1em"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M180.5,74.262C80.813,74.262,0,155.633,0,256S80.819,437.738,180.5,437.738,361,356.373,361,256,280.191,74.262,180.5,74.262Zm288.25,10.646c-49.845,0-90.245,76.619-90.245,171.095s40.406,171.1,90.251,171.1,90.251-76.619,90.251-171.1H559C559,161.5,518.6,84.908,468.752,84.908Zm139.506,17.821c-17.526,0-31.735,68.628-31.735,153.274s14.2,153.274,31.735,153.274S640,340.631,640,256C640,171.351,625.785,102.729,608.258,102.729Z"></path>
-            </svg>
-          </a>
+
           {/* Gitbook */}
           <a
-            href="#"
+            href="https://safulauncher-1.gitbook.io/safulauncher-docs"
             className="p-2 rounded-full border border-black/50 dark:border-white/50 dark:text-white"
             target="_blank"
             rel="noopener noreferrer"

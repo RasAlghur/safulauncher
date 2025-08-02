@@ -220,7 +220,7 @@ const Navbar = () => {
                   <div className="relative z-10">
                     {[
                       {
-                        to: "/launchintro",
+                        to: "/",
                         title: "Home",
                         desc: "Prep for liftoff — your mission starts here",
                       },
@@ -375,7 +375,7 @@ const Navbar = () => {
             </div>
             <div className="flex flex-col px-6 gap-6 mt-20">
               {[
-                { to: "/launchintro", title: "Home" },
+                { to: "/", title: "Home" },
                 { to: "/tokens", title: "Token" },
                 { to: "/launch", title: "Launch" },
                 { to: "/leaderboard", title: "Leaderboard" },
