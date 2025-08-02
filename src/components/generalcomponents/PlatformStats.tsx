@@ -17,6 +17,7 @@ import AverageVolume from "../svgcomponents/AverageVolume";
 import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import {
+  pureCombinedUniqueTraderCount,
   pureGetLatestETHPrice,
   pureCombinedMetrics  // Use the combined metrics directly
 } from "../../web3/readContracts";
@@ -216,6 +217,13 @@ const PlatformStats = () => {
         mainValue: getMainValue(devReward, `${devReward.toFixed(2)} ETH`),
         ethValue: getETHDisplay(devReward),
         icon: Reward,
+      },
+      {
+        id: 6,
+        title: "Total Unique Traders",
+        mainValue: "",
+        ethValue: Number(pureCombinedUniqueTraderCount), // This might need updating if you have real data
+        icon: SafuHolders,
       },
     ];
   }, [averageBondingProgress, getMainValue, getETHDisplay, metrics]);

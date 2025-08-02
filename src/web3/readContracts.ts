@@ -25,6 +25,22 @@ export const pureCombinedMetrics: bigint[] = pureMetrics.map((val, idx) =>
   val + (pureV2Metrics[idx] || 0n)
 );
 
+export const pureUniqueTraderCount = await publicClient.readContract({
+  ...LAUNCHER_ABI_V1,
+  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
+  functionName: "uniqueTraderCount",
+}) as bigint;
+
+export const pureV2UniqueTraderCount = await publicClient.readContract({
+  ...LAUNCHER_ABI_V2,
+  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
+  functionName: "uniqueTraderCount",
+}) as bigint;
+
+// Now just sum the two bigints:
+export const pureCombinedUniqueTraderCount: bigint =
+  pureUniqueTraderCount + pureV2UniqueTraderCount;
+
 /**
  * Description placeholder
  *
@@ -40,6 +56,18 @@ export const totalV2TokensListed = await publicClient.readContract({
   ...LAUNCHER_ABI_V2,
   address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
   functionName: "totalTokensListed",
+});
+
+export const listingMilestone = await publicClient.readContract({
+  ...LAUNCHER_ABI_V2,
+  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
+  functionName: "listingMilestone",
+});
+
+export const bundleMaxAmount = await publicClient.readContract({
+  ...LAUNCHER_ABI_V2,
+  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
+  functionName: "bundleMaxAmount",
 });
 
 /**

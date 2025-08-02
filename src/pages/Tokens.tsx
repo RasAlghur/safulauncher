@@ -15,7 +15,8 @@ import {
   pureV2AmountOutMarketCap,
   pureGetLatestETHPrice,
   pureInfoDataRaw,
-  pureInfoV2DataRaw
+  pureInfoV2DataRaw,
+  listingMilestone
 } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -337,7 +338,7 @@ export default function Tokens() {
             if (Array.isArray(info)) {
               const supply = Number(info[6]);
               const sold = Number(info[8]);
-              const percent = (sold / (0.75 * supply)) * 100;
+              const percent = isV2 ? (sold / ( (Number(listingMilestone) / 1e2)  * supply)) * 100 : (sold / (0.75 * supply)) * 100;
               newCurve[token.tokenAddress] = Math.min(
                 Math.max(percent, 0),
                 100
