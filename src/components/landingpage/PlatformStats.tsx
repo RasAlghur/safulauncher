@@ -11,6 +11,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
     pureCombinedMetrics,  // Import combined metrics
     pureGetLatestETHPrice,
+    pureCombinedUniqueTraderCount,
 } from "../../web3/readContracts";  // Remove totalTokensListed import
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 
@@ -29,8 +30,6 @@ import SafuHolders from "../svgcomponents/SafuHolders";
 import DustParticles from "../generalcomponents/DustParticles";
 import Reward from "../svgcomponents/Reward";
 import AverageVolume from "../svgcomponents/AverageVolume";
-
-
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -236,6 +235,13 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
                     )
                 ),
                 icon: Reward,
+            },
+            {
+                id: 9,
+                title: "Total Unique Traders",
+                mainValue: "",
+                ethValue: Number(pureCombinedUniqueTraderCount), // This might need updating if you have real data
+                icon: SafuHolders,
             },
         ];
     }, [averageBondingProgress, averageVolume, getETHDisplay, getMainValue, safeMetrics]);

@@ -36,6 +36,7 @@ import RocketLoader from "../components/generalcomponents/Loader";
 import { v4 as uuidv4 } from "uuid";
 import RocketSpinner from "../components/generalcomponents/RocketSpinner";
 import RocketSpinner2 from "../components/generalcomponents/RocketSpinner2";
+import { bundleMaxAmount } from "../web3/readContracts";
 
 /**
  * Description placeholder
@@ -610,14 +611,14 @@ export default function Launch(): JSX.Element {
       // Calculate estimated tokens that would be purchased
       if (bundleEth > 0 && supply > 0) {
         const estimatedTokens = calculateBundleTokens(bundleEth, supply);
-        const maxAllowedTokens = (supply * 25) / 100; // 25% of supply
+        const maxAllowedTokens = (supply * Number(bundleMaxAmount)) / 100; // 25% of supply
 
         if (estimatedTokens > maxAllowedTokens) {
           const maxEthForTokens =
             bundleEth * (maxAllowedTokens / estimatedTokens);
           errors.push({
             field: "bundle",
-            message: `Bundle would exceed 25% of supply. Maximum ETH for this supply: ~${maxEthForTokens.toFixed(
+            message: `Bundle would exceed ${bundleMaxAmount}% of supply. Maximum ETH for this supply: ~${maxEthForTokens.toFixed(
               4
             )} ETH`,
           });
@@ -2208,13 +2209,13 @@ export default function Launch(): JSX.Element {
                           Percentage of supply: ~ {percentBundled}%
                         </div>
                         <div className="dark:text-white text-black">
-                          Max allowed (25%):{" "}
-                          {((supply * 25) / 100).toLocaleString()}
+                          Max allowed ({Number(bundleMaxAmount)}%):{" "}
+                          {((supply * Number(bundleMaxAmount)) / 100).toLocaleString()}
                         </div>
                         {calculateBundleTokens(bundleEth, supply) >
-                          (supply * 25) / 100 && (
+                          (supply * Number(bundleMaxAmount)) / 100 && (
                             <div className="text-red-400 font-semibold">
-                              ⚠️ Exceeds 25% limit!
+                              ⚠️ Exceeds {Number(bundleMaxAmount)}% limit!
                             </div>
                           )}
                       </div>
