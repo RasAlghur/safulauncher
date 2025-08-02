@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/launchintro/Navbar";
 import AdminPageForm from "../components/generalcomponents/AdminPageForm";
+import AdminContractConfig from "../components/generalcomponents/AdminContractConfig";
 import Footer from "../components/launchintro/Footer";
 
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
@@ -10,7 +11,8 @@ const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
 const Admin = () => {
   const { address, isConnected } = useAccount();
   const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<"form" | "contract">("form");
 
   useEffect(() => {
     if (!isConnected) {
@@ -21,7 +23,7 @@ const Admin = () => {
     if (address?.toLowerCase() === ADMIN_ADDRESS) {
       setIsAuthorized(true);
     } else {
-      setIsAuthorized(true);
+      setIsAuthorized(false);
     }
   }, [address, isConnected]);
 
@@ -63,8 +65,37 @@ const Admin = () => {
   return (
     <div className="min-h-screen flex flex-col mountain">
       <Navbar />
-      <div className="flex-grow">
-        <AdminPageForm address={address} />
+      <div className="flex-grow pt-20">
+        {/* Tab Navigation */}
+        <div className="max-w-6xl mx-auto px-4 mt-8">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => setActiveTab("form")}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "form"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+            >
+              Admin Form
+            </button>
+            <button
+              onClick={() => setActiveTab("contract")}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "contract"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+            >
+              Contract Config
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "form" ? (
+          <AdminPageForm address={address} />
+        ) : (
+          <AdminContractConfig />
+        )}
       </div>
       <div className="mt-auto">
         <Footer />
