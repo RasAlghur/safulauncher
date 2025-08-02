@@ -8,7 +8,7 @@ import {
   pureGetLatestETHPrice,
   pureInfoV2DataRaw,
   pureV2AmountOutMarketCap,
-  pureCombinedMetrics
+  pureCombinedMetrics,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import { base } from "../../lib/api";
@@ -175,7 +175,7 @@ const TrendingTokens = () => {
         }
 
         // Get platform total volume threshold (4% of total volume)
-        
+
         const metrics = pureCombinedMetrics;
         const mainValue =
           metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0;
@@ -210,10 +210,10 @@ const TrendingTokens = () => {
               }
 
               // Get contract data based on token version
-              const version = token.tokenVersion || 'token_v1';
+              const version = token.tokenVersion || "token_v1";
               let info, rawAmt;
 
-              if (version === 'token_v2') {
+              if (version === "token_v2") {
                 // Use v2 functions
                 info = await pureInfoV2DataRaw(tokenAddress);
                 rawAmt = await pureV2AmountOutMarketCap(tokenAddress);
@@ -227,7 +227,9 @@ const TrendingTokens = () => {
               let marketCap = 0;
               if (Array.isArray(info)) {
                 const supply = Number(info[6]);
-                const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+                const pricePerToken = rawAmt
+                  ? Number(rawAmt.toString()) / 1e18
+                  : 0;
                 marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               }
 
@@ -262,7 +264,7 @@ const TrendingTokens = () => {
                 volumeThreshold: volume >= volumeThreshold,
                 highGain: priceChange >= 100,
                 highLoss: priceChange <= -90,
-                messageCount: messageCount >= 50, 
+                messageCount: messageCount >= 50,
               };
 
               // Count how many criteria are met
@@ -341,7 +343,8 @@ const TrendingTokens = () => {
         // Log the ranking for debugging
         rankedTokens.forEach((token, index) => {
           console.log(
-            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress
+            `#${index + 1} ${token.token.symbol} (${
+              token.token.tokenAddress
             }):`,
             `Criteria: ${token.criteriaCount}/4`,
             `[Vol≥4%: ${token.criteria.volumeThreshold ? "✓" : "✗"},`,
@@ -398,10 +401,11 @@ const TrendingTokens = () => {
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
-                  ? "bg-[#1D223E] text-white"
-                  : "text-gray-400 dark:hover:text-white hover:text-black"
-                  }`}
+                className={`px-3 py-1 rounded-full transition-colors ${
+                  range === selectedRange
+                    ? "bg-[#1D223E] text-white"
+                    : "text-gray-400 dark:hover:text-white hover:text-black"
+                }`}
               >
                 {range}
               </button>
@@ -446,10 +450,11 @@ const TrendingTokens = () => {
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                           >
                             {data.token.tokenImageId &&
-                              data.token.image?.path ? (
+                            data.token.image?.path ? (
                               <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image.path
-                                  }`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}${
+                                  data.token.image.path
+                                }`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"
                                 crossOrigin="anonymous"
@@ -475,10 +480,11 @@ const TrendingTokens = () => {
                           {formatCurrency(data.marketCap)}
                         </td>
                         <td
-                          className={`p-3 font-semibold ${data.priceChange < 0
-                            ? "text-red-500"
-                            : "text-green-400"
-                            }`}
+                          className={`p-3 font-semibold ${
+                            data.priceChange < 0
+                              ? "text-red-500"
+                              : "text-green-400"
+                          }`}
                         >
                           {formatPercentage(data.priceChange)}
                         </td>

@@ -14,15 +14,17 @@ import TaxTokens from "../svgcomponents/TaxTokens";
 import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import AverageVolume from "../svgcomponents/AverageVolume";
+import UniqueWallet from "../svgcomponents/UniqueWallet";
 import DustParticles from "./DustParticles";
 import { ETH_USDT_PRICE_FEED } from "../../web3/config";
 import {
   pureCombinedUniqueTraderCount,
   pureGetLatestETHPrice,
-  pureCombinedMetrics  // Use the combined metrics directly
+  pureCombinedMetrics, // Use the combined metrics directly
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
 import { base } from "../../lib/api";
+import Moralis from "moralis";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,11 +45,38 @@ const PlatformStats = () => {
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
+  const [safuHolders, setSafuHolders] = useState<number>(0);
 
   // Add new state for aggregated data
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
 
   const metrics = pureCombinedMetrics;
+
+  useEffect(() => {
+    async function fetchSafuHolders() {
+      try {
+        if (!Moralis.Core.isStarted) {
+          await Moralis.start({ apiKey: import.meta.env.VITE_MORALIS_API_KEY });
+        }
+
+        const response = await Moralis.EvmApi.token.getTokenOwners({
+          chain: "0xaa36a7", // Sepolia
+          order: "DESC",
+          tokenAddress: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8",
+        });
+
+        // Moralis returns the holders list in `result`
+        const holdersCount = response.raw().result.length;
+        console.log("SAFU holders count:", holdersCount);
+
+        setSafuHolders(holdersCount);
+      } catch (err) {
+        console.error("Error fetching SAFU holders:", err);
+      }
+    }
+
+    fetchSafuHolders();
+  }, []);
 
   // Fetch list of tokens
   useEffect(() => {
@@ -84,10 +113,9 @@ const PlatformStats = () => {
   const averageVolume = useMemo(() => {
     return totalTokenCount > 0
       ? (metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0) /
-      totalTokenCount
+          totalTokenCount
       : 0;
   }, [metrics, totalTokenCount]);
-
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -132,9 +160,10 @@ const PlatformStats = () => {
         title: "Total Volume",
         mainValue: getMainValue(
           metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0,
-          `${metrics[0] !== undefined
-            ? (Number(metrics[0]) / 1e18).toFixed(8)
-            : 0
+          `${
+            metrics[0] !== undefined
+              ? (Number(metrics[0]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -151,9 +180,10 @@ const PlatformStats = () => {
         title: "Fees Collected",
         mainValue: getMainValue(
           metrics[1] !== undefined ? Number(metrics[1]) / 1e18 : 0,
-          `${metrics[1] !== undefined
-            ? (Number(metrics[1]) / 1e18).toFixed(8)
-            : 0
+          `${
+            metrics[1] !== undefined
+              ? (Number(metrics[1]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: FeeCollected,
@@ -175,18 +205,17 @@ const PlatformStats = () => {
     ];
   }, [getMainValue, averageVolume, metrics]);
 
-
   // Stats group 2 using combined metrics
   const stats2 = useMemo(() => {
-    const devReward =
-      metrics[6] !== undefined ? Number(metrics[6]) / 1e18 : 0;
+    const devReward = metrics[6] !== undefined ? Number(metrics[6]) / 1e18 : 0;
 
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -207,7 +236,7 @@ const PlatformStats = () => {
       {
         id: 4,
         title: "SAFU Holders",
-        mainValue: "234",
+        mainValue: safuHolders.toString(),
         ethValue: "",
         icon: SafuHolders,
       },
@@ -223,10 +252,16 @@ const PlatformStats = () => {
         title: "Total Unique Traders",
         mainValue: "",
         ethValue: Number(pureCombinedUniqueTraderCount), // This might need updating if you have real data
-        icon: SafuHolders,
+        icon: UniqueWallet,
       },
     ];
-  }, [averageBondingProgress, getMainValue, getETHDisplay, metrics]);
+  }, [
+    averageBondingProgress,
+    getMainValue,
+    getETHDisplay,
+    metrics,
+    safuHolders,
+  ]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -400,38 +435,6 @@ const PlatformStats = () => {
               );
             })}
           </div>
-
-          {/* <div className="bg-[#0c8be011] p-[20px] rounded-[20px] grid grid-cols-1 gap-4">
-            {stats3.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={index}
-                  ref={(el) => {
-                    if (el)
-                      cardRefs.current[stats1.length + stats2.length + index] =
-                        el;
-                  }}
-                  className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
-                >
-                  <div className="w-16 h-16 mb-4">
-                    <Icon className="w-full h-full" />
-                  </div>
-                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
-                    {stat.mainValue}
-                  </div>
-                  <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
-                    {stat.title}
-                  </div>
-                  {stat.ethValue && (
-                    <div className="text-sm dark:text-white/60 text-black/60 font-medium">
-                      {stat.ethValue}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div> */}
         </div>
         <div>
           <TrendingTokens />

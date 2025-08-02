@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/web3/readContracts.ts
 import { publicClient } from "../config/publicConfig";
-import { LAUNCHER_ABI_V1, LAUNCHER_ABI_V2, PRICE_GETTER_ABI, SAFU_LAUNCHER_CA_V1, SAFU_LAUNCHER_CA_V2 } from "./config";
+import {
+  LAUNCHER_ABI_V1,
+  LAUNCHER_ABI_V2,
+  PRICE_GETTER_ABI,
+  SAFU_LAUNCHER_CA_V1,
+  SAFU_LAUNCHER_CA_V2,
+} from "./config";
 
 /**
  * Description placeholder
@@ -21,21 +27,21 @@ export const pureV2Metrics = await publicClient.readContract({
 });
 
 // Explicitly type as bigint[]
-export const pureCombinedMetrics: bigint[] = pureMetrics.map((val, idx) => 
-  val + (pureV2Metrics[idx] || 0n)
+export const pureCombinedMetrics: bigint[] = pureMetrics.map(
+  (val, idx) => val + (pureV2Metrics[idx] || 0n)
 );
 
-export const pureUniqueTraderCount = await publicClient.readContract({
+export const pureUniqueTraderCount = (await publicClient.readContract({
   ...LAUNCHER_ABI_V1,
   address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
   functionName: "uniqueTraderCount",
-}) as bigint;
+})) as bigint;
 
-export const pureV2UniqueTraderCount = await publicClient.readContract({
+export const pureV2UniqueTraderCount = (await publicClient.readContract({
   ...LAUNCHER_ABI_V2,
   address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
   functionName: "uniqueTraderCount",
-}) as bigint;
+})) as bigint;
 
 // Now just sum the two bigints:
 export const pureCombinedUniqueTraderCount: bigint =

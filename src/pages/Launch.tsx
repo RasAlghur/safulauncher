@@ -73,6 +73,7 @@ export default function Launch(): JSX.Element {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [logoError, setLogoError] = useState("");
 
   const [wlCsvText, setWlCsvText] = useState("");
 
@@ -86,20 +87,35 @@ export default function Launch(): JSX.Element {
     setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith("image/")) {
-      setLogo(file);
+      const error = await validateLogo(file);
+      if (error) {
+        setLogoError(error);
+        setLogo(null); // Optional: reset logo if invalid
+      } else {
+        setLogo(file);
+        setLogoError(""); // Clear previous error
+      }
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
-      setLogo(file);
+      const error = await validateLogo(file);
+      if (error) {
+        setLogoError(error);
+        setLogo(null);
+      } else {
+        setLogo(file);
+        setLogoError("");
+      }
     }
   };
 
@@ -235,6 +251,42 @@ export default function Launch(): JSX.Element {
     e.target.value = "";
   };
 
+  const validateLogo = async (file: File): Promise<string | null> => {
+    const validTypes = ["image/png", "image/jpeg", "image/webp"];
+    const maxSizeMB = 4.5;
+    const minWidth = 100;
+
+    if (!validTypes.includes(file.type)) {
+      return "Unsupported file format. Only PNG, JPG, WEBP are allowed.";
+    }
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      return "File size exceeds 4.5MB.";
+    }
+
+    const image = new Image();
+    const imageURL = URL.createObjectURL(file);
+
+    return new Promise((resolve) => {
+      image.onload = () => {
+        const isSquare = image.width === image.height;
+        if (!isSquare) {
+          resolve("Image must have a 1:1 aspect ratio (square).");
+        } else if (image.width < minWidth) {
+          resolve("Image width must be at least 100px.");
+        } else {
+          resolve(null); // no error
+        }
+        URL.revokeObjectURL(imageURL);
+      };
+      image.onerror = () => {
+        resolve("Unable to read the image file.");
+        URL.revokeObjectURL(imageURL);
+      };
+      image.src = imageURL;
+    });
+  };
+
   // const [statusMessage, setStatusMessage] = useState("");
   const [myStringIndex, setMyStringIndex] = useState(`token_${uuidv4()}`);
   // const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
@@ -253,6 +305,7 @@ export default function Launch(): JSX.Element {
   const [enableBundle, setEnableBundle] = useState(false);
   const [enableTaxOnSafu, setEnableTaxOnSafu] = useState(false);
   const walletInputRef = useRef<HTMLInputElement>(null);
+  const [deployError, setDeployError] = useState<string>("");
 
   // Dynamic groups...
   const [taxList, setTaxList] = useState<{ addr: string; bps: number }[]>([]);
@@ -359,7 +412,7 @@ export default function Launch(): JSX.Element {
   };
 
   // Comprehensive validation function
-  const validateForm = useCallback((): ValidationError[] => {
+  const validateForm = useCallback(async (): Promise<ValidationError[]> => {
     const errors: ValidationError[] = [];
     if (!isConnected) {
       errors.push({
@@ -379,6 +432,16 @@ export default function Launch(): JSX.Element {
         field: "supply-basic",
         message: "Supply must be greater than 0",
       });
+    }
+
+    if (logo) {
+      const logoError = await validateLogo(logo);
+      if (logoError) {
+        errors.push({
+          field: "logo",
+          message: logoError,
+        });
+      }
     }
 
     // Max wallet amount validation
@@ -836,13 +899,18 @@ export default function Launch(): JSX.Element {
     dexFeeBps,
     address,
     initialPool,
+    logo,
   ]);
 
   // Run validation whenever form data changes
   useEffect(() => {
-    const errors = validateForm();
-    setValidationErrors(errors);
-    setIsFormValid(errors.length === 0);
+    const runValidation = async () => {
+      const errors = await validateForm();
+      setValidationErrors(errors);
+      setIsFormValid(errors.length === 0);
+    };
+
+    runValidation();
   }, [validateForm]);
 
   // Replace this line:
@@ -1080,7 +1148,7 @@ export default function Launch(): JSX.Element {
       e.preventDefault();
 
       // Final validation check before submission
-      const errors = validateForm();
+      const errors = await validateForm();
       if (errors.length > 0) {
         setValidationErrors(errors);
         return;
@@ -1149,6 +1217,14 @@ export default function Launch(): JSX.Element {
         );
         const response = await request.json();
         console.log(response);
+
+        if (!response || response.error || !response.success) {
+          throw new Error(
+            response?.message || "Server returned an invalid response."
+          );
+        }
+
+        setDeployError("");
         writeContract({
           ...LAUNCHER_ABI_V2,
           functionName: "createToken",
@@ -1157,6 +1233,9 @@ export default function Launch(): JSX.Element {
         });
       } catch (err) {
         console.error(err);
+        setDeployError(
+          error?.message || "An unexpected error occurred while launching."
+        );
       } finally {
         setMyStringIndex(`token_${uuidv4()}`);
       }
@@ -1183,6 +1262,7 @@ export default function Launch(): JSX.Element {
       telegram,
       twitter,
       taxOnDexBps,
+      error?.message,
     ]
   );
   useEffect(() => {
@@ -1512,7 +1592,7 @@ export default function Launch(): JSX.Element {
                       <span className="">Click to upload</span> or drag and drop
                     </p>
                     <p className="text-sm dark:text-white/60 text-black mt-1">
-                      PNG, JPG
+                      PNG, JPG, WEBP • Max 4.5MB • Min 100x100px • Square only
                     </p>
                   </>
                 )}
@@ -1548,6 +1628,9 @@ export default function Launch(): JSX.Element {
                 className="hidden"
                 onChange={handleChange}
               />
+              {logoError && (
+                <p className="text-red-500 text-sm mt-1">{logoError}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2231,14 +2314,17 @@ export default function Launch(): JSX.Element {
                         </div>
                         <div className="dark:text-white text-black">
                           Max allowed ({Number(bundleMaxAmount)}%):{" "}
-                          {((supply * Number(bundleMaxAmount)) / 100).toLocaleString()}
+                          {(
+                            (supply * Number(bundleMaxAmount)) /
+                            100
+                          ).toLocaleString()}
                         </div>
                         {calculateBundleTokens(bundleEth, supply) >
                           (supply * Number(bundleMaxAmount)) / 100 && (
-                            <div className="text-red-400 font-semibold">
-                              ⚠️ Exceeds {Number(bundleMaxAmount)}% limit!
-                            </div>
-                          )}
+                          <div className="text-red-400 font-semibold">
+                            ⚠️ Exceeds {Number(bundleMaxAmount)}% limit!
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -2347,6 +2433,11 @@ export default function Launch(): JSX.Element {
                 "Fix Validation Errors"
               )}
             </button>
+            {deployError && (
+              <p className="mt-4 text-sm text-red-500 bg-red-100 border border-red-300 rounded-md p-3">
+                {deployError}
+              </p>
+            )}
             {validationErrors.length > 0 && (
               <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
                 <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">

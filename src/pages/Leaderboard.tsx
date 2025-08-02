@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Navbar from "../components/launchintro/Navbar";
-import Footer from "../components/generalcomponents/Footer";
+import Footer from "../components/launchintro/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { pureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED } from "../web3/config";
@@ -237,7 +237,7 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="px-4 relative min-h-screen mountain">
+    <div className="px-4 relative min-h-screen mountain flex flex-col">
       {/* <div className="noise" /> */}
       <Navbar />
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl hidden dark:block"></div>
@@ -246,8 +246,8 @@ export default function Leaderboard() {
           <DustParticles key={i} />
         ))}
       </div>
-      <div className="max-w-5xl mx-auto pt-[85px]">
-        <div className="text-center mb-4">
+      <div className="w-full  pt-[85px] flex-grow">
+        <div className="max-w-5xl mx-auto text-center mb-4">
           <h1 className="lg:text-4xl text-3xl font-bold font-raleway text-[#01061C] dark:text-white">
             Leaderboard
           </h1>
@@ -262,185 +262,187 @@ export default function Leaderboard() {
         </div>
 
         {/* Sort Field Dropdown */}
-        <div className="flex flex-col sm:flex-row items-center gap-x-6 mb-6">
-          <div
-            ref={sortDropdownRef}
-            className="mb-[20px] relative w-full sm:w-[200px]"
-          >
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-x-6 mb-6">
             <div
-              onClick={() => setIsOpen((prev) => !prev)}
-              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              ref={sortDropdownRef}
+              className="mb-[20px] relative w-full sm:w-[200px]"
             >
-              <span className="text-sm capitalize">{selected}</span>
-              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                <BsChevronDown className="text-white text-xl" />
-              </div>
-            </div>
-            {isOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                {options.map((option, idx) => (
-                  <div
-                    key={option}
-                    onClick={() => {
-                      setSelected(option);
-                      setIsOpen(false);
-                    }}
-                    className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                      idx === 0
-                        ? "rounded-t-xl"
-                        : idx === options.length - 1
-                        ? "rounded-b-xl"
-                        : ""
-                    }`}
-                  >
-                    {option}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Sort Order Dropdown */}
-          <div
-            ref={orderDropdownRef}
-            className="mb-[20px] relative w-full sm:w-[200px]"
-          >
-            <div
-              onClick={() => setOrderDropdownOpen((prev) => !prev)}
-              className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
-            >
-              <span className="text-sm">
-                {sortOrder === "desc"
-                  ? selected === "Volume"
-                    ? "High → Low"
-                    : "New → Old"
-                  : selected === "Volume"
-                  ? "Low → High"
-                  : "Old → New"}
-              </span>
-              <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
-                <BsChevronDown className="text-white text-xl" />
-              </div>
-            </div>
-            {orderDropdownOpen && (
-              <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
-                <div
-                  onClick={() => {
-                    setSortOrder("desc");
-                    setOrderDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
-                >
-                  {selected === "Volume" ? "High → Low" : "New → Old"}
-                </div>
-                <div
-                  onClick={() => {
-                    setSortOrder("asc");
-                    setOrderDropdownOpen(false);
-                  }}
-                  className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
-                >
-                  {selected === "Volume" ? "Low → High" : "Old → New"}
+              <div
+                onClick={() => setIsOpen((prev) => !prev)}
+                className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              >
+                <span className="text-sm capitalize">{selected}</span>
+                <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                  <BsChevronDown className="text-white text-xl" />
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
-          <div className="overflow-x-auto">
-            <table className="min-w-[700px] sm:min-w-full text-sm text-left">
-              <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
-                <tr className="uppercase lg:text-lg tracking-wider font-raleway font-semibold ">
-                  <th className="px-6 py-3">S/N</th>
-                  <th className="px-6 py-3">Wallet</th>
-                  <th className="px-6 py-3">Volume</th>
-                  <th className="px-6 py-3">Last Purchase (UTC)</th>
-                </tr>
-              </thead>
-              <tbody className="text-white/90">
-                {display.map((entry, idx) => {
-                  const tokenMeta = tokensMap[entry.lastTokenAddress];
-                  return (
-                    <tr
-                      key={entry.wallet}
-                      className="hover:bg-white/5 transition border-b dark:border-b-Primary border-b-[#01061C]/8"
+              {isOpen && (
+                <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                  {options.map((option, idx) => (
+                    <div
+                      key={option}
+                      onClick={() => {
+                        setSelected(option);
+                        setIsOpen(false);
+                      }}
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        idx === 0
+                          ? "rounded-t-xl"
+                          : idx === options.length - 1
+                          ? "rounded-b-xl"
+                          : ""
+                      }`}
                     >
-                      <td className="px-6 py-4 font-medium text-black dark:text-white">
-                        {(page - 1) * ITEMS_PER_PAGE + idx + 1}
-                      </td>
-                      <td className="px-6 py-4 ">
-                        <p className=" text-black dark:text-white">
-                          {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
-                        <div className="flex flex-col">
-                          <span>
-                            $
-                            {entry.volumeUSD.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                          <span className="text-xs dark:text-white/60 text-black/60">
-                            {entry.volume.toFixed(6)} ETH
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {tokenMeta ? (
-                          <Link
-                            to={`/trade/${tokenMeta.tokenAddress}`}
-                            className="flex items-center gap-3 cursor-pointer"
-                          >
-                            {tokenMeta.tokenImageId && (
-                              <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${
-                                  tokenMeta.image?.path
-                                }`}
-                                alt={tokenMeta.symbol}
-                                className="w-6 h-6 rounded-full"
-                                crossOrigin="anonymous"
-                              />
-                            )}
-                            <div className="text-lg flex items-center gap-1">
-                              <div className="font-medium text-black dark:text-white">
-                                {tokenMeta.name}
-                                <span className="dark:text-white/80 ml-1 text-sm text-black">
-                                  ({tokenMeta.symbol})
-                                </span>
-                              </div>
-                              <div className="dark:text-white/50 text-black/54 text-sm">
-                                {formatUTC(entry.lastPurchaseTs)}
-                              </div>
-                            </div>
-                          </Link>
-                        ) : (
-                          <span>—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {/* Pagination */}
-        <div className="flex justify-start items-center gap-2 py-4 border-t border-white/10">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setPage(i + 1)}
-              className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                i + 1 === page
-                  ? "bg-[#0C8CE0] text-white"
-                  : "bg-white/10 text-white/60 hover:bg-white/20"
-              }`}
+                      {option}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Sort Order Dropdown */}
+            <div
+              ref={orderDropdownRef}
+              className="mb-[20px] relative w-full sm:w-[200px]"
             >
-              {i + 1}
-            </button>
-          ))}
+              <div
+                onClick={() => setOrderDropdownOpen((prev) => !prev)}
+                className="dark:bg-[#d5f2f80a] bg-white dark:text-white text-black px-4 py-3 rounded-md cursor-pointer flex justify-between items-center border border-white/10"
+              >
+                <span className="text-sm">
+                  {sortOrder === "desc"
+                    ? selected === "Volume"
+                      ? "High → Low"
+                      : "New → Old"
+                    : selected === "Volume"
+                    ? "Low → High"
+                    : "Old → New"}
+                </span>
+                <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
+                  <BsChevronDown className="text-white text-xl" />
+                </div>
+              </div>
+              {orderDropdownOpen && (
+                <div className="absolute top-full mt-2 z-50 w-full search dark:text-white text-black rounded-xl shadow-md">
+                  <div
+                    onClick={() => {
+                      setSortOrder("desc");
+                      setOrderDropdownOpen(false);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-t-xl"
+                  >
+                    {selected === "Volume" ? "High → Low" : "New → Old"}
+                  </div>
+                  <div
+                    onClick={() => {
+                      setSortOrder("asc");
+                      setOrderDropdownOpen(false);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 rounded-b-xl"
+                  >
+                    {selected === "Volume" ? "Low → High" : "Old → New"}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className=" dark:bg-[#0B132B]/50 backdrop-blur-md border-[1px] dark:border-Primary border-[#01061C]/8 rounded-xl overflow-hidden shadow-xl ">
+            <div className="overflow-x-auto">
+              <table className="min-w-[700px] sm:min-w-full text-sm text-left">
+                <thead className="dark:bg-[#3BC3DB]/20 bg-[#01061C]/8 dark:text-white/70 text-black">
+                  <tr className="uppercase lg:text-lg tracking-wider font-raleway font-semibold ">
+                    <th className="px-6 py-3">S/N</th>
+                    <th className="px-6 py-3">Wallet</th>
+                    <th className="px-6 py-3">Volume</th>
+                    <th className="px-6 py-3">Last Purchase (UTC)</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/90">
+                  {display.map((entry, idx) => {
+                    const tokenMeta = tokensMap[entry.lastTokenAddress];
+                    return (
+                      <tr
+                        key={entry.wallet}
+                        className="hover:bg-white/5 transition border-b dark:border-b-Primary border-b-[#01061C]/8"
+                      >
+                        <td className="px-6 py-4 font-medium text-black dark:text-white">
+                          {(page - 1) * ITEMS_PER_PAGE + idx + 1}
+                        </td>
+                        <td className="px-6 py-4 ">
+                          <p className=" text-black dark:text-white">
+                            {entry.wallet.slice(0, 4)}...
+                            {entry.wallet.slice(-4)}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
+                          <div className="flex flex-col">
+                            <span>
+                              $
+                              {entry.volumeUSD.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-xs dark:text-white/60 text-black/60">
+                              {entry.volume.toFixed(6)} ETH
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {tokenMeta ? (
+                            <Link
+                              to={`/trade/${tokenMeta.tokenAddress}`}
+                              className="flex items-center gap-3 cursor-pointer"
+                            >
+                              {tokenMeta.tokenImageId && (
+                                <img
+                                  src={`${import.meta.env.VITE_API_BASE_URL}${
+                                    tokenMeta.image?.path
+                                  }`}
+                                  alt={tokenMeta.symbol}
+                                  className="w-6 h-6 rounded-full"
+                                  crossOrigin="anonymous"
+                                />
+                              )}
+                              <div className="text-lg flex items-center gap-1">
+                                <div className="font-medium text-black dark:text-white">
+                                  {tokenMeta.name}
+                                  <span className="dark:text-white/80 ml-1 text-sm text-black">
+                                    ({tokenMeta.symbol})
+                                  </span>
+                                </div>
+                                <div className="dark:text-white/50 text-black/54 text-sm">
+                                  {formatUTC(entry.lastPurchaseTs)}
+                                </div>
+                              </div>
+                            </Link>
+                          ) : (
+                            <span>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {/* Pagination */}
+          <div className="flex justify-start items-center gap-2 py-4 border-t border-white/10">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setPage(i + 1)}
+                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                  i + 1 === page
+                    ? "bg-[#0C8CE0] text-white"
+                    : "bg-white/10 text-white/60 hover:bg-white/20"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

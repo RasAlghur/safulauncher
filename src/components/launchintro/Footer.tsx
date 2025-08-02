@@ -20,7 +20,7 @@ const Footer = () => {
 
         <ul className="flex flex-col md:flex-row items-center gap-6 font-raleway font-medium">
           {[
-            { to: "/launchintro", title: "Home" },
+            { to: "/", title: "Home" },
             { to: "/tokens", title: "Token" },
             { to: "/launch", title: "Launch" },
             { to: "/leaderboard", title: "Leaderboard" },

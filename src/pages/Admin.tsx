@@ -71,19 +71,21 @@ const Admin = () => {
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
             <button
               onClick={() => setActiveTab("form")}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "form"
-                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                }`}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeTab === "form"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
             >
               Admin Form
             </button>
             <button
               onClick={() => setActiveTab("contract")}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "contract"
-                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                }`}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeTab === "contract"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
             >
               Contract Config
             </button>

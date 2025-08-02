@@ -9,7 +9,14 @@ import {
   base,
   bscTestnet,
 } from "wagmi/chains";
-import { metaMaskWallet, phantomWallet, rainbowWallet, trustWallet, walletConnectWallet, injectedWallet} from "@rainbow-me/rainbowkit/wallets";
+import {
+  metaMaskWallet,
+  phantomWallet,
+  rainbowWallet,
+  trustWallet,
+  walletConnectWallet,
+  injectedWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
 const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
@@ -17,15 +24,7 @@ const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
 export const config = getDefaultConfig({
   appName: "Abyss App",
   projectId,
-  chains: [
-    mainnet,
-    polygon,
-    optimism,
-    arbitrum,
-    base,
-    sepolia,
-    bscTestnet,
-  ],
+  chains: [mainnet, polygon, optimism, arbitrum, base, sepolia, bscTestnet],
   ssr: true,
   transports: {
     [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`),
