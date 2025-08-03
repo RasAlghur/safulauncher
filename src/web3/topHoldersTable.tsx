@@ -27,8 +27,7 @@ export function TopHoldersTable({
   const ref = useRef<HTMLDivElement | null>(null);
 
   // Pre-normalize bonding addresses for fast lookups
-  const normalizedBonding = bondingAddrs.map(a => a.toLowerCase());
-
+  const normalizedBonding = bondingAddrs.map((a) => a.toLowerCase());
 
   const fetchTopHolders = useCallback(async () => {
     if (!tokenAddress) return;
@@ -132,7 +131,6 @@ export function TopHoldersTable({
     );
   };
 
-
   const getAddressIcon = (address: string) => {
     const lc = address.toLowerCase();
     if (lc === creatorAddress.toLowerCase()) {
@@ -155,7 +153,11 @@ export function TopHoldersTable({
     if (normalizedBonding.includes(lc)) {
       return (
         <IconWithTooltip tooltip="SafuLauncher Pool (tokens available for sale)">
-          <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          <svg
+            className="w-4 h-4 text-green-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
             <svg
               className="w-4 h-4 text-green-500"
               fill="currentColor"

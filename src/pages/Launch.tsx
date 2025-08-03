@@ -411,6 +411,15 @@ export default function Launch(): JSX.Element {
     return { duplicates, positions };
   };
 
+  const { data: getTradeFeeBps } = useReadContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
+    functionName: "tradeFeeBps",
+    query: {
+      enabled: isConnected,
+    },
+  });
+
   // Comprehensive validation function
   const validateForm = useCallback(async (): Promise<ValidationError[]> => {
     const errors: ValidationError[] = [];
@@ -900,6 +909,7 @@ export default function Launch(): JSX.Element {
     address,
     initialPool,
     logo,
+    getTradeFeeBps,
   ]);
 
   // Run validation whenever form data changes
@@ -927,15 +937,6 @@ export default function Launch(): JSX.Element {
     ...LAUNCHER_ABI_V2,
     address: SAFU_LAUNCHER_CA_V2,
     functionName: "maxWhitelistBps",
-    query: {
-      enabled: isConnected,
-    },
-  });
-  
-  const { data: getTradeFeeBps } = useReadContract({
-    ...LAUNCHER_ABI_V2,
-    address: SAFU_LAUNCHER_CA_V2,
-    functionName: "tradeFeeBps",
     query: {
       enabled: isConnected,
     },

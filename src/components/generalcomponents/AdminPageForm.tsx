@@ -186,16 +186,28 @@ const AdminPageForm = ({ address }: { address: string | undefined }) => {
             />
           </div>
         </div>
+        <div className="flex gap-4 mt-4">
+          <button
+            className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
+            onClick={handleSubmit}
+          >
+            Add Advertisement
+          </button>
 
-        <button
-          className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 hero-cta dark:bg-[#0C8CE0] rounded-full"
-          onClick={handleSubmit}
-        >
-          Add Advertisement
-        </button>
+          <button
+            onClick={manuallyStop}
+            className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-full transition"
+          >
+            Stop
+          </button>
 
-        <button onClick={manuallyStop}>Stop</button>
-        <button onClick={restartAds}>Restart</button>
+          <button
+            onClick={restartAds}
+            className="text-[1rem] font-bold px-[24px] py-[13px] flex items-center justify-center text-white cursor-pointer gap-3 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 rounded-full transition"
+          >
+            Restart
+          </button>
+        </div>
       </div>
 
       <div className="mt-10">

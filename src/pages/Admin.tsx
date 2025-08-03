@@ -30,14 +30,14 @@ const Admin = () => {
   if (isAuthorized === false) {
     return (
       <>
-        <div className="min-h-screen flex flex-col px-4 mountain">
+        {/* <div className="min-h-screen flex flex-col px-4 mountain">
           <Navbar />
           <div className="bg-white mx-auto mt-28 flex flex-col items-center justify-center dark:bg-[#111827] border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
             <h1 className="text-3xl font-bold text-[#e11d48] dark:text-red-400">
               Access Denied
             </h1>
             <p className="mt-3 text-gray-600 dark:text-gray-300">
-              This page is restricted to the admin wallet only.
+              404 - You are not authorized to access this page.
             </p>
             <button
               onClick={() => navigate("/")}
@@ -49,7 +49,33 @@ const Admin = () => {
           <div className="mt-auto">
             <Footer />
           </div>
-        </div>
+        </div> */}
+
+        <main className="min-h-screen w-full flex flex-col justify-center items-center bg-[#1A2238]">
+          <Navbar />
+          <div className="mt-40 flex flex-col items-center justify-center text-center">
+            <h1 className="text-9xl font-extrabold text-white tracking-widest">
+              404
+            </h1>
+            <div className="bg-Primary px-2 text-sm rounded rotate-12 absolute">
+              Page Not Found
+            </div>
+            <button className="mt-5">
+              <a className="relative inline-block text-sm font-medium text-Primary group active:text-orange-500 focus:outline-none focus:ring">
+                <span className="absolute inset-0 transition-transform translate-x-0.5 translate-y-0.5 bg-Primary group-hover:translate-y-0 group-hover:translate-x-0"></span>
+                <span
+                  onClick={() => navigate("/")}
+                  className="relative block px-8 py-3 bg-[#1A2238] border border-current"
+                >
+                  Go Home
+                </span>
+              </a>
+            </button>
+          </div>
+          <div className="mt-auto w-full">
+            <Footer />
+          </div>
+        </main>
       </>
     );
   }
