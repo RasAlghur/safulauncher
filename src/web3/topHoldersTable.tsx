@@ -12,19 +12,23 @@ interface Holder {
 
 interface TopHoldersTableProps {
   tokenAddress: string;
-  creatorAdress: string;
-  bondingAddr: string;
+  creatorAddress: string;
+  bondingAddrs: string[];
 }
 
 export function TopHoldersTable({
   tokenAddress,
-  creatorAdress,
-  bondingAddr,
+  creatorAddress,
+  bondingAddrs,
 }: TopHoldersTableProps) {
   const [topHolders, setTopHolders] = useState<Holder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
+
+  // Pre-normalize bonding addresses for fast lookups
+  const normalizedBonding = bondingAddrs.map(a => a.toLowerCase());
+
 
   const fetchTopHolders = useCallback(async () => {
     if (!tokenAddress) return;
@@ -128,12 +132,10 @@ export function TopHoldersTable({
     );
   };
 
-  // Function to check address type and return appropriate icon
-  const getAddressIcon = (address: string) => {
-    const isCreator = address.toLowerCase() === creatorAdress.toLowerCase();
-    const isBonding = address.toLowerCase() === bondingAddr.toLowerCase();
 
-    if (isCreator) {
+  const getAddressIcon = (address: string) => {
+    const lc = address.toLowerCase();
+    if (lc === creatorAddress.toLowerCase()) {
       return (
         <IconWithTooltip tooltip="Dev Wallet">
           <svg
@@ -150,25 +152,25 @@ export function TopHoldersTable({
         </IconWithTooltip>
       );
     }
-
-    if (isBonding) {
+    if (normalizedBonding.includes(lc)) {
       return (
         <IconWithTooltip tooltip="SafuLauncher Pool (tokens available for sale)">
-          <svg
-            className="w-4 h-4 text-green-500"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-              clipRule="evenodd"
-            />
+          <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg
+              className="w-4 h-4 text-green-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                clipRule="evenodd"
+              />
+            </svg>
           </svg>
         </IconWithTooltip>
       );
     }
-
     return null;
   };
 

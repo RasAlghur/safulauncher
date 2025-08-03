@@ -47,17 +47,15 @@ export interface TokenMetadata {
   expiresAt?: string;
 }
 
-interface PlatformStatsProps {
-  metrics?: readonly bigint[] | undefined;
-}
-
-const PlatformStats = ({ metrics }: PlatformStatsProps) => {
+const PlatformStats = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [safuHolders, setSafuHolders] = useState<number>(0);
+
+  const combinedMetrics = pureCombinedMetrics;
 
   useEffect(() => {
     async function fetchSafuHolders() {
@@ -112,24 +110,20 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
     })();
   }, []);
 
-  const safeMetrics = useMemo(() => {
-    return metrics || pureCombinedMetrics;
-  }, [metrics]);
-
-  // Calculate average curve progress using safeMetrics
+  // Calculate average curve progress using combinedMetrics
   const averageBondingProgress = useMemo(() => {
     return totalTokenCount > 0
-      ? (Number(safeMetrics[3]) / totalTokenCount) * 100
+      ? (Number(combinedMetrics[3]) / totalTokenCount) * 100
       : 0;
-  }, [safeMetrics, totalTokenCount]);
+  }, [combinedMetrics, totalTokenCount]);
 
-  // Calculate average volume using safeMetrics
+  // Calculate average volume using combinedMetrics
   const averageVolume = useMemo(() => {
     return totalTokenCount > 0
-      ? (safeMetrics[0] !== undefined ? Number(safeMetrics[0]) / 1e18 : 0) /
+      ? (combinedMetrics[0] !== undefined ? Number(combinedMetrics[0]) / 1e18 : 0) /
           totalTokenCount
       : 0;
-  }, [safeMetrics, totalTokenCount]);
+  }, [combinedMetrics, totalTokenCount]);
 
   // Fetch ETH price if not provided
   useEffect(() => {
@@ -167,17 +161,17 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
     [currentETHPrice]
   );
 
-  // Stats array using safeMetrics
+  // Stats array using combinedMetrics
   const stats = useMemo(() => {
     return [
       {
         id: 1,
         title: "Total Volume",
         mainValue: getMainValue(
-          safeMetrics[0] !== undefined ? Number(safeMetrics[0]) / 1e18 : 0,
+          combinedMetrics[0] !== undefined ? Number(combinedMetrics[0]) / 1e18 : 0,
           `${
-            safeMetrics[0] !== undefined
-              ? (Number(safeMetrics[0]) / 1e18).toFixed(8)
+            combinedMetrics[0] !== undefined
+              ? (Number(combinedMetrics[0]) / 1e18).toFixed(8)
               : 0
           } ETH`
         ),
@@ -194,10 +188,10 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
         id: 3,
         title: "Fees Collected",
         mainValue: getMainValue(
-          safeMetrics[1] !== undefined ? Number(safeMetrics[1]) / 1e18 : 0,
+          combinedMetrics[1] !== undefined ? Number(combinedMetrics[1]) / 1e18 : 0,
           `${
-            safeMetrics[1] !== undefined
-              ? (Number(safeMetrics[1]) / 1e18).toFixed(8)
+            combinedMetrics[1] !== undefined
+              ? (Number(combinedMetrics[1]) / 1e18).toFixed(8)
               : 0
           } ETH`
         ),
@@ -206,14 +200,14 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
       {
         id: 4,
         title: "Tokens Deployed",
-        mainValue: `${safeMetrics[2]?.toString() || 0}`,
+        mainValue: `${combinedMetrics[2]?.toString() || 0}`,
         ethValue: "",
         icon: TokensLaunched,
       },
       {
         id: 5,
         title: "Graduated Tokens",
-        mainValue: `${safeMetrics[3]?.toString() || 0}`,
+        mainValue: `${combinedMetrics[3]?.toString() || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
@@ -229,14 +223,14 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
       {
         id: 7,
         title: "Tax Tokens",
-        mainValue: `${safeMetrics[4]?.toString() || 0}`,
+        mainValue: `${combinedMetrics[4]?.toString() || 0}`,
         ethValue: "",
         icon: TaxTokens,
       },
       {
         id: 8,
         title: "0% Tax Tokens",
-        mainValue: `${safeMetrics[5]?.toString() || 0}`,
+        mainValue: `${combinedMetrics[5]?.toString() || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
       },
@@ -251,16 +245,16 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
         id: 10,
         title: "Paid Out Dev Reward",
         mainValue: getMainValue(
-          safeMetrics[6] !== undefined ? Number(safeMetrics[6]) / 1e18 : 0,
-          `${(safeMetrics[6] !== undefined
-            ? Number(safeMetrics[6]) / 1e18
+          combinedMetrics[6] !== undefined ? Number(combinedMetrics[6]) / 1e18 : 0,
+          `${(combinedMetrics[6] !== undefined
+            ? Number(combinedMetrics[6]) / 1e18
             : 0
           ).toFixed(2)} ETH`
         ),
         ethValue: getETHDisplay(
           Number(
-            safeMetrics[6] !== undefined
-              ? (Number(safeMetrics[6]) / 1e18).toFixed(2)
+            combinedMetrics[6] !== undefined
+              ? (Number(combinedMetrics[6]) / 1e18).toFixed(2)
               : 0
           )
         ),
@@ -269,7 +263,7 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
       {
         id: 9,
         title: "Total Unique Traders",
-        mainValue: "",
+        mainValue: Number(pureCombinedUniqueTraderCount).toLocaleString(),
         ethValue: Number(pureCombinedUniqueTraderCount), // This might need updating if you have real data
         icon: UniqueWallet,
       },
@@ -279,7 +273,7 @@ const PlatformStats = ({ metrics }: PlatformStatsProps) => {
     averageVolume,
     getETHDisplay,
     getMainValue,
-    safeMetrics,
+    combinedMetrics,
     safuHolders,
   ]);
 

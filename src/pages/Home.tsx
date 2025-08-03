@@ -132,7 +132,7 @@ function Home() {
       </div>
       <Navbar />
       <Hero />
-      <PlatformStats metrics={displayMetrics} />
+      <PlatformStats/>
 
       <div className="mountain dark:bg-none">
         <div className="relative z-10 overflow-x-hidden">

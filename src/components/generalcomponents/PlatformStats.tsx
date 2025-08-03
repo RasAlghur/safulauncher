@@ -1,4 +1,4 @@
-// PlatformStats.tsx
+// LlaunchIntro/PlatformStats.tsx
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
