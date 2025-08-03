@@ -621,7 +621,7 @@ export default function Launch(): JSX.Element {
     ): number => {
       // Simulate the smart contract calculation
       // These values should match your smart contract constants
-      const TRADE_FEE_BPS = 30; // 0.3% - adjust to match your contract
+      const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
       const virtualEthReserve = initialPool; // 2 ETH - from your contract
 
       if (bundleEth <= 0) return 0;
@@ -927,6 +927,15 @@ export default function Launch(): JSX.Element {
     ...LAUNCHER_ABI_V2,
     address: SAFU_LAUNCHER_CA_V2,
     functionName: "maxWhitelistBps",
+    query: {
+      enabled: isConnected,
+    },
+  });
+  
+  const { data: getTradeFeeBps } = useReadContract({
+    ...LAUNCHER_ABI_V2,
+    address: SAFU_LAUNCHER_CA_V2,
+    functionName: "tradeFeeBps",
     query: {
       enabled: isConnected,
     },
@@ -1309,8 +1318,8 @@ export default function Launch(): JSX.Element {
   function calculateBundleTokens(bundleEth: number, supply: number): number {
     // Simulate the smart contract calculation
     // These values should match your smart contract constants
-    const TRADE_FEE_BPS = 30; // 0.3% - adjust to match your contract
-    const virtualEthReserve = 2; // 2 ETH - from your contract
+    const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
+    const virtualEthReserve = initialPool; // 2 ETH - from your contract
 
     if (bundleEth <= 0 || supply <= 0) return 0;
 
