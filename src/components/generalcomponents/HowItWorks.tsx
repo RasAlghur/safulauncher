@@ -167,7 +167,7 @@ const HowItWorks = () => {
                 </div>
                 <p className="dark:text-white text-[#141313]">
                   Whitelisted and bundle addresses get first access; then the
-                  public trades on our internal AMM with a 0.3% fee.
+                  public trades on our internal AMM with a 1% fee.
                 </p>
               </div>
             </div>

@@ -1992,8 +1992,6 @@ export default function Trade() {
     }
   }
 
-  console.log("Trade page rendered with token:", token);
-
   // Loading state
   if (isLoadingToken) {
     return (
@@ -2073,7 +2071,7 @@ export default function Trade() {
                       token.image?.path
                     }`}
                     alt={`${token.symbol} logo`}
-                    className="w-10 h-10 rounded-md"
+                    className="w-10 h-10 rounded-md mt-2"
                     crossOrigin=""
                   />
                 )}
@@ -2081,15 +2079,15 @@ export default function Trade() {
             )}
             <div>
               {/* Always Visible Heading */}
-              <div className="flex flex-col lg:flex-row">
-                <div className="flex items-center">
-                  <h1 className="text-2xl font-bold dark:text-white text-black font-raleway mr-2">
+              <div className="flex flex-col gap-y-3 lg:flex-row">
+                <div className="flex items-center gap-x-4">
+                  <h1 className="text-2xl tracking-tight font-bold dark:text-white text-black font-raleway">
                     Trade {token.name}{" "}
                     <span className="dark:text-white/60 text-black/80">
                       ({token.symbol})
                     </span>
                   </h1>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 self-start mr-2">
                     {token.twitter && (
                       <a
                         href={token.twitter}
@@ -2116,7 +2114,7 @@ export default function Trade() {
 
                 {/* Conditional Admin Buttons */}
                 {isTokenCreator && (
-                  <div className="flex gap-4 h-fit">
+                  <div className="flex gap-2 h-fit">
                     {/* Add Whitelist Button */}
                     <button
                       type="button"

@@ -37,6 +37,7 @@ import { v4 as uuidv4 } from "uuid";
 import RocketSpinner from "../components/generalcomponents/RocketSpinner";
 import RocketSpinner2 from "../components/generalcomponents/RocketSpinner2";
 import { bundleMaxAmount } from "../web3/readContracts";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Description placeholder
@@ -74,12 +75,48 @@ export default function Launch(): JSX.Element {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [logoError, setLogoError] = useState("");
+  const [isLogoLoading, setIsLogoLoading] = useState(false);
 
+  const navigate = useNavigate();
   const [wlCsvText, setWlCsvText] = useState("");
 
   const [whitelistUpload, setWhitelistUpload] = useState<
     { address: string; cap: number }[]
   >([]);
+
+  const forceSquareImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        if (!e.target?.result) return reject("Failed to read image file.");
+        img.src = e.target.result as string;
+      };
+
+      img.onload = () => {
+        const size = Math.min(img.width, img.height); // crop to center square
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas context error");
+
+        const offsetX = (img.width - size) / 2;
+        const offsetY = (img.height - size) / 2;
+        ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return reject("Failed to convert canvas to blob.");
+          const squareFile = new File([blob], file.name, { type: file.type });
+          resolve(squareFile);
+        }, file.type);
+      };
+
+      img.onerror = () => reject("Unable to load image.");
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -94,28 +131,34 @@ export default function Launch(): JSX.Element {
 
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith("image/")) {
+      setIsLogoLoading(true);
       const error = await validateLogo(file);
       if (error) {
         setLogoError(error);
-        setLogo(null); // Optional: reset logo if invalid
+        setLogo(null);
       } else {
-        setLogo(file);
-        setLogoError(""); // Clear previous error
+        const squareFile = await forceSquareImage(file);
+        setLogo(squareFile);
+        setLogoError("");
       }
+      setIsLogoLoading(false);
     }
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
+      setIsLogoLoading(true);
       const error = await validateLogo(file);
       if (error) {
         setLogoError(error);
         setLogo(null);
       } else {
-        setLogo(file);
+        const squareFile = await forceSquareImage(file);
+        setLogo(squareFile);
         setLogoError("");
       }
+      setIsLogoLoading(false);
     }
   };
 
@@ -269,13 +312,10 @@ export default function Launch(): JSX.Element {
 
     return new Promise((resolve) => {
       image.onload = () => {
-        const isSquare = image.width === image.height;
-        if (!isSquare) {
-          resolve("Image must have a 1:1 aspect ratio (square).");
-        } else if (image.width < minWidth) {
-          resolve("Image width must be at least 100px.");
+        if (image.width < minWidth || image.height < minWidth) {
+          resolve("Image dimensions must be at least 100x100px.");
         } else {
-          resolve(null); // no error
+          resolve(null);
         }
         URL.revokeObjectURL(imageURL);
       };
@@ -1366,8 +1406,7 @@ export default function Launch(): JSX.Element {
   }, []);
 
   if (loading) return <RocketLoader />;
-
-  // const isTxProcessing = isPending || isConfirming;
+  console.log("result", result);
 
   return (
     <>
@@ -1593,7 +1632,14 @@ export default function Launch(): JSX.Element {
                 onDragLeave={() => setDragActive(false)}
                 onDrop={handleDrop}
               >
-                {!logo && (
+                {isLogoLoading ? (
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-12 w-12 border-4 border-dashed border-gray-300 dark:border-white/20 rounded-full animate-spin"></div>
+                    <p className="text-sm mt-2 text-black dark:text-white">
+                      Processing image...
+                    </p>
+                  </div>
+                ) : !logo ? (
                   <>
                     <div className="bg-gray-600 p-4 rounded-lg mb-4">
                       <UploadCloud className="w-8 h-8 text-white" />
@@ -1602,12 +1648,10 @@ export default function Launch(): JSX.Element {
                       <span className="">Click to upload</span> or drag and drop
                     </p>
                     <p className="text-sm dark:text-white/60 text-black mt-1">
-                      PNG, JPG, WEBP • Max 4.5MB • Min 100x100px • Square only
+                      PNG, JPG, WEBP • Max 4.5MB • Min 100x100px
                     </p>
                   </>
-                )}
-
-                {logo && (
+                ) : (
                   <div className="flex flex-col items-center gap-2">
                     <img
                       src={URL.createObjectURL(logo)}
@@ -2448,7 +2492,7 @@ export default function Launch(): JSX.Element {
                 {deployError}
               </p>
             )}
-            {validationErrors.length > 0 && (
+            {/* {validationErrors.length > 0 && (
               <div className=" dark:bg-[#2c0b0e] border border-red-300 dark:border-red-600 text-red-800 dark:text-red-300 rounded-md px-4 py-3 mb-5 mt-4">
                 <h3 className="font-semibold mb-2 text-sm md:text-base font-raleway">
                   Please fix the following issues:
@@ -2462,7 +2506,7 @@ export default function Launch(): JSX.Element {
                   ))}
                 </ul>
               </div>
-            )}
+            )} */}
           </form>
 
           {error && (
@@ -2485,6 +2529,17 @@ export default function Launch(): JSX.Element {
                   Click Here
                 </a>
               </p>
+            )}
+
+            {result?.contractAddress && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => navigate(`/tokens/${result.contractAddress}`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+                >
+                  View Trading Page
+                </button>
+              </div>
             )}
           </div>
         </div>
