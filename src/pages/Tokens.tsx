@@ -140,27 +140,32 @@ export default function Tokens() {
 
   const scroll = (direction: "left" | "right") => {
     if (!sliderRef.current) return;
-    const { scrollLeft, clientWidth, scrollWidth } = sliderRef.current;
-    const scrollAmount = clientWidth * 0.8;
 
+    const slider = sliderRef.current;
+    const slide = slider.querySelector("div"); // assumes each slide is a direct div
+    if (!slide) return;
+
+    const slideWidth =
+      slide.clientWidth +
+      parseFloat(getComputedStyle(slide).marginRight || "0");
+
+    const { scrollLeft, scrollWidth, clientWidth } = slider;
     const newScrollLeft =
-      direction === "left"
-        ? scrollLeft - scrollAmount
-        : scrollLeft + scrollAmount;
+      direction === "left" ? scrollLeft - slideWidth : scrollLeft + slideWidth;
 
-    sliderRef.current.scrollTo({
+    slider.scrollTo({
       left: newScrollLeft,
       behavior: "smooth",
     });
 
-    // Reset after last item
+    // Optional: loop back when reaching the end
     if (
       direction === "right" &&
-      scrollLeft + clientWidth >= scrollWidth - 10 // small buffer
+      scrollLeft + clientWidth >= scrollWidth - slideWidth
     ) {
       setTimeout(() => {
-        sliderRef.current?.scrollTo({ left: 0, behavior: "smooth" });
-      }, 800); // slight delay before reset
+        slider.scrollTo({ left: 0, behavior: "smooth" });
+      }, 600);
     }
   };
 
