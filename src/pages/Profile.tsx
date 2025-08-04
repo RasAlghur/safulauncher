@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type FormEvent,
 } from "react";
 import { FaEdit, FaTimes } from "react-icons/fa";
 import { useAccount, useReadContract } from "wagmi";
@@ -49,6 +50,13 @@ type tokenAll = {
   tokenAddress: string;
 };
 
+type Form = {
+  website: string;
+  description: string;
+  twitter: string;
+  telegram: string;
+  logo: File;
+};
 const Profile = () => {
   const { address, isConnected } = useAccount();
   const [balanceChange, setBalanceChange] = useState<{
@@ -76,6 +84,7 @@ const Profile = () => {
   const [showEditCard, setShowEditCard] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [allToken, setAllToken] = useState<tokenAll[]>([]);
+  const [editToken, setEditToken] = useState<Form>({} as Form);
 
   const { user, saveOrFetchUser, updateUser } = useUser();
 
@@ -380,6 +389,7 @@ const Profile = () => {
         );
 
         const apiData = res.data.data;
+        console.log({ tokenDeloyment: apiData });
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
         setLaunchedTokens((prev) =>
@@ -497,6 +507,40 @@ const Profile = () => {
   ]);
 
   console.log(filteredHoldings);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEditToken((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditToken((prev) => ({ ...prev, logo: file }));
+    }
+  };
+
+  const onEdit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const { description, website, twitter, telegram, logo } = editToken;
+    const formData = new FormData();
+    if (address) formData.append("wallet", address);
+    if (description) formData.append("description", description);
+    if (website) formData.append("website", website);
+    if (twitter) formData.append("twitter", twitter);
+    if (telegram) formData.append("telegram", telegram);
+    if (logo) formData.append("logo", logo);
+
+    const req: Response = await fetch(
+      `http://localhost:4000/api/update-token/af0049da-1d43-4efc-a744-579b6102e162`,
+      {
+        method: "PATCH",
+        body: formData,
+      }
+    );
+
+    const res: unknown = await req.json();
+    console.log(res);
+  };
 
   return (
     <div className="px-4 relative mountain ">
@@ -772,6 +816,56 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      <form onSubmit={onEdit} className="bg-red-500 flex flex-col">
+        <input
+          type="text"
+          inputMode="url"
+          name="website"
+          id=""
+          placeholder="enter here website"
+          onChange={handleChange}
+          className="p-2 border"
+        />
+        <input
+          type="text"
+          name="description"
+          id=""
+          placeholder="enter here description"
+          className="p-2 border"
+          onChange={handleChange}
+        />
+        <input
+          type="text"
+          inputMode="url"
+          name="twitter"
+          id=""
+          placeholder="enter here twitter"
+          className="p-2 border"
+          onChange={handleChange}
+        />
+        <input
+          type="text"
+          inputMode="url"
+          name="telegram"
+          id=""
+          placeholder="enter here enter telegram"
+          className="p-2 border"
+          onChange={handleChange}
+        />
+
+        <input
+          type="file"
+          name="logo"
+          id=""
+          onChange={handleFile}
+          className="p-2 border"
+        />
+
+        <button type="submit" className="p-2">
+          Submit
+        </button>
+      </form>
       <Footer />
     </div>
   );
