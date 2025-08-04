@@ -302,7 +302,7 @@ const Navbar = () => {
                       {/* Token Image */}
                       {token.image?.path && (
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${token.image.path
+                          src={`${networkInfo.apiBaseUrl}${token.image.path
                             }`}
                           alt={token.symbol}
                           className="w-8 h-8 rounded-md object-cover"

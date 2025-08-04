@@ -2076,7 +2076,7 @@ export default function Trade() {
               <div className="flex items-center mb-1">
                 {token.tokenImageId && (
                   <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}${token.image?.path
+                    src={`${networkInfo.apiBaseUrl}${token.image?.path
                       }`}
                     alt={`${token.symbol} logo`}
                     className="w-10 h-10 rounded-md mt-2"

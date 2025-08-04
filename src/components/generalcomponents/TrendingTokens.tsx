@@ -452,7 +452,7 @@ const TrendingTokens = () => {
                             {data.token.tokenImageId &&
                               data.token.image?.path ? (
                               <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image.path
+                                src={`${networkInfo.apiBaseUrl}${data.token.image.path
                                   }`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"

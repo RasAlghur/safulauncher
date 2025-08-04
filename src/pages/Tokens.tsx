@@ -620,7 +620,7 @@ export default function Tokens() {
                         <div className="flex items-center gap-3">
                           {t.token.tokenImageId && (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${t.token.image?.path
+                              src={`${networkInfo.apiBaseUrl}${t.token.image?.path
                                 }`}
                               alt={`${t.token.symbol} logo`}
                               className="w-10 h-10 rounded-md"
@@ -847,7 +847,7 @@ export default function Tokens() {
                         <div className="flex items-start gap-4 ">
                           {t.tokenImageId && (
                             <img
-                              src={`${import.meta.env.VITE_API_BASE_URL}${t.image?.path
+                              src={`${networkInfo.apiBaseUrl}${t.image?.path
                                 }`}
                               alt={`${t.symbol} logo`}
                               className="w-14 h-14 rounded-lg"

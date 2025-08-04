@@ -1,7 +1,11 @@
 import axios from "axios";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
+
+
+const networkInfo = useNetworkEnvironment();
 
 export const base = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "",
+  baseURL: networkInfo.apiBaseUrl || "",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

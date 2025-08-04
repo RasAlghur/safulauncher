@@ -400,7 +400,7 @@ export default function Leaderboard() {
                             >
                               {tokenMeta.tokenImageId && (
                                 <img
-                                  src={`${import.meta.env.VITE_API_BASE_URL}${tokenMeta.image?.path
+                                  src={`${networkInfo.apiBaseUrl}${tokenMeta.image?.path
                                     }`}
                                   alt={tokenMeta.symbol}
                                   className="w-6 h-6 rounded-full"
