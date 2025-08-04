@@ -5,12 +5,14 @@ import {
   type BaseError,
   useBalance,
 } from "wagmi";
-import { LAUNCHER_ABI_V2, SAFU_LAUNCHER_CA_V2 } from "../../web3/config";
+import { LAUNCHER_ABI_V1, SAFU_LAUNCHER_ADDRESSES_V1 } from "../../web3/config";
 import { ethers } from "ethers";
 import { useState } from "react";
 import { Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 
 const AdminContractConfig = () => {
+  const networkInfo = useNetworkEnvironment();
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
@@ -49,68 +51,79 @@ const AdminContractConfig = () => {
 
   // Read current contract values
   const { data: currentTradeFeeBps } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "tradeFeeBps",
   });
 
   const { data: getListingFeeBps } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "listingFeeBps",
   });
   const { data: getListingFeeDiv } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "listingFeeDiv",
   });
 
   const { data: getTaxOnSafuMaxBps } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "taxOnSafuMaxBps",
   });
   const { data: getTaxOnDexMaxBps } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "taxOnDexMaxBps",
   });
   const { data: getListingMilestone } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "listingMilestone",
   });
   const { data: getBundleMaxAmount } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "bundleMaxAmount",
   });
   const { data: getMaxWhitelistBps } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "maxWhitelistBps",
   });
 
   const { data: currentInitialPoolEth } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "initialPoolEth",
   });
 
   const { data: currentDevRewardETH } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "devRewardETH",
   });
 
   const { data: geReservedETH } = useReadContract({
-    address: SAFU_LAUNCHER_CA_V2,
-    abi: LAUNCHER_ABI_V2.abi,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "reservedEth",
   });
 
   const { data: contractBalance } = useBalance({
-    address: SAFU_LAUNCHER_CA_V2,
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
   });
 
   // Validation functions
@@ -281,11 +294,10 @@ const AdminContractConfig = () => {
             className={`w-full px-3 py-2 border rounded-md 
                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                           ${
-                             hasError
-                               ? "border-red-500 dark:border-red-400"
-                               : "border-gray-300 dark:border-gray-600"
-                           }`}
+                           ${hasError
+                ? "border-red-500 dark:border-red-400"
+                : "border-gray-300 dark:border-gray-600"
+              }`}
           />
           {hasError && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -544,8 +556,9 @@ const AdminContractConfig = () => {
               <ActionButton
                 onClick={() =>
                   writeContract({
-                    address: SAFU_LAUNCHER_CA_V2,
-                    abi: LAUNCHER_ABI_V2.abi,
+                    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                    abi: LAUNCHER_ABI_V1.abi,
                     functionName: "withdrawStuckETH",
                     args: [],
                   })
@@ -578,8 +591,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "setTradeFeeBps",
                   args: [parseInt(tradeFeeBps) * 100],
                 })
@@ -617,8 +631,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateListingFee",
                   args: [parseInt(listingFeeBps), parseInt(listingFeeDiv)],
                 })
@@ -671,8 +686,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updatePoolConfigs",
                   args: [
                     ethers.parseEther(newPoolETH || "0"),
@@ -760,8 +776,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateCreatorConfigs",
                   args: [
                     parseInt(taxOnSafuMaxBps) * 100,
@@ -797,8 +814,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateSafuTokenCA",
                   args: [safuTokenAddress as `0x${string}`],
                 })
@@ -894,17 +912,17 @@ const AdminContractConfig = () => {
                     Current:{" "}
                     {tier1Threshold && tier1ThresholdDiv
                       ? `${(
-                          (parseInt(tier1Threshold) /
-                            parseInt(tier1ThresholdDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier1Threshold) /
+                          parseInt(tier1ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier1WLCap && tier1WLDiv
                       ? `${(
-                          (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -979,17 +997,17 @@ const AdminContractConfig = () => {
                     Current:{" "}
                     {tier2Threshold && tier2ThresholdDiv
                       ? `${(
-                          (parseInt(tier2Threshold) /
-                            parseInt(tier2ThresholdDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier2Threshold) /
+                          parseInt(tier2ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier2WLCap && tier2WLDiv
                       ? `${(
-                          (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1006,10 +1024,10 @@ const AdminContractConfig = () => {
                   • Tier 1 users need ≥
                   {tier1Threshold && tier1ThresholdDiv
                     ? `${(
-                        (parseInt(tier1Threshold) /
-                          parseInt(tier1ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                      (parseInt(tier1Threshold) /
+                        parseInt(tier1ThresholdDiv)) *
+                      100
+                    ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1017,10 +1035,10 @@ const AdminContractConfig = () => {
                   • Tier 2 users need ≥
                   {tier2Threshold && tier2ThresholdDiv
                     ? `${(
-                        (parseInt(tier2Threshold) /
-                          parseInt(tier2ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                      (parseInt(tier2Threshold) /
+                        parseInt(tier2ThresholdDiv)) *
+                      100
+                    ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1031,8 +1049,9 @@ const AdminContractConfig = () => {
             <ActionButton
               onClick={() =>
                 writeContract({
-                  address: SAFU_LAUNCHER_CA_V2,
-                  abi: LAUNCHER_ABI_V2.abi,
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+
+                  abi: LAUNCHER_ABI_V1.abi,
                   functionName: "setTierThreshold",
                   args: [
                     parseInt(tier1Threshold),
@@ -1062,86 +1081,74 @@ const AdminContractConfig = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div
-            className={`flex items-center gap-2 ${
-              isTradeFeeBpsValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isTradeFeeBpsValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Trade Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isPoolConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isPoolConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Pool Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isListingFeeValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isListingFeeValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isListingFeeValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isListingFeeValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Listing Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isCreatorConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isCreatorConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Creator Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isSafuTokenValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isSafuTokenValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             SAFU Token Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isTierConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isTierConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isTierConfigValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isTierConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Tier Config
           </div>

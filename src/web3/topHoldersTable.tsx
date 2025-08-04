@@ -14,12 +14,14 @@ interface TopHoldersTableProps {
   tokenAddress: string;
   creatorAddress: string;
   bondingAddrs: string[];
+  chainId: number;
 }
 
 export function TopHoldersTable({
   tokenAddress,
   creatorAddress,
   bondingAddrs,
+  chainId,
 }: TopHoldersTableProps) {
   const [topHolders, setTopHolders] = useState<Holder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export function TopHoldersTable({
       }
 
       const response = await Moralis.EvmApi.token.getTokenOwners({
-        chain: "0xaa36a7", // Sepolia
+        chain: chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
         order: "DESC",
         tokenAddress,
       });

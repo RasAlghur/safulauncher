@@ -3,8 +3,9 @@ import axios from "axios";
 import Navbar from "../components/launchintro/Navbar";
 import Footer from "../components/launchintro/Footer";
 import DustParticles from "../components/generalcomponents/DustParticles";
-import { pureGetLatestETHPrice } from "../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../web3/config";
+import { getPureGetLatestETHPrice } from "../web3/readContracts";
+import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import { base } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import { Link } from "react-router-dom";
@@ -43,6 +44,7 @@ interface LeaderboardEntry {
 const ITEMS_PER_PAGE = 25;
 
 export default function Leaderboard() {
+  const networkInfo = useNetworkEnvironment();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [tokensMap, setTokensMap] = useState<Record<string, TokenMetadata>>({});
   const [page, setPage] = useState(1);
@@ -107,12 +109,15 @@ export default function Leaderboard() {
     throw new Error("Max retry attempts exceeded");
   }
 
+  const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+
+
   useEffect(() => {
     async function loadData() {
       try {
         // Fetch ETH price with retry
         const raw = await retry(() =>
-          pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
+          getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress)
         );
         const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
         setEthPriceUSD(price);
@@ -188,9 +193,9 @@ export default function Leaderboard() {
     } else if (selected === "Most Recent Trade") {
       return sortOrder === "desc"
         ? new Date(b.lastPurchaseTs).getTime() -
-            new Date(a.lastPurchaseTs).getTime()
+        new Date(a.lastPurchaseTs).getTime()
         : new Date(a.lastPurchaseTs).getTime() -
-            new Date(b.lastPurchaseTs).getTime();
+        new Date(b.lastPurchaseTs).getTime();
     }
     return 0;
   });
@@ -286,13 +291,12 @@ export default function Leaderboard() {
                         setSelected(option);
                         setIsOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                        idx === 0
-                          ? "rounded-t-xl"
-                          : idx === options.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
+                        ? "rounded-t-xl"
+                        : idx === options.length - 1
                           ? "rounded-b-xl"
                           : ""
-                      }`}
+                        }`}
                     >
                       {option}
                     </div>
@@ -315,8 +319,8 @@ export default function Leaderboard() {
                       ? "High → Low"
                       : "New → Old"
                     : selected === "Volume"
-                    ? "Low → High"
-                    : "Old → New"}
+                      ? "Low → High"
+                      : "Old → New"}
                 </span>
                 <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
                   <BsChevronDown className="text-white text-xl" />
@@ -396,9 +400,8 @@ export default function Leaderboard() {
                             >
                               {tokenMeta.tokenImageId && (
                                 <img
-                                  src={`${import.meta.env.VITE_API_BASE_URL}${
-                                    tokenMeta.image?.path
-                                  }`}
+                                  src={`${import.meta.env.VITE_API_BASE_URL}${tokenMeta.image?.path
+                                    }`}
                                   alt={tokenMeta.symbol}
                                   className="w-6 h-6 rounded-full"
                                   crossOrigin="anonymous"
@@ -433,11 +436,10 @@ export default function Leaderboard() {
               <button
                 key={i + 1}
                 onClick={() => setPage(i + 1)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                  i + 1 === page
-                    ? "bg-[#0C8CE0] text-white"
-                    : "bg-white/10 text-white/60 hover:bg-white/20"
-                }`}
+                className={`w-8 h-8 rounded-full text-sm font-medium transition ${i + 1 === page
+                  ? "bg-[#0C8CE0] text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20"
+                  }`}
               >
                 {i + 1}
               </button>

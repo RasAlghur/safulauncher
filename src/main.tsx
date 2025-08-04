@@ -14,6 +14,8 @@ import { config } from "./config/config.ts";
 import { AuthProvider } from "./lib/AuthContext.tsx";
 import { TokenProvider } from "./context/TokenContext.tsx";
 import { UserProvider } from "./context/user.context.tsx";
+import { NetworkWarning } from "./components/generalcomponents/NetworkWarning.tsx";
+import { useNetworkEnvironment } from "./config/useNetworkEnvironment.ts";
 
 /**
  * Description placeholder
@@ -26,13 +28,39 @@ const queryClient = new QueryClient();
  *
  * @returns {*}
  */
+
+const MyDApp: React.FC = () => {
+  const networkInfo = useNetworkEnvironment();
+
+  return (
+    <div className="p-4">
+      <NetworkWarning />
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Network Information</h2>
+        <div className="space-y-2 text-sm">
+          <p><strong>API Base URL:</strong> {networkInfo.apiBaseUrl}</p>
+          <p><strong>Chain ID:</strong> {networkInfo.chainId}</p>
+          <p><strong>Chain Name:</strong> {networkInfo.chainName}</p>
+          <p><strong>Explorer URL:</strong> {networkInfo.explorerUrl}</p>
+          <p><strong>Environment Match:</strong> {networkInfo.environmentMatch ? "✅ Yes" : "❌ No"}</p>
+          <p><strong>SafuLauncher Address:</strong> {networkInfo.safuContract}</p>
+        </div>
+      </div>
+      {/* Your app components */}
+      <App />
+    </div>
+  );
+};
+
+
 const WalletApp = () => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <UserProvider>
-            <App />
+            <MyDApp />
           </UserProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

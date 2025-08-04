@@ -1,185 +1,189 @@
+// safulauncher/src/web3/readContracts.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// safu-dapp/src/web3/readContracts.ts
-import { publicClient } from "../config/publicConfig";
+import { getClientForChain } from "../config/publicConfig";
 import {
-  LAUNCHER_ABI_V1,
   LAUNCHER_ABI_V2,
+  LAUNCHER_ABI_V1,
   PRICE_GETTER_ABI,
-  SAFU_LAUNCHER_CA_V1,
-  SAFU_LAUNCHER_CA_V2,
+  PRICE_GETTER_ADDRESSES,
+  SAFU_LAUNCHER_ADDRESSES_V2,
+  SAFU_LAUNCHER_ADDRESSES_V1
 } from "./config";
 
-/**
- * Description placeholder
- *
- * @type {*}
- */
-export const pureMetrics = await publicClient.readContract({
-  ...LAUNCHER_ABI_V1,
-  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
-  functionName: "getMetrics",
-});
+// Combined metrics functions
+export const getPureMetrics = async (chainId: number) => {
+  const publicClient = getClientForChain(chainId);
+  const [v1, v2] = await Promise.all([
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+      abi: LAUNCHER_ABI_V2.abi,
+      functionName: "getMetrics",
+    }),
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "getMetrics",
+    })
+  ]);
 
-export const pureV2Metrics = await publicClient.readContract({
-  ...LAUNCHER_ABI_V2,
-  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-  functionName: "getMetrics",
-});
+  return v1.map((val: bigint, idx: number) => val + (v2[idx] || 0n));
+};
 
-// Explicitly type as bigint[]
-export const pureCombinedMetrics: bigint[] = pureMetrics.map(
-  (val, idx) => val + (pureV2Metrics[idx] || 0n)
-);
+export const getPureUniqueTraderCount = async (chainId: number) => {
+  const publicClient = getClientForChain(chainId);
+  const [v1, v2] = await Promise.all([
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+      abi: LAUNCHER_ABI_V2.abi,
+      functionName: "uniqueTraderCount",
+    }),
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "uniqueTraderCount",
+    })
+  ]);
+  return v1 + v2;
+};
 
-export const pureUniqueTraderCount = (await publicClient.readContract({
-  ...LAUNCHER_ABI_V1,
-  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
-  functionName: "uniqueTraderCount",
-})) as bigint;
+// Token listing functions
+export const getTotalTokensListed = async (chainId: number) => {
+  const publicClient = getClientForChain(chainId);
+  const [v1, v2] = await Promise.all([
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+      abi: LAUNCHER_ABI_V2.abi,
+      functionName: "totalTokensListed",
+    }),
+    publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "totalTokensListed",
+    })
+  ]);
+  return v1 + v2;
+};
 
-export const pureV2UniqueTraderCount = (await publicClient.readContract({
-  ...LAUNCHER_ABI_V2,
-  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-  functionName: "uniqueTraderCount",
-})) as bigint;
-
-// Now just sum the two bigints:
-export const pureCombinedUniqueTraderCount: bigint =
-  pureUniqueTraderCount + pureV2UniqueTraderCount;
-
-/**
- * Description placeholder
- *
- * @type {*}
- */
-export const totalTokensListed = await publicClient.readContract({
-  ...LAUNCHER_ABI_V1,
-  address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
-  functionName: "totalTokensListed",
-});
-
-export const totalV2TokensListed = await publicClient.readContract({
-  ...LAUNCHER_ABI_V2,
-  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-  functionName: "totalTokensListed",
-});
-
-export const listingMilestone = await publicClient.readContract({
-  ...LAUNCHER_ABI_V2,
-  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-  functionName: "listingMilestone",
-});
-
-export const bundleMaxAmount = await publicClient.readContract({
-  ...LAUNCHER_ABI_V2,
-  address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-  functionName: "bundleMaxAmount",
-});
-
-/**
- * Description placeholder
- *
- * @async
- * @param {*} tokenAddress
- * @returns {unknown}
- */
-export const pureInfoDataRaw = async (tokenAddress: any) => {
-  if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V1,
-    address: SAFU_LAUNCHER_CA_V1,
-    functionName: "data",
-    args: [tokenAddress],
+export const getListingMilestone = async (chainId: number) => {
+  const publicClient = getClientForChain(chainId);
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "listingMilestone",
   });
 };
 
-export const pureInfoV2DataRaw = async (tokenAddress: any) => {
-  if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V2,
-    address: SAFU_LAUNCHER_CA_V2,
-    functionName: "data",
-    args: [tokenAddress],
+export const getBundleMaxAmount = async (chainId: number) => {
+  const publicClient = getClientForChain(chainId);
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "bundleMaxAmount",
   });
 };
 
-/**
- * Description placeholder
- *
- * @async
- * @param {*} priceFeed
- * @returns {unknown}
- */
-export const pureGetLatestETHPrice = async (priceFeed: any) => {
+// Token data functions
+export const getPureInfoDataRaw = async (chainId: number, tokenAddress: string) => {
+  if (!tokenAddress) return;
+  const publicClient = getClientForChain(chainId);
+
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+    abi: LAUNCHER_ABI_V2.abi,
+    functionName: "data",
+    args: [tokenAddress as `0x${string}`],
+  });
+};
+
+export const getPureInfoV2DataRaw = async (chainId: number, tokenAddress: string) => {
+  if (!tokenAddress) return;
+  const publicClient = getClientForChain(chainId);
+
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "data",
+    args: [tokenAddress as `0x${string}`],
+  });
+};
+
+// Price functions
+export const getPureGetLatestETHPrice = async (chainId: number, priceFeed: `0x${string}`) => {
   if (!priceFeed) return;
+  const publicClient = getClientForChain(chainId);
 
-  return await publicClient.readContract({
-    ...PRICE_GETTER_ABI,
+  return publicClient.readContract({
+    address: PRICE_GETTER_ADDRESSES[chainId],
+    abi: PRICE_GETTER_ABI.abi,
     functionName: "getLatestETHPrice",
     args: [priceFeed],
   });
 };
 
-/**
- * Description placeholder
- *
- * @async
- * @param {*} tokenAddress
- * @returns {unknown}
- */
-export const pureAmountOutMarketCap = async (tokenAddress: any) => {
+export const getPureAmountOutMarketCap = async (chainId: number, tokenAddress: string) => {
   if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V1,
-    address: SAFU_LAUNCHER_CA_V1,
-    functionName: "getAmountOut",
-    args: [tokenAddress, 1000000000000000000n, false],
-  });
+  const publicClient = getClientForChain(chainId);
+
+  try {
+    return await publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+      abi: LAUNCHER_ABI_V2.abi,
+      functionName: "getAmountOut",
+      args: [tokenAddress as `0x${string}`, 1000000000000000000n, false],
+    });
+  } catch (error) {
+    console.error("Error fetching market cap:", error);
+    return 0n;
+  }
 };
 
-export const pureV2AmountOutMarketCap = async (tokenAddress: any) => {
+export const getPureV2AmountOutMarketCap = async (chainId: number, tokenAddress: string) => {
   if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V2,
-    address: SAFU_LAUNCHER_CA_V2,
-    functionName: "getAmountOut",
-    args: [tokenAddress, 1000000000000000000n, false],
-  });
+  const publicClient = getClientForChain(chainId);
+
+  try {
+    return await publicClient.readContract({
+      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "getAmountOut",
+      args: [tokenAddress as `0x${string}`, 1000000000000000000n, false],
+    });
+  } catch (error) {
+    console.error("Error fetching market cap:", error);
+    return 0n;
+  }
 };
 
-/**
- * Description placeholder
- *
- * @async
- * @param {*} tokenAddress
- * @param {bigint} a
- * @param {boolean} b
- * @returns {unknown}
- */
-export const pureAmountOut = async (
-  tokenAddress: any,
-  a: bigint,
-  b: boolean
+export const getPureAmountOut = async (
+  chainId: number,
+  tokenAddress: `0x${string}`,
+  amountIn: bigint,
+  isBuy: boolean
 ) => {
   if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V1,
-    address: SAFU_LAUNCHER_CA_V1,
+  const publicClient = getClientForChain(chainId);
+
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+    abi: LAUNCHER_ABI_V2.abi,
     functionName: "getAmountOut",
-    args: [tokenAddress, a, b],
+    args: [tokenAddress, amountIn, isBuy],
   });
 };
 
-export const pureV2AmountOut = async (
-  tokenAddress: any,
-  a: bigint,
-  b: boolean
+export const getPureV2AmountOut = async (
+  chainId: number,
+  tokenAddress: `0x${string}`,
+  amountIn: bigint,
+  isBuy: boolean
 ) => {
   if (!tokenAddress) return;
-  return await publicClient.readContract({
-    ...LAUNCHER_ABI_V2,
-    address: SAFU_LAUNCHER_CA_V2,
+  const publicClient = getClientForChain(chainId);
+
+  return publicClient.readContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+    abi: LAUNCHER_ABI_V1.abi,
     functionName: "getAmountOut",
-    args: [tokenAddress, a, b],
+    args: [tokenAddress, amountIn, isBuy],
   });
 };

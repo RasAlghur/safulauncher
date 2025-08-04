@@ -1,10 +1,11 @@
 // src/components/NotableBuys.tsx
 import { useEffect, useState } from "react";
-import { pureGetLatestETHPrice } from "../../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { getPureGetLatestETHPrice } from "../../web3/readContracts";
+import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 import { base } from "../../lib/api";
 import { processUsername } from "../../lib/username";
 import { Link } from "react-router-dom";
+import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 
 export interface TokenMetadata {
   name: string;
@@ -47,6 +48,8 @@ function formatUTCDate(timestamp: string): string {
 }
 
 const NotableBuys = () => {
+  const networkInfo = useNetworkEnvironment();
+
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [allBuys, setAllBuys] = useState<{ recent: BuyTx[]; wins: BuyTx[] }>({
     recent: [],
@@ -55,13 +58,19 @@ const NotableBuys = () => {
   const [activeTab, setActiveTab] = useState<"buys" | "wins">("buys");
   const [loading, setLoading] = useState(true);
 
-  // Load ETH price
+  const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+
   useEffect(() => {
-    pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!)
-      .then((raw) => (typeof raw === "number" ? raw : Number(raw)) / 1e8)
-      .then(setEthPriceUSD)
+    if (!priceFeedAddress) return;
+
+    getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress)
+      .then((raw) => {
+        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+        setEthPriceUSD(price);
+      })
       .catch(() => console.error("Failed to fetch ETH price"));
-  }, []);
+  }, [networkInfo.chainId, priceFeedAddress]);
+
 
   // Fetch recent buys & wins, then fetch unique token symbols
   useEffect(() => {
@@ -101,21 +110,19 @@ const NotableBuys = () => {
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${
-              activeTab === "buys"
+            className={`transition ${activeTab === "buys"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-            }`}
+              }`}
           >
             Recent Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${
-              activeTab === "wins"
+            className={`transition ${activeTab === "wins"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-            }`}
+              }`}
           >
             Notable Buys
           </button>

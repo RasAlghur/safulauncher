@@ -1,7 +1,8 @@
 import Moralis from "moralis";
 
 export async function getHoldersFromMoralis(
-  tokenAddress: string
+  tokenAddress: string,
+  chainId: number
 ): Promise<number> {
   try {
     if (!Moralis.Core.isStarted) {
@@ -9,7 +10,7 @@ export async function getHoldersFromMoralis(
     }
 
     const response = await Moralis.EvmApi.token.getTokenOwners({
-      chain: "0xaa36a7", // Sepolia
+      chain: chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
       order: "DESC",
       tokenAddress,
     });

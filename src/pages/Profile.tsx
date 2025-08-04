@@ -18,12 +18,15 @@ import { base } from "../lib/api";
 import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
+import {
+  getPureAmountOutMarketCap,
+} from "../web3/readContracts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ETH_USDT_PRICE_FEED, PRICE_GETTER_ABI } from "../web3/config";
-import { pureAmountOutMarketCap } from "../web3/readContracts";
+import { ETH_USDT_PRICE_FEED_ADDRESSES, PRICE_GETTER_ABI, PRICE_GETTER_ADDRESSES } from "../web3/config";
 import { processUsername } from "../lib/username";
 import RocketLoader from "../components/generalcomponents/Loader";
 import { Link } from "react-router-dom";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 
 interface launchedToken {
   name: string;
@@ -58,6 +61,7 @@ type Form = {
   logo: File;
 };
 const Profile = () => {
+  const networkInfo = useNetworkEnvironment();
   const { address, isConnected } = useAccount();
   const [balanceChange, setBalanceChange] = useState<{
     amount: number;
@@ -86,14 +90,17 @@ const Profile = () => {
   const [allToken, setAllToken] = useState<tokenAll[]>([]);
   const [editToken, setEditToken] = useState<Form>({} as Form);
 
+  // const isV2 = token?.tokenVersion === "token_v2";
+
   const { user, saveOrFetchUser, updateUser } = useUser();
 
   // Get ETH price
   const { data: latestETHPrice, isLoading: isLoadingLatestETHPrice } =
     useReadContract({
-      ...PRICE_GETTER_ABI,
+      address: PRICE_GETTER_ADDRESSES[networkInfo.chainId],
+      ...PRICE_GETTER_ABI.abi,
       functionName: "getLatestETHPrice",
-      args: [ETH_USDT_PRICE_FEED!],
+      args: [ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId]!],
     });
 
   const ethPriceUSD = useMemo(() => {
@@ -106,6 +113,9 @@ const Profile = () => {
   const fetchAllTokens = useCallback(async () => {
     try {
       const request = await base.get("token-all");
+      console.log("request", request);
+      const request2 = await base.get("tokens");
+      console.log("As from DB:", request2);
       const response = request.data.data;
       setAllToken(response || []);
       console.log("All tokens from DB:", response);
@@ -124,7 +134,10 @@ const Profile = () => {
   const fetchTokenPrice = useCallback(
     async (tokenAddress: string): Promise<number> => {
       try {
-        const raw = await pureAmountOutMarketCap(tokenAddress);
+        // const fn = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
+        const fn = getPureAmountOutMarketCap;
+        const raw = await fn(networkInfo.chainId, tokenAddress);
+        console.log(`raw for token address ${tokenAddress}: ${raw}`);
         if (raw !== undefined && raw !== null) {
           return Number(raw.toString()) / 1e18;
         }
@@ -431,7 +444,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-          container.scrollHeight - 100 &&
+        container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -621,11 +634,10 @@ const Profile = () => {
                     </div>
                     {isUsernameAvailable !== null && (
                       <p
-                        className={`${
-                          isUsernameAvailable
-                            ? "text-green-500"
-                            : "text-red-500"
-                        } text-xs mt-2`}
+                        className={`${isUsernameAvailable
+                          ? "text-green-500"
+                          : "text-red-500"
+                          } text-xs mt-2`}
                       >
                         {isUsernameAvailable
                           ? "Username available"
@@ -670,9 +682,8 @@ const Profile = () => {
                 ${formatCurrency(totalBalance)}
               </div>
               <div
-                className={`text-sm text-center ${
-                  balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
-                }`}
+                className={`text-sm text-center ${balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
               >
                 {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
                 {balanceChange.percentage >= 0 ? "+" : ""}
@@ -685,21 +696,19 @@ const Profile = () => {
           {/* Tabs */}
           <div className="flex gap-6 text-lg font-semibold mb-6">
             <button
-              className={`pb-1 transition cursor-pointer ${
-                activeTab === "holdings"
-                  ? "border-white dark:text-white text-black"
-                  : "border-transparent dark:text-white/30 text-black/60"
-              }`}
+              className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
+                ? "border-white dark:text-white text-black"
+                : "border-transparent dark:text-white/30 text-black/60"
+                }`}
               onClick={() => setActiveTab("holdings")}
             >
               Platform Token Holdings ({filteredHoldings.length})
             </button>
             <button
-              className={`pb-1 transition cursor-pointer ${
-                activeTab === "launched"
-                  ? "border-white dark:text-white text-[#141313]/75"
-                  : "border-transparent dark:text-white/30 text-black/60"
-              }`}
+              className={`pb-1 transition cursor-pointer ${activeTab === "launched"
+                ? "border-white dark:text-white text-[#141313]/75"
+                : "border-transparent dark:text-white/30 text-black/60"
+                }`}
               onClick={() => setActiveTab("launched")}
             >
               Tokens Deployed
@@ -749,9 +758,8 @@ const Profile = () => {
                           />
                         ) : null}
                         <div
-                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${
-                            token.logo ? "hidden" : ""
-                          }`}
+                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? "hidden" : ""
+                            }`}
                         />
                         <div>
                           <span className="font-bold text-sm text-black dark:text-white block">
@@ -777,8 +785,8 @@ const Profile = () => {
                           {token.isLoadingPrice
                             ? "Loading..."
                             : token.usdValue && token.usdValue > 0
-                            ? `$${formatCurrency(token.usdValue)}`
-                            : "$0.00"}
+                              ? `$${formatCurrency(token.usdValue)}`
+                              : "$0.00"}
                         </div>
                       </div>
                     </div>

@@ -1,12 +1,7 @@
-import { useEffect, useRef, useMemo } from "react";
-import { useAccount, useReadContract } from "wagmi";
-import {
-  LAUNCHER_ABI_V1,
-  LAUNCHER_ABI_V2,
-  SAFU_LAUNCHER_CA_V1,
-  SAFU_LAUNCHER_CA_V2,
-} from "../web3/config";
-import { pureCombinedMetrics } from "../web3/readContracts";
+// safulauncher/src/pages/home.tsx
+import { useEffect, useRef, useState } from "react";
+import { useAccount } from "wagmi";
+import { getPureMetrics } from "../web3/readContracts";
 import Navbar from "../components/landingpage/Navbar";
 import Hero from "../components/landingpage/Hero";
 import KeyBenefits from "../components/landingpage/KeyBenefits";
@@ -19,6 +14,7 @@ import PlatformStats from "../components/landingpage/PlatformStats";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useUser } from "../context/user.context";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,56 +24,15 @@ gsap.registerPlugin(ScrollTrigger);
  * @returns {*}
  */
 function Home() {
+  const [combinedMetrics, setCombinedMetrics] = useState<bigint[] | null>(null);
   const { isConnected, address } = useAccount();
   const { saveOrFetchUser } = useUser();
-  const {
-    data: getV2Metrics,
-    isLoading: isLoadingV2Metrics,
-    refetch: refetchV2Metrics,
-  } = useReadContract({
-    ...LAUNCHER_ABI_V2,
-    address: SAFU_LAUNCHER_CA_V2 as `0x${string}`,
-    functionName: "getMetrics",
-  });
-
-  const {
-    data: getMetrics,
-    isLoading: isLoadingMetrics,
-    refetch: refetchMetrics,
-  } = useReadContract({
-    ...LAUNCHER_ABI_V1,
-    address: SAFU_LAUNCHER_CA_V1 as `0x${string}`,
-    functionName: "getMetrics",
-  });
+  const networkInfo = useNetworkEnvironment();
 
   const ringRefs = useRef<HTMLDivElement[]>([]);
 
-  const shouldRefetch = !isLoadingMetrics;
-
-  const combinedMetrics = useMemo(() => {
-    if (!getMetrics || !getV2Metrics) return null;
-
-    // Convert to mutable arrays
-    const v1Metrics = Array.from(getMetrics);
-    const v2Metrics = Array.from(getV2Metrics);
-
-    return v1Metrics.map((val, idx) => val + (v2Metrics[idx] || 0n));
-  }, [getMetrics, getV2Metrics]);
-
-  // Determine what to display
-  const displayMetrics = useMemo(() => {
-    if (isConnected) {
-      if (combinedMetrics) return combinedMetrics;
-      if (getMetrics) return Array.from(getMetrics) as bigint[];
-    }
-    return pureCombinedMetrics as bigint[];
-  }, [isConnected, combinedMetrics, getMetrics]);
-
   useEffect(() => {
     let isMounted = true;
-
-    if (!isLoadingMetrics) refetchMetrics();
-    if (!isLoadingV2Metrics) refetchV2Metrics();
 
     if (isConnected && isMounted) {
       saveOrFetchUser(String(address));
@@ -87,15 +42,19 @@ function Home() {
       isMounted = false;
     };
   }, [
-    shouldRefetch,
-    refetchMetrics,
     isConnected,
     saveOrFetchUser,
     address,
-    isLoadingMetrics,
-    isLoadingV2Metrics,
-    refetchV2Metrics,
   ]);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      const metrics = await getPureMetrics(networkInfo.chainId);
+      setCombinedMetrics(metrics);
+    };
+
+    fetchMetrics();
+  }, [networkInfo.chainId]);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -122,17 +81,17 @@ function Home() {
   return (
     <div className="overflow-x-hidden">
       <div className="hidden">
-        <p>totalVolumeETH: {Number(displayMetrics?.[0] || 0) / 1e18} ETH</p>
-        <p>totalFeesETH: {Number(displayMetrics?.[1] || 0) / 1e18} ETH</p>
-        <p>totalTokensLaunched: {displayMetrics?.[2]?.toString()}</p>
-        <p>totalTokensListed: {displayMetrics?.[3]?.toString()}</p>
-        <p>totalTaxedTokens: {displayMetrics?.[4]?.toString()}</p>
-        <p>totalZeroTaxTokens: {displayMetrics?.[5]?.toString()}</p>
-        <p>DevRewardETH: {Number(displayMetrics?.[6] || 0) / 1e18} ETH</p>
+        <p>totalVolumeETH: {Number(combinedMetrics?.[0] || 0) / 1e18} ETH</p>
+        <p>totalFeesETH: {Number(combinedMetrics?.[1] || 0) / 1e18} ETH</p>
+        <p>totalTokensLaunched: {combinedMetrics?.[2]?.toString()}</p>
+        <p>totalTokensListed: {combinedMetrics?.[3]?.toString()}</p>
+        <p>totalTaxedTokens: {combinedMetrics?.[4]?.toString()}</p>
+        <p>totalZeroTaxTokens: {combinedMetrics?.[5]?.toString()}</p>
+        <p>DevRewardETH: {Number(combinedMetrics?.[6] || 0) / 1e18} ETH</p>
       </div>
       <Navbar />
       <Hero />
-      <PlatformStats/>
+      <PlatformStats />
 
       <div className="mountain dark:bg-none">
         <div className="relative z-10 overflow-x-hidden">

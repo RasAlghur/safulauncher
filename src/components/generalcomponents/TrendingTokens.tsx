@@ -3,15 +3,16 @@ import { getHoldersFromMoralis } from "../../lib/getHoldersFromMoralis";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  pureInfoDataRaw,
-  pureAmountOutMarketCap,
-  pureGetLatestETHPrice,
-  pureInfoV2DataRaw,
-  pureV2AmountOutMarketCap,
-  pureCombinedMetrics,
+  getPureInfoDataRaw,
+  getPureAmountOutMarketCap,
+  getPureGetLatestETHPrice,
+  getPureInfoV2DataRaw,
+  getPureV2AmountOutMarketCap,
+  getPureMetrics,
 } from "../../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 import { base } from "../../lib/api";
+import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 
 export interface TokenMetadata {
   name: string;
@@ -49,6 +50,7 @@ interface TrendingTokenData {
 type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 const TrendingTokens = () => {
+  const networkInfo = useNetworkEnvironment();
   const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [selectedRange, setSelectedRange] = useState<TimeRange>("24h");
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
@@ -71,19 +73,19 @@ const TrendingTokens = () => {
     }
   };
 
-  // Fetch ETH price
   useEffect(() => {
-    async function fetchEthPrice() {
+    const priceFeed = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+    if (!priceFeed) return;
+
+    (async () => {
       try {
-        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
-        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
-        setEthPriceUSD(price);
-      } catch {
-        console.error("Failed to fetch ETH price");
+        const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeed);
+        setEthPriceUSD((Number(raw) / 1e8));
+      } catch (err) {
+        console.error("Failed to fetch ETH price", err);
       }
-    }
-    fetchEthPrice();
-  }, []);
+    })();
+  }, [networkInfo.chainId]);
 
   interface logs {
     ethAmount: string;
@@ -176,7 +178,7 @@ const TrendingTokens = () => {
 
         // Get platform total volume threshold (4% of total volume)
 
-        const metrics = pureCombinedMetrics;
+        const metrics = await getPureMetrics(networkInfo.chainId);
         const mainValue =
           metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0;
         const usdValue = mainValue * ethPriceUSD;
@@ -215,12 +217,12 @@ const TrendingTokens = () => {
 
               if (version === "token_v2") {
                 // Use v2 functions
-                info = await pureInfoV2DataRaw(tokenAddress);
-                rawAmt = await pureV2AmountOutMarketCap(tokenAddress);
+                info = await getPureInfoV2DataRaw(networkInfo.chainId, tokenAddress);
+                rawAmt = await getPureV2AmountOutMarketCap(networkInfo.chainId, tokenAddress);
               } else {
                 // Default to v1
-                info = await pureInfoDataRaw(tokenAddress);
-                rawAmt = await pureAmountOutMarketCap(tokenAddress);
+                info = await getPureInfoDataRaw(networkInfo.chainId, tokenAddress);
+                rawAmt = await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress);
               }
 
               // Calculate market cap
@@ -254,7 +256,7 @@ const TrendingTokens = () => {
               }
 
               // Calculate holders for this token
-              const holders = await getHoldersFromMoralis(tokenAddress);
+              const holders = await getHoldersFromMoralis(tokenAddress, networkInfo.chainId);
 
               // Get message count for this token
               const messageCount = messageCountMap[tokenAddress] || 0;
@@ -343,8 +345,7 @@ const TrendingTokens = () => {
         // Log the ranking for debugging
         rankedTokens.forEach((token, index) => {
           console.log(
-            `#${index + 1} ${token.token.symbol} (${
-              token.token.tokenAddress
+            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress
             }):`,
             `Criteria: ${token.criteriaCount}/4`,
             `[Vol≥4%: ${token.criteria.volumeThreshold ? "✓" : "✗"},`,
@@ -401,11 +402,10 @@ const TrendingTokens = () => {
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-3 py-1 rounded-full transition-colors ${
-                  range === selectedRange
+                className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
                     ? "bg-[#1D223E] text-white"
                     : "text-gray-400 dark:hover:text-white hover:text-black"
-                }`}
+                  }`}
               >
                 {range}
               </button>
@@ -450,11 +450,10 @@ const TrendingTokens = () => {
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                           >
                             {data.token.tokenImageId &&
-                            data.token.image?.path ? (
+                              data.token.image?.path ? (
                               <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${
-                                  data.token.image.path
-                                }`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}${data.token.image.path
+                                  }`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"
                                 crossOrigin="anonymous"
@@ -480,11 +479,10 @@ const TrendingTokens = () => {
                           {formatCurrency(data.marketCap)}
                         </td>
                         <td
-                          className={`p-3 font-semibold ${
-                            data.priceChange < 0
+                          className={`p-3 font-semibold ${data.priceChange < 0
                               ? "text-red-500"
                               : "text-green-400"
-                          }`}
+                            }`}
                         >
                           {formatPercentage(data.priceChange)}
                         </td>

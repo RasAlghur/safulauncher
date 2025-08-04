@@ -8,20 +8,20 @@ import { FiMenu, FiX } from "react-icons/fi";
 import { base } from "../../lib/api";
 import { debounce } from "lodash";
 import axios from "axios";
-
 import {
-  pureGetLatestETHPrice,
-  pureAmountOutMarketCap,
-  pureInfoDataRaw,
+  getPureGetLatestETHPrice,
+  getPureAmountOutMarketCap,
+  getPureInfoDataRaw,
 } from "../../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
+import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 
 interface TokenMetadata {
   name: string;
   symbol: string;
   website?: string;
   description?: string;
-  tokenAddress: string;
+   tokenAddress: `0x${string}`;
   tokenCreator: string;
   tokenImageId?: string;
   image?: {
@@ -33,6 +33,7 @@ interface TokenMetadata {
 }
 
 const Navbar = () => {
+  const networkInfo = useNetworkEnvironment();
   const [showMenu, setShowMenu] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [navBg, setNavBg] = useState(false);
@@ -89,11 +90,14 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
+  const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+
   // Fetch ETH price
   useEffect(() => {
     (async () => {
       try {
-        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+        const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress!);
         const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
         setEthPriceUSD(price);
       } catch (err) {
@@ -112,13 +116,13 @@ const Navbar = () => {
       await Promise.all(
         tokens.map(async (token) => {
           try {
-            const info = await pureInfoDataRaw(token.tokenAddress);
+            const info = await getPureInfoDataRaw(networkInfo.chainId, token.tokenAddress);
             const supply =
               Array.isArray(info) && typeof info[7] !== "undefined"
                 ? Number(info[6])
                 : 0;
 
-            const rawAmt = await pureAmountOutMarketCap(token.tokenAddress);
+            const rawAmt = await getPureAmountOutMarketCap(networkInfo.chainId, token.tokenAddress);
             const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
 
             const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
@@ -133,7 +137,7 @@ const Navbar = () => {
     };
 
     fetchMarketCaps();
-  }, [tokens, ethPriceUSD]);
+  }, [tokens, ethPriceUSD, networkInfo.chainId]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -193,11 +197,10 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${
-          navBg
-            ? "bg-Dark-Purple"
-            : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
-        } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
+        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${navBg
+          ? "bg-Dark-Purple"
+          : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
+          } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
       >
         <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
@@ -299,9 +302,8 @@ const Navbar = () => {
                       {/* Token Image */}
                       {token.image?.path && (
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${
-                            token.image.path
-                          }`}
+                          src={`${import.meta.env.VITE_API_BASE_URL}${token.image.path
+                            }`}
                           alt={token.symbol}
                           className="w-8 h-8 rounded-md object-cover"
                           crossOrigin=""
@@ -362,9 +364,8 @@ const Navbar = () => {
           onClick={() => setIsOpen(false)}
         >
           <div
-            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${
-              isOpen ? "translate-x-0" : "translate-x-full"
-            }`}
+            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end p-4">

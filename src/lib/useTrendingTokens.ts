@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import {
-  pureInfoDataRaw,
-  pureGetLatestETHPrice,
-  pureAmountOutMarketCap,
-  pureMetrics,
+  getPureAmountOutMarketCap,
+  getPureGetLatestETHPrice,
+  getPureInfoDataRaw,
+  getPureMetrics,
 } from "../web3/readContracts";
-import { ETH_USDT_PRICE_FEED } from "../web3/config";
 import { base } from "../lib/api";
 import type { TokenMetadata } from "../pages/Tokens";
 
@@ -20,6 +21,7 @@ export interface TrendingTokenData {
 type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
+  const networkInfo = useNetworkEnvironment();
   const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,11 +36,14 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
     return now - ranges[range];
   };
 
+
+  const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+
   useEffect(() => {
     let ethPriceUSD = 0;
 
     const fetchEthPrice = async () => {
-      const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
+      const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress);
       return (typeof raw === "number" ? raw : Number(raw)) / 1e8;
     };
 
@@ -64,8 +69,9 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
         const tokens = await Promise.all(
           Object.entries(grouped).map(async ([tokenAddress, txs]) => {
             try {
-              const info = await pureInfoDataRaw(tokenAddress);
-              const rawAmt = await pureAmountOutMarketCap(tokenAddress);
+             
+              const info = await getPureInfoDataRaw(networkInfo.chainId, tokenAddress);
+              const rawAmt = await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress);
 
               const supply = Number(info?.[6] ?? 0);
               const pricePerToken = rawAmt
@@ -120,7 +126,7 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
             }
           })
         );
-
+        const pureMetrics = await getPureMetrics(networkInfo.chainId,);
         const mainValue = pureMetrics[0] ? Number(pureMetrics[0]) / 1e18 : 0;
         const usdValue = mainValue * ethPriceUSD;
         const volumeCrit = 0.04 * usdValue;

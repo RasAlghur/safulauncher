@@ -16,11 +16,12 @@ import SafuHolders from "../svgcomponents/SafuHolders";
 import AverageVolume from "../svgcomponents/AverageVolume";
 import UniqueWallet from "../svgcomponents/UniqueWallet";
 import DustParticles from "./DustParticles";
-import { ETH_USDT_PRICE_FEED } from "../../web3/config";
+import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
+import { ETH_USDT_PRICE_FEED_ADDRESSES, SAFU_TOKEN_ADDRESSES } from "../../web3/config";
 import {
-  pureCombinedUniqueTraderCount,
-  pureGetLatestETHPrice,
-  pureCombinedMetrics, // Use the combined metrics directly
+  getPureMetrics,
+  getPureGetLatestETHPrice,
+  getPureUniqueTraderCount,
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
 import { base } from "../../lib/api";
@@ -41,17 +42,70 @@ export interface TokenMetadata {
 }
 
 const PlatformStats = () => {
+  const networkInfo = useNetworkEnvironment();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
+
+  // State variables
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
   const [safuHolders, setSafuHolders] = useState<number>(0);
-
-  // Add new state for aggregated data
+  const [combinedMetrics, setCombinedMetrics] = useState<bigint[]>([]);
+  const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const metrics = pureCombinedMetrics;
+  // Fetch combined metrics from contracts
+  useEffect(() => {
+    async function fetchMetrics() {
+      try {
+        if (!networkInfo?.chainId) return;
 
+        const [metrics, traderCount] = await Promise.all([
+          getPureMetrics(networkInfo.chainId),
+          getPureUniqueTraderCount(networkInfo.chainId)
+        ]);
+
+        setCombinedMetrics(metrics);
+        setUniqueTraderCount(traderCount);
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+        // Set default values if fetch fails
+        setCombinedMetrics([0n, 0n, 0n, 0n, 0n, 0n, 0n]);
+        setUniqueTraderCount(0n);
+      }
+    }
+
+    fetchMetrics();
+  }, [networkInfo?.chainId]);
+
+  // Fetch ETH price
+  useEffect(() => {
+    async function fetchETHPrice() {
+      try {
+        if (!networkInfo?.chainId || !ETH_USDT_PRICE_FEED_ADDRESSES?.[networkInfo.chainId]) {
+          console.warn("Chain ID or price feed address not available");
+          return;
+        }
+
+        const priceResult = await getPureGetLatestETHPrice(
+          networkInfo.chainId,
+          ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId]
+        );
+
+        const price = (typeof priceResult === "number" ? priceResult : Number(priceResult)) / 1e8;
+        setCurrentETHPrice(price);
+      } catch (error) {
+        console.error("Failed to fetch ETH price:", error);
+        // You might want to set a fallback price or fetch from an alternative source
+        setCurrentETHPrice(0);
+      }
+    }
+
+    fetchETHPrice();
+  }, [networkInfo?.chainId]);
+
+  // Fetch SAFU holders
   useEffect(() => {
     async function fetchSafuHolders() {
       try {
@@ -60,78 +114,63 @@ const PlatformStats = () => {
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: "0xaa36a7", // Sepolia
+          chain: networkInfo.chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
           order: "DESC",
-          tokenAddress: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8",
+          tokenAddress: networkInfo.chainId === 1 ? SAFU_TOKEN_ADDRESSES[1] : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
-        // Moralis returns the holders list in `result`
         const holdersCount = response.raw().result.length;
-        console.log("SAFU holders count:", holdersCount);
-
         setSafuHolders(holdersCount);
       } catch (err) {
         console.error("Error fetching SAFU holders:", err);
+        setSafuHolders(0);
       }
     }
 
     fetchSafuHolders();
   }, []);
 
-  // Fetch list of tokens
+  // Fetch token list
   useEffect(() => {
-    (async () => {
+    async function fetchTokens() {
       try {
         const response = await base.get("token-all");
         const data = response.data.data;
 
-        // Handle the nested array structure
         let flattenedTokens: TokenMetadata[] = [];
 
         if (Array.isArray(data)) {
-          // If data is an array of arrays, flatten it
           flattenedTokens = data.flat();
         } else if (data && typeof data === "object") {
-          // If data is a single object, wrap it in an array
           flattenedTokens = [data];
         }
 
         setTotalTokenCount(flattenedTokens.length);
       } catch (error) {
         console.error("Error fetching tokens:", error);
-      }
-    })();
-  }, []);
-
-  const averageBondingProgress = useMemo(() => {
-    return totalTokenCount > 0
-      ? (Number(metrics[3]) / totalTokenCount) * 100
-      : 0;
-  }, [metrics, totalTokenCount]);
-
-  // Calculate average volume using metrics[0]
-  const averageVolume = useMemo(() => {
-    return totalTokenCount > 0
-      ? (metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0) /
-          totalTokenCount
-      : 0;
-  }, [metrics, totalTokenCount]);
-
-  // Fetch ETH price if not provided
-  useEffect(() => {
-    async function fetchETHPrice() {
-      try {
-        const raw = await pureGetLatestETHPrice(ETH_USDT_PRICE_FEED!);
-        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
-        setCurrentETHPrice(price);
-      } catch (error) {
-        console.error("Failed to fetch ETH price:", error);
+        setTotalTokenCount(0);
+      } finally {
+        setIsLoading(false);
       }
     }
-    fetchETHPrice();
+
+    fetchTokens();
   }, []);
 
-  // Helper function to get USD value as main display
+  // Calculate derived values
+  const averageBondingProgress = useMemo(() => {
+    return totalTokenCount > 0 && combinedMetrics.length > 3
+      ? (Number(combinedMetrics[3]) / totalTokenCount) * 100
+      : 0;
+  }, [combinedMetrics, totalTokenCount]);
+
+  const averageVolume = useMemo(() => {
+    return totalTokenCount > 0 && combinedMetrics.length > 0
+      ? Number(combinedMetrics[0]) / 1e18 / totalTokenCount
+      : 0;
+  }, [combinedMetrics, totalTokenCount]);
+
+  // Helper functions
   const getMainValue = useCallback(
     (ethValue: number, fallbackValue: string) => {
       if (currentETHPrice === 0) return fallbackValue;
@@ -141,10 +180,9 @@ const PlatformStats = () => {
         maximumFractionDigits: 2,
       })}`;
     },
-    [currentETHPrice] // <- dependency
+    [currentETHPrice]
   );
 
-  // Helper function to get ETH value for display
   const getETHDisplay = useCallback(
     (ethValue: number) => {
       if (currentETHPrice === 0) return "";
@@ -153,25 +191,24 @@ const PlatformStats = () => {
     [currentETHPrice]
   );
 
+  // Stats configurations
   const stats1 = useMemo(() => {
+    const metrics = combinedMetrics.length > 0 ? combinedMetrics : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
+
     return [
       {
         id: 1,
         title: "Total Volume",
         mainValue: getMainValue(
-          metrics[0] !== undefined ? Number(metrics[0]) / 1e18 : 0,
-          `${
-            metrics[0] !== undefined
-              ? (Number(metrics[0]) / 1e18).toFixed(8)
-              : 0
-          } ETH`
+          Number(metrics[0]) / 1e18,
+          `${(Number(metrics[0]) / 1e18).toFixed(8)} ETH`
         ),
         icon: VolumeIcon,
       },
       {
         id: 2,
         title: "Average Volume (Per Token)",
-        mainValue: `${getMainValue(averageVolume, averageVolume.toFixed(2))}`,
+        mainValue: getMainValue(averageVolume, averageVolume.toFixed(2)),
         ethValue: "",
         icon: AverageVolume,
       },
@@ -179,57 +216,51 @@ const PlatformStats = () => {
         id: 3,
         title: "Fees Collected",
         mainValue: getMainValue(
-          metrics[1] !== undefined ? Number(metrics[1]) / 1e18 : 0,
-          `${
-            metrics[1] !== undefined
-              ? (Number(metrics[1]) / 1e18).toFixed(8)
-              : 0
-          } ETH`
+          Number(metrics[1]) / 1e18,
+          `${(Number(metrics[1]) / 1e18).toFixed(8)} ETH`
         ),
         icon: FeeCollected,
       },
       {
         id: 4,
         title: "Tokens Deployed",
-        mainValue: `${metrics?.[2]?.toString() || 0}`,
+        mainValue: `${metrics[2]?.toString() || 0}`,
         ethValue: "",
         icon: TokensLaunched,
       },
       {
         id: 5,
         title: "Graduated Tokens",
-        mainValue: `${metrics?.[3]?.toString() || 0}`,
+        mainValue: `${metrics[3]?.toString() || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
     ];
-  }, [getMainValue, averageVolume, metrics]);
+  }, [getMainValue, averageVolume, combinedMetrics]);
 
-  // Stats group 2 using combined metrics
   const stats2 = useMemo(() => {
-    const devReward = metrics[6] !== undefined ? Number(metrics[6]) / 1e18 : 0;
+    const metrics = combinedMetrics.length > 0 ? combinedMetrics : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
+    const devReward = Number(metrics[6]) / 1e18;
 
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${
-          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)}%`,
         ethValue: "",
         icon: AverageBonding,
       },
       {
         id: 2,
         title: "Tax Tokens",
-        mainValue: `${metrics?.[4]?.toString() || 0}`,
+        mainValue: `${metrics[4]?.toString() || 0}`,
         ethValue: "",
         icon: TaxTokens,
       },
       {
         id: 3,
         title: "0% Tax Tokens",
-        mainValue: `${metrics?.[5]?.toString() || 0}`,
+        mainValue: `${metrics[5]?.toString() || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
       },
@@ -250,8 +281,8 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Total Unique Traders",
-        mainValue: "",
-        ethValue: Number(pureCombinedUniqueTraderCount), // This might need updating if you have real data
+        mainValue: uniqueTraderCount.toString(),
+        ethValue: "",
         icon: UniqueWallet,
       },
     ];
@@ -259,10 +290,12 @@ const PlatformStats = () => {
     averageBondingProgress,
     getMainValue,
     getETHDisplay,
-    metrics,
+    combinedMetrics,
     safuHolders,
+    uniqueTraderCount,
   ]);
 
+  // GSAP animations
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -295,7 +328,10 @@ const PlatformStats = () => {
     return () => ctx.revert();
   }, []);
 
+  // Counter animations
   useEffect(() => {
+    if (isLoading) return; // Don't animate until data is loaded
+
     const allStats = [...stats1, ...stats2];
 
     allStats.forEach((stat, index) => {
@@ -303,7 +339,6 @@ const PlatformStats = () => {
       if (!el) return;
 
       const raw = stat.mainValue;
-
       const clean = parseFloat(raw.replace(/[^0-9.]/g, ""));
       const isCurrency = raw.includes("$");
       const isETH = raw.includes("ETH");
@@ -340,7 +375,7 @@ const PlatformStats = () => {
         }
       );
     });
-  }, [stats1, stats2]);
+  }, [stats1, stats2, isLoading]);
 
   return (
     <section
@@ -387,7 +422,7 @@ const PlatformStats = () => {
                     id={`main-value-${index}`}
                     className="main-value xl:text-lg text-base font-semibold dark:text-white text-black mb-2"
                   >
-                    {stat.mainValue}
+                    {isLoading ? "Loading..." : stat.mainValue}
                   </div>
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
@@ -415,13 +450,16 @@ const PlatformStats = () => {
                   <div className="w-16 h-16 mb-4 relative">
                     <Icon className="w-full h-full" />
                     {stat.id === 3 && (
-                      <p className="text-white/50 font-bold text-[22px]  absolute bottom-6 left-[10px] dark:hidden block">
+                      <p className="text-white/50 font-bold text-[22px] absolute bottom-6 left-[10px] dark:hidden block">
                         TAX
                       </p>
                     )}
                   </div>
-                  <div className="xl:text-lg text-base font-semibold dark:text-white text-black mb-2">
-                    {stat.mainValue}
+                  <div
+                    id={`main-value-${stats1.length + index}`}
+                    className="xl:text-lg text-base font-semibold dark:text-white text-black mb-2"
+                  >
+                    {isLoading ? "Loading..." : stat.mainValue}
                   </div>
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
