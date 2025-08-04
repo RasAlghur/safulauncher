@@ -1,16 +1,16 @@
 
 export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
-  1: "0x{mainnetCA}", // Mainnet address
+  1: "0x0", // Mainnet address
   11155111: "0x2321F6a4214f473348C177F9D402bf31789c32C7", // Sepolia address
 };
 
 export const SAFU_LAUNCHER_ADDRESSES_V1: Record<number, `0x${string}`> = {
-  1: "0x{mainnetCA}", // Mainnet address
+  1: "0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87", // Mainnet address
   11155111: "0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01", // Sepolia address
 };
 
 export const PRICE_GETTER_ADDRESSES: Record<number, `0x${string}`> = {
-  1: "0x7dACcc56CB9d797A234F84a8B62C95F5c3d7433e", // Mainnet address
+  1: "0x4603276A9A90382A1aD8Af9aE56133b905bF8AAf", // Mainnet address
   11155111: "0x7dACcc56CB9d797A234F84a8B62C95F5c3d7433e", // Sepolia address
 };
 
@@ -20,7 +20,7 @@ export const ETH_USDT_PRICE_FEED_ADDRESSES: Record<number, `0x${string}`> = {
 };
 
 export const SAFU_TOKEN_ADDRESSES: Record<number, `0x${string}`> = {
-  1: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8", // Mainnet address
+  1: "0x{mainnet}", // Mainnet address
   11155111: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8", // Sepolia address
 };
 

@@ -35,7 +35,7 @@ import {
   // getPureInfoDataRaw,
   getPureInfoV2DataRaw,
   // getPureAmountOutMarketCap,
-  getPureAmountOut,
+  // getPureAmountOut,
   getPureV2AmountOut,
   getPureV2AmountOutMarketCap,
   getListingMilestone,

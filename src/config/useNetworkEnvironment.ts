@@ -19,8 +19,8 @@ export const useNetworkEnvironment = () => {
       ? import.meta.env.VITE_MAINNET_API_BASE_URL
       : import.meta.env.VITE_MAINNET_API_BASE_URL + '/';
 
-      const testnetCA = '0x{testnet}';
-      const mainnetCA = '0x{mainnet}';
+      const testnetCA = '0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01';
+      const mainnetCA = '0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87';
 
 
     return {
