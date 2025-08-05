@@ -51,7 +51,7 @@ import { GrSubtractCircle } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import { Upload } from "lucide-react";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import { socket } from "../lib/socket";
 import Chat from "./chat";
 import {
@@ -285,6 +285,7 @@ function formatTokenAmount(
  */
 export default function Trade() {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const { address, isConnected } = useAccount();
   const { saveOrFetchUser } = useUser();
 

@@ -5,10 +5,13 @@ import Navbar from "../components/launchintro/Navbar";
 import AdminPageForm from "../components/generalcomponents/AdminPageForm";
 import AdminContractConfig from "../components/generalcomponents/AdminContractConfig";
 import Footer from "../components/launchintro/Footer";
+import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
+import { useApiClient } from "../lib/api";
 
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
 
 const Admin = () => {
+  const base = useApiClient();
   const { address, isConnected } = useAccount();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -97,21 +100,19 @@ const Admin = () => {
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
             <button
               onClick={() => setActiveTab("form")}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                activeTab === "form"
-                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              }`}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "form"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
             >
               Admin Form
             </button>
             <button
               onClick={() => setActiveTab("contract")}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                activeTab === "contract"
-                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              }`}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "contract"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
             >
               Contract Config
             </button>
@@ -120,7 +121,7 @@ const Admin = () => {
 
         {/* Tab Content */}
         {activeTab === "form" ? (
-          <AdminPageForm address={address} />
+          <AdminPageForm address={address}/>
         ) : (
           <AdminContractConfig />
         )}

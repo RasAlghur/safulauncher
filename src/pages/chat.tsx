@@ -7,7 +7,7 @@ import {
 } from "react";
 import { FaArrowDown } from "react-icons/fa";
 import { socket } from "../lib/socket";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import { IoChevronForward } from "react-icons/io5";
 import { useUser } from "../context/user.context";
 import { processUsername } from "../lib/username";
@@ -35,6 +35,7 @@ type prop = {
 };
 export default function Chat({ address, tokenAddress }: prop) {
   const [message, setMessage] = useState("");
+  const base = useApiClient();
   const [messages, setMessages] = useState<MessagePayload[]>([]);
   const [hasNextPage, setHasNextPage] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -203,9 +204,8 @@ export default function Chat({ address, tokenAddress }: prop) {
         {/* Scroll To Bottom */}
         <button
           onClick={scrollToBottom}
-          className={`${
-            showScrollButton ? "block" : "hidden"
-          } absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
+          className={`${showScrollButton ? "block" : "hidden"
+            } absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
         >
           <FaArrowDown />
         </button>

@@ -14,7 +14,7 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useUser } from "../context/user.context";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
@@ -78,6 +78,7 @@ type Form = {
 };
 const Profile = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const { address, isConnected } = useAccount();
   const [balanceChange, setBalanceChange] = useState<{
     amount: number;

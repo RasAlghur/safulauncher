@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import ThemeToggle from "../../lib/ThemeToggle";
 import { FiMenu, FiX } from "react-icons/fi";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 import { debounce } from "lodash";
 import axios from "axios";
 import {
@@ -34,6 +34,7 @@ interface TokenMetadata {
 
 const Navbar = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const [showMenu, setShowMenu] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [navBg, setNavBg] = useState(false);
@@ -205,11 +206,10 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${
-          navBg
-            ? "bg-Dark-Purple"
-            : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
-        } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
+        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${navBg
+          ? "bg-Dark-Purple"
+          : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
+          } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
       >
         <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
@@ -372,9 +372,8 @@ const Navbar = () => {
           onClick={() => setIsOpen(false)}
         >
           <div
-            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${
-              isOpen ? "translate-x-0" : "translate-x-full"
-            }`}
+            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end p-4">

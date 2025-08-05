@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 
 interface response {
   user: string;
@@ -18,6 +18,7 @@ interface response {
 }
 
 export default function TrackBuy() {
+  const base = useApiClient();
   const [result, setResult] = useState<response[]>([]);
 
   const fetchErrors = async () => {

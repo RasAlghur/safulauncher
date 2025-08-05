@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { base, saveUserLocally, type serverResponse } from "../lib/api";
+import { saveUserLocally, useApiClient, type serverResponse } from "../lib/api";
 
 interface UserContextType {
   user: serverResponse | null;
@@ -43,6 +43,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const saveOrFetchUser = useCallback(
     async (address: string) => {
       const abortController = new AbortController();
+      const base = useApiClient();
 
       if (address === user?.wallet) return;
       try {

@@ -7,7 +7,8 @@ import {
   getPureInfoDataRaw,
   getPureMetrics,
 } from "../web3/readContracts";
-import { base } from "../lib/api";
+// import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import type { TokenMetadata } from "../pages/Tokens";
 
 export interface TrendingTokenData {
@@ -22,6 +23,7 @@ type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -167,7 +169,7 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
     };
 
     fetchTrendingData();
-  }, [selectedRange, networkInfo.chainId, priceFeedAddress]);
+  }, [selectedRange, networkInfo.chainId, priceFeedAddress, base]);
 
   return { trendingData, loading };
 };

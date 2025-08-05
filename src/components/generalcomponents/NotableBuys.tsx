@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { getPureGetLatestETHPrice } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 import { processUsername } from "../../lib/username";
 import { Link } from "react-router-dom";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
@@ -49,6 +49,7 @@ function formatUTCDate(timestamp: string): string {
 
 const NotableBuys = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
 
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
   const [allBuys, setAllBuys] = useState<{ recent: BuyTx[]; wins: BuyTx[] }>({
@@ -109,21 +110,19 @@ const NotableBuys = () => {
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${
-              activeTab === "buys"
+            className={`transition ${activeTab === "buys"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-            }`}
+              }`}
           >
             Recent Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${
-              activeTab === "wins"
+            className={`transition ${activeTab === "wins"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-            }`}
+              }`}
           >
             Notable Buys
           </button>

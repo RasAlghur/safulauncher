@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 
 interface error {
   timestamp: string;
@@ -7,6 +7,7 @@ interface error {
   stack: string;
 }
 export default function ErrorsPage() {
+  const base = useApiClient();
   const [errors, setErrors] = useState<error[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const fetchErrors = async () => {

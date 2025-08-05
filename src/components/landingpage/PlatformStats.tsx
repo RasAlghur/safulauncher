@@ -22,7 +22,7 @@ import {
 } from "../../web3/config";
 import cloudRight from "../../assets/cloud-right.png";
 import cloudLeft from "../../assets/cloud-left.png";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 
 import VolumeIcon from "../svgcomponents/Volume";
 import FeeCollected from "../svgcomponents/FeeCollected";
@@ -54,6 +54,7 @@ export interface TokenMetadata {
 
 const PlatformStats = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);

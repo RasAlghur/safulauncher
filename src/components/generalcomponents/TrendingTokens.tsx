@@ -11,7 +11,7 @@ import {
   getPureMetrics,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 
 export interface TokenMetadata {
@@ -51,6 +51,7 @@ type TimeRange = "1h" | "6h" | "24h" | "7d";
 
 const TrendingTokens = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const [trendingData, setTrendingData] = useState<TrendingTokenData[]>([]);
   const [selectedRange, setSelectedRange] = useState<TimeRange>("24h");
   const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);

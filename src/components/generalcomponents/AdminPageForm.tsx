@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 
 interface image {
   createdAt: Date;
@@ -59,6 +59,7 @@ interface Payload {
 }
 
 const AdminPageForm = ({ address }: { address: string | undefined }) => {
+  const base = useApiClient();
   const [tokenAddress, setTokenAddress] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");

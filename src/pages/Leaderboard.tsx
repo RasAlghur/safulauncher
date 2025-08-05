@@ -6,7 +6,7 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import { getPureGetLatestETHPrice } from "../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import { Link } from "react-router-dom";
 
@@ -45,6 +45,7 @@ const ITEMS_PER_PAGE = 25;
 
 export default function Leaderboard() {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [tokensMap, setTokensMap] = useState<Record<string, TokenMetadata>>({});
   const [page, setPage] = useState(1);

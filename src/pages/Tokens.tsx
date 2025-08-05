@@ -8,7 +8,7 @@ import "../App.css";
 import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import {
@@ -99,6 +99,7 @@ type searchField = "all" | "address" | "creator" | "name";
  */
 export default function Tokens() {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
   const [hasSetFeatured, setHasSetFeatured] = useState(false);

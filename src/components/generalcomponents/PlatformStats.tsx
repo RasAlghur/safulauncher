@@ -27,7 +27,7 @@ import {
   getPureUniqueTraderCount,
 } from "../../web3/readContracts";
 import cloudRight from "../../assets/cloud-right.png";
-import { base } from "../../lib/api";
+import { useApiClient } from "../../lib/api";
 import Moralis from "moralis";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -46,6 +46,7 @@ export interface TokenMetadata {
 
 const PlatformStats = () => {
   const networkInfo = useNetworkEnvironment();
+  const base = useApiClient();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);

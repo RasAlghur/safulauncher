@@ -1,4 +1,4 @@
-import { base } from "../lib/api";
+import { useApiClient } from "../lib/api";
 
 interface VerifyContractParams {
   encodedMessageWithoutPrefix: string;
@@ -12,6 +12,7 @@ export const verifyContract = async ({
   // export const verifyContract = async ({ tokenAddress }: VerifyContractParams) => {
   try {
     // Prepare the data to send to the backend
+    const base = useApiClient();
     const data = {
       encodedMessageWithoutPrefix,
       tokenAddress,
