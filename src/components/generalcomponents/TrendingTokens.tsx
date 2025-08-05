@@ -79,8 +79,11 @@ const TrendingTokens = () => {
 
     (async () => {
       try {
-        const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeed);
-        setEthPriceUSD((Number(raw) / 1e8));
+        const raw = await getPureGetLatestETHPrice(
+          networkInfo.chainId,
+          priceFeed
+        );
+        setEthPriceUSD(Number(raw) / 1e8);
       } catch (err) {
         console.error("Failed to fetch ETH price", err);
       }
@@ -217,12 +220,24 @@ const TrendingTokens = () => {
 
               if (version === "token_v2") {
                 // Use v2 functions
-                info = await getPureInfoV2DataRaw(networkInfo.chainId, tokenAddress);
-                rawAmt = await getPureV2AmountOutMarketCap(networkInfo.chainId, tokenAddress);
+                info = await getPureInfoV2DataRaw(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
+                rawAmt = await getPureV2AmountOutMarketCap(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
               } else {
                 // Default to v1
-                info = await getPureInfoDataRaw(networkInfo.chainId, tokenAddress);
-                rawAmt = await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress);
+                info = await getPureInfoDataRaw(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
+                rawAmt = await getPureAmountOutMarketCap(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
               }
 
               // Calculate market cap
@@ -256,7 +271,10 @@ const TrendingTokens = () => {
               }
 
               // Calculate holders for this token
-              const holders = await getHoldersFromMoralis(tokenAddress, networkInfo.chainId);
+              const holders = await getHoldersFromMoralis(
+                tokenAddress,
+                networkInfo.chainId
+              );
 
               // Get message count for this token
               const messageCount = messageCountMap[tokenAddress] || 0;
@@ -345,7 +363,8 @@ const TrendingTokens = () => {
         // Log the ranking for debugging
         rankedTokens.forEach((token, index) => {
           console.log(
-            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress
+            `#${index + 1} ${token.token.symbol} (${
+              token.token.tokenAddress
             }):`,
             `Criteria: ${token.criteriaCount}/4`,
             `[Vol≥4%: ${token.criteria.volumeThreshold ? "✓" : "✗"},`,
@@ -368,7 +387,7 @@ const TrendingTokens = () => {
     }
 
     fetchTrendingData();
-  }, [selectedRange, ethPriceUSD]);
+  }, [selectedRange, ethPriceUSD, networkInfo.chainId]);
 
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
@@ -402,10 +421,11 @@ const TrendingTokens = () => {
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
+                className={`px-3 py-1 rounded-full transition-colors ${
+                  range === selectedRange
                     ? "bg-[#1D223E] text-white"
                     : "text-gray-400 dark:hover:text-white hover:text-black"
-                  }`}
+                }`}
               >
                 {range}
               </button>
@@ -450,10 +470,9 @@ const TrendingTokens = () => {
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                           >
                             {data.token.tokenImageId &&
-                              data.token.image?.path ? (
+                            data.token.image?.path ? (
                               <img
-                                src={`${networkInfo.apiBaseUrl}${data.token.image.path
-                                  }`}
+                                src={`${networkInfo.apiBaseUrl}${data.token.image.path}`}
                                 alt={data.token.name}
                                 className="w-10 h-10 rounded-xl"
                                 crossOrigin="anonymous"
@@ -479,10 +498,11 @@ const TrendingTokens = () => {
                           {formatCurrency(data.marketCap)}
                         </td>
                         <td
-                          className={`p-3 font-semibold ${data.priceChange < 0
+                          className={`p-3 font-semibold ${
+                            data.priceChange < 0
                               ? "text-red-500"
                               : "text-green-400"
-                            }`}
+                          }`}
                         >
                           {formatPercentage(data.priceChange)}
                         </td>

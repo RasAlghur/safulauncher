@@ -36,14 +36,16 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
     return now - ranges[range];
   };
 
-
   const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
 
   useEffect(() => {
     let ethPriceUSD = 0;
 
     const fetchEthPrice = async () => {
-      const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress);
+      const raw = await getPureGetLatestETHPrice(
+        networkInfo.chainId,
+        priceFeedAddress
+      );
       return (typeof raw === "number" ? raw : Number(raw)) / 1e8;
     };
 
@@ -69,9 +71,14 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
         const tokens = await Promise.all(
           Object.entries(grouped).map(async ([tokenAddress, txs]) => {
             try {
-             
-              const info = await getPureInfoDataRaw(networkInfo.chainId, tokenAddress);
-              const rawAmt = await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress);
+              const info = await getPureInfoDataRaw(
+                networkInfo.chainId,
+                tokenAddress
+              );
+              const rawAmt = await getPureAmountOutMarketCap(
+                networkInfo.chainId,
+                tokenAddress
+              );
 
               const supply = Number(info?.[6] ?? 0);
               const pricePerToken = rawAmt
@@ -126,7 +133,7 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
             }
           })
         );
-        const pureMetrics = await getPureMetrics(networkInfo.chainId,);
+        const pureMetrics = await getPureMetrics(networkInfo.chainId);
         const mainValue = pureMetrics[0] ? Number(pureMetrics[0]) / 1e18 : 0;
         const usdValue = mainValue * ethPriceUSD;
         const volumeCrit = 0.04 * usdValue;
@@ -160,7 +167,7 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
     };
 
     fetchTrendingData();
-  }, [selectedRange]);
+  }, [selectedRange, networkInfo.chainId, priceFeedAddress]);
 
   return { trendingData, loading };
 };

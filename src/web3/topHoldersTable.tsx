@@ -43,7 +43,7 @@ export function TopHoldersTable({
       }
 
       const response = await Moralis.EvmApi.token.getTokenOwners({
-        chain: chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
+        chain: chainId === 1 ? "0x1" : "0xaa36a7", // Sepolia
         order: "DESC",
         tokenAddress,
       });
@@ -61,7 +61,7 @@ export function TopHoldersTable({
     } finally {
       setLoading(false);
     }
-  }, [tokenAddress]);
+  }, [tokenAddress, chainId]);
 
   useEffect(() => {
     if (tokenAddress) {

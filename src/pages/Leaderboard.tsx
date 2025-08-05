@@ -111,7 +111,6 @@ export default function Leaderboard() {
 
   const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
 
-
   useEffect(() => {
     async function loadData() {
       try {
@@ -182,7 +181,7 @@ export default function Leaderboard() {
     }
 
     loadData();
-  }, []);
+  }, [networkInfo.chainId, priceFeedAddress]);
 
   // Sorting logic
   const sortedEntries = [...entries].sort((a, b) => {
@@ -193,9 +192,9 @@ export default function Leaderboard() {
     } else if (selected === "Most Recent Trade") {
       return sortOrder === "desc"
         ? new Date(b.lastPurchaseTs).getTime() -
-        new Date(a.lastPurchaseTs).getTime()
+            new Date(a.lastPurchaseTs).getTime()
         : new Date(a.lastPurchaseTs).getTime() -
-        new Date(b.lastPurchaseTs).getTime();
+            new Date(b.lastPurchaseTs).getTime();
     }
     return 0;
   });
@@ -291,12 +290,13 @@ export default function Leaderboard() {
                         setSelected(option);
                         setIsOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
-                        ? "rounded-t-xl"
-                        : idx === options.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        idx === 0
+                          ? "rounded-t-xl"
+                          : idx === options.length - 1
                           ? "rounded-b-xl"
                           : ""
-                        }`}
+                      }`}
                     >
                       {option}
                     </div>
@@ -319,8 +319,8 @@ export default function Leaderboard() {
                       ? "High → Low"
                       : "New → Old"
                     : selected === "Volume"
-                      ? "Low → High"
-                      : "Old → New"}
+                    ? "Low → High"
+                    : "Old → New"}
                 </span>
                 <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
                   <BsChevronDown className="text-white text-xl" />
@@ -400,8 +400,7 @@ export default function Leaderboard() {
                             >
                               {tokenMeta.tokenImageId && (
                                 <img
-                                  src={`${networkInfo.apiBaseUrl}${tokenMeta.image?.path
-                                    }`}
+                                  src={`${networkInfo.apiBaseUrl}${tokenMeta.image?.path}`}
                                   alt={tokenMeta.symbol}
                                   className="w-6 h-6 rounded-full"
                                   crossOrigin="anonymous"
@@ -436,10 +435,11 @@ export default function Leaderboard() {
               <button
                 key={i + 1}
                 onClick={() => setPage(i + 1)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition ${i + 1 === page
-                  ? "bg-[#0C8CE0] text-white"
-                  : "bg-white/10 text-white/60 hover:bg-white/20"
-                  }`}
+                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                  i + 1 === page
+                    ? "bg-[#0C8CE0] text-white"
+                    : "bg-white/10 text-white/60 hover:bg-white/20"
+                }`}
               >
                 {i + 1}
               </button>

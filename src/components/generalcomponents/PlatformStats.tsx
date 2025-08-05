@@ -17,7 +17,10 @@ import AverageVolume from "../svgcomponents/AverageVolume";
 import UniqueWallet from "../svgcomponents/UniqueWallet";
 import DustParticles from "./DustParticles";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
-import { ETH_USDT_PRICE_FEED_ADDRESSES, SAFU_TOKEN_ADDRESSES } from "../../web3/config";
+import {
+  ETH_USDT_PRICE_FEED_ADDRESSES,
+  SAFU_TOKEN_ADDRESSES,
+} from "../../web3/config";
 import {
   getPureMetrics,
   getPureGetLatestETHPrice,
@@ -63,7 +66,7 @@ const PlatformStats = () => {
 
         const [metrics, traderCount] = await Promise.all([
           getPureMetrics(networkInfo.chainId),
-          getPureUniqueTraderCount(networkInfo.chainId)
+          getPureUniqueTraderCount(networkInfo.chainId),
         ]);
 
         setCombinedMetrics(metrics);
@@ -83,7 +86,10 @@ const PlatformStats = () => {
   useEffect(() => {
     async function fetchETHPrice() {
       try {
-        if (!networkInfo?.chainId || !ETH_USDT_PRICE_FEED_ADDRESSES?.[networkInfo.chainId]) {
+        if (
+          !networkInfo?.chainId ||
+          !ETH_USDT_PRICE_FEED_ADDRESSES?.[networkInfo.chainId]
+        ) {
           console.warn("Chain ID or price feed address not available");
           return;
         }
@@ -93,7 +99,10 @@ const PlatformStats = () => {
           ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId]
         );
 
-        const price = (typeof priceResult === "number" ? priceResult : Number(priceResult)) / 1e8;
+        const price =
+          (typeof priceResult === "number"
+            ? priceResult
+            : Number(priceResult)) / 1e8;
         setCurrentETHPrice(price);
       } catch (error) {
         console.error("Failed to fetch ETH price:", error);
@@ -114,9 +123,12 @@ const PlatformStats = () => {
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: networkInfo.chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
+          chain: networkInfo.chainId === 1 ? "0x1" : "0xaa36a7", // Sepolia
           order: "DESC",
-          tokenAddress: networkInfo.chainId === 1 ? SAFU_TOKEN_ADDRESSES[1] : SAFU_TOKEN_ADDRESSES[11155111],
+          tokenAddress:
+            networkInfo.chainId === 1
+              ? SAFU_TOKEN_ADDRESSES[1]
+              : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
         const holdersCount = response.raw().result.length;
@@ -128,7 +140,7 @@ const PlatformStats = () => {
     }
 
     fetchSafuHolders();
-  }, []);
+  }, [networkInfo.chainId]);
 
   // Fetch token list
   useEffect(() => {
@@ -193,7 +205,10 @@ const PlatformStats = () => {
 
   // Stats configurations
   const stats1 = useMemo(() => {
-    const metrics = combinedMetrics.length > 0 ? combinedMetrics : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
+    const metrics =
+      combinedMetrics.length > 0
+        ? combinedMetrics
+        : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
     return [
       {
@@ -239,14 +254,19 @@ const PlatformStats = () => {
   }, [getMainValue, averageVolume, combinedMetrics]);
 
   const stats2 = useMemo(() => {
-    const metrics = combinedMetrics.length > 0 ? combinedMetrics : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
+    const metrics =
+      combinedMetrics.length > 0
+        ? combinedMetrics
+        : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
     const devReward = Number(metrics[6]) / 1e18;
 
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)}%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },

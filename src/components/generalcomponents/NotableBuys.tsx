@@ -71,7 +71,6 @@ const NotableBuys = () => {
       .catch(() => console.error("Failed to fetch ETH price"));
   }, [networkInfo.chainId, priceFeedAddress]);
 
-
   // Fetch recent buys & wins, then fetch unique token symbols
   useEffect(() => {
     if (!ethPriceUSD) {
@@ -110,19 +109,21 @@ const NotableBuys = () => {
         <div className="flex gap-4 font-semibold text-sm sm:text-base">
           <button
             onClick={() => setActiveTab("buys")}
-            className={`transition ${activeTab === "buys"
+            className={`transition ${
+              activeTab === "buys"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-              }`}
+            }`}
           >
             Recent Buys
           </button>
           <button
             onClick={() => setActiveTab("wins")}
-            className={`transition ${activeTab === "wins"
+            className={`transition ${
+              activeTab === "wins"
                 ? "dark:text-white text-black border-b-2 border-[#1D223E]"
                 : "dark:text-white/30 text-black/70"
-              }`}
+            }`}
           >
             Notable Buys
           </button>

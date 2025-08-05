@@ -18,21 +18,37 @@ import { base } from "../lib/api";
 import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
-import {
-  getPureAmountOutMarketCap,
-} from "../web3/readContracts";
+import { getPureAmountOutMarketCap } from "../web3/readContracts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ETH_USDT_PRICE_FEED_ADDRESSES, PRICE_GETTER_ABI, PRICE_GETTER_ADDRESSES } from "../web3/config";
+import {
+  ETH_USDT_PRICE_FEED_ADDRESSES,
+  PRICE_GETTER_ABI,
+  PRICE_GETTER_ADDRESSES,
+} from "../web3/config";
 import { processUsername } from "../lib/username";
 import RocketLoader from "../components/generalcomponents/Loader";
 import { Link } from "react-router-dom";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
+import { FaXTwitter } from "react-icons/fa6";
+import { FaTelegram } from "react-icons/fa6";
+import { UploadCloud, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface launchedToken {
+  id: string;
   name: string;
   symbol: string;
   createdAt: string;
   tokenAddress: string;
+  website?: string;
+  description?: string;
+  twitter?: string;
+  telegram?: string;
+  image?: {
+    name: string;
+    path: string;
+  };
+  tokenImageId?: string;
 }
 
 interface TokenHolding {
@@ -58,7 +74,7 @@ type Form = {
   description: string;
   twitter: string;
   telegram: string;
-  logo: File;
+  logo: File | null;
 };
 const Profile = () => {
   const networkInfo = useNetworkEnvironment();
@@ -89,8 +105,13 @@ const Profile = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [allToken, setAllToken] = useState<tokenAll[]>([]);
   const [editToken, setEditToken] = useState<Form>({} as Form);
-
-  // const isV2 = token?.tokenVersion === "token_v2";
+  const [showEditTokenModal, setShowEditTokenModal] = useState(false);
+  const [editingTokenId, setEditingTokenId] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState("");
+  const [logo, setLogo] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [isLogoLoading, setIsLogoLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { user, saveOrFetchUser, updateUser } = useUser();
 
@@ -118,7 +139,7 @@ const Profile = () => {
       console.log("As from DB:", request2);
       const response = request.data.data;
       setAllToken(response || []);
-      console.log("All tokens from DB:", response);
+      // console.log("All tokens from DB:", response);
     } catch (error) {
       console.error("Error fetching all tokens:", error);
       setAllToken([]);
@@ -150,7 +171,7 @@ const Profile = () => {
         return 0;
       }
     },
-    []
+    [networkInfo.chainId]
   );
 
   // Fetch token holdings and their prices
@@ -228,20 +249,20 @@ const Profile = () => {
     }, 0);
   }, [filteredHoldings]);
 
-  console.log("Current total balance at 1 index:", totalBalance);
+  // console.log("Current total balance at 1 index:", totalBalance);
 
   // track balance
   const trackBalance = useCallback(async () => {
     try {
-      console.log("Tracking balance for user:", address);
-      console.log("Current total balance:", totalBalance);
+      // console.log("Tracking balance for user:", address);
+      // console.log("Current total balance:", totalBalance);
       const request = await base.post("track-balance", {
         currentBalance: totalBalance.toString(),
         wallet: String(address),
       });
       const { balanceChange: apiAmount, percentageChange: apiPct } =
         request.data.data;
-      console.log("API response:", request.data.data);
+      // console.log("API response:", request.data.data);
       // update state from API
       setBalanceChange({ amount: apiAmount, percentage: apiPct });
       return request.data;
@@ -397,7 +418,7 @@ const Profile = () => {
         const res = await base.get(
           `tokens?tokenCreator=${encodeURIComponent(
             String(wallet)
-          )}&page=${pageNum}`,
+          )}&page=${pageNum}&include=image`,
           { signal: controller.signal }
         );
 
@@ -444,7 +465,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100 &&
+          container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -519,21 +540,135 @@ const Profile = () => {
     fetchAllTokens,
   ]);
 
-  console.log(filteredHoldings);
+  const validateLogo = async (file: File): Promise<string | null> => {
+    const validTypes = ["image/png", "image/jpeg", "image/webp"];
+    const maxSizeMB = 4.5;
+    const minWidth = 100;
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!validTypes.includes(file.type)) {
+      return "Unsupported file format. Only PNG, JPG, WEBP are allowed.";
+    }
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      return "File size exceeds 4.5MB.";
+    }
+
+    const image = new Image();
+    const imageURL = URL.createObjectURL(file);
+
+    return new Promise((resolve) => {
+      image.onload = () => {
+        if (image.width < minWidth || image.height < minWidth) {
+          resolve("Image dimensions must be at least 100x100px.");
+        } else {
+          resolve(null);
+        }
+        URL.revokeObjectURL(imageURL);
+      };
+      image.onerror = () => {
+        resolve("Unable to read the image file.");
+        URL.revokeObjectURL(imageURL);
+      };
+      image.src = imageURL;
+    });
+  };
+
+  const forceSquareImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        if (!e.target?.result) return reject("Failed to read image file.");
+        img.src = e.target.result as string;
+      };
+
+      img.onload = () => {
+        const size = Math.min(img.width, img.height); // crop to center square
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas context error");
+
+        const offsetX = (img.width - size) / 2;
+        const offsetY = (img.height - size) / 2;
+        ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return reject("Failed to convert canvas to blob.");
+          const squareFile = new File([blob], file.name, { type: file.type });
+          resolve(squareFile);
+        }, file.type);
+      };
+
+      img.onerror = () => reject("Unable to load image.");
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setEditToken((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setEditToken((prev) => ({ ...prev, logo: file }));
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setIsLogoLoading(true);
+      const error = await validateLogo(file);
+      if (error) {
+        setLogoError(error);
+        setLogo(null);
+      } else {
+        const squareFile = await forceSquareImage(file);
+        setLogo(squareFile);
+        setLogoError("");
+      }
+      setIsLogoLoading(false);
     }
   };
 
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    setIsLogoLoading(true);
+
+    const error = await validateLogo(file);
+    if (error) {
+      setLogoError(error);
+      setLogo(null);
+      setEditToken((prev) => ({ ...prev, logo: null }));
+    } else {
+      const squareFile = await forceSquareImage(file);
+      setLogo(squareFile); // for preview
+      setLogoError("");
+      setEditToken((prev) => ({ ...prev, logo: squareFile }));
+    }
+
+    setIsLogoLoading(false);
+  };
+  const openFilePicker = () => inputRef.current?.click();
+
   const onEdit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!editingTokenId) {
+      toast.error("No token selected for editing.");
+      return;
+    }
+
     const { description, website, twitter, telegram, logo } = editToken;
     const formData = new FormData();
     if (address) formData.append("wallet", address);
@@ -543,16 +678,35 @@ const Profile = () => {
     if (telegram) formData.append("telegram", telegram);
     if (logo) formData.append("logo", logo);
 
-    const req: Response = await fetch(
-      `http://localhost:4000/api/update-token/af0049da-1d43-4efc-a744-579b6102e162`,
-      {
-        method: "PATCH",
-        body: formData,
-      }
-    );
+    try {
+      const req = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}update-token/${editingTokenId}`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+      );
+      const res = await req.json();
 
-    const res: unknown = await req.json();
-    console.log(res);
+      if (!req.ok) {
+        const errorMessage = res?.message || res?.error || JSON.stringify(res);
+        console.error("Update failed:", errorMessage);
+        toast.error(`Update failed: ${errorMessage}`);
+        return;
+      }
+
+      toast.success("Token information updated successfully.");
+      setShowEditTokenModal(false);
+      findHolderToken(1, address!, false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Unexpected error:", error);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "An unexpected error occurred while updating.";
+      toast.error(`Error: ${message}`);
+    }
   };
 
   return (
@@ -634,10 +788,11 @@ const Profile = () => {
                     </div>
                     {isUsernameAvailable !== null && (
                       <p
-                        className={`${isUsernameAvailable
-                          ? "text-green-500"
-                          : "text-red-500"
-                          } text-xs mt-2`}
+                        className={`${
+                          isUsernameAvailable
+                            ? "text-green-500"
+                            : "text-red-500"
+                        } text-xs mt-2`}
                       >
                         {isUsernameAvailable
                           ? "Username available"
@@ -682,8 +837,9 @@ const Profile = () => {
                 ${formatCurrency(totalBalance)}
               </div>
               <div
-                className={`text-sm text-center ${balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
+                className={`text-sm text-center ${
+                  balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+                }`}
               >
                 {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
                 {balanceChange.percentage >= 0 ? "+" : ""}
@@ -696,19 +852,21 @@ const Profile = () => {
           {/* Tabs */}
           <div className="flex gap-6 text-lg font-semibold mb-6">
             <button
-              className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
-                ? "border-white dark:text-white text-black"
-                : "border-transparent dark:text-white/30 text-black/60"
-                }`}
+              className={`pb-1 transition cursor-pointer ${
+                activeTab === "holdings"
+                  ? "border-white dark:text-white text-black"
+                  : "border-transparent dark:text-white/30 text-black/60"
+              }`}
               onClick={() => setActiveTab("holdings")}
             >
               Platform Token Holdings ({filteredHoldings.length})
             </button>
             <button
-              className={`pb-1 transition cursor-pointer ${activeTab === "launched"
-                ? "border-white dark:text-white text-[#141313]/75"
-                : "border-transparent dark:text-white/30 text-black/60"
-                }`}
+              className={`pb-1 transition cursor-pointer ${
+                activeTab === "launched"
+                  ? "border-white dark:text-white text-[#141313]/75"
+                  : "border-transparent dark:text-white/30 text-black/60"
+              }`}
               onClick={() => setActiveTab("launched")}
             >
               Tokens Deployed
@@ -758,8 +916,9 @@ const Profile = () => {
                           />
                         ) : null}
                         <div
-                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? "hidden" : ""
-                            }`}
+                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${
+                            token.logo ? "hidden" : ""
+                          }`}
                         />
                         <div>
                           <span className="font-bold text-sm text-black dark:text-white block">
@@ -785,8 +944,8 @@ const Profile = () => {
                           {token.isLoadingPrice
                             ? "Loading..."
                             : token.usdValue && token.usdValue > 0
-                              ? `$${formatCurrency(token.usdValue)}`
-                              : "$0.00"}
+                            ? `$${formatCurrency(token.usdValue)}`
+                            : "$0.00"}
                         </div>
                       </div>
                     </div>
@@ -797,27 +956,101 @@ const Profile = () => {
           ) : (
             <div>
               <div ref={containerRef} className="space-y-4">
-                {launchedTokens.map(
-                  ({ name, symbol, createdAt, tokenAddress }, i) => (
-                    <div
-                      key={i}
-                      className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex justify-between items-center"
-                    >
+                {launchedTokens.map((token, i) => (
+                  <div
+                    key={i}
+                    className="dark:bg-[#0B132B] bg-[#141313]/5 rounded-xl px-5 py-4 flex flex-col sm:flex-row justify-between items-start"
+                  >
+                    <div className="flex flex-col">
                       <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                        {token.image?.path && (
+                          <div className="flex items-center mb-1">
+                            {token.tokenImageId && (
+                              <img
+                                src={`${import.meta.env.VITE_API_BASE_URL}${
+                                  token.image?.path
+                                }`}
+                                alt={`${token.symbol} logo`}
+                                className="w-10 h-10 rounded-md mt-2"
+                                crossOrigin=""
+                              />
+                            )}
+                          </div>
+                        )}
                         <Link
-                          to={`/trade/${tokenAddress}`}
+                          to={`/trade/${token.tokenAddress}`}
                           className="font-bold text-sm text-black dark:text-white"
                         >
-                          {name} ({symbol})
+                          {token.name} ({token.symbol})
                         </Link>
+                        <div className="flex justify-end items-center gap-2 mt-1">
+                          {token.twitter && (
+                            <a
+                              href={token.twitter}
+                              className="p-2 rounded-full border border-black/50 dark:border-white/50 dark:text-white"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {/* Twitter SVG */}
+                              <FaXTwitter className="text-black dark:text-white text-[10px]" />
+                            </a>
+                          )}
+                          {token.telegram && (
+                            <a
+                              href={token.telegram}
+                              className=""
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FaTelegram className="text-black dark:text-white text-[27px]" />
+                            </a>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm dark:text-white/70 text-[#141313]/75">
-                        Deployed: {formatUTCDate(createdAt)}
+                      <div>
+                        {token.description && (
+                          <p className="text-sm dark:text-white/70 text-[#141313]/75 lg:max-w-[280px]">
+                            {token.description}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  )
-                )}
+                    <div className="flex flex-col justify-start">
+                      <p className="text-sm dark:text-white/70 text-[#141313]/75">
+                        Deployed: {formatUTCDate(token.createdAt)}
+                      </p>
+                      {token.website && (
+                        <a
+                          href={token.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] dark:text-white text-black truncate max-w-[250px] cursor-pointer"
+                        >
+                          {token.website.startsWith("http")}
+                        </a>
+                      )}
+                      <div
+                        onClick={() => {
+                          setEditToken({
+                            website: token.website || "",
+                            description: token.description || "",
+                            twitter: token.twitter || "",
+                            telegram: token.telegram || "",
+                            logo: {} as File,
+                          });
+                          setEditingTokenId(token.id);
+                          setShowEditTokenModal(true);
+                        }}
+                        className="flex items-center justify-end gap-2 mt-2 cursor-pointer"
+                      >
+                        <p className="text-black dark:text-white">Edit Info</p>
+                        <button className="w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
+                          <FaEdit className="dark:text-white/70 text-[#141313] text-sm" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
                 <p>{loading && "Please wait...."}</p>
               </div>
             </div>
@@ -825,56 +1058,170 @@ const Profile = () => {
         </div>
       </div>
 
-      <form onSubmit={onEdit} className="bg-red-500 flex flex-col">
-        <input
-          type="text"
-          inputMode="url"
-          name="website"
-          id=""
-          placeholder="enter here website"
-          onChange={handleChange}
-          className="p-2 border"
-        />
-        <input
-          type="text"
-          name="description"
-          id=""
-          placeholder="enter here description"
-          className="p-2 border"
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          inputMode="url"
-          name="twitter"
-          id=""
-          placeholder="enter here twitter"
-          className="p-2 border"
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          inputMode="url"
-          name="telegram"
-          id=""
-          placeholder="enter here enter telegram"
-          className="p-2 border"
-          onChange={handleChange}
-        />
-
-        <input
-          type="file"
-          name="logo"
-          id=""
-          onChange={handleFile}
-          className="p-2 border"
-        />
-
-        <button type="submit" className="p-2">
-          Submit
-        </button>
-      </form>
       <Footer />
+      {showEditTokenModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+          <form
+            onSubmit={onEdit}
+            className="dark:bg-[#050A1E] bg-white border border-white/10 rounded-xl p-6 w-full max-w-lg relative max-h-[70vh] overflow-y-auto"
+          >
+            <h2 className="text-xl font-bold mb-4 dark:text-white text-black">
+              Edit Token Info
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm dark:text-white/70 text-black mb-1">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  name="website"
+                  value={editToken.website}
+                  onChange={handleChange}
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm dark:text-white/70 text-black mb-1">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Update with a short description"
+                  maxLength={200}
+                  name="description"
+                  value={editToken.description}
+                  onChange={handleChange}
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm dark:text-white/70 text-black mb-1">
+                  X (Twitter)
+                </label>
+                <input
+                  type="url"
+                  name="twitter"
+                  value={editToken.twitter}
+                  onChange={handleChange}
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm dark:text-white/70 text-black mb-1">
+                  Telegram
+                </label>
+                <input
+                  type="url"
+                  name="telegram"
+                  value={editToken.telegram}
+                  onChange={handleChange}
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black placeholder:text-[13px] sm:placeholder:text-base dark:placeholder:text-[#B6B6B6] placeholder:text-[#141313]/42 w-full"
+                />
+              </div>
+
+              <div className="flex flex-col gap-[10px] mt-[34px]">
+                <label className="text-[20px] font-semibold dark:text-white text-black font-raleway">
+                  Add Logo{" "}
+                  <span className="text-Primary font-medium">(Optional)</span>
+                </label>
+
+                <div
+                  className={`border-2 border-dashed ${
+                    dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+                      flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
+                      transition duration-200 hover:opacity-80 w-full relative`}
+                  onClick={openFilePicker}
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={handleDrop}
+                >
+                  {isLogoLoading ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="h-12 w-12 border-4 border-dashed border-gray-300 dark:border-white/20 rounded-full animate-spin"></div>
+                      <p className="text-sm mt-2 text-black dark:text-white">
+                        Processing image...
+                      </p>
+                    </div>
+                  ) : !logo ? (
+                    <>
+                      <div className="bg-gray-600 p-4 rounded-lg mb-4">
+                        <UploadCloud className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="dark:text-white text-black font-medium">
+                        <span className="">Click to upload</span> or drag and
+                        drop
+                      </p>
+                      <p className="text-sm dark:text-white/60 text-black mt-1">
+                        PNG, JPG, WEBP • Max 4.5MB • Min 100x100px
+                      </p>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <img
+                        src={URL.createObjectURL(logo)}
+                        alt="Selected Logo"
+                        className="max-h-32 object-contain rounded-lg"
+                      />
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-[#3BC3DB] font-semibold truncate max-w-[180px]">
+                          {logo.name}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setLogo(null)}
+                          className="text-red-400 hover:text-red-500 "
+                          aria-label="Remove selected logo"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFile}
+                />
+                {logoError && (
+                  <p className="text-red-500 text-sm mt-1">{logoError}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6 gap-4">
+              <button
+                type="button"
+                onClick={() => setShowEditTokenModal(false)}
+                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 dark:bg-white/10 dark:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+            <button
+              onClick={() => setShowEditTokenModal(false)} // or your close handler
+              className="absolute top-4 right-4 w-8 h-8 dark:bg-white/10 bg-[#141313]/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <FaTimes className="dark:text-white/70 text-[#141313] text-sm" />
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

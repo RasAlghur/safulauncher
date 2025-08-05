@@ -16,7 +16,10 @@ import {
   getPureUniqueTraderCount,
 } from "../../web3/readContracts";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
-import {ETH_USDT_PRICE_FEED_ADDRESSES, SAFU_TOKEN_ADDRESSES } from "../../web3/config";
+import {
+  ETH_USDT_PRICE_FEED_ADDRESSES,
+  SAFU_TOKEN_ADDRESSES,
+} from "../../web3/config";
 import cloudRight from "../../assets/cloud-right.png";
 import cloudLeft from "../../assets/cloud-left.png";
 import { base } from "../../lib/api";
@@ -69,9 +72,12 @@ const PlatformStats = () => {
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: networkInfo.chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
+          chain: networkInfo.chainId === 1 ? "0x1" : "0xaa36a7", // Sepolia
           order: "DESC",
-          tokenAddress: networkInfo.chainId === 1 ? SAFU_TOKEN_ADDRESSES[1] : SAFU_TOKEN_ADDRESSES[11155111],
+          tokenAddress:
+            networkInfo.chainId === 1
+              ? SAFU_TOKEN_ADDRESSES[1]
+              : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
         // Moralis returns the holders list in `result`
@@ -85,7 +91,7 @@ const PlatformStats = () => {
     }
 
     fetchSafuHolders();
-  }, []);
+  }, [networkInfo.chainId]);
 
   // Fetch list of tokens
   useEffect(() => {
@@ -131,7 +137,6 @@ const PlatformStats = () => {
     })();
   }, [networkInfo.chainId]);
 
-
   // Calculate average curve progress using combinedMetrics
   const averageBondingProgress = useMemo(() => {
     return totalTokenCount > 0
@@ -142,8 +147,9 @@ const PlatformStats = () => {
   // Calculate average volume using combinedMetrics
   const averageVolume = useMemo(() => {
     return totalTokenCount > 0
-      ? (combinedMetrics[0] !== undefined ? Number(combinedMetrics[0]) / 1e18 : 0) /
-      totalTokenCount
+      ? (combinedMetrics[0] !== undefined
+          ? Number(combinedMetrics[0]) / 1e18
+          : 0) / totalTokenCount
       : 0;
   }, [combinedMetrics, totalTokenCount]);
 
@@ -153,7 +159,10 @@ const PlatformStats = () => {
   useEffect(() => {
     async function fetchETHPrice() {
       try {
-        const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress!);
+        const raw = await getPureGetLatestETHPrice(
+          networkInfo.chainId,
+          priceFeedAddress!
+        );
         const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
         setCurrentETHPrice(price);
       } catch (error) {
@@ -161,7 +170,7 @@ const PlatformStats = () => {
       }
     }
     fetchETHPrice();
-  }, []);
+  }, [networkInfo.chainId, priceFeedAddress]);
 
   const getMainValue = useCallback(
     (ethValue: number, fallbackValue: string) => {
@@ -192,10 +201,13 @@ const PlatformStats = () => {
         id: 1,
         title: "Total Volume",
         mainValue: getMainValue(
-          combinedMetrics[0] !== undefined ? Number(combinedMetrics[0]) / 1e18 : 0,
-          `${combinedMetrics[0] !== undefined
-            ? (Number(combinedMetrics[0]) / 1e18).toFixed(8)
-            : 0
+          combinedMetrics[0] !== undefined
+            ? Number(combinedMetrics[0]) / 1e18
+            : 0,
+          `${
+            combinedMetrics[0] !== undefined
+              ? (Number(combinedMetrics[0]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -211,10 +223,13 @@ const PlatformStats = () => {
         id: 3,
         title: "Fees Collected",
         mainValue: getMainValue(
-          combinedMetrics[1] !== undefined ? Number(combinedMetrics[1]) / 1e18 : 0,
-          `${combinedMetrics[1] !== undefined
-            ? (Number(combinedMetrics[1]) / 1e18).toFixed(8)
-            : 0
+          combinedMetrics[1] !== undefined
+            ? Number(combinedMetrics[1]) / 1e18
+            : 0,
+          `${
+            combinedMetrics[1] !== undefined
+              ? (Number(combinedMetrics[1]) / 1e18).toFixed(8)
+              : 0
           } ETH`
         ),
         icon: FeeCollected,
@@ -236,8 +251,9 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -266,7 +282,9 @@ const PlatformStats = () => {
         id: 10,
         title: "Paid Out Dev Reward",
         mainValue: getMainValue(
-          combinedMetrics[6] !== undefined ? Number(combinedMetrics[6]) / 1e18 : 0,
+          combinedMetrics[6] !== undefined
+            ? Number(combinedMetrics[6]) / 1e18
+            : 0,
           `${(combinedMetrics[6] !== undefined
             ? Number(combinedMetrics[6]) / 1e18
             : 0
@@ -296,6 +314,7 @@ const PlatformStats = () => {
     getMainValue,
     combinedMetrics,
     safuHolders,
+    uniqueTraderCount,
   ]);
 
   useLayoutEffect(() => {

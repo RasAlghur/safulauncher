@@ -23,21 +23,24 @@ const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
 const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
 
 // Define all supported chains
-export const ALL_CHAINS = [mainnet, sepolia, polygon, optimism, arbitrum, base, bscTestnet];
+export const ALL_CHAINS = [
+  mainnet,
+  sepolia,
+  polygon,
+  optimism,
+  arbitrum,
+  base,
+  bscTestnet,
+];
 
 export const config = getDefaultConfig({
   appName: "Abyss App",
   projectId,
-  chains: [mainnet, sepolia, polygon, optimism, arbitrum, base, bscTestnet], // Support all chains
+  chains: [mainnet, sepolia], // Support all chains
   ssr: true,
   transports: {
     [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`),
     [sepolia.id]: http(`https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`),
-    [polygon.id]: http(),
-    [optimism.id]: http(),
-    [arbitrum.id]: http(),
-    [base.id]: http(),
-    [bscTestnet.id]: http(),
   },
   wallets: [
     {

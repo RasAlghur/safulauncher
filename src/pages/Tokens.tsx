@@ -327,7 +327,10 @@ export default function Tokens() {
 
       // Get ETH price
       try {
-        const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress);
+        const raw = await getPureGetLatestETHPrice(
+          networkInfo.chainId,
+          priceFeedAddress
+        );
         const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
         setEthPriceUSD(price);
       } catch {
@@ -347,8 +350,11 @@ export default function Tokens() {
 
             // Fetch bonding curve data
             const info =
-              // isV2 ? 
-              await getPureInfoV2DataRaw(networkInfo.chainId, token.tokenAddress)
+              // isV2 ?
+              await getPureInfoV2DataRaw(
+                networkInfo.chainId,
+                token.tokenAddress
+              );
             // : await getPureInfoDataRaw(networkInfo.chainId, token.tokenAddress);
             if (Array.isArray(info)) {
               const supply = Number(info[6]);
@@ -357,8 +363,8 @@ export default function Tokens() {
               const milestone = await getListingMilestone(networkInfo.chainId);
 
               const percent =
-                // isV2  ? 
-                (sold / ((Number(milestone) / 1e2) * supply)) * 100
+                // isV2  ?
+                (sold / ((Number(milestone) / 1e2) * supply)) * 100;
               // : (sold / (0.75 * supply)) * 100;
               newCurve[token.tokenAddress] = Math.min(
                 Math.max(percent, 0),
@@ -366,8 +372,11 @@ export default function Tokens() {
               );
 
               const rawAmt =
-                // isV2 ? 
-                await getPureV2AmountOutMarketCap(networkInfo.chainId, token.tokenAddress)
+                // isV2 ?
+                await getPureV2AmountOutMarketCap(
+                  networkInfo.chainId,
+                  token.tokenAddress
+                );
               // : await getPureAmountOutMarketCap(networkInfo.chainId, token.tokenAddress);
 
               // Price per token in ETH
@@ -399,7 +408,7 @@ export default function Tokens() {
     }
 
     fetchTokenMetrics();
-  }, [tokens, ethPriceUSD]);
+  }, [tokens, ethPriceUSD, networkInfo.chainId, priceFeedAddress]);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -409,7 +418,7 @@ export default function Tokens() {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100
+          container.scrollHeight - 100
       ) {
         fetchTokenList(page + 1, searchTerm, searchField, true);
       }
@@ -429,8 +438,8 @@ export default function Tokens() {
   const filteredTokens =
     sortField === "bonded"
       ? tokens.filter(
-        (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
-      )
+          (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
+        )
       : tokens;
 
   const sortedTokens = [...filteredTokens].sort((a, b) => {
@@ -620,8 +629,7 @@ export default function Tokens() {
                         <div className="flex items-center gap-3">
                           {t.token.tokenImageId && (
                             <img
-                              src={`${networkInfo.apiBaseUrl}${t.token.image?.path
-                                }`}
+                              src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
                               alt={`${t.token.symbol} logo`}
                               className="w-10 h-10 rounded-md"
                               crossOrigin=""
@@ -658,12 +666,13 @@ export default function Tokens() {
                             {isLoadingMetrics ? (
                               <span className="">Loading...</span>
                             ) : (
-                              `$${volume24hMap[
-                                t.token.tokenAddress
-                              ]?.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }) ?? "0.00"
+                              `$${
+                                volume24hMap[
+                                  t.token.tokenAddress
+                                ]?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }) ?? "0.00"
                               }`
                             )}
                           </div>
@@ -722,12 +731,13 @@ export default function Tokens() {
                       <div
                         key={field}
                         onClick={() => searchChange(field)}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${field === "all"
-                          ? "rounded-t-xl"
-                          : field === "name"
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                          field === "all"
+                            ? "rounded-t-xl"
+                            : field === "name"
                             ? "rounded-b-xl"
                             : ""
-                          }`}
+                        }`}
                       >
                         {field === "name" ? "Name/Symbol" : field}
                       </div>
@@ -761,12 +771,13 @@ export default function Tokens() {
                         setSortField(value as any);
                         setSortDropdownOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
-                        ? "rounded-t-xl"
-                        : idx === arr.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        idx === 0
+                          ? "rounded-t-xl"
+                          : idx === arr.length - 1
                           ? "rounded-b-xl"
                           : ""
-                        }`}
+                      }`}
                     >
                       {label}
                     </div>
@@ -830,12 +841,14 @@ export default function Tokens() {
           ) : (
             <div
               ref={containerRef}
-              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-                } px-2 py-5 border border-white/10`}
+              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+                sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+              } px-2 py-5 border border-white/10`}
             >
               <ul
-                className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-                  }`}
+                className={`grid gap-6 z-10 relative ${
+                  sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                }`}
               >
                 {sortedTokens.map((t, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -847,8 +860,7 @@ export default function Tokens() {
                         <div className="flex items-start gap-4 ">
                           {t.tokenImageId && (
                             <img
-                              src={`${networkInfo.apiBaseUrl}${t.image?.path
-                                }`}
+                              src={`${networkInfo.apiBaseUrl}${t.image?.path}`}
                               alt={`${t.symbol} logo`}
                               className="w-14 h-14 rounded-lg"
                               crossOrigin=""
@@ -900,13 +912,14 @@ export default function Tokens() {
                                 Loading...
                               </span>
                             ) : (
-                              ` $${volume24hMap[t.tokenAddress]?.toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              ) ?? "0.00"
+                              ` $${
+                                volume24hMap[t.tokenAddress]?.toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                ) ?? "0.00"
                               }`
                             )}
                           </p>
@@ -961,9 +974,10 @@ export default function Tokens() {
                       <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."
-                          : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ??
-                          "0"
-                          }%`}
+                          : `${
+                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
+                              "0"
+                            }%`}
                       </p>
 
                       {!isLoadingMetrics &&
@@ -977,8 +991,9 @@ export default function Tokens() {
                               className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                               style={{
                                 width: `${stripeWidth}px`,
-                                left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
-                                  }px)`,
+                                left: `calc(${(i * spacing).toFixed(2)}% - ${
+                                  stripeWidth / 2
+                                }px)`,
                               }}
                             />
                           );
@@ -996,8 +1011,9 @@ export default function Tokens() {
 
                         return (
                           <div
-                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                              } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
+                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                              progress < 100 ? "rounded-l-full" : "rounded-full"
+                            } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
                             style={{
                               width: `${isLoadingMetrics ? 0 : progress}%`,
                               ...gradientStyle,
