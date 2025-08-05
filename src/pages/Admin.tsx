@@ -5,13 +5,10 @@ import Navbar from "../components/launchintro/Navbar";
 import AdminPageForm from "../components/generalcomponents/AdminPageForm";
 import AdminContractConfig from "../components/generalcomponents/AdminContractConfig";
 import Footer from "../components/launchintro/Footer";
-import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
-import { useApiClient } from "../lib/api";
 
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
 
 const Admin = () => {
-  const base = useApiClient();
   const { address, isConnected } = useAccount();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
