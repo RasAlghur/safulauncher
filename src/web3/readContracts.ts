@@ -15,6 +15,7 @@ function isZeroAddress(address: `0x${string}`) {
   return address === ZERO_ADDRESS;
 }
 
+
 // Combined metrics functions
 export const getPureMetrics = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);

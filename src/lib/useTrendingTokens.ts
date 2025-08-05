@@ -82,7 +82,7 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
                 tokenAddress
               );
 
-              const supply = Number(info?.[6] ?? 0);
+              const supply = info === 0n ? 0 : Number(info[6]);
               const pricePerToken = rawAmt
                 ? Number(rawAmt.toString()) / 1e18
                 : 0;
