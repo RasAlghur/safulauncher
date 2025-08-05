@@ -14,7 +14,6 @@ import { config } from "./config/config.ts";
 import { AuthProvider } from "./lib/AuthContext.tsx";
 import { TokenProvider } from "./context/TokenContext.tsx";
 import { UserProvider } from "./context/user.context.tsx";
-import { NetworkWarning } from "./components/generalcomponents/NetworkWarning.tsx";
 import { useNetworkEnvironment } from "./config/useNetworkEnvironment.ts";
 
 /**
@@ -34,7 +33,6 @@ const MyDApp: React.FC = () => {
 
   return (
     <div className="p-4">
-      <NetworkWarning />
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold mb-4">Network Information</h2>
