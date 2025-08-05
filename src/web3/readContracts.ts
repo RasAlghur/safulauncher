@@ -9,21 +9,33 @@ import {
   SAFU_LAUNCHER_ADDRESSES_V1,
 } from "./config";
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+function isZeroAddress(address: `0x${string}`) {
+  return address === ZERO_ADDRESS;
+}
+
 // Combined metrics functions
 export const getPureMetrics = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);
+  const v1Address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+  const v2Address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
 
   const [v1Metrics, v2Metrics] = await Promise.all([
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
-      abi: LAUNCHER_ABI_V1.abi,
-      functionName: "getMetrics",
-    }),
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
-      abi: LAUNCHER_ABI_V2.abi,
-      functionName: "getMetrics",
-    }),
+    isZeroAddress(v1Address)
+      ? [0n, 0n, 0n, 0n, 0n, 0n, 0n]
+      : publicClient.readContract({
+        address: v1Address,
+        abi: LAUNCHER_ABI_V1.abi,
+        functionName: "getMetrics",
+      }),
+    isZeroAddress(v2Address)
+      ? [0n, 0n, 0n, 0n, 0n, 0n, 0n]
+      : publicClient.readContract({
+        address: v2Address,
+        abi: LAUNCHER_ABI_V2.abi,
+        functionName: "getMetrics",
+      }),
   ]);
 
   return [
@@ -39,18 +51,24 @@ export const getPureMetrics = async (chainId: number) => {
 
 export const getPureUniqueTraderCount = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);
+  const v1Address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+  const v2Address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
 
   const [v1Count, v2Count] = await Promise.all([
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
-      abi: LAUNCHER_ABI_V1.abi,
-      functionName: "uniqueTraderCount",
-    }),
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
-      abi: LAUNCHER_ABI_V2.abi,
-      functionName: "uniqueTraderCount",
-    }),
+    isZeroAddress(v1Address)
+      ? 0n
+      : publicClient.readContract({
+        address: v1Address,
+        abi: LAUNCHER_ABI_V1.abi,
+        functionName: "uniqueTraderCount",
+      }),
+    isZeroAddress(v2Address)
+      ? 0n
+      : publicClient.readContract({
+        address: v2Address,
+        abi: LAUNCHER_ABI_V2.abi,
+        functionName: "uniqueTraderCount",
+      }),
   ]);
 
   return v1Count + v2Count;
@@ -59,18 +77,24 @@ export const getPureUniqueTraderCount = async (chainId: number) => {
 // Token listing functions
 export const getTotalTokensListed = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);
+  const v1Address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+  const v2Address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
 
   const [v1Listed, v2Listed] = await Promise.all([
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
-      abi: LAUNCHER_ABI_V1.abi,
-      functionName: "totalTokensListed",
-    }),
-    publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
-      abi: LAUNCHER_ABI_V2.abi,
-      functionName: "totalTokensListed",
-    }),
+    isZeroAddress(v1Address)
+      ? 0n
+      : publicClient.readContract({
+        address: v1Address,
+        abi: LAUNCHER_ABI_V1.abi,
+        functionName: "totalTokensListed",
+      }),
+    isZeroAddress(v2Address)
+      ? 0n
+      : publicClient.readContract({
+        address: v2Address,
+        abi: LAUNCHER_ABI_V2.abi,
+        functionName: "totalTokensListed",
+      }),
   ]);
 
   return v1Listed + v2Listed;
@@ -78,20 +102,27 @@ export const getTotalTokensListed = async (chainId: number) => {
 
 export const getListingMilestone = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
-    abi: LAUNCHER_ABI_V1.abi,
-    functionName: "listingMilestone",
-  });
+  const address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+
+  return isZeroAddress(address)
+    ? 0n
+    : publicClient.readContract({
+      address,
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "listingMilestone",
+    });
 };
 
 export const getBundleMaxAmount = async (chainId: number) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
-    abi: LAUNCHER_ABI_V1.abi,
-    functionName: "bundleMaxAmount",
-  });
+  const address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+
+  return isZeroAddress(address) ? 0n :
+    publicClient.readContract({
+      address: address,
+      abi: LAUNCHER_ABI_V1.abi,
+      functionName: "bundleMaxAmount",
+    });
 };
 
 // Token data functions
@@ -100,8 +131,10 @@ export const getPureInfoDataRaw = async (
   tokenAddress: string
 ) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+  const address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
+
+  return isZeroAddress(address) ? 0n : publicClient.readContract({
+    address: address,
     abi: LAUNCHER_ABI_V2.abi,
     functionName: "data",
     args: [tokenAddress as `0x${string}`],
@@ -113,8 +146,10 @@ export const getPureInfoV2DataRaw = async (
   tokenAddress: string
 ) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+  const address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+
+  return isZeroAddress(address) ? 0n : publicClient.readContract({
+    address: address,
     abi: LAUNCHER_ABI_V1.abi,
     functionName: "data",
     args: [tokenAddress as `0x${string}`],
@@ -127,8 +162,9 @@ export const getPureGetLatestETHPrice = async (
   priceFeed: string
 ) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: PRICE_GETTER_ADDRESSES[chainId],
+  const address = PRICE_GETTER_ADDRESSES[chainId];
+  return isZeroAddress(address) ? 0n : publicClient.readContract({
+    address,
     abi: PRICE_GETTER_ABI.abi,
     functionName: "getLatestETHPrice",
     args: [priceFeed as `0x${string}`],
@@ -140,9 +176,13 @@ export const getPureAmountOutMarketCap = async (
   tokenAddress: string
 ) => {
   const publicClient = getClientForChain(chainId);
+  const address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
+
+  if (isZeroAddress(address)) return 0n;
+
   try {
     return await publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+      address: address,
       abi: LAUNCHER_ABI_V2.abi,
       functionName: "getAmountOut",
       args: [tokenAddress as `0x${string}`, 1000000000000000000n, false],
@@ -158,9 +198,13 @@ export const getPureV2AmountOutMarketCap = async (
   tokenAddress: string
 ) => {
   const publicClient = getClientForChain(chainId);
+  const address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+
+  if (isZeroAddress(address)) return 0n;
+
   try {
     return await publicClient.readContract({
-      address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+      address: address,
       abi: LAUNCHER_ABI_V1.abi,
       functionName: "getAmountOut",
       args: [tokenAddress as `0x${string}`, 1000000000000000000n, false],
@@ -178,8 +222,10 @@ export const getPureAmountOut = async (
   isBuy: boolean
 ) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V2[chainId],
+  const address = SAFU_LAUNCHER_ADDRESSES_V2[chainId];
+
+  return isZeroAddress(address) ? 0n : publicClient.readContract({
+    address: address,
     abi: LAUNCHER_ABI_V2.abi,
     functionName: "getAmountOut",
     args: [tokenAddress as `0x${string}`, amountIn, isBuy],
@@ -193,8 +239,10 @@ export const getPureV2AmountOut = async (
   isBuy: boolean
 ) => {
   const publicClient = getClientForChain(chainId);
-  return publicClient.readContract({
-    address: SAFU_LAUNCHER_ADDRESSES_V1[chainId],
+  const address = SAFU_LAUNCHER_ADDRESSES_V1[chainId];
+
+  return isZeroAddress(address) ? 0n : publicClient.readContract({
+    address: address,
     abi: LAUNCHER_ABI_V1.abi,
     functionName: "getAmountOut",
     args: [tokenAddress as `0x${string}`, amountIn, isBuy],
