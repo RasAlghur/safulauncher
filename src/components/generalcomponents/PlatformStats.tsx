@@ -168,7 +168,7 @@ const PlatformStats = () => {
     }
 
     fetchTokens();
-  }, []);
+  }, [base]);
 
   // Calculate derived values
   const averageBondingProgress = useMemo(() => {

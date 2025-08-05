@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useApiClient } from "../lib/api";
 
 interface error {
@@ -10,7 +10,7 @@ export default function ErrorsPage() {
   const base = useApiClient();
   const [errors, setErrors] = useState<error[]>([]);
   const [file, setFile] = useState<File | null>(null);
-  const fetchErrors = async () => {
+  const fetchErrors = useCallback(async () => {
     try {
       const req = await base.get("errors");
       setErrors(req.data.data);
@@ -18,7 +18,7 @@ export default function ErrorsPage() {
     } catch (error) {
       console.error("Error fetching errors:", error);
     }
-  };
+  }, [base]);
 
   useEffect(() => {
     fetchErrors();
@@ -26,7 +26,7 @@ export default function ErrorsPage() {
     const intervalId = setInterval(fetchErrors, 60000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchErrors]);
 
   const handleFile = () => {
     const fileInput = document.getElementById("fileInput") as HTMLInputElement;

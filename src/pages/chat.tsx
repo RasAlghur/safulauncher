@@ -100,7 +100,7 @@ export default function Chat({ address, tokenAddress }: prop) {
         setMessages(oldMessages.data);
       }
     },
-    [tokenAddress]
+    [tokenAddress, base]
   );
 
   const scrollToBottom = () => {
@@ -204,8 +204,9 @@ export default function Chat({ address, tokenAddress }: prop) {
         {/* Scroll To Bottom */}
         <button
           onClick={scrollToBottom}
-          className={`${showScrollButton ? "block" : "hidden"
-            } absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
+          className={`${
+            showScrollButton ? "block" : "hidden"
+          } absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50`}
         >
           <FaArrowDown />
         </button>

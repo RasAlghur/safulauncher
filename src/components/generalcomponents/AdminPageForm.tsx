@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useApiClient } from "../../lib/api";
 
 interface image {
@@ -66,16 +66,19 @@ const AdminPageForm = ({ address }: { address: string | undefined }) => {
   const [featuredTokens, setFeaturedTokens] = useState<FeaturedToken[]>([]);
   //   const [editingAddress, setEditingAddress] = useState<string | null>(null);
 
+  const fetchFeaturedTokens = useCallback(async () => {
+    try {
+      const req = await base.get("advertisements?include=image&include=token");
+      const res: response = req.data.data;
+      setFeaturedTokens(res.data);
+    } catch (error) {
+      console.error("Error fetching featured tokens:", error);
+    }
+  }, [base]);
+
   useEffect(() => {
     fetchFeaturedTokens();
-  }, []);
-
-  const fetchFeaturedTokens = async () => {
-    //    This function fetches the list of featured tokens from the backend
-    const req = await base.get("advertisements?include=image&include=token");
-    const res: response = req.data.data;
-    setFeaturedTokens(res.data);
-  };
+  }, [fetchFeaturedTokens]);
 
   const handleSubmit = async () => {
     // backend logic will be here

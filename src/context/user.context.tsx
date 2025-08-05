@@ -28,6 +28,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<serverResponse | null>(null);
+  const base = useApiClient();
 
   useEffect(() => {
     const findUserLocally = async () => {
@@ -43,7 +44,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const saveOrFetchUser = useCallback(
     async (address: string) => {
       const abortController = new AbortController();
-      const base = useApiClient();
 
       if (address === user?.wallet) return;
       try {
@@ -68,7 +68,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         abortController.abort();
       };
     },
-    [user?.wallet]
+    [user?.wallet, base]
   );
 
   const updateUser = useCallback((userData: serverResponse) => {

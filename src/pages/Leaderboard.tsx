@@ -182,7 +182,7 @@ export default function Leaderboard() {
     }
 
     loadData();
-  }, [networkInfo.chainId, priceFeedAddress]);
+  }, [networkInfo.chainId, priceFeedAddress, base]);
 
   // Sorting logic
   const sortedEntries = [...entries].sort((a, b) => {

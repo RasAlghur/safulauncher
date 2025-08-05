@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useApiClient } from "../lib/api";
 
 interface response {
@@ -21,21 +21,21 @@ export default function TrackBuy() {
   const base = useApiClient();
   const [result, setResult] = useState<response[]>([]);
 
-  const fetchErrors = async () => {
+  const fetchErrors = useCallback(async () => {
     try {
       const req = await base.get("track-event");
       setResult(req.data.data);
     } catch (error) {
       console.error("Error fetching errors:", error);
     }
-  };
+  }, [base]);
   useEffect(() => {
     fetchErrors();
 
     const intervalId = setInterval(fetchErrors, 60000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchErrors]);
 
   return (
     <div className="space-y-10 p-10">

@@ -898,7 +898,7 @@ export default function Trade() {
         }
       }
     },
-    [tokenAddress, selectedTimeframe]
+    [tokenAddress, selectedTimeframe, base]
   );
 
   // Setup auto-update interval
@@ -1018,7 +1018,7 @@ export default function Trade() {
         setIsLoadingToken(false);
       }
     })();
-  }, [tokenAddress]);
+  }, [tokenAddress, base]);
 
   // Check approval needs
   useEffect(() => {
@@ -1155,7 +1155,7 @@ export default function Trade() {
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
-  }, [tokenAddress]);
+  }, [tokenAddress, base]);
 
   // Log transactions
   useEffect(() => {

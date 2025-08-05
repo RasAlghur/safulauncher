@@ -277,7 +277,7 @@ export default function Tokens() {
         setIsLoadingTokens(false);
       }
     },
-    []
+    [base]
   );
 
   const debouncedFetch = useMemo(

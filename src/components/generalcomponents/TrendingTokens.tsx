@@ -388,7 +388,7 @@ const TrendingTokens = () => {
     }
 
     fetchTrendingData();
-  }, [selectedRange, ethPriceUSD, networkInfo.chainId]);
+  }, [selectedRange, ethPriceUSD, networkInfo.chainId, base]);
 
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {

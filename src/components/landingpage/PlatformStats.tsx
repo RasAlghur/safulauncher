@@ -119,7 +119,7 @@ const PlatformStats = () => {
         console.error("Error fetching tokens:", error);
       }
     })();
-  }, []);
+  }, [base]);
 
   useEffect(() => {
     if (!networkInfo.chainId) return;

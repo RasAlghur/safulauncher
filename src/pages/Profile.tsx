@@ -145,7 +145,7 @@ const Profile = () => {
       console.error("Error fetching all tokens:", error);
       setAllToken([]);
     }
-  }, []);
+  }, [base]);
 
   // Initialize - fetch all tokens from database
   useEffect(() => {
@@ -270,7 +270,7 @@ const Profile = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [address, totalBalance]);
+  }, [address, totalBalance, base]);
 
   // Days left calculation
   useEffect(() => {
@@ -331,33 +331,36 @@ const Profile = () => {
 
   // Username search logic
   const abortController = useRef<AbortController | null>(null);
-  const findUsername = useCallback(async (query = "") => {
-    if (abortController.current) {
-      abortController.current.abort();
-    }
-    const controller = new AbortController();
-    abortController.current = controller;
-    try {
-      const res = await base.get(`users?search=${query}`, {
-        signal: controller.signal,
-      });
-      const response = res.data.data;
-      const result = response.data.length > 0 ? false : true;
-      setIsUsernameAvailable(result);
-    } catch (error) {
-      if (
-        axios.isCancel(error) ||
-        (typeof error === "object" &&
-          error !== null &&
-          "name" in error &&
-          (error as { name?: string }).name === "CanceledError")
-      ) {
-        console.log(error);
-      } else {
-        console.error("API Error:", error);
+  const findUsername = useCallback(
+    async (query = "") => {
+      if (abortController.current) {
+        abortController.current.abort();
       }
-    }
-  }, []);
+      const controller = new AbortController();
+      abortController.current = controller;
+      try {
+        const res = await base.get(`users?search=${query}`, {
+          signal: controller.signal,
+        });
+        const response = res.data.data;
+        const result = response.data.length > 0 ? false : true;
+        setIsUsernameAvailable(result);
+      } catch (error) {
+        if (
+          axios.isCancel(error) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "name" in error &&
+            (error as { name?: string }).name === "CanceledError")
+        ) {
+          console.log(error);
+        } else {
+          console.error("API Error:", error);
+        }
+      }
+    },
+    [base]
+  );
 
   const debouncedFetch = useMemo(
     () =>
@@ -446,7 +449,7 @@ const Profile = () => {
         setLoading(false);
       }
     },
-    []
+    [base]
   );
 
   // Initial fetch for launched tokens
