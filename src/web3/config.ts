@@ -1,6 +1,6 @@
 
 export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
-  1: "0x0", // Mainnet address
+  1: "0x0000000000000000000000000000000000000000", // Mainnet address
   11155111: "0x2321F6a4214f473348C177F9D402bf31789c32C7", // Sepolia address
 };
 
@@ -20,7 +20,7 @@ export const ETH_USDT_PRICE_FEED_ADDRESSES: Record<number, `0x${string}`> = {
 };
 
 export const SAFU_TOKEN_ADDRESSES: Record<number, `0x${string}`> = {
-  1: "0x{mainnet}", // Mainnet address
+  1: "0x0000000000000000000000000000000000000000", // Mainnet address
   11155111: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8", // Sepolia address
 };
 
