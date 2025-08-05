@@ -3,7 +3,7 @@
 import { Alchemy, Network } from 'alchemy-sdk';
 
 export const AlchemyTokenDiscovery = {
-    async getAllTokenBalances(address: string, chainId = 11155111) {
+    async getAllTokenBalances(address: string, chainId: number) {
         const networkMap: Record<number, Network> = {
             1: Network.ETH_MAINNET,
             11155111: Network.ETH_SEPOLIA,

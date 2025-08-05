@@ -184,7 +184,7 @@ const Profile = () => {
       try {
         // Get all user's token holdings
         const holdings = await AlchemyTokenDiscovery.getAllTokenBalances(
-          address
+          address, networkInfo.chainId
         );
 
         const holdingsWithMetadata = holdings.map((token) => ({

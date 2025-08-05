@@ -4,10 +4,8 @@ import { ALL_CHAINS } from "./config";
 import { useMemo } from "react";
 
 // Precompute default chain IDs
-const testnetChain = ALL_CHAINS.find(chain => chain.testnet);
-const mainnetChain = ALL_CHAINS.find(chain => !chain.testnet);
-const DEFAULT_MAINNET_CHAIN_ID = mainnetChain?.id || 56;
-const DEFAULT_TESTNET_CHAIN_ID = testnetChain?.id || 97;
+const DEFAULT_MAINNET_CHAIN_ID = 1;
+const DEFAULT_TESTNET_CHAIN_ID = 11155111;
 
 export const useNetworkEnvironment = () => {
   const { isConnected } = useAccount();
@@ -38,13 +36,9 @@ export const useNetworkEnvironment = () => {
     const isTestnet = chain.testnet;
 
     // Ensure URLs end with a trailing slash
-    const testnetUrl = import.meta.env.VITE_TESTNET_API_BASE_URL.endsWith('/')
-      ? import.meta.env.VITE_TESTNET_API_BASE_URL
-      : import.meta.env.VITE_TESTNET_API_BASE_URL + '/';
+    const testnetUrl = import.meta.env.VITE_TESTNET_API_BASE_URL;
 
-    const mainnetUrl = import.meta.env.VITE_MAINNET_API_BASE_URL.endsWith('/')
-      ? import.meta.env.VITE_MAINNET_API_BASE_URL
-      : import.meta.env.VITE_MAINNET_API_BASE_URL + '/';
+    const mainnetUrl = import.meta.env.VITE_MAINNET_API_BASE_URL;
 
     const testnetCA = '0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01';
     const mainnetCA = '0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87';
