@@ -1,238 +1,166 @@
-To implement historical event fetching and avoid duplicates, we'll add a block tracker service and modify the event listener to process past events. Here's the step-by-step solution:
+import { ethers } from "ethers";
+import fs from 'fs';
 
-1. **Create Block Tracker Service**:
-```typescript
-// block-tracker.service.ts
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+const launcherAbi = [
+    "event TokenDeployed(address indexed token, address creator, string myIndex)",
+    "event Trade(address indexed user, address indexed token, bool buy, uint256 inAmt, uint256 outAmt)",
+    "function getAmountOut(address tok, uint256 amountIn, bool isBuy) external view returns (uint256)",
+];
 
-@Injectable()
-export class BlockTrackerService {
-  private filePath: string;
+const priceFeedAbi = [
+    "function getLatestETHPrice(address _priceFeed) external view returns (uint256)"
+];
 
-  constructor(private configService: ConfigService) {
-    this.filePath = this.configService.get('BLOCK_TRACKER_FILE') || 'lastBlock.json';
-  }
+const erc20Abi = [
+    "function totalSupply() external view returns (uint256)",
+    "function decimals() external view returns (uint8)"
+];
 
-  getLastBlock(): number {
+const CONFIRMATIONS = 5;  // Safe block confirmations
+const SCAN_INTERVAL = 10; // Block interval for historical scans
+const CHUNK_SIZE = 500;  // Max blocks per historical request
+const STATE_FILE = 'state.json';
+const START_BLOCK = 23078000;    // Contract deployment block
+
+const LAUNCHER_ADDRESS = "0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87";
+const PRICE_FEED_ADDRESS = "0x4603276A9A90382A1aD8Af9aE56133b905bF8AAf";
+const PRICE_GETTER_CHAINLINK = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419';
+
+const ALCHEMY_HTTP = `https://eth-mainnet.g.alchemy.com/v2/GBBggRps7baCsfF4zFXWG`
+const provider = new ethers.JsonRpcProvider(ALCHEMY_HTTP);
+const launcher = new ethers.Contract(LAUNCHER_ADDRESS, launcherAbi, provider);
+const priceFeed = new ethers.Contract(PRICE_FEED_ADDRESS, priceFeedAbi, provider);
+
+// State management
+let state = {
+    lastProcessedBlock: START_BLOCK
+};
+let processedTx = new Set();
+let isHistoricalScanActive = false;
+
+// Load/save state from disk
+function loadState() {
     try {
-      if (existsSync(this.filePath)) {
-        const data = JSON.parse(readFileSync(this.filePath, 'utf8'));
-        return data.lastBlock || 23078000;
-      }
-    } catch (err) {
-      console.error('Error reading last block:', err);
+        return JSON.parse(fs.readFileSync(STATE_FILE));
+    } catch {
+        return { lastProcessedBlock: START_BLOCK };
     }
-    return 23078000; // Default starting block
-  }
-
-  saveLastBlock(blockNumber: number): void {
-    try {
-      writeFileSync(this.filePath, JSON.stringify({ lastBlock: blockNumber }));
-    } catch (err) {
-      console.error('Error saving last block:', err);
-    }
-  }
 }
-```
 
-2. **Update TransactionEventService**:
-```typescript
-import { BlockTrackerService } from './block-tracker.service';
+function saveState() {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state));
+}
 
-// Add to imports
-const CHUNK_SIZE = 2000; // Process blocks in chunks
 
-@Injectable()
-export class TransactionEventService implements OnModuleInit {
-  constructor(
-    // ...existing dependencies
-    private blockTracker: BlockTrackerService,
-  ) { 
-    // ...existing constructor
-  }
+async function handleToken(tokenAddr, txHash, logBlock) {
+    // 1. Get totalSupply & decimals
+    const token = new ethers.Contract(tokenAddr, erc20Abi, provider);
+    const [rawSupply, decimals] = await Promise.all([
+        token.totalSupply(),
+        token.decimals()
+    ]);
+    const supply = Number(ethers.formatUnits(rawSupply, decimals));
 
-  async onModuleInit() {
-    console.log('Fetching historical events');
-    await this.fetchHistoricalEvents();
-    console.log('Starting live event listeners');
-    this.eventListener().catch((err) => {
-      console.error('Event listener error:', err);
-      process.exit(1);
-    });
-  }
+    let priceUSD;
+    const rawTokenPerETH = await launcher.getAmountOut(tokenAddr, 1000000000000000000n, false);
+    console.log("rawTokenPerETH", rawTokenPerETH)
 
-  async fetchHistoricalEvents() {
-    const startBlock = this.blockTracker.getLastBlock();
-    const currentBlock = await this.provider.getBlockNumber();
-    console.log(`Processing blocks from ${startBlock} to ${currentBlock}`);
+    const tokenPerETH = Number(ethers.formatUnits(rawTokenPerETH, 18));
+    console.log("tokenPerETH", tokenPerETH)
+    const rawETHUSD = await priceFeed.getLatestETHPrice(PRICE_GETTER_CHAINLINK);
+    console.log("rawETHUSD", rawETHUSD)
+    const ethUsd = Number(ethers.formatUnits(rawETHUSD, 8));
+    console.log("ethUsd", ethUsd)
+    priceUSD = ethUsd * tokenPerETH;
+    console.log("priceUSD", priceUSD)
 
-    await this.processEventsInRange(
-      startBlock,
-      currentBlock,
-      CHUNK_SIZE
-    );
+    // 3. Compute market cap
+    const marketCapUSD = supply * priceUSD;
+    console.log("marketCapUSD", marketCapUSD);
 
-    this.blockTracker.saveLastBlock(currentBlock);
-  }
+    console.log(`↪ Token: ${tokenAddr}`);
+    console.log(` • Block: ${logBlock}, Tx: ${txHash}`);
+    console.log(`• Total Supply: ${supply.toLocaleString()}`);
+    console.log(`  • Price USD: $${priceUSD.toFixed(4)}`);
+    console.log(`  • Market Cap: $${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}`);
+}
 
-  private async processEventsInRange(
-    startBlock: number,
-    endBlock: number,
-    chunkSize: number
-  ) {
-    for (let fromBlock = startBlock; fromBlock <= endBlock; fromBlock += chunkSize) {
-      const toBlock = Math.min(fromBlock + chunkSize - 1, endBlock);
-      console.log(`Processing blocks ${fromBlock} to ${toBlock}`);
+// Process events from a block range
+async function processBlockRange(fromBlock, toBlock) {
+    console.log(`Scanning blocks ${fromBlock}-${toBlock}...`);
 
-      await Promise.all([
-        this.processContractEvents(this.launcherV1, 'TokenDeployed', fromBlock, toBlock),
-        this.processContractEvents(this.launcherV1, 'Trade', fromBlock, toBlock),
-        this.processContractEvents(this.launcherV2, 'TokenDeployed', fromBlock, toBlock),
-        this.processContractEvents(this.launcherV2, 'Trade', fromBlock, toBlock),
-      ]);
+    const tokenEvents = await launcher.queryFilter("TokenDeployed", fromBlock, toBlock);
+    const tradeEvents = await launcher.queryFilter("Trade", fromBlock, toBlock);
 
-      // Save progress after each chunk
-      this.blockTracker.saveLastBlock(toBlock + 1);
+    for (const event of [...tokenEvents, ...tradeEvents]) {
+        if (processedTx.has(event.transactionHash)) continue;
+
+        const tokenAddr = event.args.tokenAddr || event.args.token;
+        console.log(`Processing historical event in tx ${event.transactionHash}`);
+        await handleToken(tokenAddr, event.transactionHash, event.blockNumber);
     }
-  }
+}
 
-  private async processContractEvents(
-    contract: Contract,
-    eventName: string,
-    fromBlock: number,
-    toBlock: number
-  ) {
+// Chunk processor for large ranges
+async function processHistoricalEvents(targetBlock) {
+    if (isHistoricalScanActive) return;
+    isHistoricalScanActive = true;
+
     try {
-      const events = await contract.queryFilter(eventName, fromBlock, toBlock);
-      console.log(`Found ${events.length} ${eventName} events`);
+        let currentBlock = state.lastProcessedBlock + 1;
+        const safeTarget = targetBlock - CONFIRMATIONS;
 
-      for (const event of events) {
-        if (eventName === 'TokenDeployed') {
-          await this.processTokenDeployedEvent(event);
-        } else if (eventName === 'Trade') {
-          await this.processTradeEvent(event, contract);
+        while (currentBlock <= safeTarget) {
+            const chunkEnd = Math.min(currentBlock + CHUNK_SIZE - 1, safeTarget);
+            await processBlockRange(currentBlock, chunkEnd);
+            state.lastProcessedBlock = chunkEnd;
+            saveState();
+            currentBlock = chunkEnd + 1;
         }
-      }
     } catch (error) {
-      console.error(`Error processing ${eventName} events:`, error);
+        console.error("Historical scan error:", error);
+    } finally {
+        isHistoricalScanActive = false;
     }
-  }
-
-  private async processTokenDeployedEvent(event: ethers.EventLog) {
-    const [tokenAddr, creator, myIndex] = event.args;
-    
-    // Check if token exists
-    const exists = await this.tokenService.exists(tokenAddr);
-    if (exists) return;
-
-    console.log(`Processing historical TokenDeployed: ${tokenAddr}`);
-    await this.tokenService.update(
-      {
-        tokenAddress: tokenAddr,
-        tokenCreator: creator,
-        transactionHash: event.log.transactionHash,
-      },
-      myIndex
-    );
-  }
-
-  private async processTradeEvent(event: ethers.EventLog, contract: Contract) {
-    const [user, tokenAddr, buy, inAmt, outAmt] = event.args;
-    
-    // Check if transaction exists
-    const exists = await this.transactionService.exists(
-      event.log.transactionHash,
-      event.log.index
-    );
-    if (exists) return;
-
-    console.log(`Processing historical Trade: ${event.log.transactionHash}`);
-    const isV1 = contract.address === this.launcherV1.address;
-    const oldMarketCap = isV1
-      ? await this.handleTokenV1(tokenAddr, event.log.transactionHash, event.log.blockNumber)
-      : await this.handleTokenV2(tokenAddr, event.log.transactionHash, event.log.blockNumber);
-
-    await this.saveTrade(
-      user,
-      tokenAddr,
-      buy,
-      inAmt,
-      outAmt,
-      oldMarketCap,
-      event.log.transactionHash,
-      event.log.index // Add logIndex parameter
-    );
-  }
-
-  // Update saveTrade to include logIndex
-  private async saveTrade(
-    user: string,
-    tokenAddr: string,
-    buy: boolean,
-    inAmt: any,
-    outAmt: any,
-    oldMarketCap: number,
-    transactionHash: string,
-    logIndex: number // Add this parameter
-  ) {
-    try {
-      // ... existing save logic
-
-      await this.transactionService.create({
-        tokenAddress: tokenAddr,
-        tokenAmount: buy ? outAmount : inAmount,
-        wallet: user,
-        type: TransactionType[action],
-        ethAmount: buy ? inAmount : outAmount,
-        oldMarketCap,
-        txnHash: transactionHash,
-        logIndex, // Store logIndex
-        // ... other fields
-      });
-    } catch (err) {
-      console.error('Error saving trade:', err);
-    }
-  }
 }
-```
 
-3. **Update Transaction Service**:
-```typescript
-// Add to TransactionService
-async exists(txnHash: string, logIndex: number): Promise<boolean> {
-  const count = await this.transactionRepository.count({
-    where: { txnHash, logIndex },
-  });
-  return count > 0;
+// Main function with enhanced logic
+async function main() {
+    console.log('Server starting...');
+    state = loadState();
+
+    // Initial historical catch-up
+    const currentBlock = await provider.getBlockNumber();
+    await processHistoricalEvents(currentBlock);
+
+    // Real-time event listeners
+    launcher.on("TokenDeployed", (tokenAddr, creator, myIndex, event) => {
+        processedTx.add(event.log.transactionHash);
+        console.log(`New token deployed by ${creator}: ${tokenAddr}`);
+        handleToken(tokenAddr, event.log.transactionHash, event.log.blockNumber);
+    });
+
+    launcher.on("Trade", (user, tokenAddr, buy, inAmt, outAmt, event) => {
+        processedTx.add(event.log.transactionHash);
+        console.log(`New trade: ${buy ? 'BUY' : 'SELL'} ${tokenAddr}`);
+        handleToken(tokenAddr, event.log.transactionHash, event.log.blockNumber);
+    });
+
+    // Periodic historical scan trigger
+    provider.on('block', async (blockNumber) => {
+        if (blockNumber % SCAN_INTERVAL === 0) {
+            console.log(`Triggering historical scan at block ${blockNumber}`);
+            await processHistoricalEvents(blockNumber);
+        }
+    });
+
+    // Clean shutdown handler
+    process.on("SIGINT", () => {
+        console.log("\nShutting down...");
+        provider.removeAllListeners();
+        saveState();
+        process.exit(0);
+    });
 }
-```
 
-4. **Update Transaction Entity**:
-```typescript
-// Add to Transaction entity
-@Column()
-logIndex: number;
-```
-
-**Key Improvements**:
-1. **Block Tracking**: Uses a file to persist the last processed block
-2. **Chunk Processing**: Processes blocks in manageable chunks (2000 blocks)
-3. **Duplicate Prevention**: Checks database using transaction hash + log index
-4. **Progress Saving**: Saves progress after each chunk to prevent re-processing
-5. **Concurrent Processing**: Processes events from both contracts in parallel
-6. **Error Handling**: Robust error handling for individual event processing
-
-**To use this**:
-1. Create the new `BlockTrackerService`
-2. Add `logIndex` to your Transaction entity and run a database migration
-3. Inject `BlockTrackerService` into `TransactionEventService`
-4. Update `saveTrade` calls to include `event.log.index` from event objects
-
-This solution will:
-- Fetch all historical events from your starting block
-- Skip already processed events using transaction hash + log index
-- Save progress periodically to prevent re-processing
-- Resume from the last processed block on restart
-- Continue listening for new events after historical processing
+main().catch(console.error);
