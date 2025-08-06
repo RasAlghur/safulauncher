@@ -26,6 +26,7 @@ import { BsChevronDown } from "react-icons/bs";
 import { FaTelegram } from "react-icons/fa6";
 import { socket } from "../lib/socket";
 import { useTrendingTokens } from "../lib/useTrendingTokens";
+import CopyButton from "../components/generalcomponents/CopyButton";
 
 const gradientSteps = [
   { threshold: 9, color: "#dc2626" }, // Red
@@ -644,10 +645,13 @@ export default function Tokens() {
                               by {t.token.tokenCreator.slice(0, 6)}...
                               {t.token.tokenCreator.slice(-4)}
                             </p>
-                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-1">
-                              Address: {t.token.tokenAddress.slice(0, 6)}...
-                              {t.token.tokenAddress.slice(-4)}
-                            </p>
+                            <div className="flex items-center">
+                              <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]">
+                                Address: {t.token.tokenAddress.slice(0, 6)}...
+                                {t.token.tokenAddress.slice(-4)}
+                              </p>
+                              <CopyButton value={t.token.tokenAddress} />
+                            </div>
                           </div>
                         </div>
 
@@ -878,10 +882,13 @@ export default function Tokens() {
                                 {t.tokenCreator.slice(-4)}
                               </span>
                             </p>
-                            <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] mb-2.5">
-                              Address: {t.tokenAddress.slice(0, 6)}...
-                              {t.tokenAddress.slice(-4)}
-                            </p>
+                            <div className="flex items-center mb-2.5">
+                              <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] ">
+                                Address: {t.tokenAddress.slice(0, 6)}...
+                                {t.tokenAddress.slice(-4)}
+                              </p>
+                              <CopyButton value={t.tokenAddress} />
+                            </div>
                             {t.website && (
                               <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]/60">
                                 Website:{" "}

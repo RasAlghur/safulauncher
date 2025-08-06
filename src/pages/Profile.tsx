@@ -33,6 +33,7 @@ import { FaXTwitter } from "react-icons/fa6";
 import { FaTelegram } from "react-icons/fa6";
 import { UploadCloud, X } from "lucide-react";
 import toast from "react-hot-toast";
+import CopyButton from "../components/generalcomponents/CopyButton";
 
 interface launchedToken {
   id: string;
@@ -184,7 +185,8 @@ const Profile = () => {
       try {
         // Get all user's token holdings
         const holdings = await AlchemyTokenDiscovery.getAllTokenBalances(
-          address, networkInfo.chainId
+          address,
+          networkInfo.chainId
         );
 
         const holdingsWithMetadata = holdings.map((token) => ({
@@ -221,7 +223,7 @@ const Profile = () => {
         if (!silent) setTokenHoldingsLoading(false);
       }
     },
-    [address, fetchTokenPrice, ethPriceUSD]
+    [address, fetchTokenPrice, ethPriceUSD, networkInfo.chainId]
   );
 
   // Filter holdings to only show tokens that exist in the database
@@ -1015,6 +1017,29 @@ const Profile = () => {
                         {token.description && (
                           <p className="text-sm dark:text-white/70 text-[#141313]/75 lg:max-w-[280px]">
                             {token.description}
+                          </p>
+                        )}
+                        <div className="flex items-center">
+                          <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] ">
+                            Address: {token.tokenAddress.slice(0, 6)}...
+                            {token.tokenAddress.slice(-4)}
+                          </p>
+                          <CopyButton value={token.tokenAddress} />
+                        </div>
+                        {token.website && (
+                          <p className="text-sm dark:text-white/70 text-[#141313]/75 lg:max-w-[280px]">
+                            <a
+                              href={
+                                token.website.startsWith("http")
+                                  ? token.website
+                                  : `https://${token.website}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline"
+                            >
+                              {token.website}
+                            </a>
                           </p>
                         )}
                       </div>

@@ -67,6 +67,7 @@ import { RiArrowUpDownFill } from "react-icons/ri";
 import { useUser } from "../context/user.context";
 import { CircleCheckBig } from "lucide-react";
 import { X } from "lucide-react";
+import CopyButton from "../components/generalcomponents/CopyButton";
 
 // Define this function outside your component
 const GRADIENT_STEPS = [
@@ -318,6 +319,7 @@ export default function Trade() {
     "transactions"
   );
   const [showSectionA, setShowSectionA] = useState(false);
+  const [autoSlideEnabled, setAutoSlideEnabled] = useState(true); // 💡 New state
 
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 25;
@@ -483,12 +485,14 @@ export default function Trade() {
   }, [isConnected, address, saveOrFetchUser]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setShowSectionA((prev) => !prev); // Toggle between true and false
-    }, 5000);
+    if (!autoSlideEnabled) return; //  Don't set interval if user toggled manually
 
-    return () => clearInterval(interval); // Cleanup on unmount
-  }, []);
+    const interval = setInterval(() => {
+      setShowSectionA((prev) => !prev);
+    }, 15000); // ⏱ 15 seconds now
+
+    return () => clearInterval(interval); // Cleanup on unmount or state change
+  }, [autoSlideEnabled]); // Rerun if autoSlideEnabled changes
 
   // Add this useEffect to handle the async call
   useEffect(() => {
@@ -2354,7 +2358,10 @@ export default function Trade() {
               </span>
 
               <div
-                onClick={() => setShowSectionA((prev) => !prev)}
+                onClick={() => {
+                  setShowSectionA((prev) => !prev);
+                  setAutoSlideEnabled(false);
+                }}
                 className={`w-[40px] h-[20px] rounded-full p-[2px] cursor-pointer flex items-center transition-colors duration-300
       ${showSectionA ? "bg-Primary" : "bg-white"} shadow-inner relative`}
               >
@@ -2419,9 +2426,12 @@ export default function Trade() {
                     <h2 className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway text-sm">
                       Token Address
                     </h2>
-                    <p className="text-xs text-black/80 dark:text-white/80">
-                      {token.tokenAddress}
-                    </p>
+                    <div className="flex items-start">
+                      <p className="text-xs text-black/80 dark:text-white/80">
+                        {token.tokenAddress}
+                      </p>
+                      <CopyButton value={token.tokenAddress} />
+                    </div>
                   </div>
 
                   {token.description && (
