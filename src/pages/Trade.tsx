@@ -445,7 +445,7 @@ export default function Trade() {
         functionName: "allowance",
         args: [
           address as `0x${string}`,
-          SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          isV2 ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId] : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
         ],
       }
       : undefined
@@ -1028,25 +1028,39 @@ export default function Trade() {
       mode === "sell" &&
       allowance !== undefined &&
       amount &&
-      !isLoadingAllowance
+      !isLoadingAllowance &&
+      tokenAddress && address
     ) {
       try {
+        if (!amount || amount === "0" || amount === "") {
+          setNeedsApproval(false);
+          return;
+        }
         const parsedAmount = ethers.parseEther(amount);
-        setNeedsApproval(allowance < parsedAmount);
+        const currentAllowance = allowance ?? BigInt(0);
+
+        console.log("Checking approval:", {
+          amount,
+          parsedAmount: parsedAmount.toString(),
+          currentAllowance: currentAllowance.toString(),
+          needsApproval: currentAllowance < parsedAmount
+        });
+
+        setNeedsApproval(currentAllowance < parsedAmount);
       } catch {
         setNeedsApproval(false);
       }
     } else {
       setNeedsApproval(false);
     }
-  }, [allowance, amount, isLoadingAllowance, mode]);
+  }, [allowance, amount, isLoadingAllowance, mode, tokenAddress, address]);
 
   // Handle transaction errors
   useEffect(() => {
-    if (error) {
+    if (error && lastTxnType === "approval") {
       setIsProcessingTxn(false);
     }
-  }, [error]);
+  }, [error, lastTxnType]);
 
   // Reset processing state
   useEffect(() => {
@@ -1059,6 +1073,17 @@ export default function Trade() {
   useEffect(() => {
     async function fetchTokenMet() {
       if (isConfirmed && txHash) {
+        await refetchAllowance();
+
+        if (lastTxnType === "approval") {
+          // Small delay to ensure the blockchain state is updated
+          setTimeout(async () => {
+            await refetchAllowance();
+            // Force recalculation of needsApproval
+            setNeedsApproval(false);
+          }, 1000);
+        }
+
         refetchInfoData();
         refetchLatestETHPrice();
         // if (isV2) {
@@ -1074,21 +1099,7 @@ export default function Trade() {
           .catch((err) => {
             console.error("Error updating token price after txn:", err);
           });
-        // }
-        // else {
-        //   await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress!)
-        //     .then((raw) => {
-        //       if (raw !== undefined && raw !== null) {
-        //         const eth = Number(raw.toString()) / 1e18;
-        //         setOneTokenPriceETH(eth);
-        //       } else {
-        //         setOneTokenPriceETH(0);
-        //       }
-        //     })
-        //     .catch((err) => {
-        //       console.error("Error updating token price after txn:", err);
-        //     });
-        // }
+
         refetchSafuHolder();
         refetchSafuSupply();
         refetchSafuHolderBalance();
@@ -1411,12 +1422,17 @@ export default function Trade() {
     setErrorMsg("");
   }, []);
 
-  const handleMaxClick = useCallback(() => {
+  const handleMaxClick = useCallback(async () => {
     if (mode === "sell" && getBalance) {
       const maxAmount = ethers.formatEther(getBalance.toString());
       setAmount(maxAmount);
+      
+      // Force allowance check after setting max amount
+      setTimeout(() => {
+        refetchAllowance();
+      }, 100);
     }
-  }, [mode, getBalance]);
+  }, [mode, getBalance, refetchAllowance]);
 
   const validateWhitelistAddresses = useCallback(
     (addresses: string): string[] | null => {
@@ -1455,21 +1471,28 @@ export default function Trade() {
       return;
     }
 
-    setErrorMsg("");
-    setLastTxnType("approval");
+    try {
+      setIsProcessingTxn(true)
+      setLastTxnType("approval");
+      setErrorMsg("");
 
-    writeContract({
-      ...TOKEN_ABI,
-      functionName: "approve",
-      address: tokenAddress,
-      args: [
-        isV2
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId] as `0x${string}`
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId] as `0x${string}`,
-        MaxUint256 as bigint,
-      ],
-    });
-    setIsProcessingTxn(true);
+      writeContract({
+        ...TOKEN_ABI,
+        functionName: "approve",
+        address: tokenAddress,
+        args: [
+          isV2
+            ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId] as `0x${string}`
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId] as `0x${string}`,
+          MaxUint256 as bigint,
+        ],
+      });
+    } catch (error) {
+      console.error("Approval rejected:", error);
+      // setNeedsApproval(true);
+      setErrorMsg("Approval was rejected");
+      setIsProcessingTxn(false);
+    }
   }, [
     isLoadingAllowance,
     isConfirming,
@@ -1479,6 +1502,17 @@ export default function Trade() {
     mode,
     networkInfo.chainId,
   ]);
+
+  useEffect(() => {
+    // Refetch allowance when user changes amount (debounced)
+    const timeoutId = setTimeout(() => {
+      if (mode === "sell" && amount && !isLoadingAllowance) {
+        refetchAllowance();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [amount, mode, refetchAllowance, isLoadingAllowance]);
 
   const handleSubmit = useCallback(
     (e?: FormEvent) => {
