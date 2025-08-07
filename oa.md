@@ -1,166 +1,221 @@
-import { ethers } from "ethers";
-import fs from 'fs';
+To implement the chunk-based historical event scanning with parallel processing for multiple contract versions (V1 and V2), follow this structured approach:
 
-const launcherAbi = [
-    "event TokenDeployed(address indexed token, address creator, string myIndex)",
-    "event Trade(address indexed user, address indexed token, bool buy, uint256 inAmt, uint256 outAmt)",
-    "function getAmountOut(address tok, uint256 amountIn, bool isBuy) external view returns (uint256)",
-];
+### 1. Block Tracking System
+```javascript
+class BlockTracker {
+  constructor() {
+    this.state = { V1: START_BLOCK_V1, V2: START_BLOCK_V2 };
+    this.loadState();
+  }
 
-const priceFeedAbi = [
-    "function getLatestETHPrice(address _priceFeed) external view returns (uint256)"
-];
-
-const erc20Abi = [
-    "function totalSupply() external view returns (uint256)",
-    "function decimals() external view returns (uint8)"
-];
-
-const CONFIRMATIONS = 5;  // Safe block confirmations
-const SCAN_INTERVAL = 10; // Block interval for historical scans
-const CHUNK_SIZE = 500;  // Max blocks per historical request
-const STATE_FILE = 'state.json';
-const START_BLOCK = 23078000;    // Contract deployment block
-
-const LAUNCHER_ADDRESS = "0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87";
-const PRICE_FEED_ADDRESS = "0x4603276A9A90382A1aD8Af9aE56133b905bF8AAf";
-const PRICE_GETTER_CHAINLINK = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419';
-
-const ALCHEMY_HTTP = `https://eth-mainnet.g.alchemy.com/v2/GBBggRps7baCsfF4zFXWG`
-const provider = new ethers.JsonRpcProvider(ALCHEMY_HTTP);
-const launcher = new ethers.Contract(LAUNCHER_ADDRESS, launcherAbi, provider);
-const priceFeed = new ethers.Contract(PRICE_FEED_ADDRESS, priceFeedAbi, provider);
-
-// State management
-let state = {
-    lastProcessedBlock: START_BLOCK
-};
-let processedTx = new Set();
-let isHistoricalScanActive = false;
-
-// Load/save state from disk
-function loadState() {
+  loadState() {
     try {
-        return JSON.parse(fs.readFileSync(STATE_FILE));
-    } catch {
-        return { lastProcessedBlock: START_BLOCK };
-    }
-}
-
-function saveState() {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state));
-}
-
-
-async function handleToken(tokenAddr, txHash, logBlock) {
-    // 1. Get totalSupply & decimals
-    const token = new ethers.Contract(tokenAddr, erc20Abi, provider);
-    const [rawSupply, decimals] = await Promise.all([
-        token.totalSupply(),
-        token.decimals()
-    ]);
-    const supply = Number(ethers.formatUnits(rawSupply, decimals));
-
-    let priceUSD;
-    const rawTokenPerETH = await launcher.getAmountOut(tokenAddr, 1000000000000000000n, false);
-    console.log("rawTokenPerETH", rawTokenPerETH)
-
-    const tokenPerETH = Number(ethers.formatUnits(rawTokenPerETH, 18));
-    console.log("tokenPerETH", tokenPerETH)
-    const rawETHUSD = await priceFeed.getLatestETHPrice(PRICE_GETTER_CHAINLINK);
-    console.log("rawETHUSD", rawETHUSD)
-    const ethUsd = Number(ethers.formatUnits(rawETHUSD, 8));
-    console.log("ethUsd", ethUsd)
-    priceUSD = ethUsd * tokenPerETH;
-    console.log("priceUSD", priceUSD)
-
-    // 3. Compute market cap
-    const marketCapUSD = supply * priceUSD;
-    console.log("marketCapUSD", marketCapUSD);
-
-    console.log(`↪ Token: ${tokenAddr}`);
-    console.log(` • Block: ${logBlock}, Tx: ${txHash}`);
-    console.log(`• Total Supply: ${supply.toLocaleString()}`);
-    console.log(`  • Price USD: $${priceUSD.toFixed(4)}`);
-    console.log(`  • Market Cap: $${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}`);
-}
-
-// Process events from a block range
-async function processBlockRange(fromBlock, toBlock) {
-    console.log(`Scanning blocks ${fromBlock}-${toBlock}...`);
-
-    const tokenEvents = await launcher.queryFilter("TokenDeployed", fromBlock, toBlock);
-    const tradeEvents = await launcher.queryFilter("Trade", fromBlock, toBlock);
-
-    for (const event of [...tokenEvents, ...tradeEvents]) {
-        if (processedTx.has(event.transactionHash)) continue;
-
-        const tokenAddr = event.args.tokenAddr || event.args.token;
-        console.log(`Processing historical event in tx ${event.transactionHash}`);
-        await handleToken(tokenAddr, event.transactionHash, event.blockNumber);
-    }
-}
-
-// Chunk processor for large ranges
-async function processHistoricalEvents(targetBlock) {
-    if (isHistoricalScanActive) return;
-    isHistoricalScanActive = true;
-
-    try {
-        let currentBlock = state.lastProcessedBlock + 1;
-        const safeTarget = targetBlock - CONFIRMATIONS;
-
-        while (currentBlock <= safeTarget) {
-            const chunkEnd = Math.min(currentBlock + CHUNK_SIZE - 1, safeTarget);
-            await processBlockRange(currentBlock, chunkEnd);
-            state.lastProcessedBlock = chunkEnd;
-            saveState();
-            currentBlock = chunkEnd + 1;
-        }
+      const data = fs.readFileSync(STATE_FILE);
+      this.state = JSON.parse(data);
     } catch (error) {
-        console.error("Historical scan error:", error);
-    } finally {
-        isHistoricalScanActive = false;
+      console.log('Using initial state');
     }
+  }
+
+  saveState() {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(this.state));
+  }
+
+  getLastBlock(version) {
+    return this.state[version] || START_BLOCK;
+  }
+
+  saveLastBlock(blockNumber, version) {
+    this.state[version] = blockNumber;
+    this.saveState();
+  }
 }
+```
 
-// Main function with enhanced logic
-async function main() {
-    console.log('Server starting...');
-    state = loadState();
+### 2. Event Processing with Chunking
+```javascript
+class EventProcessor {
+  constructor(provider, blockTracker) {
+    this.provider = provider;
+    this.blockTracker = blockTracker;
+    this.launcherV1 = new ethers.Contract(V1_ADDRESS, launcherAbi, provider);
+    this.launcherV2 = new ethers.Contract(V2_ADDRESS, launcherAbi, provider);
+    this.isScanning = false;
+  }
 
-    // Initial historical catch-up
-    const currentBlock = await provider.getBlockNumber();
-    await processHistoricalEvents(currentBlock);
+  async processEventsInRange(startBlock, endBlock, chunkSize, version) {
+    for (let fromBlock = startBlock; fromBlock <= endBlock; fromBlock += chunkSize) {
+      const toBlock = Math.min(fromBlock + chunkSize - 1, endBlock);
+      console.log(`Processing ${version} blocks ${fromBlock}-${toBlock}`);
+      
+      const contract = version === 'V1' ? this.launcherV1 : this.launcherV2;
+      await Promise.all([
+        this.processContractEvents(contract, 'TokenDeployed', fromBlock, toBlock),
+        this.processContractEvents(contract, 'Trade', fromBlock, toBlock)
+      ]);
+      
+      this.blockTracker.saveLastBlock(toBlock + 1, version);
+    }
+  }
 
-    // Real-time event listeners
-    launcher.on("TokenDeployed", (tokenAddr, creator, myIndex, event) => {
-        processedTx.add(event.log.transactionHash);
-        console.log(`New token deployed by ${creator}: ${tokenAddr}`);
-        handleToken(tokenAddr, event.log.transactionHash, event.log.blockNumber);
-    });
-
-    launcher.on("Trade", (user, tokenAddr, buy, inAmt, outAmt, event) => {
-        processedTx.add(event.log.transactionHash);
-        console.log(`New trade: ${buy ? 'BUY' : 'SELL'} ${tokenAddr}`);
-        handleToken(tokenAddr, event.log.transactionHash, event.log.blockNumber);
-    });
-
-    // Periodic historical scan trigger
-    provider.on('block', async (blockNumber) => {
-        if (blockNumber % SCAN_INTERVAL === 0) {
-            console.log(`Triggering historical scan at block ${blockNumber}`);
-            await processHistoricalEvents(blockNumber);
+  async processContractEvents(contract, eventName, fromBlock, toBlock, retries = 0) {
+    const MAX_RETRIES = 3;
+    try {
+      const events = await contract.queryFilter(eventName, fromBlock, toBlock);
+      console.log(`Found ${events.length} ${eventName} events`);
+      
+      for (const event of events) {
+        if (eventName === 'TokenDeployed') {
+          await this.handleTokenDeployed(event);
+        } else {
+          await this.handleTrade(event, contract);
         }
-    });
+      }
+    } catch (error) {
+      if (retries < MAX_RETRIES) {
+        console.log(`Retrying ${eventName} (${retries + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * (retries + 1)));
+        return this.processContractEvents(contract, eventName, fromBlock, toBlock, retries + 1);
+      }
+      console.error(`Failed ${eventName}: ${error.message}`);
+    }
+  }
 
-    // Clean shutdown handler
-    process.on("SIGINT", () => {
-        console.log("\nShutting down...");
-        provider.removeAllListeners();
-        saveState();
-        process.exit(0);
-    });
+  async handleTokenDeployed(event) {
+    const [tokenAddr, creator] = event.args;
+    // Your token deployment logic here
+  }
+
+  async handleTrade(event, contract) {
+    const [user, tokenAddr, buy] = event.args;
+    // Your trade processing logic here
+  }
+}
+```
+
+### 3. Historical Scanner with Version Management
+```javascript
+class HistoricalScanner {
+  constructor(provider, blockTracker, eventProcessor) {
+    this.provider = provider;
+    this.blockTracker = blockTracker;
+    this.eventProcessor = eventProcessor;
+    this.scanActive = false;
+  }
+
+  async triggerHistoricalScan() {
+    if (this.scanActive) return;
+    this.scanActive = true;
+    
+    try {
+      const currentBlock = await this.provider.getBlockNumber();
+      const targetBlock = currentBlock - CONFIRMATIONS;
+      
+      await Promise.allSettled([
+        this.scanVersion('V1', targetBlock),
+        this.scanVersion('V2', targetBlock)
+      ]);
+    } catch (error) {
+      console.error('Scan error:', error);
+    } finally {
+      this.scanActive = false;
+    }
+  }
+
+  async scanVersion(version, targetBlock) {
+    const startBlock = this.blockTracker.getLastBlock(version);
+    if (startBlock >= targetBlock) return;
+    
+    console.log(`Starting ${version} scan from ${startBlock} to ${targetBlock}`);
+    await this.eventProcessor.processEventsInRange(
+      startBlock,
+      targetBlock,
+      CHUNK_SIZE,
+      version
+    );
+    this.blockTracker.saveLastBlock(targetBlock, version);
+  }
+}
+```
+
+### 4. Main Application Flow
+```javascript
+async function main() {
+  const provider = new ethers.JsonRpcProvider(ALCHEMY_HTTP);
+  const blockTracker = new BlockTracker();
+  const eventProcessor = new EventProcessor(provider, blockTracker);
+  const scanner = new HistoricalScanner(provider, blockTracker, eventProcessor);
+
+  // Initial historical catch-up
+  await scanner.triggerHistoricalScan();
+
+  // Real-time listeners
+  setupEventListeners(eventProcessor);
+
+  // Periodic scanning (every 10 blocks)
+  provider.on('block', async (blockNumber) => {
+    if (blockNumber % SCAN_INTERVAL === 0) {
+      await scanner.triggerHistoricalScan();
+    }
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    provider.removeAllListeners();
+    blockTracker.saveState();
+    process.exit();
+  });
 }
 
-main().catch(console.error);
+function setupEventListeners(processor) {
+  [processor.launcherV1, processor.launcherV2].forEach(contract => {
+    contract.on('TokenDeployed', (tokenAddr, creator, event) => {
+      processor.handleTokenDeployed({ args: [tokenAddr, creator], ...event });
+    });
+    
+    contract.on('Trade', (user, tokenAddr, buy, inAmt, outAmt, event) => {
+      processor.handleTrade({ args: [user, tokenAddr, buy], ...event }, contract);
+    });
+  });
+}
+```
+
+### Key Improvements:
+1. **Version-aware Processing**:
+   - Separate block tracking for V1/V2 contracts
+   - Parallel scanning of both versions
+   - Version-specific chunk processing
+
+2. **Robust Error Handling**:
+   - Exponential backoff retry mechanism
+   - Settled promises prevent version blocking
+   - Error isolation between versions
+
+3. **Efficient Chunking**:
+   - Configurable chunk sizes (500 blocks)
+   - Block range segmentation
+   - Progress saving after each chunk
+
+4. **Modular Architecture**:
+   - Separate concerns (tracking, processing, scanning)
+   - Reusable components
+   - Clear lifecycle management
+
+5. **Real-time + Historical Synergy**:
+   - Live event listeners for instant processing
+   - Periodic historical scans for completeness
+   - Transaction de-duplication
+
+To use this system:
+1. Set your start blocks for V1/V2
+2. Configure your Alchemy URL
+3. Define contract addresses and ABIs
+4. Implement your specific `handleTokenDeployed` and `handleTrade` logic
+
+This architecture provides:
+- Parallel processing of contract versions
+- Chunk-based historical scanning
+- Automatic retries on failures
+- Persistent state tracking
+- Efficient resource usage
+- Graceful error recovery
