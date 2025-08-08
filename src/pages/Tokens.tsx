@@ -638,7 +638,7 @@ export default function Tokens() {
                             />
                           )}
                           <div className="flex-1">
-                            <h3 className="text-base font-semibold text-[#01061C] dark:text-white truncate">
+                            <h3 className="text-[13px] max-w-[10rem] font-semibold text-[#01061C] dark:text-white">
                               {t.token.name} ({t.token.symbol})
                             </h3>
                             <p className="text-xs text-[#147ABD] truncate">
@@ -646,7 +646,7 @@ export default function Tokens() {
                               {t.token.tokenCreator.slice(-4)}
                             </p>
                             <div className="flex items-center">
-                              <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313]">
+                              <p className="text-sm dark:text-[#B6B6B6] text-[#141313]">
                                 Address: {t.token.tokenAddress.slice(0, 6)}...
                                 {t.token.tokenAddress.slice(-4)}
                               </p>
