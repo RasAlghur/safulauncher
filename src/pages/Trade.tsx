@@ -68,7 +68,6 @@ import { useUser } from "../context/user.context";
 import { CircleCheckBig } from "lucide-react";
 import { X } from "lucide-react";
 import CopyButton from "../components/generalcomponents/CopyButton";
-import { filter } from "lodash";
 
 // Define this function outside your component
 const GRADIENT_STEPS = [
