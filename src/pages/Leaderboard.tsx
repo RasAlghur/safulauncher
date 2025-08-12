@@ -133,7 +133,8 @@ export default function Leaderboard() {
         setTokensMap(map);
 
         // Fetch transactions and build leaderboard with retry
-        const txRes = await retry(() => base.get("transactions"));
+        const txRes = await retry(() => base.get("transactions?limit=100"));
+        console.log('txRes', txRes);
         const allTx: TxLog[] = txRes.data.data.data;
 
         const walletMap: Record<

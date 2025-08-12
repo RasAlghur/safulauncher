@@ -315,14 +315,9 @@ export default function Trade() {
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 25;
 
-  const indexOfLastTx = currentPage * transactionsPerPage;
-  const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
-  const currentTxLogs = txLogs.slice(indexOfFirstTx, indexOfLastTx);
   const [listingMilestonePct, setListingMilestonePct] = useState<number | null>(
     null
   );
-
-  const totalPages = Math.ceil(txLogs.length / transactionsPerPage);
 
   const [wlCsvText, setWlCsvText] = useState("");
 
@@ -375,6 +370,17 @@ export default function Trade() {
       address.toLowerCase() === token.tokenCreator.toLowerCase(),
     [address, token]
   );
+
+  const sortedTxLogs = useMemo(() => {
+    return [...txLogs].sort((a, b) => {
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  }, [txLogs]);
+
+  const indexOfLastTx = currentPage * transactionsPerPage;
+  const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
+  const currentTxLogs = sortedTxLogs.slice(indexOfFirstTx, indexOfLastTx);
+  const totalPages = Math.ceil(sortedTxLogs.length / transactionsPerPage);
 
   const isV2 = token?.tokenVersion === "token_v2";
 
@@ -721,6 +727,12 @@ export default function Trade() {
       ? oneTokenPriceETH * totalSupplyTokens
       : 0;
   const marketCapUSD = marketCapETH * infoETHCurrentPrice;
+
+  // console.log("marketCapUSD", marketCapUSD);
+  // console.log("totalSupplyTokens", totalSupplyTokens);
+  // console.log("oneTokenPriceETH", oneTokenPriceETH);
+  // console.log("marketCapETH", marketCapETH);
+  // console.log("infoETHCurrentPrice", infoETHCurrentPrice);
 
   // Pool valuation
   const tokenPool = tokenSupply - tokenSold;
@@ -1144,12 +1156,13 @@ export default function Trade() {
   // Enhanced fetchLogs with callback for chart update
   const fetchLogsWithCallback = useCallback(async () => {
     if (!tokenAddress) return;
-
     try {
       const response = await base.get(
-        `transactions?tokenAddress=${tokenAddress}`
+        `transactions?limit=100&tokenAddress=${tokenAddress}`
       );
+      console.log("response", response);
       const all: TxLog[] = await response.data.data.data;
+      console.log("all", all);
       const filtered = all.filter(
         (tx) => tx.type === "buy" || tx.type === "sell"
       );
