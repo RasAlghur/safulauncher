@@ -361,16 +361,16 @@ export default function LightweightChart({
       {/* Header */}
 
       {/*Header and Controls */}
-      <div className="flex items-center justify-between px-4 py-1 border-b border-white/10 bg-[#0B132B]">
+      <div className="flex items-center justify-between px-4 py-1 dark:bg-[#0B132B] border dark:border-white/10 border-black/50">
         <div className="flex items-center gap-4 ml-10 mt-1">
           {/* PRICE / MCAP Toggle */}
-          <div className="text-sm text-white/60">
+          <div className="text-sm dark:text-white/60 text-black/80">
             <span
               onClick={() => setMetric("price")}
               className={`cursor-pointer transition ${
                 metric === "price"
-                  ? "text-white font-semibold"
-                  : "hover:text-white/80"
+                  ? " font-semibold"
+                  : "dark:hover:text-white/80 hover:text-black/50"
               }`}
             >
               PRICE
@@ -380,8 +380,8 @@ export default function LightweightChart({
               onClick={() => setMetric("marketcap")}
               className={`cursor-pointer transition ${
                 metric === "marketcap"
-                  ? "text-white font-semibold"
-                  : "hover:text-white/80"
+                  ? "font-semibold"
+                  : "dark:hover:text-white/80 hover:text-black/50"
               }`}
             >
               MCAP
@@ -389,13 +389,13 @@ export default function LightweightChart({
           </div>
 
           {/* ETH / USD Toggle */}
-          <div className="text-sm text-white/60">
+          <div className="text-sm dark:text-white/60 text-black/80">
             <span
               onClick={() => setCurrency("ETH")}
               className={`cursor-pointer transition ${
                 currency === "ETH"
-                  ? "text-white font-semibold"
-                  : "hover:text-white/80"
+                  ? " font-semibold"
+                  : "dark:hover:text-white/80 hover:text-black/50"
               }`}
             >
               ETH
@@ -405,8 +405,8 @@ export default function LightweightChart({
               onClick={() => setCurrency("USD")}
               className={`cursor-pointer transition ${
                 currency === "USD"
-                  ? "text-white font-semibold"
-                  : "hover:text-white/80"
+                  ? "font-semibold"
+                  : "dark:hover:text-white/80 hover:text-black/50"
               }`}
             >
               USD

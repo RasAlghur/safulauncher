@@ -27,6 +27,7 @@ import { FaTelegram } from "react-icons/fa6";
 import { socket } from "../lib/socket";
 import { useTrendingTokens } from "../lib/useTrendingTokens";
 import CopyButton from "../components/generalcomponents/CopyButton";
+import Message from "../components/svgcomponents/Message";
 
 const gradientSteps = [
   { threshold: 9, color: "#dc2626" }, // Red
@@ -104,6 +105,9 @@ export default function Tokens() {
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
   const [featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
   const [hasSetFeatured, setHasSetFeatured] = useState(false);
+  const [messageCountMap, setMessageCountMap] = useState<
+    Record<string, number>
+  >({});
 
   const [curveProgressMap, setCurveProgressMap] = useState<
     Record<string, number>
@@ -507,14 +511,63 @@ export default function Tokens() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  useEffect(() => {
+    if (tokens.length === 0) return;
+
+    async function fetchWithRetry<T>(
+      fn: () => Promise<T>,
+      retries = 3,
+      delay = 500
+    ): Promise<T> {
+      try {
+        return await fn();
+      } catch (err: any) {
+        const status = err?.response?.status;
+
+        // Skip retry if it's a permanent error (e.g., Not Found)
+        if (status === 404) {
+          throw err;
+        }
+
+        if (retries === 0) throw err;
+
+        await new Promise((res) => setTimeout(res, delay));
+        return fetchWithRetry(fn, retries - 1, delay * 2); // exponential backoff
+      }
+    }
+
+    async function fetchMessageCounts() {
+      const counts: Record<string, number> = {};
+
+      await Promise.allSettled(
+        tokens.map(async (token) => {
+          try {
+            const res = await fetchWithRetry(() =>
+              base.get(`message-count/${token.tokenAddress}`)
+            );
+            counts[token.tokenAddress] = Number(res?.data?.data ?? 0);
+          } catch (err) {
+            console.error(
+              `Error fetching message count for ${token.tokenAddress} after retries`,
+              err
+            );
+            counts[token.tokenAddress] = 0;
+          }
+        })
+      );
+
+      setMessageCountMap(counts);
+    }
+
+    fetchMessageCounts();
+  }, [tokens, base]);
+
   // Handle click events to prevent nested anchor navigation
   // const handleWebsiteClick = (e: React.MouseEvent, url: string) => {
   //   e.preventDefault();
   //   e.stopPropagation();
   //   window.open(url, "_blank", "noopener,noreferrer");
   // };
-
-  console.log("sortedTokens", sortedTokens);
 
   // Loading skeleton component
   const TokenSkeleton = () => (
@@ -540,7 +593,7 @@ export default function Tokens() {
 
   const { trendingData } = useTrendingTokens("7d");
 
-  console.log("sortedTokens", sortedTokens);
+  // console.log("sortedTokens", sortedTokens);
   return (
     <div className="mountain ">
       <Navbar />
@@ -972,6 +1025,12 @@ export default function Tokens() {
                                 <FaTelegram className="text-black dark:text-white text-[32px]" />
                               </a>
                             )}
+                          </div>
+                          <div className="mt-auto relative">
+                            <Message className="" />
+                            <p className="absolute -right-1 -top-1 text-white size-4 flex items-center justify-center rounded-full bg-red-500">
+                              {messageCountMap[t.tokenAddress] ?? 0}
+                            </p>
                           </div>
                         </div>
                       </div>

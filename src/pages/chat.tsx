@@ -32,13 +32,19 @@ interface oldMessages {
 type prop = {
   address: string | undefined;
   tokenAddress: string | undefined;
+  onMessageCountChange?: (count: number) => void; // NEW
 };
-export default function Chat({ address, tokenAddress }: prop) {
+export default function Chat({
+  address,
+  tokenAddress,
+  onMessageCountChange,
+}: prop) {
   const [message, setMessage] = useState("");
   const base = useApiClient();
   const [messages, setMessages] = useState<MessagePayload[]>([]);
   const [hasNextPage, setHasNextPage] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [, setTotalCount] = useState<number>(0); // NEW
   const [showScrollButton, setShowScrollButton] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -62,16 +68,17 @@ export default function Chat({ address, tokenAddress }: prop) {
   };
 
   useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
+    if (!socket.connected) socket.connect();
 
-    // Join the group chat room
     socket.emit("joinRoom", String(tokenAddress));
 
     const handleReceiveMessage = (msg: MessagePayload) => {
-      // console.log("Received message:", msg);
-      setMessages((prevMessages) => [...prevMessages, msg]);
+      setMessages((prevMessages) => {
+        const updated = [...prevMessages, msg];
+        const newCount = updated.length;
+        onMessageCountChange?.(newCount); // update parent in real time
+        return updated;
+      });
     };
 
     socket.on("recMessage", handleReceiveMessage);
@@ -80,7 +87,7 @@ export default function Chat({ address, tokenAddress }: prop) {
       socket.off("recMessage", handleReceiveMessage);
       socket.disconnect();
     };
-  }, [tokenAddress]);
+  }, [tokenAddress, onMessageCountChange]);
 
   const fetchMessages = useCallback(
     async (page = 1, append = false, groupId = tokenAddress) => {
@@ -89,10 +96,11 @@ export default function Chat({ address, tokenAddress }: prop) {
       });
       const { data } = response.data;
       const oldMessages: oldMessages = data;
-      // console.log(oldMessages);
 
       setHasNextPage(oldMessages.hasNextPage);
       setCurrentPage(oldMessages.currentPage);
+      setTotalCount(oldMessages.totalCount); // NEW
+      onMessageCountChange?.(oldMessages.totalCount); // send to parent
 
       if (append) {
         setMessages((prev) => [...oldMessages.data, ...prev]);
@@ -100,7 +108,7 @@ export default function Chat({ address, tokenAddress }: prop) {
         setMessages(oldMessages.data);
       }
     },
-    [tokenAddress, base]
+    [tokenAddress, base, onMessageCountChange]
   );
 
   const scrollToBottom = () => {
