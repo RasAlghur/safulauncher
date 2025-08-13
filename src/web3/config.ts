@@ -1,6 +1,6 @@
 
 export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
-  1: "0x0000000000000000000000000000000000000000", // Mainnet address
+  1: "0xB9890A2c1c448cb87877b6121c4518F04808F90D", // Mainnet address
   11155111: "0x2321F6a4214f473348C177F9D402bf31789c32C7", // Sepolia address
 };
 
@@ -20,7 +20,7 @@ export const ETH_USDT_PRICE_FEED_ADDRESSES: Record<number, `0x${string}`> = {
 };
 
 export const SAFU_TOKEN_ADDRESSES: Record<number, `0x${string}`> = {
-  1: "0x0000000000000000000000000000000000000000", // Mainnet address
+  1: "0x32b9c89248Bea35c42FCCa76856d31D6D00d3A61", // Mainnet address
   11155111: "0x4BEdac867d705d9225293c6eba1Fc2d98Fa70DD8", // Sepolia address
 };
 
@@ -150,8 +150,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "capsBps",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "type": "uint256[]",
+          "internalType": "uint256[]"
         }
       ],
       "outputs": [],
@@ -232,8 +232,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "maxWalletAmountOnSafu_",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "bundleAddrs",
@@ -242,13 +242,13 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "bundleShares",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "type": "uint256[]",
+          "internalType": "uint256[]"
         },
         {
           "name": "taxOnDexBps_",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "taxOnDexRecipients",
@@ -257,13 +257,13 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "taxOnDexPercents",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "type": "uint256[]",
+          "internalType": "uint256[]"
         },
         {
           "name": "taxOnSafuBps_",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "taxOnSafuRecipients_",
@@ -272,8 +272,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "taxOnSafuPercents_",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "type": "uint256[]",
+          "internalType": "uint256[]"
         },
         {
           "name": "whitelistOnly_",
@@ -287,8 +287,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "initialCapsBps",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "type": "uint256[]",
+          "internalType": "uint256[]"
         },
         {
           "name": "myIndex",
@@ -348,8 +348,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "wlCount",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "totalSupply",
@@ -388,13 +388,13 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "taxOnSafuBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "taxOnDexBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "isBundled",
@@ -418,8 +418,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "maxWalletAmountOnSafu",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -617,8 +617,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -630,8 +630,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -651,13 +651,13 @@ export const LAUNCHER_ABI_V2 = {
     },
     {
       "type": "function",
-      "name": "locker",
+      "name": "lpLockDur",
       "inputs": [],
       "outputs": [
         {
           "name": "",
-          "type": "address",
-          "internalType": "address"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -669,8 +669,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -684,6 +684,25 @@ export const LAUNCHER_ABI_V2 = {
           "name": "",
           "type": "address",
           "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "pendingTaxWithdrawals",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -741,47 +760,70 @@ export const LAUNCHER_ABI_V2 = {
     },
     {
       "type": "function",
+      "name": "setLockDuration",
+      "inputs": [
+        {
+          "name": "_tLockDur",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_lpLockDur",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tLockPer",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "setTierThreshold",
       "inputs": [
         {
           "name": "_tier1Threshold",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier1ThresholdDiv",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier1WLCap",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier1WLDiv",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier2Threshold",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier2ThresholdDiv",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier2WLCap",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_tier2WLDiv",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "outputs": [],
@@ -793,8 +835,8 @@ export const LAUNCHER_ABI_V2 = {
       "inputs": [
         {
           "name": "_newBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "outputs": [],
@@ -815,13 +857,39 @@ export const LAUNCHER_ABI_V2 = {
     },
     {
       "type": "function",
+      "name": "tLckPrcnt",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tLockDur",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "taxOnDexMaxBps",
       "inputs": [],
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -833,8 +901,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -846,8 +914,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -859,8 +927,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -872,8 +940,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -885,8 +953,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -989,8 +1057,8 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
@@ -1027,13 +1095,13 @@ export const LAUNCHER_ABI_V2 = {
       "inputs": [
         {
           "name": "_taxOnSafuMaxBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_taxOnDexMaxBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_bundleMaxAmount",
@@ -1047,8 +1115,8 @@ export const LAUNCHER_ABI_V2 = {
         },
         {
           "name": "_maxWhitelistBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "outputs": [],
@@ -1060,13 +1128,13 @@ export const LAUNCHER_ABI_V2 = {
       "inputs": [
         {
           "name": "_newBps",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         },
         {
           "name": "_newDiv",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "outputs": [],
@@ -1169,11 +1237,18 @@ export const LAUNCHER_ABI_V2 = {
       "outputs": [
         {
           "name": "",
-          "type": "uint16",
-          "internalType": "uint16"
+          "type": "uint256",
+          "internalType": "uint256"
         }
       ],
       "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "withdrawPending",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
     },
     {
       "type": "function",

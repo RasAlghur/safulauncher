@@ -15,7 +15,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI_V1, SAFU_LAUNCHER_ADDRESSES_V1 } from "../web3/config";
+import { LAUNCHER_ABI_V2, SAFU_LAUNCHER_ADDRESSES_V2 } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -56,7 +56,7 @@ export default function Launch(): JSX.Element {
   const { address, isConnected } = useAccount();
   const { saveOrFetchUser } = useUser();
   const networkInfo = useNetworkEnvironment();
-  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId];
+  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
 
   // Basic fields
   const [name, setName] = useState("");
@@ -452,7 +452,7 @@ export default function Launch(): JSX.Element {
   };
 
   const { data: getTradeFeeBps } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V2,
     address: safuLauncherAddress,
     functionName: "tradeFeeBps",
     query: {
@@ -992,7 +992,7 @@ export default function Launch(): JSX.Element {
     : 0;
 
   const { data: maxWhitelistBps } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V2,
     address: safuLauncherAddress,
     functionName: "maxWhitelistBps",
     query: {
@@ -1001,7 +1001,7 @@ export default function Launch(): JSX.Element {
   });
 
   const { data: initialPoolEth } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V2,
     address: safuLauncherAddress,
     functionName: "initialPoolEth",
     query: {
@@ -1156,18 +1156,18 @@ export default function Launch(): JSX.Element {
         boolean,
         boolean,
         boolean,
-        number,
+        bigint,
         readonly `0x${string}`[],
-        readonly number[],
-        number,
+        readonly bigint[],
+        bigint,
         readonly `0x${string}`[],
-        readonly number[],
-        number,
+        readonly bigint[],
+        bigint,
         readonly `0x${string}`[],
-        readonly number[],
+        readonly bigint[],
         boolean,
         readonly `0x${string}`[],
-        readonly number[],
+        readonly bigint[],
         string
       ],
     [
@@ -1199,13 +1199,13 @@ export default function Launch(): JSX.Element {
   ).toFixed(2);
 
   const { data: uniV2Router } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V2,
     address: safuLauncherAddress,
     functionName: "_uniV2Router",
   });
 
   const { data: uniV2WETH } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V2,
     address: safuLauncherAddress,
     functionName: "WETH",
   });
@@ -1293,7 +1293,7 @@ export default function Launch(): JSX.Element {
 
         setDeployError("");
         writeContract({
-          ...LAUNCHER_ABI_V1,
+          ...LAUNCHER_ABI_V2,
           address: safuLauncherAddress,
           functionName: "createToken",
           args: argArray,
