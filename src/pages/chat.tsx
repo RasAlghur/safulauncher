@@ -171,7 +171,12 @@ export default function Chat({
       <div
         className="flex-1 overflow-y-auto px-4 py-6 relative"
         ref={chatContainerRef}
-        style={{ scrollBehavior: "smooth", scrollbarWidth: "none" }}
+        style={{
+          scrollBehavior: "smooth",
+          scrollbarWidth: "none",
+          maxHeight: "400px", // 👈 limit height
+          overflowY: "auto",
+        }}
       >
         {messages.map((msg, index) => {
           const isWalletAddress = (value: string | undefined) => {
