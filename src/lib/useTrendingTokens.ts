@@ -6,8 +6,9 @@ import {
   getPureGetLatestETHPrice,
   getPureInfoDataRaw,
   getPureMetrics,
+  getPureV2AmountOutMarketCap,
+  getPureInfoV2DataRaw
 } from "../web3/readContracts";
-// import { base } from "../lib/api";
 import { useApiClient } from "../lib/api";
 import type { TokenMetadata } from "../pages/Tokens";
 
@@ -51,6 +52,28 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
       return (typeof raw === "number" ? raw : Number(raw)) / 1e8;
     };
 
+    const fetchTokenData = async (tokenAddress: string, tokenVersion?: string) => {
+      try {
+        // Determine token version and select appropriate functions
+        const isV2 = tokenVersion === "token_v2";
+        const getInfo = isV2 ? getPureInfoV2DataRaw : getPureInfoDataRaw;
+        const getAmountOut = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
+
+        // Fetch token info and price
+        const info = await getInfo(networkInfo.chainId, tokenAddress);
+        const rawAmt = await getAmountOut(networkInfo.chainId, tokenAddress);
+
+        const supply = info === 0n ? 0 : Number(info[6]);
+        const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+        const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
+
+        return { marketCap, pricePerToken };
+      } catch (error) {
+        console.error(`Error fetching data for token ${tokenAddress}:`, error);
+        return { marketCap: 0, pricePerToken: 0 };
+      }
+    };
+
     const fetchTrendingData = async () => {
       setLoading(true);
       try {
@@ -73,20 +96,11 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
         const tokens = await Promise.all(
           Object.entries(grouped).map(async ([tokenAddress, txs]) => {
             try {
-              const info = await getPureInfoDataRaw(
-                networkInfo.chainId,
-                tokenAddress
-              );
-              const rawAmt = await getPureAmountOutMarketCap(
-                networkInfo.chainId,
-                tokenAddress
-              );
-
-              const supply = info === 0n ? 0 : Number(info[6]);
-              const pricePerToken = rawAmt
-                ? Number(rawAmt.toString()) / 1e18
-                : 0;
-              const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
+              // Extract token version from token metadata
+              const tokenVersion = txs[0]?.token?.tokenVersion;
+              
+              // Fetch token data with version check
+              const { marketCap } = await fetchTokenData(tokenAddress, tokenVersion);
 
               const volume =
                 txs.reduce(

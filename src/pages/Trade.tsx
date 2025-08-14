@@ -35,14 +35,14 @@ import {
 import { MaxUint256, ethers } from "ethers";
 import "../App.css";
 import {
-  // getPureInfoDataRaw,
   getPureInfoV2DataRaw,
-  // getPureAmountOutMarketCap,
-  // getPureAmountOut,
   getPureV2AmountOut,
   getPureV2AmountOutMarketCap,
   getListingMilestone,
   getPureGetLatestETHPrice,
+  getPureInfoDataRaw,
+  getPureAmountOut,
+  getPureAmountOutMarketCap,
 } from "../web3/readContracts";
 import LightweightChart from "../web3/lightWeightChart";
 import TimeframeSelector from "../web3/timeframeSelector";
@@ -431,11 +431,12 @@ export default function Trade() {
   const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
   const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
   const taxOnSafuBps = Array.isArray(infoData)
-    ? Number(((infoData as unknown[])[13] as number) / 100)
+    ? Number((infoData as any)[13]) / 100
     : 0;
   const taxOnDexBps = Array.isArray(infoData)
-    ? Number(((infoData as unknown[])[14] as number) / 100)
+    ? Number((infoData as any)[14]) / 100
     : 0;
+
   const isMaxWalletOnSafu = Array.isArray(infoData) ? Number(infoData[18]) : 0;
   const rawMaxWalletBps = Array.isArray(infoData)
     ? ((infoData as unknown[])[19] as bigint)
@@ -474,7 +475,7 @@ export default function Trade() {
         ...UNISWAP_ROUTER_ABI,
         address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
         functionName: "getAmountsOut",
-        args: [amountInForUni as any, uniPath as any],
+        args: [amountInForUni as bigint, uniPath as any],
       }
       : undefined
   );
@@ -521,61 +522,6 @@ export default function Trade() {
       return launcherAmountRaw ?? null;
     }
   }, [isListed, uniAmountsRaw, launcherAmountRaw, amountInForUni]); // Add amountInForUni as dependency
-
-
-  // const {
-  //   data: uniAmountsRaw,
-  //   isLoading: isLoadingUniAmounts,
-  //   refetch: refetchUniAmounts,
-  // } = useReadContract(
-  //   tokenAddress && isListed
-  //     ? {
-  //       ...UNISWAP_ROUTER_ABI,
-  //       address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
-  //       functionName: "getAmountsOut",
-  //       args: [amountInForUni as any, uniPath as any],
-  //       // watch: true // optional
-  //     }
-  //     : undefined
-  // );
-
-  // const {
-  //   data: launcherAmountRaw,
-  //   isLoading: isLoadingLauncherAmount,
-  //   refetch: refetchLauncherAmount,
-  // } = useReadContract(
-  //   tokenAddress
-  //     ? {
-  //       abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-  //       address: isV2
-  //         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-  //         : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-  //       functionName: "getAmountOut",
-  //       args: [
-  //         tokenAddress,
-  //         mode === "buy" ? ethValue : tokenValue,
-  //         mode === "buy" ? true : false,
-  //       ],
-  //     }
-  //     : undefined
-  // );
-
-  // const amountOut = useMemo(() => {
-  //   console.log("Amount Out");
-  //   if (isListed) {
-  //     console.log("IsListed");
-  //     console.log("amountInForUni", amountInForUni);
-  //     if (!uniAmountsRaw) return null;
-  //     console.log("uniAmountsRaw", uniAmountsRaw);
-  //     const arr = Array.isArray(uniAmountsRaw) ? uniAmountsRaw : (uniAmountsRaw as any);
-  //     console.log("Arr", arr);
-  //     return arr[arr.length - 1] ?? null; // last element is the output token amount
-  //   } else {
-  //     console.log("launcherAmountRaw", launcherAmountRaw);
-  //     return launcherAmountRaw ?? null;
-  //   }
-  // }, [isListed, uniAmountsRaw, launcherAmountRaw]);
-
 
 
   // Memoized values
@@ -686,8 +632,7 @@ export default function Trade() {
 
       try {
         const amountIn = mode === "buy" ? ethValue : tokenValue;
-        // const fn = isV2 ? getPureV2AmountOut : getPureAmountOut;
-        const fn = getPureV2AmountOut;
+        const fn = isV2 ? getPureV2AmountOut : getPureAmountOut;
         const result = await fn(
           networkInfo.chainId,
           tokenAddress!,
@@ -879,31 +824,31 @@ export default function Trade() {
       setIsLoadingFallbackAmountOut(true);
       const fetchFallbackData = async () => {
         try {
-          // if (isV2) {
-          const [infoData, ethPrice] = await Promise.all([
-            await getPureInfoV2DataRaw(networkInfo.chainId, tokenAddress).catch(
-              () => []
-            ),
-            priceFeedAddress
-              ? await getPureGetLatestETHPrice(
-                networkInfo.chainId,
-                priceFeedAddress
-              ).catch(() => null)
-              : Promise.resolve(null),
-          ]);
-          setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
-          setFallbackETHPrice(ethPrice);
-          // }
-          // else {
-          //   const [infoData, ethPrice] = await Promise.all([
-          //     await getPureInfoDataRaw(networkInfo.chainId, tokenAddress).catch(() => []),
-          //     priceFeedAddress
-          //       ? await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress).catch(() => null)
-          //       : Promise.resolve(null),
-          //   ]);
-          //   setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
-          //   setFallbackETHPrice(ethPrice);
-          // }
+          if (isV2) {
+            const [infoData, ethPrice] = await Promise.all([
+              await getPureInfoV2DataRaw(networkInfo.chainId, tokenAddress).catch(
+                () => []
+              ),
+              priceFeedAddress
+                ? await getPureGetLatestETHPrice(
+                  networkInfo.chainId,
+                  priceFeedAddress
+                ).catch(() => null)
+                : Promise.resolve(null),
+            ]);
+            setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
+            setFallbackETHPrice(ethPrice);
+          }
+          else {
+            const [infoData, ethPrice] = await Promise.all([
+              await getPureInfoDataRaw(networkInfo.chainId, tokenAddress).catch(() => []),
+              priceFeedAddress
+                ? await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress).catch(() => null)
+                : Promise.resolve(null),
+            ]);
+            setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
+            setFallbackETHPrice(ethPrice);
+          }
         } catch (error) {
           console.error("Error loading fallback data:", error);
           setFallbackInfoData([]);
@@ -924,8 +869,7 @@ export default function Trade() {
 
       setIsLoadingOneTokenPrice(true);
       try {
-        // const fn = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
-        const fn = getPureV2AmountOutMarketCap;
+        const fn = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
         const raw = await fn(networkInfo.chainId, tokenAddress);
 
         if (raw !== undefined && raw !== null) {
@@ -1221,19 +1165,33 @@ export default function Trade() {
 
         refetchInfoData();
         refetchLatestETHPrice();
-        // if (isV2) {
-        await getPureV2AmountOutMarketCap(networkInfo.chainId, tokenAddress!)
-          .then((raw) => {
-            if (raw !== undefined && raw !== null) {
-              const eth = Number(raw.toString()) / 1e18;
-              setOneTokenPriceETH(eth);
-            } else {
-              setOneTokenPriceETH(0);
-            }
-          })
-          .catch((err) => {
-            console.error("Error updating token price after txn:", err);
-          });
+        if (isV2) {
+          await getPureV2AmountOutMarketCap(networkInfo.chainId, tokenAddress!)
+            .then((raw) => {
+              if (raw !== undefined && raw !== null) {
+                const eth = Number(raw.toString()) / 1e18;
+                setOneTokenPriceETH(eth);
+              } else {
+                setOneTokenPriceETH(0);
+              }
+            })
+            .catch((err) => {
+              console.error("Error updating token price after txn:", err);
+            });
+        } else {
+          await getPureAmountOutMarketCap(networkInfo.chainId, tokenAddress!)
+            .then((raw) => {
+              if (raw !== undefined && raw !== null) {
+                const eth = Number(raw.toString()) / 1e18;
+                setOneTokenPriceETH(eth);
+              } else {
+                setOneTokenPriceETH(0);
+              }
+            })
+            .catch((err) => {
+              console.error("Error updating token price after txn:", err);
+            });
+        }
 
         refetchSafuHolder();
         refetchSafuSupply();
@@ -1682,7 +1640,6 @@ export default function Trade() {
           if (!amountOutRaw) throw new Error("Could not fetch swap quote");
 
           const slippageBasis = 10000n - BigInt(Math.round(slippage * 100));
-
           const minAmountOut = (amountOutRaw * slippageBasis) / 10000n;
 
           // Calculate deadline
@@ -3088,7 +3045,7 @@ export default function Trade() {
                   <div className="relative">
                     <div className="flex items-center gap-2">
                       {/* Settings Button - only shown when listed */}
-                      {isListed && (
+                      {isListed === 1 ? (
                         <button
                           type="button"
                           onClick={() => setShowSettings(!showSettings)}
@@ -3096,7 +3053,7 @@ export default function Trade() {
                         >
                           <FiSettings className="text-black dark:text-white text-sm" />
                         </button>
-                      )}
+                      ) : ''}
 
                       <button
                         type="button"

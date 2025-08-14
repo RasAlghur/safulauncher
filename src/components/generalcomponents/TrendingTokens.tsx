@@ -216,7 +216,7 @@ const TrendingTokens = () => {
               }
 
               // Get contract data based on token version
-              const version = token.tokenVersion || "token_v1";
+              const version = token.tokenVersion;
               let info, rawAmt;
 
               if (version === "token_v2") {
