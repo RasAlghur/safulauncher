@@ -25,9 +25,12 @@ import {
   LAUNCHER_ABI_V1,
   PRICE_GETTER_ABI,
   SAFU_TOKEN_ADDRESSES,
+  UNISWAP_V2_ROUTER_ADDRESSES,
+  UNISWAP_ROUTER_ABI,
   ETH_USDT_PRICE_FEED_ADDRESSES,
   SAFU_LAUNCHER_ADDRESSES_V2,
   PRICE_GETTER_ADDRESSES,
+  WETH_ADDRESS,
 } from "../web3/config";
 import { MaxUint256, ethers } from "ethers";
 import "../App.css";
@@ -45,6 +48,7 @@ import LightweightChart from "../web3/lightWeightChart";
 import TimeframeSelector from "../web3/timeframeSelector";
 import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
+import { FiSettings } from "react-icons/fi";
 import { FiCheckCircle } from "react-icons/fi";
 import { MdOutlineCancel } from "react-icons/md";
 import { GrSubtractCircle } from "react-icons/gr";
@@ -292,11 +296,16 @@ export default function Trade() {
   const [fallbackAmountOut, setFallbackAmountOut] = useState<bigint | null>(
     null
   );
+
+  const [showSettings, setShowSettings] = useState(false);
+
   const [isLoadingFallbackAmountOut, setIsLoadingFallbackAmountOut] =
     useState(false);
 
   // Core state
   const [token, setToken] = useState<TokenMetadata | null>(null);
+  const [slippage, setSlippage] = useState<number>(0.5);
+  const [deadlineMinutes, setDeadlineMinutes] = useState<number>(30);
   const [txLogs, setTxLogs] = useState<TxLog[]>([]);
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState<string>("");
@@ -362,6 +371,213 @@ export default function Trade() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isLoadingChartRef = useRef(false);
 
+  const isV2 = token?.tokenVersion === "token_v2";
+
+
+  // Computed values with error handling
+  const ethValue = useMemo(() => {
+    try {
+      return ethers.parseEther(mode === "buy" ? amount || "0" : "0");
+    } catch {
+      return BigInt(0);
+    }
+  }, [mode, amount]);
+
+  const tokenValue = useMemo(() => {
+    try {
+      return ethers.parseEther(mode === "sell" ? amount || "0" : "0");
+    } catch {
+      return BigInt(0);
+    }
+  }, [mode, amount]);
+
+  const {
+    data: whitelistBalance,
+    isLoading: isLoadingWhitelistBalance,
+    refetch: refetchWhitelistBalance,
+  } = useReadContract({
+    abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+    address: isV2
+      ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+
+    functionName: "getRemainingWhitelistBalance",
+    args: [tokenAddress as `0x${string}`, address as `0x${string}`],
+  });
+
+
+  const {
+    data: infoDataRaw,
+    isLoading: isLoadingInfoData,
+    refetch: refetchInfoData,
+  } = useReadContract({
+    abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+    address: isV2
+      ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+    functionName: "data",
+    args: [tokenAddress!],
+  });
+
+  const infoData = isConnected ? infoDataRaw : fallbackInfoData;
+  const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 0;
+  const ethRaised = Array.isArray(infoData) ? Number(infoData[7]) : 0;
+  const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
+  const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
+  const isBundled = Array.isArray(infoData) ? Number(infoData[15]) : 0;
+  const isTaxedOnDex = Array.isArray(infoData) ? Number(infoData[16]) : 0;
+  const IsTaxedOnSafu = Array.isArray(infoData) ? Number(infoData[17]) : 0;
+
+  const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
+  const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
+  const taxOnSafuBps = Array.isArray(infoData)
+    ? Number(((infoData as unknown[])[13] as number) / 100)
+    : 0;
+  const taxOnDexBps = Array.isArray(infoData)
+    ? Number(((infoData as unknown[])[14] as number) / 100)
+    : 0;
+  const isMaxWalletOnSafu = Array.isArray(infoData) ? Number(infoData[18]) : 0;
+  const rawMaxWalletBps = Array.isArray(infoData)
+    ? ((infoData as unknown[])[19] as bigint)
+    : BigInt(0);
+  const maxWalletAmountOnSafu = Number(rawMaxWalletBps) / 100;
+  const mwAmountOnSafu = Number((maxWalletAmountOnSafu / 100) * tokenSupply);
+  const ywhitelistBalance = isLoadingWhitelistBalance
+    ? 0
+    : whitelistBalance !== undefined
+      ? Number(whitelistBalance) / 1e18
+      : 0;
+
+  const uniPath = mode === "buy" ? [WETH_ADDRESS[networkInfo.chainId], tokenAddress!] : [tokenAddress!, WETH_ADDRESS[networkInfo.chainId]];
+  const amountInForUni = mode === "buy" ? ethValue : tokenValue;
+
+  // if (isListed) {
+  //   const {
+  //     data: getAmountOut,
+  //     isLoading: isLoadingGetAmount,
+  //     refetch: refetchGetAmount,
+  //   } = useReadContract(
+
+  //     )
+  // }
+
+  // Update the condition to include amountInForUni check
+  const shouldCallUni = tokenAddress && isListed && amountInForUni > 0n;
+
+  const {
+    data: uniAmountsRaw,
+    isLoading: isLoadingUniAmounts,
+    refetch: refetchUniAmounts,
+  } = useReadContract(
+    shouldCallUni
+      ? {
+        ...UNISWAP_ROUTER_ABI,
+        address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+        functionName: "getAmountsOut",
+        args: [amountInForUni as any, uniPath as any],
+      }
+      : undefined
+  );
+
+  const {
+    data: launcherAmountRaw,
+    isLoading: isLoadingLauncherAmount,
+    refetch: refetchLauncherAmount,
+  } = useReadContract(
+    tokenAddress
+      ? {
+        abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+        address: isV2
+          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        functionName: "getAmountOut",
+        args: [
+          tokenAddress,
+          mode === "buy" ? ethValue : tokenValue,
+          mode === "buy" ? true : false,
+        ],
+      }
+      : undefined
+  );
+
+  const isLoadingAmountOut = isListed ? isLoadingUniAmounts : isLoadingLauncherAmount;
+  const refetchAmountOut = isListed ? refetchUniAmounts : refetchLauncherAmount;
+
+
+  // Update the amountOut calculation to handle zero case
+  const amountOut = useMemo(() => {
+    if (isListed) {
+      // Handle zero input amount case
+      if (amountInForUni === 0n) return 0n;
+      if (!uniAmountsRaw) {
+        console.log("uniAmountsRaw", uniAmountsRaw);
+        return null;
+      }
+      const arr = Array.isArray(uniAmountsRaw) ? uniAmountsRaw : (uniAmountsRaw as any);
+      console.log("arr");
+      return arr[arr.length - 1] ?? null;
+    } else {
+      console.log("launcherAmountRaw");
+      return launcherAmountRaw ?? null;
+    }
+  }, [isListed, uniAmountsRaw, launcherAmountRaw, amountInForUni]); // Add amountInForUni as dependency
+
+
+  // const {
+  //   data: uniAmountsRaw,
+  //   isLoading: isLoadingUniAmounts,
+  //   refetch: refetchUniAmounts,
+  // } = useReadContract(
+  //   tokenAddress && isListed
+  //     ? {
+  //       ...UNISWAP_ROUTER_ABI,
+  //       address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+  //       functionName: "getAmountsOut",
+  //       args: [amountInForUni as any, uniPath as any],
+  //       // watch: true // optional
+  //     }
+  //     : undefined
+  // );
+
+  // const {
+  //   data: launcherAmountRaw,
+  //   isLoading: isLoadingLauncherAmount,
+  //   refetch: refetchLauncherAmount,
+  // } = useReadContract(
+  //   tokenAddress
+  //     ? {
+  //       abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+  //       address: isV2
+  //         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+  //         : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+  //       functionName: "getAmountOut",
+  //       args: [
+  //         tokenAddress,
+  //         mode === "buy" ? ethValue : tokenValue,
+  //         mode === "buy" ? true : false,
+  //       ],
+  //     }
+  //     : undefined
+  // );
+
+  // const amountOut = useMemo(() => {
+  //   console.log("Amount Out");
+  //   if (isListed) {
+  //     console.log("IsListed");
+  //     console.log("amountInForUni", amountInForUni);
+  //     if (!uniAmountsRaw) return null;
+  //     console.log("uniAmountsRaw", uniAmountsRaw);
+  //     const arr = Array.isArray(uniAmountsRaw) ? uniAmountsRaw : (uniAmountsRaw as any);
+  //     console.log("Arr", arr);
+  //     return arr[arr.length - 1] ?? null; // last element is the output token amount
+  //   } else {
+  //     console.log("launcherAmountRaw", launcherAmountRaw);
+  //     return launcherAmountRaw ?? null;
+  //   }
+  // }, [isListed, uniAmountsRaw, launcherAmountRaw]);
+
+
+
   // Memoized values
   const isTokenCreator = useMemo(
     () =>
@@ -382,8 +598,6 @@ export default function Trade() {
   const currentTxLogs = sortedTxLogs.slice(indexOfFirstTx, indexOfLastTx);
   const totalPages = Math.ceil(sortedTxLogs.length / transactionsPerPage);
 
-  const isV2 = token?.tokenVersion === "token_v2";
-
   // Wagmi hooks
   const {
     data: txHash,
@@ -396,23 +610,6 @@ export default function Trade() {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
   } = useWaitForTransactionReceipt({ hash: txHash });
-
-  // Computed values with error handling
-  const ethValue = useMemo(() => {
-    try {
-      return ethers.parseEther(mode === "buy" ? amount || "0" : "0");
-    } catch {
-      return BigInt(0);
-    }
-  }, [mode, amount]);
-
-  const tokenValue = useMemo(() => {
-    try {
-      return ethers.parseEther(mode === "sell" ? amount || "0" : "0");
-    } catch {
-      return BigInt(0);
-    }
-  }, [mode, amount]);
 
   // Contract read hooks
   const {
@@ -442,34 +639,16 @@ export default function Trade() {
         functionName: "allowance",
         args: [
           address as `0x${string}`,
-          isV2
-            ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          isListed
+            ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
+            : isV2
+              ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+              : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
         ],
       }
       : undefined
   );
 
-  const {
-    data: amountOut,
-    isLoading: isLoadingAmountOut,
-    refetch: refetchAmountOut,
-  } = useReadContract(
-    tokenAddress
-      ? {
-        abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-        address: isV2
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
-      : undefined
-  );
 
   // Initialize when wallet connects and set up real-time fetches
   useEffect(() => {
@@ -482,6 +661,12 @@ export default function Trade() {
       isMounted = false;
     };
   }, [isConnected, address, saveOrFetchUser]);
+
+  useEffect(() => {
+    if (isListed && taxOnDexBps > 0) {
+      setSlippage(taxOnDexBps);
+    }
+  }, [isListed, taxOnDexBps]);
 
   useEffect(() => {
     if (!autoSlideEnabled) return; //  Don't set interval if user toggled manually
@@ -545,19 +730,6 @@ export default function Trade() {
     : isLoadingFallbackAmountOut;
 
   const {
-    data: infoDataRaw,
-    isLoading: isLoadingInfoData,
-    refetch: refetchInfoData,
-  } = useReadContract({
-    abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-    address: isV2
-      ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-    functionName: "data",
-    args: [tokenAddress!],
-  });
-
-  const {
     data: latestETHPrice,
     isLoading: isLoadingLatestETHPrice,
     refetch: refetchLatestETHPrice,
@@ -566,20 +738,6 @@ export default function Trade() {
     abi: PRICE_GETTER_ABI.abi,
     functionName: "getLatestETHPrice",
     args: [ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId]!],
-  });
-
-  const {
-    data: whitelistBalance,
-    isLoading: isLoadingWhitelistBalance,
-    refetch: refetchWhitelistBalance,
-  } = useReadContract({
-    abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-    address: isV2
-      ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-
-    functionName: "getRemainingWhitelistBalance",
-    args: [tokenAddress as `0x${string}`, address as `0x${string}`],
   });
 
   const {
@@ -617,34 +775,6 @@ export default function Trade() {
   });
 
   // Computed contract data
-  const infoData = isConnected ? infoDataRaw : fallbackInfoData;
-  const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 0;
-  const ethRaised = Array.isArray(infoData) ? Number(infoData[7]) : 0;
-  const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
-  const isStartTrading = Array.isArray(infoData) ? Number(infoData[1]) : 0;
-  const isBundled = Array.isArray(infoData) ? Number(infoData[15]) : 0;
-  const isTaxedOnDex = Array.isArray(infoData) ? Number(infoData[16]) : 0;
-  const IsTaxedOnSafu = Array.isArray(infoData) ? Number(infoData[17]) : 0;
-
-  const isListed = Array.isArray(infoData) ? Number(infoData[2]) : 0;
-  const isWhiteListOngoing = Array.isArray(infoData) ? Number(infoData[3]) : 0;
-  const taxOnSafuBps = Array.isArray(infoData)
-    ? Number(((infoData as unknown[])[13] as number) / 100)
-    : 0;
-  const taxOnDexBps = Array.isArray(infoData)
-    ? Number(((infoData as unknown[])[14] as number) / 100)
-    : 0;
-  const isMaxWalletOnSafu = Array.isArray(infoData) ? Number(infoData[18]) : 0;
-  const rawMaxWalletBps = Array.isArray(infoData)
-    ? ((infoData as unknown[])[19] as bigint)
-    : BigInt(0);
-  const maxWalletAmountOnSafu = Number(rawMaxWalletBps) / 100;
-  const mwAmountOnSafu = Number((maxWalletAmountOnSafu / 100) * tokenSupply);
-  const ywhitelistBalance = isLoadingWhitelistBalance
-    ? 0
-    : whitelistBalance !== undefined
-      ? Number(whitelistBalance) / 1e18
-      : 0;
 
   // 2) On chainId change, fetch it once
   useEffect(() => {
@@ -671,14 +801,19 @@ export default function Trade() {
     if (!infoData) return 0;
 
     // pull out your sold & total
-    const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
-    const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 1;
 
+    if (isListed) {
+      return 100;
+    } else {
+      const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
+
+      const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 1;
+      if (listingMilestonePct === null) return 0;
+      // only sell relative to milestone% of supply
+      const allowed = (listingMilestonePct / 100) * tokenSupply;
+      return Math.min(Math.max((tokenSold / allowed) * 100, 0), 100);
+    }
     // require that the milestone has arrived
-    if (listingMilestonePct === null) return 0;
-    // only sell relative to milestone% of supply
-    const allowed = (listingMilestonePct / 100) * tokenSupply;
-    return Math.min(Math.max((tokenSold / allowed) * 100, 0), 100);
   }, [infoData, listingMilestonePct]);
 
   // 4) Memoize the final clamped value
@@ -1105,6 +1240,8 @@ export default function Trade() {
         refetchSafuHolderBalance();
         refetchWhitelistBalance();
         refetchAmountOut();
+        refetchLauncherAmount();
+        refetchUniAmounts();
         refetchETHBalance();
         refetchBalance();
 
@@ -1129,6 +1266,8 @@ export default function Trade() {
     lastTxnType,
     loadChartData,
     marketCapUSD,
+    refetchUniAmounts,
+    refetchLauncherAmount,
     marketCapETH,
     oneTokenPriceETH,
     infoETHCurrentPrice,
@@ -1484,22 +1623,24 @@ export default function Trade() {
       setLastTxnType("approval");
       setErrorMsg("");
 
+      // Determine spender based on listing status
+      const spender = isListed
+        ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
+        : isV2
+          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
+
       writeContract({
         ...TOKEN_ABI,
         functionName: "approve",
         address: tokenAddress,
         args: [
-          isV2
-            ? (SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId] as `0x${string}`)
-            : (SAFU_LAUNCHER_ADDRESSES_V2[
-              networkInfo.chainId
-            ] as `0x${string}`),
+          spender as `0x${string}`,
           MaxUint256 as bigint,
         ],
       });
     } catch (error) {
       console.error("Approval rejected:", error);
-      // setNeedsApproval(true);
       setErrorMsg("Approval was rejected");
       setIsProcessingTxn(false);
     }
@@ -1512,6 +1653,7 @@ export default function Trade() {
     mode,
     networkInfo.chainId,
     isV2,
+    isListed, // Add isListed to dependencies
   ]);
 
   useEffect(() => {
@@ -1533,15 +1675,99 @@ export default function Trade() {
       setErrorMsg("");
       setLastTxnType(mode);
 
-      writeContract({
-        abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-        address: isV2
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        functionName: mode,
-        args: mode === "sell" ? [tokenAddress, tokenValue] : [tokenAddress],
-        value: mode === "buy" ? ethValue : undefined,
-      });
+      if (isListed) {
+        try {
+          // Calculate slippage-adjusted min amount
+          const amountOutRaw = amountOutSelect;
+          if (!amountOutRaw) throw new Error("Could not fetch swap quote");
+
+          const slippageBasis = 10000n - BigInt(Math.round(slippage * 100));
+
+          const minAmountOut = (amountOutRaw * slippageBasis) / 10000n;
+
+          // Calculate deadline
+          const deadline = Math.floor(Date.now() / 1000) + deadlineMinutes * 60;
+
+          // Choose swap method based on tax status
+          const methodName = isTaxedOnDex
+            ? mode === "buy"
+              ? "swapExactETHForTokensSupportingFeeOnTransferTokens"
+              : "swapExactTokensForETHSupportingFeeOnTransferTokens"
+            : mode === "buy"
+              ? "swapExactETHForTokens"
+              : "swapExactTokensForETH";
+
+          if (mode === "buy") {
+            console.log("buy", {
+              ...UNISWAP_ROUTER_ABI,
+              address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+              functionName: methodName,
+              args: [
+                minAmountOut, // amountOutMin
+                uniPath as readonly `0x${string}`[],
+                address as `0x${string}`,
+                BigInt(deadline)
+              ],
+              value: ethValue
+            })
+            // BUY transaction
+            writeContract({
+              ...UNISWAP_ROUTER_ABI,
+              address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+              functionName: methodName,
+              args: [
+                minAmountOut, // amountOutMin
+                uniPath as readonly `0x${string}`[],
+                address as `0x${string}`,
+                BigInt(deadline)
+              ],
+              value: ethValue
+            });
+          } else {
+            console.log("sell", {
+              ...UNISWAP_ROUTER_ABI,
+              address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+              functionName: methodName,
+              args: [
+                tokenValue, // amountIn
+                minAmountOut, // amountOutMin
+                uniPath as readonly `0x${string}`[],
+                address as `0x${string}`,
+                BigInt(deadline)
+              ],
+              value: ethValue
+            })
+
+            // SELL transaction
+            writeContract({
+              ...UNISWAP_ROUTER_ABI,
+              address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+              functionName: methodName,
+              args: [
+                tokenValue, // amountIn
+                minAmountOut, // amountOutMin
+                uniPath as readonly `0x${string}`[],
+                address as `0x${string}`,
+                BigInt(deadline)
+              ]
+            });
+          }
+        } catch (error) {
+          setErrorMsg("Swap setup failed: " + (error as Error).message);
+          return;
+        }
+      } else {
+        // Existing SafuLauncher logic
+        writeContract({
+          abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+          address: isV2
+            ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          functionName: mode,
+          args: mode === "sell" ? [tokenAddress, tokenValue] : [tokenAddress],
+          value: mode === "buy" ? ethValue : undefined,
+        });
+      }
       setIsProcessingTxn(true);
     },
     [
@@ -1553,6 +1779,13 @@ export default function Trade() {
       ethValue,
       isV2,
       networkInfo.chainId,
+      isListed,
+      slippage,
+      deadlineMinutes,
+      isTaxedOnDex,
+      amountOutSelect,
+      uniPath,
+      address
     ]
   );
 
@@ -2728,7 +2961,9 @@ export default function Trade() {
 
             {/* right section */}
             <div className="top-section mt-1">
+
               <div className=" dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-xl p-3 border border-white/10 text-sm max-w-[20rem] mx-auto">
+
                 <div className="space-y-2 ">
                   {/* SELL INPUT */}
                   <div className="flex flex-col space-y-1 ">
@@ -2816,10 +3051,18 @@ export default function Trade() {
                         {isLoadingAmountOutSelect ? (
                           <span className="inline-block w-16 h-4 bg-white/20 animate-pulse rounded" />
                         ) : amountOutSelect ? (
-                          formatTokenAmount(
-                            Number(amountOutSelect.toString()) / 1e18,
-                            mode === "sell" ? 8 : 2
-                          )
+                          <>
+                            {formatTokenAmount(
+                              Number(amountOutSelect.toString()) / 1e18 *
+                              (isListed && isTaxedOnDex ? (1 - taxOnDexBps / 100) : 1),
+                              mode === "sell" ? 8 : 2
+                            )}
+                            {isListed && isTaxedOnDex && (
+                              <span className="text-xs text-red-400 ml-1">
+                                (-{taxOnDexBps}% tax)
+                              </span>
+                            )}
+                          </>
                         ) : (
                           "0"
                         )}
@@ -2841,32 +3084,84 @@ export default function Trade() {
                   )}
 
                   {/* Swap Button */}
-                  {isListed === 1 ? (
-                    <a
-                      href={`https://app.uniswap.org/#/tokens/ethereum/${token.tokenAddress}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full rounded-lg py-2 px-2 mx-auto flex items-center justify-center text-white text-center text-xs bg-[#27AE60] hover:bg-green-600 transition"
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      View token on Uniswap
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleButtonClick}
-                      className={`w-full rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${validationState.isDisabled
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
-                        }`}
-                      disabled={validationState.isDisabled}
-                    >
-                      {validationState.message}
-                      {isTransactionPending && (
-                        <span className="ml-1 animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full inline-block"></span>
+
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      {/* Settings Button - only shown when listed */}
+                      {isListed && (
+                        <button
+                          type="button"
+                          onClick={() => setShowSettings(!showSettings)}
+                          className="p-2 rounded-full bg-black/10 dark:bg-white/10 border border-white/10 hover:bg-[#0C8CE0] transition"
+                        >
+                          <FiSettings className="text-black dark:text-white text-sm" />
+                        </button>
                       )}
-                    </button>
-                  )}
+
+                      <button
+                        type="button"
+                        onClick={handleButtonClick}
+                        className={`flex-1 rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${validationState.isDisabled
+                          ? "opacity-60 cursor-not-allowed"
+                          : ""
+                          }`}
+                        disabled={validationState.isDisabled}
+                      >
+                        {validationState.message}
+                        {isTransactionPending && (
+                          <span className="ml-1 animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full inline-block"></span>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Settings Panel */}
+                    {showSettings && (
+                      <div className="absolute z-10 mt-2 p-4 bg-white dark:bg-[#0B132B] border dark:border-white/10 border-black/20 rounded-lg shadow-lg w-full max-w-xs">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-medium dark:text-white text-black">Swap Settings</h3>
+                          <button
+                            onClick={() => setShowSettings(false)}
+                            className="text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs dark:text-white/70 text-black/70 mb-1">
+                              Slippage tolerance
+                            </label>
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                value={slippage}
+                                onChange={(e) => setSlippage(Math.max(0.1, Math.min(100, Number(e.target.value))))}
+                                className="w-full p-2 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white text-black"
+                                step="0.1"
+                              />
+                              <span className="ml-2 dark:text-white text-black">%</span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs dark:text-white/70 text-black/70 mb-1">
+                              Transaction deadline
+                            </label>
+                            <div className="flex items-center">
+                              <input
+                                type="number"
+                                value={deadlineMinutes}
+                                onChange={(e) => setDeadlineMinutes(Math.max(1, Math.min(60, Number(e.target.value))))}
+                                className="w-full p-2 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white text-black"
+                              />
+                              <span className="ml-2 dark:text-white text-black">minutes</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Status messages */}
                   {isWritePending && (
@@ -2916,7 +3211,6 @@ export default function Trade() {
                 </div>
               </div>
             </div>
-
             {/* )} */}
 
             {/* Progress Bar */}
@@ -3015,182 +3309,205 @@ export default function Trade() {
           {/* Right section */}
 
           <div className="w-full lg:w-[55%]">
+
             <div className="">
               {/* Tab Buttons */}
               <div className="flex flex-col md:flex-row gap-2 justify-between md:items-center mb-2">
                 <h1 className="text-left text-[20px] lg:text-[24px] font-raleway font-medium dark:text-white text-black">
                   Chart
                 </h1>
+                {
+                  !isListed && (
+                    <div className="flex items-start gap-2 w-fit">
+                      <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                          <p className="dark:text-white text-black text-sm">
+                            <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                              Token Supply:
+                            </span>{" "}
+                            {(tokenSupply / 1e18).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                          <p className="dark:text-white text-black text-sm">
+                            <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                              Market Cap:
+                            </span>{" "}
+                            {marketCapUSD > 0
+                              ? `$${formatTokenAmount(marketCapUSD)}`
+                              : "Calculating..."}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                          <p className="dark:text-white text-black text-sm">
+                            <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                              Pooled ETH:
+                            </span>{" "}
+                            {(ethRaised / 1e18).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                          <p className="dark:text-white text-black text-sm">
+                            <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                              Pooled {token.symbol}:
+                            </span>{" "}
+                            {(tokenPool / 1e18).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
 
-                <div className="flex items-start gap-2 w-fit">
-                  <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                      <p className="dark:text-white text-black text-sm">
-                        <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                          Token Supply:
-                        </span>{" "}
-                        {(tokenSupply / 1e18).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                      <p className="dark:text-white text-black text-sm">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          Market Cap:
-                        </span>{" "}
-                        {marketCapUSD > 0
-                          ? `$${formatTokenAmount(marketCapUSD)}`
-                          : "Calculating..."}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
-                      <p className="dark:text-white text-black text-sm">
-                        <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                          Pooled ETH:
-                        </span>{" "}
-                        {(ethRaised / 1e18).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                    <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
-                      <p className="dark:text-white text-black text-sm">
-                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                          Pooled {token.symbol}:
-                        </span>{" "}
-                        {(tokenPool / 1e18).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Chart Tab Content */}
 
               <div className="">
                 {/* Chart Header */}
-                <div className="chart-header dark:bg-[#0B132B] border dark:border-white/10 border-black/50 rounded-t-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between text-sm">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <TimeframeSelector
-                      selectedTimeframe={selectedTimeframe}
-                      onTimeframeChange={handleTimeframeChange}
-                      disabled={isLoadingChart}
-                    />
+                {
+                  !isListed && (
+                    <div className="chart-header dark:bg-[#0B132B] border dark:border-white/10 border-black/50 rounded-t-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between text-sm">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <TimeframeSelector
+                          selectedTimeframe={selectedTimeframe}
+                          onTimeframeChange={handleTimeframeChange}
+                          disabled={isLoadingChart}
+                        />
 
-                    <button
-                      type="button"
-                      onClick={toggleAutoUpdate}
-                      title={
-                        isAutoUpdateEnabled
-                          ? "Disable auto-update"
-                          : "Enable auto-update"
-                      }
-                      className={`px-3 py-[3px] rounded text-xs font-medium ${isAutoUpdateEnabled
-                        ? "bg-green-600 text-white hover:bg-green-700"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        } transition duration-150`}
-                    >
-                      {isAutoUpdateEnabled ? "Auto" : "Manual"}
-                    </button>
+                        <button
+                          type="button"
+                          onClick={toggleAutoUpdate}
+                          title={
+                            isAutoUpdateEnabled
+                              ? "Disable auto-update"
+                              : "Enable auto-update"
+                          }
+                          className={`px-3 py-[3px] rounded text-xs font-medium ${isAutoUpdateEnabled
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                            } transition duration-150`}
+                        >
+                          {isAutoUpdateEnabled ? "Auto" : "Manual"}
+                        </button>
 
-                    <div className="text-xs dark:text-white/50 text-black/80 ml-1">
-                      Last updated:{" "}
-                      <span className="">
-                        {new Date(lastUpdateTime).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold dark:text-white text-black font-raleway relative z-40">
-                      ${tokenPriceUSD.toFixed(4)}
-                    </p>
-                  </div>
-                  {/* Volume summary */}
-                  {/* Volume dropdown display */}
-                  <div
-                    ref={volumeDropdownRef}
-                    className="relative z-30 w-fit"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                    <div className="cursor-pointer rounded-lg px-3 py-2 flex items-center gap-2">
-                      <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                        Volume ({selectedVolume.label}):
-                      </span>
-                      <span className="dark:text-white text-black whitespace-nowrap">
-                        $
-                        {selectedVolume.usd.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
+                        <div className="text-xs dark:text-white/50 text-black/80 ml-1">
+                          Last updated:{" "}
+                          <span className="">
+                            {new Date(lastUpdateTime).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-2xl md:text-3xl font-bold dark:text-white text-black font-raleway relative z-40">
+                          ${tokenPriceUSD.toFixed(4)}
+                        </p>
+                      </div>
+                      {/* Volume summary */}
+                      {/* Volume dropdown display */}
+                      <div
+                        ref={volumeDropdownRef}
+                        className="relative z-30 w-fit"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      >
+                        <div className="cursor-pointer rounded-lg px-3 py-2 flex items-center gap-2">
+                          <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                            Volume ({selectedVolume.label}):
+                          </span>
+                          <span className="dark:text-white text-black whitespace-nowrap">
+                            $
+                            {selectedVolume.usd.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
 
-                      <FaChevronDown
-                        className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${isDropdownOpen ? "rotate-180" : ""
-                          }`}
-                      />
-                    </div>
+                          <FaChevronDown
+                            className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${isDropdownOpen ? "rotate-180" : ""
+                              }`}
+                          />
+                        </div>
 
-                    {/* Dropdown menu */}
-                    {isDropdownOpen && (
-                      <div className="absolute z-10 mt-1 right-0 bg-white dark:bg-[#0B132B] border border-white/10 rounded-lg shadow-lg w-max">
-                        {volumeOptions.map((option) => (
-                          <div
-                            key={option.label}
-                            onClick={() => {
-                              setSelectedVolume(option);
-                              setIsDropdownOpen(false);
-                            }}
-                            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 text-sm cursor-pointer flex justify-between gap-4"
-                          >
-                            <span className="text-[#FF0199] dark:text-[#EA971C] font-medium">
-                              {option.label}
-                            </span>
-                            <span className="dark:text-white text-black whitespace-nowrap">
-                              $
-                              {option.usd.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
+                        {/* Dropdown menu */}
+                        {isDropdownOpen && (
+                          <div className="absolute z-10 mt-1 right-0 bg-white dark:bg-[#0B132B] border border-white/10 rounded-lg shadow-lg w-max">
+                            {volumeOptions.map((option) => (
+                              <div
+                                key={option.label}
+                                onClick={() => {
+                                  setSelectedVolume(option);
+                                  setIsDropdownOpen(false);
+                                }}
+                                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 text-sm cursor-pointer flex justify-between gap-4"
+                              >
+                                <span className="text-[#FF0199] dark:text-[#EA971C] font-medium">
+                                  {option.label}
+                                </span>
+                                <span className="dark:text-white text-black whitespace-nowrap">
+                                  $
+                                  {option.usd.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+
+
+                {/* Chart Container */}
+                <div>
+                  <div className="chart-container">
+                    {isListed ? (
+                      <div className="h-[390px] w-full">
+                        <iframe
+                          title="GeckoTerminal Embed"
+                          src={`https://www.geckoterminal.com/eth/pools/${token.tokenAddress}?embed=1&info=0&swaps=0&light_chart=0&chart_type=price&resolution=15m&bg_color=111827`}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="clipboard-write"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : isLoadingChart ? (
+                      <div className="chart-loading h-[350px] flex flex-col items-center gap-2">
+                        <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
+                        <p className="text-sm text-white/60">Loading chart data...</p>
+                      </div>
+                    ) : (
+                      <LightweightChart
+                        data={ohlc}
+                        timeframe={selectedTimeframe.resolution}
+                        height={390}
+                        ethToUsdRate={infoETHCurrentPrice}
+                        totalSupply={tokenSupply / 1e18}
+                        symbol={token.symbol}
+                      />
+                    )}
+
+                    {/* Auto-update Live Indicator */}
+                    {isAutoUpdateEnabled && (
+                      <div className="absolute top-2 left-2 flex items-center gap-1 text-green-400 text-sm">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
+                        Live
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* Chart Container */}
-                <div className="chart-container">
-                  {isLoadingChart ? (
-                    <div className="chart-loading h-[350px] flex flex-col items-center gap-2">
-                      <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
-                      <p className="text-sm text-white/60">
-                        Loading chart data...
-                      </p>
-                    </div>
-                  ) : (
-                    <LightweightChart
-                      data={ohlc}
-                      timeframe={selectedTimeframe.resolution}
-                      height={390}
-                      ethToUsdRate={infoETHCurrentPrice}
-                      totalSupply={tokenSupply / 1e18}
-                      symbol={token.symbol}
-                    />
-                  )}
-
-                  {/* Auto-update Live Indicator */}
-                  {isAutoUpdateEnabled && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1 text-green-400 text-sm">
-                      <span className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
-                      Live
-                    </div>
-                  )}
-                </div>
               </div>
+
             </div>
 
             <div className="mt-[34px]">

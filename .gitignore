@@ -15,6 +15,26 @@ trade1.tsx
 trade2.tsx
 OldLightWeightChart.tsx
 
+AdminPanel.tsx
+ChartPanel.tsx
+ProgressSection.tsx
+SectionToggle.tsx
+TabContent.tsx
+TabNavigation.tsx
+TokenHeader.tsx
+TokenInfoSections.tsx
+TopHoldersSection.tsx
+TradeForm.tsx
+
+useTradeData.ts
+useTradeEffects.ts
+useTradeHandlers.ts
+useTradeUI.ts
+
+formatting.ts
+constants.ts
+types.ts
+
 node_modules
 dist
 dist-ssr
