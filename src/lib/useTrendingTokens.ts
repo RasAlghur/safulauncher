@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import {
-  getPureAmountOutMarketCap,
   getPureGetLatestETHPrice,
-  getPureInfoDataRaw,
   getPureMetrics,
-  getPureV2AmountOutMarketCap,
-  getPureInfoV2DataRaw
+  getPureInfoV2DataRaw,
+  getPureInfoV1DataRaw,
+  getPureAmountOutMarketCapV1,
+  getPureAmountOutMarketCapV2
 } from "../web3/readContracts";
 import { useApiClient } from "../lib/api";
 import type { TokenMetadata } from "../pages/Tokens";
@@ -55,9 +55,9 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
     const fetchTokenData = async (tokenAddress: string, tokenVersion?: string) => {
       try {
         // Determine token version and select appropriate functions
-        const isV2 = tokenVersion === "token_v2";
-        const getInfo = isV2 ? getPureInfoV2DataRaw : getPureInfoDataRaw;
-        const getAmountOut = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
+        const isV1 = tokenVersion === "token_v1";
+        const getInfo = isV1 ? getPureInfoV1DataRaw : getPureInfoV2DataRaw;
+        const getAmountOut = isV1 ? getPureAmountOutMarketCapV1 : getPureAmountOutMarketCapV2;
 
         // Fetch token info and price
         const info = await getInfo(networkInfo.chainId, tokenAddress);

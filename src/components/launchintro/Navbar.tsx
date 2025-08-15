@@ -10,10 +10,10 @@ import { debounce } from "lodash";
 import axios from "axios";
 import {
   getPureGetLatestETHPrice,
-  getPureAmountOutMarketCap,
-  getPureInfoDataRaw,
+  getPureInfoV1DataRaw,
   getPureInfoV2DataRaw,
-  getPureV2AmountOutMarketCap,
+  getPureAmountOutMarketCapV1,
+  getPureAmountOutMarketCapV2,
 } from "../../web3/readContracts";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
@@ -122,8 +122,8 @@ const Navbar = () => {
       await Promise.all(
         tokens.map(async (token) => {
           try {
-            if (token?.tokenVersion == "token_v2") {
-              const info = await getPureInfoDataRaw(
+            if (token?.tokenVersion == "token_v1") {
+              const info = await getPureInfoV1DataRaw(
                 networkInfo.chainId,
                 token.tokenAddress
               );
@@ -132,7 +132,7 @@ const Navbar = () => {
                   ? Number(info[6])
                   : 0;
 
-              const rawAmt = await getPureAmountOutMarketCap(
+              const rawAmt = await getPureAmountOutMarketCapV1(
                 networkInfo.chainId,
                 token.tokenAddress
               );
@@ -150,7 +150,7 @@ const Navbar = () => {
                   ? Number(info[6])
                   : 0;
 
-              const rawAmt = await getPureV2AmountOutMarketCap(
+              const rawAmt = await getPureAmountOutMarketCapV2(
                 networkInfo.chainId,
                 token.tokenAddress
               );
