@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // safu-dapp/src/pages/Trade.tsx
 import React, {
   useCallback,
@@ -373,7 +374,6 @@ export default function Trade() {
 
   const isV2 = token?.tokenVersion === "token_v2";
 
-
   // Computed values with error handling
   const ethValue = useMemo(() => {
     try {
@@ -404,7 +404,6 @@ export default function Trade() {
     functionName: "getRemainingWhitelistBalance",
     args: [tokenAddress as `0x${string}`, address as `0x${string}`],
   });
-
 
   const {
     data: infoDataRaw,
@@ -446,10 +445,15 @@ export default function Trade() {
   const ywhitelistBalance = isLoadingWhitelistBalance
     ? 0
     : whitelistBalance !== undefined
-      ? Number(whitelistBalance) / 1e18
-      : 0;
+    ? Number(whitelistBalance) / 1e18
+    : 0;
 
-  const uniPath = mode === "buy" ? [WETH_ADDRESS[networkInfo.chainId], tokenAddress!] : [tokenAddress!, WETH_ADDRESS[networkInfo.chainId]];
+  const uniPath = useMemo(() => {
+    return mode === "buy"
+      ? [WETH_ADDRESS[networkInfo.chainId], tokenAddress!]
+      : [tokenAddress!, WETH_ADDRESS[networkInfo.chainId]];
+  }, [mode, networkInfo.chainId, tokenAddress]);
+
   const amountInForUni = mode === "buy" ? ethValue : tokenValue;
 
   // if (isListed) {
@@ -472,11 +476,11 @@ export default function Trade() {
   } = useReadContract(
     shouldCallUni
       ? {
-        ...UNISWAP_ROUTER_ABI,
-        address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
-        functionName: "getAmountsOut",
-        args: [amountInForUni as bigint, uniPath as any],
-      }
+          ...UNISWAP_ROUTER_ABI,
+          address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+          functionName: "getAmountsOut",
+          args: [amountInForUni as bigint, uniPath as any],
+        }
       : undefined
   );
 
@@ -487,23 +491,24 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
-        address: isV2
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
+          abi: isV2 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+          address: isV2
+            ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          functionName: "getAmountOut",
+          args: [
+            tokenAddress,
+            mode === "buy" ? ethValue : tokenValue,
+            mode === "buy" ? true : false,
+          ],
+        }
       : undefined
   );
 
-  const isLoadingAmountOut = isListed ? isLoadingUniAmounts : isLoadingLauncherAmount;
+  const isLoadingAmountOut = isListed
+    ? isLoadingUniAmounts
+    : isLoadingLauncherAmount;
   const refetchAmountOut = isListed ? refetchUniAmounts : refetchLauncherAmount;
-
 
   // Update the amountOut calculation to handle zero case
   const amountOut = useMemo(() => {
@@ -514,7 +519,9 @@ export default function Trade() {
         console.log("uniAmountsRaw", uniAmountsRaw);
         return null;
       }
-      const arr = Array.isArray(uniAmountsRaw) ? uniAmountsRaw : (uniAmountsRaw as any);
+      const arr = Array.isArray(uniAmountsRaw)
+        ? uniAmountsRaw
+        : (uniAmountsRaw as any);
       console.log("arr");
       return arr[arr.length - 1] ?? null;
     } else {
@@ -522,7 +529,6 @@ export default function Trade() {
       return launcherAmountRaw ?? null;
     }
   }, [isListed, uniAmountsRaw, launcherAmountRaw, amountInForUni]); // Add amountInForUni as dependency
-
 
   // Memoized values
   const isTokenCreator = useMemo(
@@ -565,11 +571,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress as `0x${string}`,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "balanceOf",
+          args: [address as `0x${string}`],
+        }
       : undefined
   );
 
@@ -580,21 +586,20 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress,
-        functionName: "allowance",
-        args: [
-          address as `0x${string}`,
-          isListed
-            ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
-            : isV2
+          ...TOKEN_ABI,
+          address: tokenAddress,
+          functionName: "allowance",
+          args: [
+            address as `0x${string}`,
+            isListed
+              ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
+              : isV2
               ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
               : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        ],
-      }
+          ],
+        }
       : undefined
   );
-
 
   // Initialize when wallet connects and set up real-time fetches
   useEffect(() => {
@@ -660,7 +665,7 @@ export default function Trade() {
     ethValue,
     tokenValue,
     mode,
-    // isV2,
+    isV2,
     networkInfo.chainId,
   ]);
 
@@ -759,7 +764,7 @@ export default function Trade() {
       return Math.min(Math.max((tokenSold / allowed) * 100, 0), 100);
     }
     // require that the milestone has arrived
-  }, [infoData, listingMilestonePct]);
+  }, [infoData, listingMilestonePct, isListed]);
 
   // 4) Memoize the final clamped value
   const curvePercentClamped = useMemo(
@@ -826,24 +831,29 @@ export default function Trade() {
         try {
           if (isV2) {
             const [infoData, ethPrice] = await Promise.all([
-              await getPureInfoV2DataRaw(networkInfo.chainId, tokenAddress).catch(
-                () => []
-              ),
+              await getPureInfoV2DataRaw(
+                networkInfo.chainId,
+                tokenAddress
+              ).catch(() => []),
               priceFeedAddress
                 ? await getPureGetLatestETHPrice(
-                  networkInfo.chainId,
-                  priceFeedAddress
-                ).catch(() => null)
+                    networkInfo.chainId,
+                    priceFeedAddress
+                  ).catch(() => null)
                 : Promise.resolve(null),
             ]);
             setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
             setFallbackETHPrice(ethPrice);
-          }
-          else {
+          } else {
             const [infoData, ethPrice] = await Promise.all([
-              await getPureInfoDataRaw(networkInfo.chainId, tokenAddress).catch(() => []),
+              await getPureInfoDataRaw(networkInfo.chainId, tokenAddress).catch(
+                () => []
+              ),
               priceFeedAddress
-                ? await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress).catch(() => null)
+                ? await getPureGetLatestETHPrice(
+                    networkInfo.chainId,
+                    priceFeedAddress
+                  ).catch(() => null)
                 : Promise.resolve(null),
             ]);
             setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
@@ -860,7 +870,7 @@ export default function Trade() {
 
       fetchFallbackData();
     }
-  }, [isConnected, tokenAddress, networkInfo.chainId, priceFeedAddress]); // Added isV2 dependency
+  }, [isConnected, tokenAddress, networkInfo.chainId, priceFeedAddress, isV2]); // Added isV2 dependency
 
   // Load one token price
   useEffect(() => {
@@ -869,7 +879,9 @@ export default function Trade() {
 
       setIsLoadingOneTokenPrice(true);
       try {
-        const fn = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
+        const fn = isV2
+          ? getPureV2AmountOutMarketCap
+          : getPureAmountOutMarketCap;
         const raw = await fn(networkInfo.chainId, tokenAddress);
 
         if (raw !== undefined && raw !== null) {
@@ -887,7 +899,7 @@ export default function Trade() {
     }
 
     fetchTokenMark();
-  }, [tokenAddress, networkInfo.chainId]);
+  }, [tokenAddress, networkInfo.chainId, isV2]);
 
   useEffect(() => {
     if (tokenAddress && curvePercentClamped !== undefined) {
@@ -911,8 +923,10 @@ export default function Trade() {
 
       try {
         console.log(
-          `${isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
+          `${
+            isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
+            selectedTimeframe.value
           }`
         );
 
@@ -1243,7 +1257,7 @@ export default function Trade() {
     refetchSafuHolder,
     tokenAddress,
     networkInfo.chainId,
-    // isV2,
+    isV2,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1585,17 +1599,14 @@ export default function Trade() {
       const spender = isListed
         ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
         : isV2
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
+        ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
 
       writeContract({
         ...TOKEN_ABI,
         functionName: "approve",
         address: tokenAddress,
-        args: [
-          spender as `0x${string}`,
-          MaxUint256 as bigint,
-        ],
+        args: [spender as `0x${string}`, MaxUint256 as bigint],
       });
     } catch (error) {
       console.error("Approval rejected:", error);
@@ -1651,8 +1662,8 @@ export default function Trade() {
               ? "swapExactETHForTokensSupportingFeeOnTransferTokens"
               : "swapExactTokensForETHSupportingFeeOnTransferTokens"
             : mode === "buy"
-              ? "swapExactETHForTokens"
-              : "swapExactTokensForETH";
+            ? "swapExactETHForTokens"
+            : "swapExactTokensForETH";
 
           if (mode === "buy") {
             console.log("buy", {
@@ -1663,10 +1674,10 @@ export default function Trade() {
                 minAmountOut, // amountOutMin
                 uniPath as readonly `0x${string}`[],
                 address as `0x${string}`,
-                BigInt(deadline)
+                BigInt(deadline),
               ],
-              value: ethValue
-            })
+              value: ethValue,
+            });
             // BUY transaction
             writeContract({
               ...UNISWAP_ROUTER_ABI,
@@ -1676,9 +1687,9 @@ export default function Trade() {
                 minAmountOut, // amountOutMin
                 uniPath as readonly `0x${string}`[],
                 address as `0x${string}`,
-                BigInt(deadline)
+                BigInt(deadline),
               ],
-              value: ethValue
+              value: ethValue,
             });
           } else {
             console.log("sell", {
@@ -1690,10 +1701,10 @@ export default function Trade() {
                 minAmountOut, // amountOutMin
                 uniPath as readonly `0x${string}`[],
                 address as `0x${string}`,
-                BigInt(deadline)
+                BigInt(deadline),
               ],
-              value: ethValue
-            })
+              value: ethValue,
+            });
 
             // SELL transaction
             writeContract({
@@ -1705,8 +1716,8 @@ export default function Trade() {
                 minAmountOut, // amountOutMin
                 uniPath as readonly `0x${string}`[],
                 address as `0x${string}`,
-                BigInt(deadline)
-              ]
+                BigInt(deadline),
+              ],
             });
           }
         } catch (error) {
@@ -1742,7 +1753,7 @@ export default function Trade() {
       isTaxedOnDex,
       amountOutSelect,
       uniPath,
-      address
+      address,
     ]
   );
 
@@ -1758,10 +1769,10 @@ export default function Trade() {
     () =>
       isWhiteListOngoing
         ? (whitelistUpload.map((e) =>
-          Math.round(e.cap * 100)
-        ) as readonly number[])
+            Math.round(e.cap * 100)
+          ) as readonly number[])
         : // Default to 100% for each whitelist entry
-        ([] as readonly number[]),
+          ([] as readonly number[]),
     [isWhiteListOngoing, whitelistUpload]
   );
 
@@ -1946,8 +1957,9 @@ export default function Trade() {
           if (addr.cap > maxWalletAmountOnSafu) {
             errors.push({
               field: "whitelist",
-              message: `Entry ${index + 1
-                }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
+              message: `Entry ${
+                index + 1
+              }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
             });
           }
         }
@@ -2294,7 +2306,6 @@ export default function Trade() {
     ): Promise<T> {
       try {
         return await fn();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         const status = err?.response?.status;
 
@@ -2594,10 +2605,11 @@ export default function Trade() {
                       type="button"
                       onClick={handleAddToWhitelist}
                       disabled={!isFormValid || isWhiteListOngoing === 0}
-                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${isFormValid
-                        ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                        : "opacity-50 cursor-not-allowed"
-                        }`}
+                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${
+                        isFormValid
+                          ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                          : "opacity-50 cursor-not-allowed"
+                      }`}
                     >
                       Add to whitelist
                     </button>
@@ -2652,10 +2664,11 @@ export default function Trade() {
                 <div
                   className={`absolute z-20 left-[2px] pt-[1px] size-[20px] rounded-full flex items-center justify-center
         transition-transform duration-300 ease-in-out dark:shadow-[1px_-2px_12px_0px_rgba(71,_71,_77,_0.5)]
-        ${showSectionA
-                      ? "translate-x-[17.5px] bg-white"
-                      : "translate-x-0 bg-[#D9D9D9]"
-                    }`}
+        ${
+          showSectionA
+            ? "translate-x-[17.5px] bg-white"
+            : "translate-x-0 bg-[#D9D9D9]"
+        }`}
                 >
                   {showSectionA ? (
                     <CircleCheckBig className="text-Primary w-[12px] h-[12px]" />
@@ -2680,10 +2693,11 @@ export default function Trade() {
 
             <div className="relative">
               <div
-                className={`transition-opacity duration-700 ${showSectionA
-                  ? "opacity-100 relative z-40"
-                  : "opacity-0 absolute inset-0 pointer-events-none -z-50"
-                  }`}
+                className={`transition-opacity duration-700 ${
+                  showSectionA
+                    ? "opacity-100 relative z-40"
+                    : "opacity-0 absolute inset-0 pointer-events-none -z-50"
+                }`}
               >
                 {/* ✅ Section A — Token Metadata */}
                 <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
@@ -2802,8 +2816,9 @@ export default function Trade() {
               </div>
 
               <div
-                className={`transition-opacity duration-700 ${showSectionA ? "opacity-0 absolute inset-0" : "opacity-100"
-                  }`}
+                className={`transition-opacity duration-700 ${
+                  showSectionA ? "opacity-0 absolute inset-0" : "opacity-100"
+                }`}
               >
                 {/* 🚀 Section B — Launch Info */}
                 <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
@@ -2851,30 +2866,31 @@ export default function Trade() {
                     // },
                     ...(isWhiteListOngoing && ywhitelistBalance > 0
                       ? [
-                        {
-                          label: "Whitelisted Amount",
-                          value: { isWhiteListOngoing },
-                          extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${token?.symbol
+                          {
+                            label: "Whitelisted Amount",
+                            value: { isWhiteListOngoing },
+                            extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${
+                              token?.symbol
                             }`,
-                        },
-                      ]
+                          },
+                        ]
                       : []),
                     ...(isWhiteListOngoing && isSafuHolder
                       ? [
-                        {
-                          label: "Auto Whitelisted",
-                          value: `${isSafuHolder}`,
-                        },
-                      ]
+                          {
+                            label: "Auto Whitelisted",
+                            value: `${isSafuHolder}`,
+                          },
+                        ]
                       : []),
                     ...(isWhiteListOngoing && isSafuHolder
                       ? [
-                        {
-                          label: "Your Safu",
-                          value: `${isSafuHolder}`,
-                          extra: `${safuHolderBalance} SAFU`,
-                        },
-                      ]
+                          {
+                            label: "Your Safu",
+                            value: `${isSafuHolder}`,
+                            extra: `${safuHolderBalance} SAFU`,
+                          },
+                        ]
                       : []),
                   ].map(({ label, value, extra }, i) => (
                     <div
@@ -2918,9 +2934,7 @@ export default function Trade() {
 
             {/* right section */}
             <div className="top-section mt-1">
-
               <div className=" dark:bg-white/5 bg-[#141313]/4 backdrop-blur-md rounded-xl p-3 border border-white/10 text-sm max-w-[20rem] mx-auto">
-
                 <div className="space-y-2 ">
                   {/* SELL INPUT */}
                   <div className="flex flex-col space-y-1 ">
@@ -2965,7 +2979,8 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
                             }`
                           )}
                         </span>
@@ -3010,8 +3025,10 @@ export default function Trade() {
                         ) : amountOutSelect ? (
                           <>
                             {formatTokenAmount(
-                              Number(amountOutSelect.toString()) / 1e18 *
-                              (isListed && isTaxedOnDex ? (1 - taxOnDexBps / 100) : 1),
+                              (Number(amountOutSelect.toString()) / 1e18) *
+                                (isListed && isTaxedOnDex
+                                  ? 1 - taxOnDexBps / 100
+                                  : 1),
                               mode === "sell" ? 8 : 2
                             )}
                             {isListed && isTaxedOnDex && (
@@ -3053,15 +3070,18 @@ export default function Trade() {
                         >
                           <FiSettings className="text-black dark:text-white text-sm" />
                         </button>
-                      ) : ''}
+                      ) : (
+                        ""
+                      )}
 
                       <button
                         type="button"
                         onClick={handleButtonClick}
-                        className={`flex-1 rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${validationState.isDisabled
-                          ? "opacity-60 cursor-not-allowed"
-                          : ""
-                          }`}
+                        className={`flex-1 rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                          validationState.isDisabled
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
                         disabled={validationState.isDisabled}
                       >
                         {validationState.message}
@@ -3075,7 +3095,9 @@ export default function Trade() {
                     {showSettings && (
                       <div className="absolute z-10 mt-2 p-4 bg-white dark:bg-[#0B132B] border dark:border-white/10 border-black/20 rounded-lg shadow-lg w-full max-w-xs">
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-medium dark:text-white text-black">Swap Settings</h3>
+                          <h3 className="font-medium dark:text-white text-black">
+                            Swap Settings
+                          </h3>
                           <button
                             onClick={() => setShowSettings(false)}
                             className="text-gray-500 hover:text-gray-700 dark:hover:text-white"
@@ -3093,11 +3115,20 @@ export default function Trade() {
                               <input
                                 type="number"
                                 value={slippage}
-                                onChange={(e) => setSlippage(Math.max(0.1, Math.min(100, Number(e.target.value))))}
+                                onChange={(e) =>
+                                  setSlippage(
+                                    Math.max(
+                                      0.1,
+                                      Math.min(100, Number(e.target.value))
+                                    )
+                                  )
+                                }
                                 className="w-full p-2 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white text-black"
                                 step="0.1"
                               />
-                              <span className="ml-2 dark:text-white text-black">%</span>
+                              <span className="ml-2 dark:text-white text-black">
+                                %
+                              </span>
                             </div>
                           </div>
 
@@ -3109,10 +3140,19 @@ export default function Trade() {
                               <input
                                 type="number"
                                 value={deadlineMinutes}
-                                onChange={(e) => setDeadlineMinutes(Math.max(1, Math.min(60, Number(e.target.value))))}
+                                onChange={(e) =>
+                                  setDeadlineMinutes(
+                                    Math.max(
+                                      1,
+                                      Math.min(60, Number(e.target.value))
+                                    )
+                                  )
+                                }
                                 className="w-full p-2 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-white text-black"
                               />
-                              <span className="ml-2 dark:text-white text-black">minutes</span>
+                              <span className="ml-2 dark:text-white text-black">
+                                minutes
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -3137,10 +3177,10 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed!"
                           : lastTxnType === "sell"
-                            ? "Sell confirmed!"
-                            : lastTxnType === "buy"
-                              ? "Buy confirmed!"
-                              : getAdminTxnMessage()}
+                          ? "Sell confirmed!"
+                          : lastTxnType === "buy"
+                          ? "Buy confirmed!"
+                          : getAdminTxnMessage()}
                       </p>
                       <a
                         href={`${networkInfo.explorerUrl}/tx/${txHash}`}
@@ -3203,8 +3243,9 @@ export default function Trade() {
                         className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                         style={{
                           width: `${stripeWidth}px`,
-                          left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
-                            }px)`,
+                          left: `calc(${(i * spacing).toFixed(2)}% - ${
+                            stripeWidth / 2
+                          }px)`,
                         }}
                       />
                     );
@@ -3222,8 +3263,9 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                        } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                      className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                        progress < 100 ? "rounded-l-full" : "rounded-full"
+                      } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
                       style={{
                         width: `${isLoadingInfoData ? 0 : progress}%`,
                         ...gradientStyle,
@@ -3233,10 +3275,11 @@ export default function Trade() {
                 })()}
 
                 <div
-                  className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${curvePercentClamped < 100
-                    ? "rounded-l-full"
-                    : "rounded-full"
-                    } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                  className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                    curvePercentClamped < 100
+                      ? "rounded-l-full"
+                      : "rounded-full"
+                  } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
                   style={{
                     width: `${isLoadingInfoData ? 0 : curvePercentClamped}%`,
                     backgroundImage: isLoadingInfoData
@@ -3266,163 +3309,157 @@ export default function Trade() {
           {/* Right section */}
 
           <div className="w-full lg:w-[55%]">
-
             <div className="">
               {/* Tab Buttons */}
               <div className="flex flex-col md:flex-row gap-2 justify-between md:items-center mb-2">
                 <h1 className="text-left text-[20px] lg:text-[24px] font-raleway font-medium dark:text-white text-black">
                   Chart
                 </h1>
-                {
-                  !isListed && (
-                    <div className="flex items-start gap-2 w-fit">
-                      <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
-                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                          <p className="dark:text-white text-black text-sm">
-                            <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                              Token Supply:
-                            </span>{" "}
-                            {(tokenSupply / 1e18).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
-                          <p className="dark:text-white text-black text-sm">
-                            <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                              Market Cap:
-                            </span>{" "}
-                            {marketCapUSD > 0
-                              ? `$${formatTokenAmount(marketCapUSD)}`
-                              : "Calculating..."}
-                          </p>
-                        </div>
+                {!isListed && (
+                  <div className="flex items-start gap-2 w-fit">
+                    <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                      <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                        <p className="dark:text-white text-black text-sm">
+                          <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                            Token Supply:
+                          </span>{" "}
+                          {(tokenSupply / 1e18).toLocaleString()}
+                        </p>
                       </div>
-                      <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
-                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
-                          <p className="dark:text-white text-black text-sm">
-                            <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
-                              Pooled ETH:
-                            </span>{" "}
-                            {(ethRaised / 1e18).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-                        </div>
-                        <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
-                          <p className="dark:text-white text-black text-sm">
-                            <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                              Pooled {token.symbol}:
-                            </span>{" "}
-                            {(tokenPool / 1e18).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-                        </div>
+                      <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group">
+                        <p className="dark:text-white text-black text-sm">
+                          <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                            Market Cap:
+                          </span>{" "}
+                          {marketCapUSD > 0
+                            ? `$${formatTokenAmount(marketCapUSD)}`
+                            : "Calculating..."}
+                        </p>
                       </div>
                     </div>
-                  )
-                }
-
+                    <div className="flex flex-col md:flex-row items-start gap-2 w-fit">
+                      <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                        <p className="dark:text-white text-black text-sm">
+                          <span className="dark:text-[#ea981c] text-[#FF0199] font-medium font-raleway">
+                            Pooled ETH:
+                          </span>{" "}
+                          {(ethRaised / 1e18).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                      <div className="dark:bg-[#ea971c0a] bg-[#FF0199]/5 rounded-lg px-3 py-2 flex items-center justify-between relative group w-fit">
+                        <p className="dark:text-white text-black text-sm">
+                          <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                            Pooled {token.symbol}:
+                          </span>{" "}
+                          {(tokenPool / 1e18).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Chart Tab Content */}
 
               <div className="">
                 {/* Chart Header */}
-                {
-                  !isListed && (
-                    <div className="chart-header dark:bg-[#0B132B] border dark:border-white/10 border-black/50 rounded-t-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between text-sm">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <TimeframeSelector
-                          selectedTimeframe={selectedTimeframe}
-                          onTimeframeChange={handleTimeframeChange}
-                          disabled={isLoadingChart}
-                        />
+                {!isListed && (
+                  <div className="chart-header dark:bg-[#0B132B] border dark:border-white/10 border-black/50 rounded-t-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:justify-between text-sm">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <TimeframeSelector
+                        selectedTimeframe={selectedTimeframe}
+                        onTimeframeChange={handleTimeframeChange}
+                        disabled={isLoadingChart}
+                      />
 
-                        <button
-                          type="button"
-                          onClick={toggleAutoUpdate}
-                          title={
-                            isAutoUpdateEnabled
-                              ? "Disable auto-update"
-                              : "Enable auto-update"
-                          }
-                          className={`px-3 py-[3px] rounded text-xs font-medium ${isAutoUpdateEnabled
+                      <button
+                        type="button"
+                        onClick={toggleAutoUpdate}
+                        title={
+                          isAutoUpdateEnabled
+                            ? "Disable auto-update"
+                            : "Enable auto-update"
+                        }
+                        className={`px-3 py-[3px] rounded text-xs font-medium ${
+                          isAutoUpdateEnabled
                             ? "bg-green-600 text-white hover:bg-green-700"
                             : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                            } transition duration-150`}
-                        >
-                          {isAutoUpdateEnabled ? "Auto" : "Manual"}
-                        </button>
-
-                        <div className="text-xs dark:text-white/50 text-black/80 ml-1">
-                          Last updated:{" "}
-                          <span className="">
-                            {new Date(lastUpdateTime).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-2xl md:text-3xl font-bold dark:text-white text-black font-raleway relative z-40">
-                          ${tokenPriceUSD.toFixed(4)}
-                        </p>
-                      </div>
-                      {/* Volume summary */}
-                      {/* Volume dropdown display */}
-                      <div
-                        ref={volumeDropdownRef}
-                        className="relative z-30 w-fit"
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        } transition duration-150`}
                       >
-                        <div className="cursor-pointer rounded-lg px-3 py-2 flex items-center gap-2">
-                          <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
-                            Volume ({selectedVolume.label}):
-                          </span>
-                          <span className="dark:text-white text-black whitespace-nowrap">
-                            $
-                            {selectedVolume.usd.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
+                        {isAutoUpdateEnabled ? "Auto" : "Manual"}
+                      </button>
 
-                          <FaChevronDown
-                            className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${isDropdownOpen ? "rotate-180" : ""
-                              }`}
-                          />
-                        </div>
-
-                        {/* Dropdown menu */}
-                        {isDropdownOpen && (
-                          <div className="absolute z-10 mt-1 right-0 bg-white dark:bg-[#0B132B] border border-white/10 rounded-lg shadow-lg w-max">
-                            {volumeOptions.map((option) => (
-                              <div
-                                key={option.label}
-                                onClick={() => {
-                                  setSelectedVolume(option);
-                                  setIsDropdownOpen(false);
-                                }}
-                                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 text-sm cursor-pointer flex justify-between gap-4"
-                              >
-                                <span className="text-[#FF0199] dark:text-[#EA971C] font-medium">
-                                  {option.label}
-                                </span>
-                                <span className="dark:text-white text-black whitespace-nowrap">
-                                  $
-                                  {option.usd.toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                      <div className="text-xs dark:text-white/50 text-black/80 ml-1">
+                        Last updated:{" "}
+                        <span className="">
+                          {new Date(lastUpdateTime).toLocaleTimeString()}
+                        </span>
                       </div>
+                      <p className="text-2xl md:text-3xl font-bold dark:text-white text-black font-raleway relative z-40">
+                        ${tokenPriceUSD.toFixed(4)}
+                      </p>
                     </div>
-                  )
-                }
+                    {/* Volume summary */}
+                    {/* Volume dropdown display */}
+                    <div
+                      ref={volumeDropdownRef}
+                      className="relative z-30 w-fit"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                      <div className="cursor-pointer rounded-lg px-3 py-2 flex items-center gap-2">
+                        <span className="dark:text-[#EA971C] text-[#FF0199] font-medium font-raleway">
+                          Volume ({selectedVolume.label}):
+                        </span>
+                        <span className="dark:text-white text-black whitespace-nowrap">
+                          $
+                          {selectedVolume.usd.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
 
+                        <FaChevronDown
+                          className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${
+                            isDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
 
+                      {/* Dropdown menu */}
+                      {isDropdownOpen && (
+                        <div className="absolute z-10 mt-1 right-0 bg-white dark:bg-[#0B132B] border border-white/10 rounded-lg shadow-lg w-max">
+                          {volumeOptions.map((option) => (
+                            <div
+                              key={option.label}
+                              onClick={() => {
+                                setSelectedVolume(option);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 text-sm cursor-pointer flex justify-between gap-4"
+                            >
+                              <span className="text-[#FF0199] dark:text-[#EA971C] font-medium">
+                                {option.label}
+                              </span>
+                              <span className="dark:text-white text-black whitespace-nowrap">
+                                $
+                                {option.usd.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Chart Container */}
                 <div>
@@ -3441,7 +3478,9 @@ export default function Trade() {
                     ) : isLoadingChart ? (
                       <div className="chart-loading h-[350px] flex flex-col items-center gap-2">
                         <div className="spinner animate-spin rounded-full h-6 w-6 border-t-2 border-white border-opacity-25"></div>
-                        <p className="text-sm text-white/60">Loading chart data...</p>
+                        <p className="text-sm text-white/60">
+                          Loading chart data...
+                        </p>
                       </div>
                     ) : (
                       <LightweightChart
@@ -3464,7 +3503,6 @@ export default function Trade() {
                   </div>
                 </div>
               </div>
-
             </div>
 
             <div className="mt-[34px]">
@@ -3473,20 +3511,22 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
-                    ? " dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "transactions"
+                      ? " dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] flex items-center gap-2 font-raleway font-medium text-left ${activeTab === "chat"
-                    ? "dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] flex items-center gap-2 font-raleway font-medium text-left ${
+                    activeTab === "chat"
+                      ? "dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Community Chat{" "}
                   {/* {messageCount > 0 && (
@@ -3526,10 +3566,11 @@ export default function Trade() {
                               className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none"
                             >
                               <td
-                                className={`font-medium py-3 pl-1 flex items-center gap-1 ${tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
-                                  }`}
+                                className={`font-medium py-3 pl-1 flex items-center gap-1 ${
+                                  tx.type === "buy"
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                }`}
                               >
                                 {tx.type === "buy" ? (
                                   <MdAddCircleOutline className="text-[22px]" />
@@ -3544,11 +3585,11 @@ export default function Trade() {
                                 {/* Market Cap Cell */}
                                 {tx.oldMarketCap
                                   ? `$${Number(tx.oldMarketCap).toLocaleString(
-                                    undefined,
-                                    {
-                                      maximumFractionDigits: 0,
-                                    }
-                                  )}`
+                                      undefined,
+                                      {
+                                        maximumFractionDigits: 0,
+                                      }
+                                    )}`
                                   : "—"}
                               </td>
 

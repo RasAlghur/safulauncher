@@ -18,7 +18,10 @@ import { useApiClient } from "../lib/api";
 import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
-import { getPureAmountOutMarketCap, getPureV2AmountOutMarketCap } from "../web3/readContracts";
+import {
+  getPureAmountOutMarketCap,
+  getPureV2AmountOutMarketCap,
+} from "../web3/readContracts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   ETH_USDT_PRICE_FEED_ADDRESSES,
@@ -156,10 +159,14 @@ const Profile = () => {
   const fetchTokenPrice = useCallback(
     async (tokenAddress: string): Promise<number> => {
       try {
-        const token = launchedTokens.find(t => t.tokenAddress === tokenAddress);
+        const token = launchedTokens.find(
+          (t) => t.tokenAddress === tokenAddress
+        );
         const isV2 = token?.tokenVersion === "token_v2";
 
-        const fn = isV2 ? getPureV2AmountOutMarketCap : getPureAmountOutMarketCap;
+        const fn = isV2
+          ? getPureV2AmountOutMarketCap
+          : getPureAmountOutMarketCap;
         // const fn = getPureAmountOutMarketCap;
         const raw = await fn(networkInfo.chainId, tokenAddress);
         console.log(`raw for token address ${tokenAddress}: ${raw}`);
@@ -175,7 +182,7 @@ const Profile = () => {
         return 0;
       }
     },
-    [networkInfo.chainId]
+    [networkInfo.chainId, launchedTokens]
   );
 
   // Fetch token holdings and their prices
@@ -473,7 +480,7 @@ const Profile = () => {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100 &&
+          container.scrollHeight - 100 &&
         address;
 
       if (condition) {
@@ -796,10 +803,11 @@ const Profile = () => {
                     </div>
                     {isUsernameAvailable !== null && (
                       <p
-                        className={`${isUsernameAvailable
-                          ? "text-green-500"
-                          : "text-red-500"
-                          } text-xs mt-2`}
+                        className={`${
+                          isUsernameAvailable
+                            ? "text-green-500"
+                            : "text-red-500"
+                        } text-xs mt-2`}
                       >
                         {isUsernameAvailable
                           ? "Username available"
@@ -844,8 +852,9 @@ const Profile = () => {
                 ${formatCurrency(totalBalance)}
               </div>
               <div
-                className={`text-sm text-center ${balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
+                className={`text-sm text-center ${
+                  balanceChange.amount >= 0 ? "text-green-400" : "text-red-400"
+                }`}
               >
                 {balanceChange.amount >= 0 ? "▲" : "▼"}{" "}
                 {balanceChange.percentage >= 0 ? "+" : ""}
@@ -858,19 +867,21 @@ const Profile = () => {
           {/* Tabs */}
           <div className="flex gap-6 text-lg font-semibold mb-6">
             <button
-              className={`pb-1 transition cursor-pointer ${activeTab === "holdings"
-                ? "border-white dark:text-white text-black"
-                : "border-transparent dark:text-white/30 text-black/60"
-                }`}
+              className={`pb-1 transition cursor-pointer ${
+                activeTab === "holdings"
+                  ? "border-white dark:text-white text-black"
+                  : "border-transparent dark:text-white/30 text-black/60"
+              }`}
               onClick={() => setActiveTab("holdings")}
             >
               Platform Token Holdings ({filteredHoldings.length})
             </button>
             <button
-              className={`pb-1 transition cursor-pointer ${activeTab === "launched"
-                ? "border-white dark:text-white text-[#141313]/75"
-                : "border-transparent dark:text-white/30 text-black/60"
-                }`}
+              className={`pb-1 transition cursor-pointer ${
+                activeTab === "launched"
+                  ? "border-white dark:text-white text-[#141313]/75"
+                  : "border-transparent dark:text-white/30 text-black/60"
+              }`}
               onClick={() => setActiveTab("launched")}
             >
               Tokens Deployed
@@ -920,8 +931,9 @@ const Profile = () => {
                           />
                         ) : null}
                         <div
-                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${token.logo ? "hidden" : ""
-                            }`}
+                          className={`w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 ${
+                            token.logo ? "hidden" : ""
+                          }`}
                         />
                         <div>
                           <span className="font-bold text-sm text-black dark:text-white block">
@@ -947,8 +959,8 @@ const Profile = () => {
                           {token.isLoadingPrice
                             ? "Loading..."
                             : token.usdValue && token.usdValue > 0
-                              ? `$${formatCurrency(token.usdValue)}`
-                              : "$0.00"}
+                            ? `$${formatCurrency(token.usdValue)}`
+                            : "$0.00"}
                         </div>
                       </div>
                     </div>
@@ -970,8 +982,9 @@ const Profile = () => {
                           <div className="flex items-center mb-1">
                             {token.tokenImageId && (
                               <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}${token.image?.path
-                                  }`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}${
+                                  token.image?.path
+                                }`}
                                 alt={`${token.symbol} logo`}
                                 className="w-10 h-10 rounded-md mt-2"
                                 crossOrigin=""
@@ -1155,8 +1168,9 @@ const Profile = () => {
                 </label>
 
                 <div
-                  className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                    } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+                  className={`border-2 border-dashed ${
+                    dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
                       flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
                       transition duration-200 hover:opacity-80 w-full relative`}
                   onClick={openFilePicker}
