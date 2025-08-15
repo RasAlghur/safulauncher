@@ -420,7 +420,7 @@ const AdminContractConfig = () => {
     <div className="p-4 max-w-6xl mx-auto mt-8 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-          SafuLauncher Admin Panel
+          SafuLauncher Admin Panel for Address: {SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Manage contract parameters and system configurations
@@ -643,7 +643,7 @@ const AdminContractConfig = () => {
 
                   abi: LAUNCHER_ABI_V1.abi,
                   functionName: "setTradeFeeBps",
-                  args: [parseInt(tradeFeeBps) * 100],
+                  args: [BigInt(parseInt(tradeFeeBps) * 100)],
                 })
               }
               isValid={isTradeFeeBpsValid}
@@ -683,7 +683,7 @@ const AdminContractConfig = () => {
 
                   abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateListingFee",
-                  args: [parseInt(listingFeeBps), parseInt(listingFeeDiv)],
+                  args: [BigInt(parseInt(listingFeeBps)), BigInt(parseInt(listingFeeDiv))],
                 })
               }
               isValid={isListingFeeValid}
@@ -829,11 +829,11 @@ const AdminContractConfig = () => {
                   abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateCreatorConfigs",
                   args: [
-                    parseInt(taxOnSafuMaxBps) * 100,
-                    parseInt(taxOnDexMaxBps) * 100,
-                    BigInt(bundleMaxAmount),
-                    BigInt(listingMilestone),
-                    parseInt(maxWhitelistBps) * 100,
+                    BigInt(parseInt(taxOnSafuMaxBps) * 100),
+                    BigInt(parseInt(taxOnDexMaxBps) * 100),
+                    BigInt(BigInt(bundleMaxAmount)),
+                    BigInt(BigInt(listingMilestone)),
+                    BigInt(parseInt(maxWhitelistBps) * 100),
                   ],
                 })
               }
@@ -1102,14 +1102,14 @@ const AdminContractConfig = () => {
                   abi: LAUNCHER_ABI_V1.abi,
                   functionName: "setTierThreshold",
                   args: [
-                    parseInt(tier1Threshold),
-                    parseInt(tier1ThresholdDiv),
-                    parseInt(tier1WLCap),
-                    parseInt(tier1WLDiv),
-                    parseInt(tier2Threshold),
-                    parseInt(tier2ThresholdDiv),
-                    parseInt(tier2WLCap),
-                    parseInt(tier2WLDiv),
+                    BigInt(parseInt(tier1Threshold)),
+                    BigInt(parseInt(tier1ThresholdDiv)),
+                    BigInt(parseInt(tier1WLCap)),
+                    BigInt(parseInt(tier1WLDiv)),
+                    BigInt(parseInt(tier2Threshold)),
+                    BigInt(parseInt(tier2ThresholdDiv)),
+                    BigInt(parseInt(tier2WLCap)),
+                    BigInt(parseInt(tier2WLDiv)),
                   ],
                 })
               }

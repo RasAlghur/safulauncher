@@ -127,7 +127,7 @@ export const getBundleMaxAmount = async (chainId: number) => {
 };
 
 // Token data functions
-export const getPureInfoDataRaw = async (
+export const getPureInfoV2DataRaw = async (
   chainId: number,
   tokenAddress: string
 ) => {
@@ -142,7 +142,7 @@ export const getPureInfoDataRaw = async (
   });
 };
 
-export const getPureInfoV2DataRaw = async (
+export const getPureInfoV1DataRaw = async (
   chainId: number,
   tokenAddress: string
 ) => {
@@ -172,7 +172,7 @@ export const getPureGetLatestETHPrice = async (
   });
 };
 
-export const getPureAmountOutMarketCap = async (
+export const getPureAmountOutMarketCapV2 = async (
   chainId: number,
   tokenAddress: string
 ) => {
@@ -194,7 +194,7 @@ export const getPureAmountOutMarketCap = async (
   }
 };
 
-export const getPureV2AmountOutMarketCap = async (
+export const getPureAmountOutMarketCapV1 = async (
   chainId: number,
   tokenAddress: string
 ) => {
@@ -216,7 +216,7 @@ export const getPureV2AmountOutMarketCap = async (
   }
 };
 
-export const getPureAmountOut = async (
+export const getPureAmountOutV2 = async (
   chainId: number,
   tokenAddress: string,
   amountIn: bigint,
@@ -233,7 +233,7 @@ export const getPureAmountOut = async (
   });
 };
 
-export const getPureV2AmountOut = async (
+export const getPureAmountOutV1 = async (
   chainId: number,
   tokenAddress: string,
   amountIn: bigint,

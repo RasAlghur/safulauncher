@@ -12,14 +12,12 @@ import { useApiClient } from "../lib/api";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../web3/config";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import {
-  // getPureAmountOutMarketCap,
-  getPureV2AmountOutMarketCap,
   getPureGetLatestETHPrice,
-  // getPureInfoDataRaw,
-  getPureInfoV2DataRaw,
   getListingMilestone,
-  getPureAmountOutMarketCap,
-  getPureInfoDataRaw,
+  getPureInfoV1DataRaw,
+  getPureInfoV2DataRaw,
+  getPureAmountOutMarketCapV1,
+  getPureAmountOutMarketCapV2,
 } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -360,23 +358,26 @@ export default function Tokens() {
       await Promise.all(
         tokens.map(async (token) => {
           try {
-            const isV2 = token.tokenVersion === "token_v2";
+            const isV1 = token.tokenVersion === "token_v1";
 
             // Fetch bonding curve data
-            const info = isV2
-              ? await getPureInfoV2DataRaw(
+            const info = isV1
+              ? await getPureInfoV1DataRaw(
                 networkInfo.chainId,
                 token.tokenAddress
               )
-              : await getPureInfoDataRaw(networkInfo.chainId, token.tokenAddress);
+              : await getPureInfoV2DataRaw(networkInfo.chainId, token.tokenAddress);
             if (Array.isArray(info)) {
+
+              const isListed = Number(info[2]);
               const supply = Number(info[6]);
               const sold = Number(info[8]);
 
               const milestone = await getListingMilestone(networkInfo.chainId);
 
-              const percent =
-                // isV2  ?
+              const percent = isListed ? 100 :
+              // const percent = 
+                // isV1  ?
                 (sold / ((Number(milestone) / 1e2) * supply)) * 100;
               // : (sold / (0.75 * supply)) * 100;
               newCurve[token.tokenAddress] = Math.min(
@@ -384,12 +385,12 @@ export default function Tokens() {
                 100
               );
 
-              const rawAmt = isV2
-                ? await getPureV2AmountOutMarketCap(
+              const rawAmt = isV1
+                ? await getPureAmountOutMarketCapV1(
                   networkInfo.chainId,
                   token.tokenAddress
                 )
-                : await getPureAmountOutMarketCap(networkInfo.chainId, token.tokenAddress);
+                : await getPureAmountOutMarketCapV2(networkInfo.chainId, token.tokenAddress);
               // Price per token in ETH
               const pricePerToken = rawAmt
                 ? Number(rawAmt.toString()) / 1e18

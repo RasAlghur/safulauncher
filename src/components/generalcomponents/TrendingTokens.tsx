@@ -3,12 +3,12 @@ import { getHoldersFromMoralis } from "../../lib/getHoldersFromMoralis";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  getPureInfoDataRaw,
-  getPureAmountOutMarketCap,
   getPureGetLatestETHPrice,
-  getPureInfoV2DataRaw,
-  getPureV2AmountOutMarketCap,
   getPureMetrics,
+  getPureAmountOutMarketCapV1,
+  getPureAmountOutMarketCapV2,
+  getPureInfoV1DataRaw,
+  getPureInfoV2DataRaw,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 import { useApiClient } from "../../lib/api";
@@ -219,23 +219,23 @@ const TrendingTokens = () => {
               const version = token.tokenVersion;
               let info, rawAmt;
 
-              if (version === "token_v2") {
+              if (version === "token_v1") {
                 // Use v2 functions
-                info = await getPureInfoV2DataRaw(
+                info = await getPureInfoV1DataRaw(
                   networkInfo.chainId,
                   tokenAddress
                 );
-                rawAmt = await getPureV2AmountOutMarketCap(
+                rawAmt = await getPureAmountOutMarketCapV1(
                   networkInfo.chainId,
                   tokenAddress
                 );
               } else {
-                // Default to v1
-                info = await getPureInfoDataRaw(
+                // Default to v2
+                info = await getPureInfoV2DataRaw(
                   networkInfo.chainId,
                   tokenAddress
                 );
-                rawAmt = await getPureAmountOutMarketCap(
+                rawAmt = await getPureAmountOutMarketCapV2(
                   networkInfo.chainId,
                   tokenAddress
                 );

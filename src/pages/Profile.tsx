@@ -19,8 +19,8 @@ import { AlchemyTokenDiscovery } from "../web3/tokenholding";
 import axios from "axios";
 import { debounce } from "lodash";
 import {
-  getPureAmountOutMarketCap,
-  getPureV2AmountOutMarketCap,
+  getPureAmountOutMarketCapV1,
+  getPureAmountOutMarketCapV2,
 } from "../web3/readContracts";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
@@ -52,7 +52,7 @@ interface launchedToken {
     name: string;
     path: string;
   };
-  tokenVersion?: "token_v1" | "token_v2";
+  tokenVersion?: "token_v1" | "token_v1";
   tokenImageId?: string;
 }
 
@@ -162,11 +162,11 @@ const Profile = () => {
         const token = launchedTokens.find(
           (t) => t.tokenAddress === tokenAddress
         );
-        const isV2 = token?.tokenVersion === "token_v2";
+        const isV1 = token?.tokenVersion === "token_v1";
 
-        const fn = isV2
-          ? getPureV2AmountOutMarketCap
-          : getPureAmountOutMarketCap;
+        const fn = isV1
+          ? getPureAmountOutMarketCapV1
+          : getPureAmountOutMarketCapV2;
         // const fn = getPureAmountOutMarketCap;
         const raw = await fn(networkInfo.chainId, tokenAddress);
         console.log(`raw for token address ${tokenAddress}: ${raw}`);

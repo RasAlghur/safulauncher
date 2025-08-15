@@ -1,5 +1,5 @@
 
-export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
+export const SAFU_LAUNCHER_ADDRESSES_V1: Record<number, `0x${string}`> = {
   1: "0xB9890A2c1c448cb87877b6121c4518F04808F90D", // Mainnet address
   11155111: "0xCe7c7f774a2DAC5fd60f08B4b5E4ABb8dcC56348", // Sepolia address
 };
@@ -9,7 +9,7 @@ export const UNISWAP_V2_ROUTER_ADDRESSES: Record<number, `0x${string}`> = {
   11155111: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3",
 };
 
-export const SAFU_LAUNCHER_ADDRESSES_V1: Record<number, `0x${string}`> = {
+export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
   1: "0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87", // Mainnet address
   11155111: "0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01", // Sepolia address
 };
@@ -1010,7 +1010,7 @@ export const UNISWAP_ROUTER_ABI = {
  * @type {{ readonly address: "0x31ea5493a157dfFa0f440335abc12855101286c4"; readonly abi: readonly [{ readonly type: "constructor"; readonly inputs: readonly [{ readonly name: "router_"; readonly type: "address"; readonly internalType: "address"; }, ... 6 more ..., { ...; }]; readonly stateMutability: "nonpayable"; }, ... 53 ...}
  */
 
-export const LAUNCHER_ABI_V2 = {
+export const LAUNCHER_ABI_V1 = {
   abi: [
     {
       "type": "constructor",
@@ -2425,7 +2425,7 @@ export const LAUNCHER_ABI_V2 = {
   ],
 } as const;
 
-export const LAUNCHER_ABI_V1 = {
+export const LAUNCHER_ABI_V2 = {
   abi: [
     {
       "type": "constructor",
