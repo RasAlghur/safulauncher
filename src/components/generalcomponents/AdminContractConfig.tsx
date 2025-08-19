@@ -1,3 +1,5 @@
+// setLockDuration
+
 import {
   useWriteContract,
   useReadContract,
@@ -44,6 +46,11 @@ const AdminContractConfig = () => {
   const [tier2ThresholdDiv, setTier2ThresholdDiv] = useState<string>("");
   const [tier2WLCap, setTier2WLCap] = useState<string>("");
   const [tier2WLDiv, setTier2WLDiv] = useState<string>("");
+
+  // Locking config (NEW)
+  const [tLockDurDays, setTLockDurDays] = useState<string>("");
+  const [lpLockDurDays, setLpLockDurDays] = useState<string>("");
+  const [tLockPercent, setTLockPercent] = useState<string>("");
 
   // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
@@ -108,6 +115,22 @@ const AdminContractConfig = () => {
     functionName: "initialPoolEth",
   });
 
+  const { data: currentTLockDur } = useReadContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "tLockDur",
+  });
+  const { data: currentLpLockDur } = useReadContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "lpLockDur",
+  });
+  const { data: currentTLockPrcnt } = useReadContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+    abi: LAUNCHER_ABI_V1.abi,
+    functionName: "tLckPrcnt",
+  });
+
   const { data: currentDevRewardETH } = useReadContract({
     address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
 
@@ -164,6 +187,22 @@ const AdminContractConfig = () => {
     if (!value) return "Address is required";
     if (!/^0x[a-fA-F0-9]{40}$/.test(value))
       return "Invalid Ethereum address format";
+    return null;
+  };
+
+  const validateLockDays = (value: string): string | null => {
+    const num = parseInt(value);
+    if (isNaN(num)) return "Must be a valid integer (days)";
+    if (num < 7) return "Must be at least 7 days";
+    if (num > 3650) return "Too long (>10 years)";
+    return null;
+  };
+
+  const validateLockPercent = (value: string): string | null => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "Must be a valid number";
+    if (num < 0) return "Cannot be negative";
+    if (num > 100) return "Cannot exceed 100%";
     return null;
   };
 
@@ -415,6 +454,15 @@ const AdminContractConfig = () => {
     tier2ThresholdDiv.trim() !== "" &&
     tier2WLCap.trim() !== "" &&
     tier2WLDiv.trim() !== "";
+
+
+  const isLockingConfigValid: boolean =
+    !validationErrors.tLockDurDays &&
+    !validationErrors.lpLockDurDays &&
+    !validationErrors.tLockPercent &&
+    tLockDurDays.trim() !== "" &&
+    lpLockDurDays.trim() !== "" &&
+    tLockPercent.trim() !== "";
 
   return (
     <div className="p-4 max-w-6xl mx-auto mt-8 space-y-6">
@@ -750,6 +798,72 @@ const AdminContractConfig = () => {
             </ActionButton>
           </div>
         </FormSection>
+
+        {/* Lock & Locking Configuration */}
+        <FormSection
+          title="🔒 Lock Durations & Percent"
+          tooltip="Configure token lock durations and the percent of tokens to lock on launch"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <InputField
+                label="Token Lock Duration (days)"
+                value={tLockDurDays}
+                onChange={setTLockDurDays}
+                placeholder="30"
+                currentValue={currentTLockDur ? Number(currentTLockDur) / 86400 : "N/A"}
+                tooltip="Duration (in days) for token lock when enabled (min 7 days)"
+                validator={validateLockDays}
+                fieldName="tLockDurDays"
+                unit="days"
+              />
+
+              <InputField
+                label="LP Lock Duration (days)"
+                value={lpLockDurDays}
+                onChange={setLpLockDurDays}
+                placeholder="30"
+                currentValue={currentLpLockDur ? Number(currentLpLockDur) / 86400 : "N/A"}
+                tooltip="Duration (in days) for LP token lock (min 7 days)"
+                validator={validateLockDays}
+                fieldName="lpLockDurDays"
+                unit="days"
+              />
+
+              <InputField
+                label="Token Lock Percent (%)"
+                value={tLockPercent}
+                onChange={setTLockPercent}
+                placeholder="5"
+                currentValue={currentTLockPrcnt ? Number(currentTLockPrcnt) / 100 : "N/A"}
+                tooltip="Percent of tokens to lock (e.g. 5 = 5%)"
+                validator={validateLockPercent}
+                fieldName="tLockPercent"
+                unit="%"
+              />
+            </div>
+
+            <ActionButton
+              onClick={() => {
+                // convert days -> seconds, percent -> BPS (percent * 100)
+                const tLockSecs = BigInt(Math.floor(parseInt(tLockDurDays || "0") * 86400));
+                const lpLockSecs = BigInt(Math.floor(parseInt(lpLockDurDays || "0") * 86400));
+                const tLockPrcntBps = BigInt(Math.round(parseFloat(tLockPercent || "0") * 100));
+
+                writeContract({
+                  address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
+                  abi: LAUNCHER_ABI_V1.abi,
+                  functionName: "setLockDuration",
+                  args: [tLockSecs, lpLockSecs, tLockPrcntBps],
+                });
+              }}
+              isValid={isLockingConfigValid}
+            >
+              Update Lock Durations
+            </ActionButton>
+          </div>
+        </FormSection>
+
 
         {/* Creator Configuration */}
         <FormSection
