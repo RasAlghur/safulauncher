@@ -368,22 +368,51 @@ export default function Tokens() {
               )
               : await getPureInfoV2DataRaw(networkInfo.chainId, token.tokenAddress);
             if (Array.isArray(info)) {
-
+              // ( current mc / final mc ) * 100
               const isListed = Number(info[2]);
+              // const supply = Number(info[6]);
+              // const sold = Number(info[8]);
+
+              // const milestone = await getListingMilestone(networkInfo.chainId);
+
+              // const percent = isListed ? 100 :
+              // // const percent = 
+              //   // isV1  ?
+              //   (sold / ((Number(milestone) / 1e2) * supply)) * 100;
+              // // : (sold / (0.75 * supply)) * 100;
+              // newCurve[token.tokenAddress] = Math.min(
+              //   Math.max(percent, 0),
+              //   100
+              // );
+
+              // implement 2 starts here
+              const virtPool = Number(info[9]);
+              console.log("here 1")
+              const ETHRaised = Number(info[7]);
+              console.log("here 2")
+              const initPool = (virtPool - ETHRaised) / 1e18;
+              console.log("here 3")
+
               const supply = Number(info[6]);
-              const sold = Number(info[8]);
+              console.log("here 4")
+              const index1 = (initPool * supply) / 1e18
+              console.log("here 5")
 
               const milestone = await getListingMilestone(networkInfo.chainId);
+              console.log("here 6")
 
-              const percent = isListed ? 100 :
-              // const percent = 
-                // isV1  ?
-                (sold / ((Number(milestone) / 1e2) * supply)) * 100;
-              // : (sold / (0.75 * supply)) * 100;
-              newCurve[token.tokenAddress] = Math.min(
-                Math.max(percent, 0),
-                100
-              );
+              const lmstone = (Number(milestone) / 1e2) * supply;
+              console.log("here 7")
+
+              const index2 = (supply - lmstone) / 1e18;
+              console.log("here 8")
+              const index1Div2 = index1 / index2;
+              console.log("here 9")
+
+              const index3 = (index1Div2 / index2) * (supply / 1e18)
+              console.log("here 10")
+              const finalMC = index3 * ethPriceUSD;
+              console.log("here 11")
 
               const rawAmt = isV1
                 ? await getPureAmountOutMarketCapV1(
@@ -398,6 +427,12 @@ export default function Tokens() {
               // Market cap USD
               newMarketCap[token.tokenAddress] =
                 pricePerToken * (supply / 1e18) * ethPriceUSD;
+
+              const percent = isListed ? 100 : (newMarketCap[token.tokenAddress] / finalMC) * 100
+              console.log("here 12")
+              newCurve[token.tokenAddress] = Math.min(Math.max(percent, 0), 100);
+              console.log("here 13")
+
             }
 
             // Fetch transaction logs
