@@ -810,7 +810,7 @@ export default function Trade() {
 
       const index2 = (tokenSupply - lmstone) / 1e18;
       const index1Div2 = index1 / index2;
-
+      console.log("index1Div2", index1Div2)
       const index3 = (index1Div2 / index2) * (tokenSupply / 1e18)
       const finalMC = index3 * infoETHCurrentPrice;
       

@@ -134,9 +134,49 @@ export default function Leaderboard() {
         setTokensMap(map);
 
         // Fetch transactions and build leaderboard with retry
+        // const txRes = await retry(() => base.get("transactions?limit=100"));
+        // // https://api.safulauncher.com/api/transactions?page=2&limit=100
+        // const fPage = txRes.data.data.data;
+        // console.log("firstPage", fPage);
+        // const tPages = txRes.data.data.totalPages
+        // console.log("totalPages", tPages);
+        // // console.log("txRes", txRes);
+
+        // const allTx: TxLog[] = fPage;
+
+
+        // Fetch transactions and build leaderboard with retry
         const txRes = await retry(() => base.get("transactions?limit=100"));
-        console.log("txRes", txRes);
-        const allTx: TxLog[] = txRes.data.data.data;
+        const firstPage = txRes.data.data.data;
+        const totalPages = txRes.data.data.totalPages;
+
+        console.log("firstPage", firstPage);
+        console.log("totalPages", totalPages);
+
+        let allTx: TxLog[] = [...firstPage]; // Start with first page
+
+        // Fetch remaining pages if totalPages > 1
+        if (totalPages > 1) {
+          const remainingPagePromises = [];
+
+          for (let page = 2; page <= totalPages; page++) {
+            remainingPagePromises.push(
+              retry(() => base.get(`transactions?page=${page}&limit=100`))
+            );
+          }
+
+          // Wait for all remaining pages to complete
+          const remainingPagesResponses = await Promise.all(remainingPagePromises);
+
+          // Extract data from each page response and add to allTx
+          remainingPagesResponses.forEach((response) => {
+            const pageData = response.data.data.data;
+            allTx = [...allTx, ...pageData];
+          });
+        }
+
+        console.log("Total transactions fetched:", allTx.length);
+
 
         const walletMap: Record<
           string,
@@ -195,9 +235,9 @@ export default function Leaderboard() {
     } else if (selected === "Most Recent Trade") {
       return sortOrder === "desc"
         ? new Date(b.lastPurchaseTs).getTime() -
-            new Date(a.lastPurchaseTs).getTime()
+        new Date(a.lastPurchaseTs).getTime()
         : new Date(a.lastPurchaseTs).getTime() -
-            new Date(b.lastPurchaseTs).getTime();
+        new Date(b.lastPurchaseTs).getTime();
     }
     return 0;
   });
@@ -293,13 +333,12 @@ export default function Leaderboard() {
                         setSelected(option);
                         setIsOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
-                        idx === 0
-                          ? "rounded-t-xl"
-                          : idx === options.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
+                        ? "rounded-t-xl"
+                        : idx === options.length - 1
                           ? "rounded-b-xl"
                           : ""
-                      }`}
+                        }`}
                     >
                       {option}
                     </div>
@@ -322,8 +361,8 @@ export default function Leaderboard() {
                       ? "High → Low"
                       : "New → Old"
                     : selected === "Volume"
-                    ? "Low → High"
-                    : "Old → New"}
+                      ? "Low → High"
+                      : "Old → New"}
                 </span>
                 <div className="w-8 h-8 rounded-md bg-Primary flex items-center justify-center">
                   <BsChevronDown className="text-white text-xl" />
@@ -450,11 +489,10 @@ export default function Leaderboard() {
               <button
                 key={i + 1}
                 onClick={() => setPage(i + 1)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                  i + 1 === page
-                    ? "bg-[#0C8CE0] text-white"
-                    : "bg-white/10 text-white/60 hover:bg-white/20"
-                }`}
+                className={`w-8 h-8 rounded-full text-sm font-medium transition ${i + 1 === page
+                  ? "bg-[#0C8CE0] text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20"
+                  }`}
               >
                 {i + 1}
               </button>
