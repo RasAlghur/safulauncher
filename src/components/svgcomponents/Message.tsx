@@ -2,8 +2,8 @@ const Message = ({ className = "" }) => {
   return (
     <svg
       className={className}
-      width="30"
-      height="30"
+      width="23"
+      height="23"
       viewBox="0 0 512 512"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

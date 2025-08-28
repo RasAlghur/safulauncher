@@ -363,10 +363,13 @@ export default function Tokens() {
             // Fetch bonding curve data
             const info = isV1
               ? await getPureInfoV1DataRaw(
-                networkInfo.chainId,
-                token.tokenAddress
-              )
-              : await getPureInfoV2DataRaw(networkInfo.chainId, token.tokenAddress);
+                  networkInfo.chainId,
+                  token.tokenAddress
+                )
+              : await getPureInfoV2DataRaw(
+                  networkInfo.chainId,
+                  token.tokenAddress
+                );
             if (Array.isArray(info)) {
               // ( current mc / final mc ) * 100
               const isListed = Number(info[2]);
@@ -376,7 +379,7 @@ export default function Tokens() {
               // const milestone = await getListingMilestone(networkInfo.chainId);
 
               // const percent = isListed ? 100 :
-              // // const percent = 
+              // // const percent =
               //   // isV1  ?
               //   (sold / ((Number(milestone) / 1e2) * supply)) * 100;
               // // : (sold / (0.75 * supply)) * 100;
@@ -387,39 +390,42 @@ export default function Tokens() {
 
               // implement 2 starts here
               const virtPool = Number(info[9]);
-              console.log("here 1")
+              console.log("here 1");
               const ETHRaised = Number(info[7]);
-              console.log("here 2")
+              console.log("here 2");
               const initPool = (virtPool - ETHRaised) / 1e18;
-              console.log("here 3")
+              console.log("here 3");
 
               const supply = Number(info[6]);
-              console.log("here 4")
-              const index1 = (initPool * supply) / 1e18
-              console.log("here 5")
+              console.log("here 4");
+              const index1 = (initPool * supply) / 1e18;
+              console.log("here 5");
 
               const milestone = await getListingMilestone(networkInfo.chainId);
-              console.log("here 6")
+              console.log("here 6");
 
               const lmstone = (Number(milestone) / 1e2) * supply;
-              console.log("here 7")
+              console.log("here 7");
 
               const index2 = (supply - lmstone) / 1e18;
-              console.log("here 8")
+              console.log("here 8");
               const index1Div2 = index1 / index2;
-              console.log("here 9")
+              console.log("here 9");
 
-              const index3 = (index1Div2 / index2) * (supply / 1e18)
-              console.log("here 10")
+              const index3 = (index1Div2 / index2) * (supply / 1e18);
+              console.log("here 10");
               const finalMC = index3 * ethPriceUSD;
-              console.log("here 11")
+              console.log("here 11");
 
               const rawAmt = isV1
                 ? await getPureAmountOutMarketCapV1(
-                  networkInfo.chainId,
-                  token.tokenAddress
-                )
-                : await getPureAmountOutMarketCapV2(networkInfo.chainId, token.tokenAddress);
+                    networkInfo.chainId,
+                    token.tokenAddress
+                  )
+                : await getPureAmountOutMarketCapV2(
+                    networkInfo.chainId,
+                    token.tokenAddress
+                  );
               // Price per token in ETH
               const pricePerToken = rawAmt
                 ? Number(rawAmt.toString()) / 1e18
@@ -428,11 +434,15 @@ export default function Tokens() {
               newMarketCap[token.tokenAddress] =
                 pricePerToken * (supply / 1e18) * ethPriceUSD;
 
-              const percent = isListed ? 100 : (newMarketCap[token.tokenAddress] / finalMC) * 100
-              console.log("here 12")
-              newCurve[token.tokenAddress] = Math.min(Math.max(percent, 0), 100);
-              console.log("here 13")
-
+              const percent = isListed
+                ? 100
+                : (newMarketCap[token.tokenAddress] / finalMC) * 100;
+              console.log("here 12");
+              newCurve[token.tokenAddress] = Math.min(
+                Math.max(percent, 0),
+                100
+              );
+              console.log("here 13");
             }
 
             // Fetch transaction logs
@@ -465,7 +475,7 @@ export default function Tokens() {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100
+          container.scrollHeight - 100
       ) {
         fetchTokenList(page + 1, searchTerm, searchField, true);
       }
@@ -485,8 +495,8 @@ export default function Tokens() {
   const filteredTokens =
     sortField === "bonded"
       ? tokens.filter(
-        (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
-      )
+          (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
+        )
       : tokens;
 
   const sortedTokens = [...filteredTokens].sort((a, b) => {
@@ -765,12 +775,13 @@ export default function Tokens() {
                             {isLoadingMetrics ? (
                               <span className="">Loading...</span>
                             ) : (
-                              `$${volume24hMap[
-                                t.token.tokenAddress
-                              ]?.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }) ?? "0.00"
+                              `$${
+                                volume24hMap[
+                                  t.token.tokenAddress
+                                ]?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }) ?? "0.00"
                               }`
                             )}
                           </div>
@@ -829,12 +840,13 @@ export default function Tokens() {
                       <div
                         key={field}
                         onClick={() => searchChange(field)}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${field === "all"
-                          ? "rounded-t-xl"
-                          : field === "name"
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                          field === "all"
+                            ? "rounded-t-xl"
+                            : field === "name"
                             ? "rounded-b-xl"
                             : ""
-                          }`}
+                        }`}
                       >
                         {field === "name" ? "Name/Symbol" : field}
                       </div>
@@ -868,12 +880,13 @@ export default function Tokens() {
                         setSortField(value as any);
                         setSortDropdownOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
-                        ? "rounded-t-xl"
-                        : idx === arr.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        idx === 0
+                          ? "rounded-t-xl"
+                          : idx === arr.length - 1
                           ? "rounded-b-xl"
                           : ""
-                        }`}
+                      }`}
                     >
                       {label}
                     </div>
@@ -937,12 +950,14 @@ export default function Tokens() {
           ) : (
             <div
               ref={containerRef}
-              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-                } px-2 py-5 border border-white/10`}
+              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+                sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+              } px-2 py-5 border border-white/10`}
             >
               <ul
-                className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-                  }`}
+                className={`grid gap-6 z-10 relative ${
+                  sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                }`}
               >
                 {sortedTokens.map((t, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -951,7 +966,7 @@ export default function Tokens() {
                       className="rounded-xl lg:px-6 px-2 py-5 cursor-pointer"
                     >
                       <div className="grid grid-cols-[.7fr_.3fr] justify-between">
-                        <div className="flex items-start gap-4 ">
+                        <div className="flex items-start sm:gap-4 gap-1">
                           {t.tokenImageId && (
                             <img
                               src={`${networkInfo.apiBaseUrl}${t.image?.path}`}
@@ -961,7 +976,7 @@ export default function Tokens() {
                             />
                           )}
                           <div>
-                            <h3 className="dark:text-white text-black text-[20px] font-semibold mb-2.5">
+                            <h3 className="dark:text-white text-black text-[18px] sm:text-[20px] font-semibold mb-2.5">
                               {t.name} ({t.symbol})
                             </h3>
                             <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#147ABD] mb-2.5">
@@ -972,7 +987,7 @@ export default function Tokens() {
                               </span>
                             </p>
                             <div className="flex items-center mb-2.5">
-                              <p className="text-sm md:text-base dark:text-[#B6B6B6] text-[#141313] ">
+                              <p className="text-[13px] md:text-base dark:text-[#B6B6B6] text-[#141313] ">
                                 Address: {t.tokenAddress.slice(0, 6)}...
                                 {t.tokenAddress.slice(-4)}
                               </p>
@@ -1002,20 +1017,21 @@ export default function Tokens() {
                         </div>
                         {/* Stats */}
                         <div className="flex flex-col space-y-1 items-end">
-                          <p className="text-[12px] lg:text-sm dark:text-white text-[#141313]">
+                          <p className="text-[12px] lg:text-sm dark:text-white text-[#141313] text-right">
                             <strong className="">24h Volume:</strong>
                             {isLoadingMetrics ? (
                               <span className="ml-1 text-gray-500">
                                 Loading...
                               </span>
                             ) : (
-                              ` $${volume24hMap[t.tokenAddress]?.toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              ) ?? "0.00"
+                              ` $${
+                                volume24hMap[t.tokenAddress]?.toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                ) ?? "0.00"
                               }`
                             )}
                           </p>
@@ -1063,9 +1079,11 @@ export default function Tokens() {
                           </div>
                           <div className="mt-auto relative">
                             <Message className="" />
-                            <p className="absolute -right-1 -top-1 text-white size-4 flex items-center justify-center rounded-full bg-red-500">
-                              {messageCountMap[t.tokenAddress] ?? 0}
-                            </p>
+                            <div className="absolute -right-1 -top-1 text-white size-4 flex items-center justify-center rounded-full bg-red-500">
+                              <p className="text-[12px]">
+                                {messageCountMap[t.tokenAddress] ?? 0}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1076,9 +1094,10 @@ export default function Tokens() {
                       <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."
-                          : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ??
-                          "0"
-                          }%`}
+                          : `${
+                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
+                              "0"
+                            }%`}
                       </p>
 
                       {!isLoadingMetrics &&
@@ -1092,8 +1111,9 @@ export default function Tokens() {
                               className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                               style={{
                                 width: `${stripeWidth}px`,
-                                left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
-                                  }px)`,
+                                left: `calc(${(i * spacing).toFixed(2)}% - ${
+                                  stripeWidth / 2
+                                }px)`,
                               }}
                             />
                           );
@@ -1111,8 +1131,9 @@ export default function Tokens() {
 
                         return (
                           <div
-                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                              } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
+                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                              progress < 100 ? "rounded-l-full" : "rounded-full"
+                            } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
                             style={{
                               width: `${isLoadingMetrics ? 0 : progress}%`,
                               ...gradientStyle,

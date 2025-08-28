@@ -9,6 +9,7 @@ import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import { useApiClient } from "../lib/api";
 import { BsChevronDown } from "react-icons/bs";
 import { Link } from "react-router-dom";
+import CopyButton from "../components/generalcomponents/CopyButton";
 
 const options = ["Volume", "Most Recent Trade"];
 
@@ -134,7 +135,7 @@ export default function Leaderboard() {
 
         // Fetch transactions and build leaderboard with retry
         const txRes = await retry(() => base.get("transactions?limit=100"));
-        console.log('txRes', txRes);
+        console.log("txRes", txRes);
         const allTx: TxLog[] = txRes.data.data.data;
 
         const walletMap: Record<
@@ -375,11 +376,23 @@ export default function Leaderboard() {
                           {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                         </td>
                         <td className="px-6 py-4 ">
-                          <p className=" text-black dark:text-white">
-                            {entry.wallet.slice(0, 4)}...
-                            {entry.wallet.slice(-4)}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            {/* Wallet hyperlink (dynamic explorer URL) */}
+                            <a
+                              href={`${networkInfo.explorerUrl}/address/${entry.wallet}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              {entry.wallet.slice(0, 6)}…
+                              {entry.wallet.slice(-4)}
+                            </a>
+
+                            {/* Copy button */}
+                            <CopyButton value={entry.wallet} />
+                          </div>
                         </td>
+
                         <td className="px-6 py-4 font-semibold text-lg text-black dark:text-white">
                           <div className="flex flex-col">
                             <span>
