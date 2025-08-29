@@ -2438,7 +2438,7 @@ export default function Trade() {
               <div className="flex flex-col gap-y-3 lg:flex-row">
                 <div className="flex items-center gap-x-4">
                   <h1 className="text-2xl tracking-tight font-bold dark:text-white text-black font-raleway">
-                    Trade {token.name}{" "}
+                    {token.name}{" "}
                     <span className="dark:text-white/60 text-black/80">
                       ({token.symbol})
                     </span>
