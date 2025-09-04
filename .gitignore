@@ -31,7 +31,6 @@ useTradeEffects.ts
 useTradeHandlers.ts
 useTradeUI.ts
 
-formatting.ts
 constants.ts
 types.ts
 
