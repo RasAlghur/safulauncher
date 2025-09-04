@@ -15,7 +15,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI_V1, SAFU_LAUNCHER_ADDRESSES_V1 } from "../web3/config";
+import { LAUNCHER_ABI_V3, SAFU_LAUNCHER_ADDRESSES_V3, SAFU_TOKEN_ADDRESSES, TOKEN_ABI } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -31,9 +31,10 @@ import RocketLoader from "../components/generalcomponents/Loader";
 import { v4 as uuidv4 } from "uuid";
 import RocketSpinner from "../components/generalcomponents/RocketSpinner";
 import RocketSpinner2 from "../components/generalcomponents/RocketSpinner2";
-import { getBundleMaxAmount } from "../web3/readContracts";
+import { getPureMetrics } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
+import { formatRawAmount } from "../lib/formatting";
 
 /**
  * Description placeholder
@@ -56,7 +57,7 @@ export default function Launch(): JSX.Element {
   const { address, isConnected } = useAccount();
   const { saveOrFetchUser } = useUser();
   const networkInfo = useNetworkEnvironment();
-  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId];
+  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId];
 
   // Basic fields
   const [name, setName] = useState("");
@@ -67,6 +68,7 @@ export default function Launch(): JSX.Element {
   const [telegram, setTelegram] = useState<string>("");
   const [twitter, setTwitter] = useState<string>("");
   const [bundleMaxAmount, setBundleMaxAmount] = useState<number>(0);
+  const [combinedMetrics, setCombinedMetrics] = useState<bigint[] | null>(null);
 
   const [description, setDescription] = useState<string>("");
   const [logo, setLogo] = useState<File | null>(null);
@@ -235,6 +237,7 @@ export default function Launch(): JSX.Element {
       );
     }
   };
+
   // Updated file upload handler with Excel support
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -340,6 +343,8 @@ export default function Launch(): JSX.Element {
   const [maxWalletAmountOnSafu, setMaxWalletAmountOnSafu] = useState<number>(0);
   const [maxWhitelist, setMaxWhitelist] = useState<number>(0);
   const [initialPool, setInitialPool] = useState<number>(0);
+  const [creationFeeETH, setCreationFeeETH] = useState<number>(0);
+  const [creationHolderThresholdBps, setCreationHolderThresholdBps] = useState<number>(0);
   const [lpOption, setLpOption] = useState<"lock" | "burn">("lock");
   const [enableBundle, setEnableBundle] = useState(false);
   const [enableTaxOnSafu, setEnableTaxOnSafu] = useState(false);
@@ -451,14 +456,43 @@ export default function Launch(): JSX.Element {
     return { duplicates, positions };
   };
 
-  const { data: getTradeFeeBps } = useReadContract({
-    ...LAUNCHER_ABI_V1,
-    address: safuLauncherAddress,
-    functionName: "tradeFeeBps",
-    query: {
-      enabled: isConnected,
-    },
-  });
+  const {
+    data: safuBalance,
+    isLoading: isLoadingBalance,
+    refetch: refetchBalance,
+  } = useReadContract(
+    SAFU_TOKEN_ADDRESSES && address
+      ? {
+        ...TOKEN_ABI,
+        address: SAFU_TOKEN_ADDRESSES[networkInfo.chainId] as `0x${string}`,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      }
+      : undefined
+  );
+
+  const {
+    data: safuSupply,
+    isLoading: isLoadingSupply,
+    refetch: refetchSupply,
+  } = useReadContract(
+    SAFU_TOKEN_ADDRESSES && address
+      ? {
+        ...TOKEN_ABI,
+        address: SAFU_TOKEN_ADDRESSES[networkInfo.chainId] as `0x${string}`,
+        functionName: "totalSupply",
+      }
+      : undefined
+  );
+
+  // const { data: getMetric } = useReadContract({
+  //   ...LAUNCHER_ABI_V3,
+  //   address: safuLauncherAddress,
+  //   functionName: "getMetrics",
+  //   query: {
+  //     enabled: isConnected,
+  //   },
+  // });
 
   // Comprehensive validation function
   const validateForm = useCallback(async (): Promise<ValidationError[]> => {
@@ -544,9 +578,8 @@ export default function Launch(): JSX.Element {
         if (tax.bps < 0 || tax.bps > 10000) {
           errors.push({
             field: "tax",
-            message: `Tax recipient ${
-              index + 1
-            }: percentage must be between 0-100`,
+            message: `Tax recipient ${index + 1
+              }: percentage must be between 0-100`,
           });
         }
       });
@@ -613,9 +646,8 @@ export default function Launch(): JSX.Element {
           if (addr.cap > maxWalletAmountOnSafu) {
             errors.push({
               field: "whitelist",
-              message: `Entry ${
-                index + 1
-              }: max cap for whitelisted addrs must not be greater than max Wallet Amount On Safu: ${maxWalletAmountOnSafu}%.`,
+              message: `Entry ${index + 1
+                }: max cap for whitelisted addrs must not be greater than max Wallet Amount On Safu: ${maxWalletAmountOnSafu}%.`,
             });
           }
         }
@@ -623,9 +655,8 @@ export default function Launch(): JSX.Element {
         if (addr.cap <= 0 || addr.cap > maxWhitelist) {
           errors.push({
             field: "whitelist",
-            message: `Entry ${
-              index + 1
-            }: max cap for whitelisted addrs is ${maxWhitelist}%.`,
+            message: `Entry ${index + 1
+              }: max cap for whitelisted addrs is ${maxWhitelist}%.`,
           });
         }
       });
@@ -670,7 +701,8 @@ export default function Launch(): JSX.Element {
     ): number => {
       // Simulate the smart contract calculation
       // These values should match your smart contract constants
-      const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
+      // const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
+      const TRADE_FEE_BPS = Number(combinedMetrics?.[9]); // 0.3% - adjust to match your contract
       const virtualEthReserve = initialPool; // 2 ETH - from your contract
 
       if (bundleEth <= 0) return 0;
@@ -761,13 +793,12 @@ export default function Launch(): JSX.Element {
         if (!isCreator && recipientTokens > maxAllowedTokens) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${index + 1} (${
-              bundle.addr
-            }) would receive ${recipientTokens.toFixed(
-              0
-            )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
-              0
-            )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
+            message: `Bundle recipient ${index + 1} (${bundle.addr
+              }) would receive ${recipientTokens.toFixed(
+                0
+              )} tokens, exceeding the per‑wallet cap of ${maxAllowedTokens.toFixed(
+                0
+              )} tokens (${capPercent}% of total supply). Only the creator (${address}) may exceed this limit.`,
           });
         }
 
@@ -780,9 +811,8 @@ export default function Launch(): JSX.Element {
         if (bundle.pct <= 0 || bundle.pct > 100) {
           errors.push({
             field: "bundle",
-            message: `Bundle recipient ${
-              index + 1
-            }: Percentage must be between 0-100%`,
+            message: `Bundle recipient ${index + 1
+              }: Percentage must be between 0-100%`,
           });
         }
         totalBundlePercent += bundle.pct || 0;
@@ -873,9 +903,8 @@ export default function Launch(): JSX.Element {
         if (fee.pct <= 0 || fee.pct > 100) {
           errors.push({
             field: "platformFee",
-            message: `Platform fee recipient ${
-              index + 1
-            }: Percentage must be between 0-100%`,
+            message: `Platform fee recipient ${index + 1
+              }: Percentage must be between 0-100%`,
           });
         }
         totalPlatformPercent += fee.pct || 0;
@@ -927,31 +956,7 @@ export default function Launch(): JSX.Element {
     }
 
     return errors;
-  }, [
-    isConnected,
-    name,
-    symbol,
-    supply,
-    enableTaxOnDex,
-    taxList,
-    enableWhitelist,
-    isMaxWalletAmountOnSafu,
-    maxWalletAmountOnSafu,
-    maxWhitelist,
-    whitelistUpload,
-    enableBundle,
-    bundleList,
-    bundleEth,
-    enableTaxOnSafu,
-    platformFeeBps,
-    platformFeeList,
-    dexFeeBps,
-    address,
-    initialPool,
-    logo,
-    getTradeFeeBps,
-    bundleMaxAmount,
-  ]);
+  }, [isConnected, name, symbol, supply, logo, isMaxWalletAmountOnSafu, enableTaxOnDex, enableWhitelist, enableBundle, enableTaxOnSafu, maxWalletAmountOnSafu, maxWhitelist, dexFeeBps, taxList, whitelistUpload, combinedMetrics, initialPool, bundleList, bundleEth, bundleMaxAmount, address, platformFeeBps, platformFeeList]);
 
   // Run validation whenever form data changes
   useEffect(() => {
@@ -965,11 +970,17 @@ export default function Launch(): JSX.Element {
   }, [validateForm]);
 
   useEffect(() => {
-    // whenever chainId or connector changes, re-fetch
-    getBundleMaxAmount(networkInfo.chainId).then((raw: bigint) => {
-      setBundleMaxAmount(Number(raw));
-    });
-  }, [networkInfo.chainId]);
+    const fetchMetrics = async () => {
+      const metrics = await getPureMetrics(networkInfo.chainId);
+      setCombinedMetrics(metrics);
+    };
+
+    fetchMetrics();
+    refetchBalance();
+    refetchSupply();
+
+    // <p>totalVolumeETH: {Number(combinedMetrics?.[0] || 0) / 1e18} ETH</p>
+  }, [networkInfo.chainId, refetchBalance, refetchSupply]);
 
   useEffect(() => {
     if (isConfirmed && result) {
@@ -990,24 +1001,6 @@ export default function Launch(): JSX.Element {
   const maxWalletAmountOnSafuBps = isMaxWalletAmountOnSafu
     ? Math.floor(maxWalletAmountOnSafu * 100)
     : 0;
-
-  const { data: maxWhitelistBps } = useReadContract({
-    ...LAUNCHER_ABI_V1,
-    address: safuLauncherAddress,
-    functionName: "maxWhitelistBps",
-    query: {
-      enabled: isConnected,
-    },
-  });
-
-  const { data: initialPoolEth } = useReadContract({
-    ...LAUNCHER_ABI_V1,
-    address: safuLauncherAddress,
-    functionName: "initialPoolEth",
-    query: {
-      enabled: isConnected,
-    },
-  });
 
   // 4. Add an input handler for decimal validation (optional)
   const handlePlatformFeeBpsChange = (value: string) => {
@@ -1066,12 +1059,13 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableTaxOnSafu, platformFeeList]
   );
+
   const taxOnSafuPercentArray = React.useMemo(
     () =>
       enableTaxOnSafu
         ? (platformFeeList.map((p) =>
-            Math.floor(p.pct * 100)
-          ) as readonly number[])
+          Math.floor(p.pct * 100)
+        ) as readonly number[])
         : ([] as readonly number[]),
     [enableTaxOnSafu, platformFeeList]
   );
@@ -1083,14 +1077,15 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableTaxOnDex, taxList]
   );
+
   const initialCapsBps = React.useMemo(
     () =>
       enableWhitelist
         ? (whitelistUpload.map((e) =>
-            Math.round(e.cap * 100)
-          ) as readonly number[])
+          Math.round(e.cap * 100)
+        ) as readonly number[])
         : // Default to 100% for each whitelist entry
-          ([] as readonly number[]),
+        ([] as readonly number[]),
     [enableWhitelist, whitelistUpload]
   );
 
@@ -1109,6 +1104,7 @@ export default function Launch(): JSX.Element {
         : ([] as readonly `0x${string}`[]),
     [enableBundle, bundleList]
   );
+
   const bundleShares = React.useMemo(
     () =>
       enableBundle
@@ -1116,7 +1112,12 @@ export default function Launch(): JSX.Element {
         : ([] as readonly number[]),
     [enableBundle, bundleList]
   );
-  const ethValue = enableBundle ? ethers.parseEther(bundleEth.toString()) : 0n;
+
+  const deploymentFee = !isLoadingBalance || !isLoadingSupply ? (safuBalance! >= (creationHolderThresholdBps * (Number(safuSupply)) / 10000) ? 0 : creationFeeETH) : 0;
+  const ethValue = enableBundle ? (ethers.parseEther(bundleEth.toString()) + BigInt(deploymentFee)) : BigInt(deploymentFee);
+
+  console.log('deploymentFee', deploymentFee);
+  console.log('ethValue', ethValue);
 
   const wlArray = React.useMemo(
     () =>
@@ -1199,13 +1200,13 @@ export default function Launch(): JSX.Element {
   ).toFixed(2);
 
   const { data: uniV2Router } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V3,
     address: safuLauncherAddress,
     functionName: "_uniV2Router",
   });
 
   const { data: uniV2WETH } = useReadContract({
-    ...LAUNCHER_ABI_V1,
+    ...LAUNCHER_ABI_V3,
     address: safuLauncherAddress,
     functionName: "WETH",
   });
@@ -1293,11 +1294,11 @@ export default function Launch(): JSX.Element {
 
         setDeployError("");
         writeContract({
-          ...LAUNCHER_ABI_V1,
+          ...LAUNCHER_ABI_V3,
           address: safuLauncherAddress,
           functionName: "createToken",
           args: argArray,
-          value: ethValue,
+          value: enableBundle ? ethValue : BigInt(deploymentFee),
         });
       } catch (err) {
         console.error(err);
@@ -1327,6 +1328,7 @@ export default function Launch(): JSX.Element {
       writeContract,
       argArray,
       ethValue,
+      deploymentFee,
       percentBundled,
       supply,
       taxOnDexRecipientsAddrs,
@@ -1340,15 +1342,34 @@ export default function Launch(): JSX.Element {
       safuLauncherAddress,
     ]
   );
+
   useEffect(() => {
-    if (initialPoolEth !== undefined) {
-      const ethValue = ethers.formatUnits(initialPoolEth, 18);
-      setInitialPool(parseFloat(ethValue));
+    console.log("at combined 13, 21")
+    if (combinedMetrics?.[13] == null) return;
+    if ((combinedMetrics?.[20]) == null) return;
+    if ((combinedMetrics?.[21]) == null) return;
+    if ((combinedMetrics?.[22]) == null) return;
+    if ((combinedMetrics?.[23]) == null) return;
+    try {
+      const ethStr = formatRawAmount(combinedMetrics[13], 18);
+      console.log("ethStr", ethStr)
+      setInitialPool(parseFloat(ethStr)); // or setInitialPool(ethStr)
+      const mwlStr = Number(combinedMetrics?.[21]) / 100
+      const cFETHStr = Number(combinedMetrics?.[22])
+      const cHTBpsStr = Number(combinedMetrics?.[23])
+      const bMAmtStr = Number(combinedMetrics?.[20])
+
+      console.log("mwlStr", mwlStr)
+      console.log("cFETHStr", cFETHStr)
+      console.log("cHTBpsStr", cHTBpsStr)
+      setMaxWhitelist(mwlStr);
+      setCreationFeeETH(cFETHStr);
+      setCreationHolderThresholdBps(cHTBpsStr);
+      setBundleMaxAmount(bMAmtStr);
+    } catch (e) {
+      console.error(e);
     }
-    if (maxWhitelistBps !== undefined) {
-      setMaxWhitelist(Number(maxWhitelistBps) / 100);
-    }
-  }, [initialPoolEth, maxWhitelistBps]);
+  }, [combinedMetrics]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1359,6 +1380,8 @@ export default function Launch(): JSX.Element {
     if (!isConnected) {
       setInitialPool(0);
       setMaxWhitelist(0);
+      setCreationFeeETH(0);
+      setCreationHolderThresholdBps(0);
     }
 
     return () => {
@@ -1369,7 +1392,8 @@ export default function Launch(): JSX.Element {
   function calculateBundleTokens(bundleEth: number, supply: number): number {
     // Simulate the smart contract calculation
     // These values should match your smart contract constants
-    const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
+    // const TRADE_FEE_BPS = Number(getTradeFeeBps); // 0.3% - adjust to match your contract
+    const TRADE_FEE_BPS = Number(combinedMetrics?.[9]); // 0.3% - adjust to match your contract
     const virtualEthReserve = initialPool; // 2 ETH - from your contract
 
     if (bundleEth <= 0 || supply <= 0) return 0;
@@ -1630,9 +1654,8 @@ export default function Launch(): JSX.Element {
               </label>
 
               <div
-                className={`border-2 border-dashed ${
-                  dragActive ? "border-[#3BC3DB]" : "border-Primary"
-                } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
+                className={`border-2 border-dashed ${dragActive ? "border-[#3BC3DB]" : "border-Primary"
+                  } rounded-xl dark:bg-[#ffffff0a] bg-[#01061c0d]
         flex flex-col items-center justify-center py-10 px-4 text-center cursor-pointer
         transition duration-200 hover:opacity-80 w-full relative`}
                 onClick={openFilePicker}
@@ -1708,16 +1731,14 @@ export default function Launch(): JSX.Element {
                     <div className="relative group">
                       <div
                         onClick={() => setEnableTaxOnDex(!enableTaxOnDex)}
-                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${
-                          enableTaxOnDex ? "bg-Primary" : "bg-white"
-                        } shadow-inner relative`}
+                        className={`w-16 h-8 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${enableTaxOnDex ? "bg-Primary" : "bg-white"
+                          } shadow-inner relative`}
                       >
                         <div
-                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${
-                            enableTaxOnDex
-                              ? "translate-x-[30px] bg-white"
-                              : "translate-x-0 bg-[#D9D9D9]"
-                          }`}
+                          className={`absolute z-20 left-1 pt-[2px] w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out ${enableTaxOnDex
+                            ? "translate-x-[30px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableTaxOnDex ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -1858,11 +1879,10 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableTaxOnSafu
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${enableTaxOnSafu
+                              ? "translate-x-[32px] bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableTaxOnSafu ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2018,11 +2038,10 @@ export default function Launch(): JSX.Element {
                         <div
                           className={`absolute z-20 left-1 pt-[2px] w-[28px] h-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              enableWhitelist
-                ? "translate-x-[32px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${enableWhitelist
+                              ? "translate-x-[32px] bg-white"
+                              : "translate-x-0 bg-[#D9D9D9]"
+                            }`}
                         >
                           {enableWhitelist ? (
                             <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2146,11 +2165,10 @@ export default function Launch(): JSX.Element {
                             setLpOption(option.value);
                             setIsOpen(false);
                           }}
-                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${
-                            option.value === "lock"
-                              ? "rounded-t-xl"
-                              : "rounded-b-xl"
-                          }`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-Primary ${option.value === "lock"
+                            ? "rounded-t-xl"
+                            : "rounded-b-xl"
+                            }`}
                         >
                           {option.label}
                         </div>
@@ -2179,11 +2197,10 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${
-            startNow
-              ? "translate-x-[32px] bg-white"
-              : "translate-x-0 bg-[#D9D9D9]"
-          }`}
+          ${startNow
+                            ? "translate-x-[32px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
                       >
                         {startNow ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2222,18 +2239,16 @@ export default function Launch(): JSX.Element {
                       setIsMaxWalletAmountOnSafu(!isMaxWalletAmountOnSafu)
                     }
                     className={`w-[66px] h-[32px] rounded-full p-1 cursor-pointer flex items-center ml-auto transition-colors duration-300
-          ${
-            isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
-          } shadow-inner relative`}
+          ${isMaxWalletAmountOnSafu ? "bg-Primary" : "bg-white"
+                      } shadow-inner relative`}
                   >
                     <div
                       className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
             transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-            ${
-              isMaxWalletAmountOnSafu
-                ? "translate-x-[31px] bg-white"
-                : "translate-x-0 bg-[#D9D9D9]"
-            }`}
+            ${isMaxWalletAmountOnSafu
+                          ? "translate-x-[31px] bg-white"
+                          : "translate-x-0 bg-[#D9D9D9]"
+                        }`}
                     >
                       {isMaxWalletAmountOnSafu ? (
                         <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2297,11 +2312,10 @@ export default function Launch(): JSX.Element {
                       <div
                         className={`absolute z-20 left-1 pt-[2px] size-[28px] rounded-full flex items-center justify-center
           transition-transform duration-300 ease-in-out dark:shadow-[2px_-4px_24px_0px_rgba(71,_71,_77,_0.5)]
-          ${
-            enableBundle
-              ? "translate-x-[32px] bg-white"
-              : "translate-x-0 bg-[#D9D9D9]"
-          }`}
+          ${enableBundle
+                            ? "translate-x-[32px] bg-white"
+                            : "translate-x-0 bg-[#D9D9D9]"
+                          }`}
                       >
                         {enableBundle ? (
                           <CircleCheckBig className="text-Primary w-3 h-3" />
@@ -2384,10 +2398,10 @@ export default function Launch(): JSX.Element {
                         </div>
                         {calculateBundleTokens(bundleEth, supply) >
                           (supply * Number(bundleMaxAmount)) / 100 && (
-                          <div className="text-red-400 font-semibold">
-                            ⚠️ Exceeds {Number(bundleMaxAmount)}% limit!
-                          </div>
-                        )}
+                            <div className="text-red-400 font-semibold">
+                              ⚠️ Exceeds {Number(bundleMaxAmount)}% limit!
+                            </div>
+                          )}
                       </div>
                     )}
 
@@ -2472,11 +2486,10 @@ export default function Launch(): JSX.Element {
             <button
               type="submit"
               className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 transition-opacity
-    ${
-      isPending || isConfirming || !isFormValid
-        ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-        : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] cursor-pointer"
-    }`}
+    ${isPending || isConfirming || !isFormValid
+                  ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                  : "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] cursor-pointer"
+                }`}
               disabled={isPending || isConfirming || !isFormValid}
             >
               {isFormValid ? (

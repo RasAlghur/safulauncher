@@ -32,6 +32,8 @@ import {
   SAFU_LAUNCHER_ADDRESSES_V2,
   PRICE_GETTER_ADDRESSES,
   WETH_ADDRESS,
+  LAUNCHER_ABI_V3,
+  SAFU_LAUNCHER_ADDRESSES_V3,
 } from "../web3/config";
 import { MaxUint256, ethers } from "ethers";
 import "../App.css";
@@ -39,11 +41,15 @@ import {
   getListingMilestone,
   getPureAmountOutMarketCapV1,
   getPureAmountOutMarketCapV2,
+  getPureAmountOutMarketCapV3,
   getPureAmountOutV1,
   getPureAmountOutV2,
+  getPureAmountOutV3,
   getPureGetLatestETHPrice,
   getPureInfoV1DataRaw,
   getPureInfoV2DataRaw,
+  getPureInfoV3DataRaw,
+  getV3Metrics,
 } from "../web3/readContracts";
 import LightweightChart from "../web3/lightWeightChart";
 import TimeframeSelector from "../web3/timeframeSelector";
@@ -305,7 +311,7 @@ export default function Trade() {
 
   // Core state
   const [token, setToken] = useState<TokenMetadata | null>(null);
-  const [slippage, setSlippage] = useState<number>(0.5);
+  const [slippage, setSlippage] = useState<number>(5);
   const [deadlineMinutes, setDeadlineMinutes] = useState<number>(30);
   const [txLogs, setTxLogs] = useState<TxLog[]>([]);
   const [mode, setMode] = useState<"buy" | "sell">("buy");
@@ -328,6 +334,8 @@ export default function Trade() {
   const [listingMilestonePct, setListingMilestonePct] = useState<number | null>(
     null
   );
+
+  const [v3Metrics, setV3Metrics] = useState<bigint[] | null>(null);
 
   const [wlCsvText, setWlCsvText] = useState("");
 
@@ -373,6 +381,7 @@ export default function Trade() {
   const isLoadingChartRef = useRef(false);
 
   const isV1 = token?.tokenVersion === "token_v1";
+  const isV3 = token?.tokenVersion === "token_v3";
 
   // Computed values with error handling
   const ethValue = useMemo(() => {
@@ -396,10 +405,11 @@ export default function Trade() {
     isLoading: isLoadingWhitelistBalance,
     refetch: refetchWhitelistBalance,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+    abi: isV1 ? LAUNCHER_ABI_V1.abi : (isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi),
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
 
     functionName: "getRemainingWhitelistBalance",
     args: [tokenAddress as `0x${string}`, address as `0x${string}`],
@@ -410,10 +420,13 @@ export default function Trade() {
     isLoading: isLoadingInfoData,
     refetch: refetchInfoData,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+    abi: isV1 ? LAUNCHER_ABI_V1.abi
+      : isV3 ? LAUNCHER_ABI_V3.abi :
+        LAUNCHER_ABI_V2.abi,
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
     functionName: "data",
     args: [tokenAddress!],
   });
@@ -481,10 +494,13 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+        abi: isV1 ? LAUNCHER_ABI_V1.abi
+          : isV3 ? LAUNCHER_ABI_V3.abi
+            : LAUNCHER_ABI_V2.abi,
         address: isV1
           ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
         functionName: "getAmountOut",
         args: [
           tokenAddress,
@@ -504,6 +520,7 @@ export default function Trade() {
   const amountOut = useMemo(() => {
     if (isListed) {
       // Handle zero input amount case
+      console.log("amountInForUni", amountInForUni);
       if (amountInForUni === 0n) return 0n;
       if (!uniAmountsRaw) {
         console.log("uniAmountsRaw", uniAmountsRaw);
@@ -585,7 +602,8 @@ export default function Trade() {
             ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
             : isV1
               ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-              : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+              : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+                : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
         ],
       }
       : undefined
@@ -605,7 +623,7 @@ export default function Trade() {
 
   useEffect(() => {
     if (isListed && taxOnDexBps > 0) {
-      setSlippage(taxOnDexBps);
+      setSlippage(taxOnDexBps + 2);
     }
   }, [isListed, taxOnDexBps]);
 
@@ -627,7 +645,7 @@ export default function Trade() {
 
       try {
         const amountIn = mode === "buy" ? ethValue : tokenValue;
-        const fn = isV1 ? getPureAmountOutV1 : getPureAmountOutV2;
+        const fn = isV1 ? getPureAmountOutV1 : isV3 ? getPureAmountOutV3 : getPureAmountOutV2;
         const result = await fn(
           networkInfo.chainId,
           tokenAddress!,
@@ -657,6 +675,7 @@ export default function Trade() {
     mode,
     networkInfo.chainId,
     isV1,
+    isV3
   ]);
 
   useEffect(() => {
@@ -685,10 +704,11 @@ export default function Trade() {
     isLoading: isLoadingSafuHolder,
     refetch: refetchSafuHolder,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+    abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
     functionName: "isSafuTokenAutoWL",
     args: [address as `0x${string}`],
   });
@@ -714,27 +734,77 @@ export default function Trade() {
     functionName: "totalSupply",
   });
 
-  // Computed contract data
 
-  // 2) On chainId change, fetch it once
   useEffect(() => {
     let cancelled = false;
-    getListingMilestone(networkInfo.chainId)
-      .then((raw) => {
-        if (!cancelled) {
-          // raw is e.g. BigNumber or string of basis-points (e.g. "7500" for 75%)
-          setListingMilestonePct(Number(raw));
-          // now listingMilestonePct is e.g. 75 (percent)
+
+    const toNumberPct = (raw: any): number | null => {
+      if (raw == null) return null;
+      // raw could be ethers.BigNumber, string (like "7500"), number, or bigint
+      try {
+        if (typeof raw === "number") return raw;
+        if (typeof raw === "bigint") return Number(raw);
+        if (typeof raw === "string") return Number(raw);
+        // ethers.BigNumber or similar
+        if (typeof raw?.toNumber === "function") {
+          // toNumber can throw if value is out of JS number range — fallback to string
+          try {
+            return raw.toNumber();
+          } catch {
+            return Number(raw.toString());
+          }
         }
-      })
-      .catch((err) => {
-        console.error("Could not fetch listing milestone:", err);
-        if (!cancelled) setListingMilestonePct(null);
-      });
+        // final fallback
+        return Number(raw);
+      } catch {
+        return null;
+      }
+    };
+
+    const fetchMetrics = async () => {
+      try {
+        const metrics = await getV3Metrics(networkInfo.chainId);
+        if (cancelled) return;
+        // convert to array of bigint if that's what you expect; adjust mapping if needed
+        const metricsArray: bigint[] = Array.from(metrics).map((m: any) =>
+          typeof m === "bigint" ? m : BigInt(m)
+        );
+        if (!cancelled) setV3Metrics(metricsArray);
+      } catch (err) {
+        console.error("Could not fetch v3 metrics:", err);
+        if (!cancelled) setV3Metrics([]);
+      }
+    };
+
+    // kickoff metrics fetch
+    fetchMetrics();
+
+    // handle milestone depending on V3 vs legacy endpoint
+    if (isV3) {
+      // read directly from v3Metrics[19]
+      const raw = v3Metrics?.[19];
+      const pct = toNumberPct(raw);
+      console.log('pct', pct)
+      if (!cancelled) setListingMilestonePct(pct);
+    } else {
+      // legacy async fetch
+      getListingMilestone(networkInfo.chainId)
+        .then((raw) => {
+          console.log('raw', raw)
+          if (!cancelled) setListingMilestonePct(toNumberPct(raw));
+        })
+        .catch((err) => {
+          console.error("Could not fetch listing milestone:", err);
+          if (!cancelled) setListingMilestonePct(null);
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [networkInfo.chainId]);
+    // include any external values used inside effect:
+  }, [networkInfo.chainId, isV3, v3Metrics]);
+
 
   const infoETHCurrentPrice = useMemo(() => {
     if (isConnected && !isLoadingLatestETHPrice && latestETHPrice) {
@@ -777,12 +847,6 @@ export default function Trade() {
       : 0;
   const marketCapUSD = marketCapETH * infoETHCurrentPrice;
 
-  // console.log("marketCapUSD", marketCapUSD);
-  // console.log("totalSupplyTokens", totalSupplyTokens);
-  // console.log("oneTokenPriceETH", oneTokenPriceETH);
-  // console.log("marketCapETH", marketCapETH);
-  // console.log("infoETHCurrentPrice", infoETHCurrentPrice);
-
   // Pool valuation
   const tokenPool = tokenSupply - tokenSold;
 
@@ -810,19 +874,16 @@ export default function Trade() {
 
       const index2 = (tokenSupply - lmstone) / 1e18;
       const index1Div2 = index1 / index2;
-      console.log("index1Div2", index1Div2)
       const index3 = (index1Div2 / index2) * (tokenSupply / 1e18)
       const finalMC = index3 * infoETHCurrentPrice;
-      
+
       const m1 = Math.min(Math.max((marketCapUSD / finalMC) * 100, 0), 100);
-      console.log("m1", m1);
 
       // const tokenSold = Array.isArray(infoData) ? Number(infoData[8]) : 0;
       // return Math.min(Math.max((tokenSold / allowed) * 100, 0), 100);
       return m1;
     }
     // require that the milestone has arrived
-    // }, [infoData, isListed, listingMilestonePct, infoETHCurrentPrice, marketCapUSD, tokenSold]);
   }, [infoData, isListed, listingMilestonePct, infoETHCurrentPrice, marketCapUSD]);
 
   // 4) Memoize the final clamped value
@@ -839,6 +900,21 @@ export default function Trade() {
           if (isV1) {
             const [infoData, ethPrice] = await Promise.all([
               await getPureInfoV1DataRaw(
+                networkInfo.chainId,
+                tokenAddress
+              ).catch(() => []),
+              priceFeedAddress
+                ? await getPureGetLatestETHPrice(
+                  networkInfo.chainId,
+                  priceFeedAddress
+                ).catch(() => null)
+                : Promise.resolve(null),
+            ]);
+            setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
+            setFallbackETHPrice(ethPrice);
+          } else if (isV3) {
+            const [infoData, ethPrice] = await Promise.all([
+              await getPureInfoV3DataRaw(
                 networkInfo.chainId,
                 tokenAddress
               ).catch(() => []),
@@ -878,7 +954,7 @@ export default function Trade() {
 
       fetchFallbackData();
     }
-  }, [isConnected, tokenAddress, networkInfo.chainId, priceFeedAddress, isV1]); // Added isV1 dependency
+  }, [isConnected, tokenAddress, networkInfo.chainId, priceFeedAddress, isV1, isV3]); // Added isV1 dependency
 
   // Load one token price
   useEffect(() => {
@@ -889,7 +965,7 @@ export default function Trade() {
       try {
         const fn = isV1
           ? getPureAmountOutMarketCapV1
-          : getPureAmountOutMarketCapV2;
+          : isV3 ? getPureAmountOutMarketCapV3 : getPureAmountOutMarketCapV2;
         const raw = await fn(networkInfo.chainId, tokenAddress);
 
         if (raw !== undefined && raw !== null) {
@@ -907,7 +983,7 @@ export default function Trade() {
     }
 
     fetchTokenMark();
-  }, [tokenAddress, networkInfo.chainId, isV1]);
+  }, [tokenAddress, networkInfo.chainId, isV1, isV3]);
 
   useEffect(() => {
     if (tokenAddress && curvePercentClamped !== undefined) {
@@ -948,7 +1024,6 @@ export default function Trade() {
           },
         });
 
-        console.log("ohlcResponse", ohlcResponse.data.data);
         const ohlcData = await ohlcResponse.data.data;
 
         if (Array.isArray(ohlcData) && ohlcData.length > 0) {
@@ -1198,6 +1273,19 @@ export default function Trade() {
             .catch((err) => {
               console.error("Error updating token price after txn:", err);
             });
+        } else if (isV3) {
+          await getPureAmountOutMarketCapV3(networkInfo.chainId, tokenAddress!)
+            .then((raw) => {
+              if (raw !== undefined && raw !== null) {
+                const eth = Number(raw.toString()) / 1e18;
+                setOneTokenPriceETH(eth);
+              } else {
+                setOneTokenPriceETH(0);
+              }
+            })
+            .catch((err) => {
+              console.error("Error updating token price after txn:", err);
+            });
         } else {
           await getPureAmountOutMarketCapV2(networkInfo.chainId, tokenAddress!)
             .then((raw) => {
@@ -1228,7 +1316,6 @@ export default function Trade() {
 
         // Immediate chart update after successful transaction
         if (lastTxnType === "buy" || lastTxnType === "sell") {
-          // console.log("Transaction confirmed, updating chart immediately");
           // Small delay to ensure backend has processed the transaction
           setTimeout(() => {
             loadChartData(true);
@@ -1264,6 +1351,7 @@ export default function Trade() {
     tokenAddress,
     networkInfo.chainId,
     isV1,
+    isV3
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1275,7 +1363,6 @@ export default function Trade() {
       const response = await base.get(
         `transactions?limit=100&tokenAddress=${tokenAddress}`
       );
-      console.log("response", response);
       const all: TxLog[] = await response.data.data.data;
       console.log("all", all);
       const filtered = all.filter(
@@ -1606,7 +1693,8 @@ export default function Trade() {
         ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
         : isV1
           ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
+          : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
 
       writeContract({
         ...TOKEN_ABI,
@@ -1628,6 +1716,7 @@ export default function Trade() {
     mode,
     networkInfo.chainId,
     isV1,
+    isV3,
     isListed, // Add isListed to dependencies
   ]);
 
@@ -1733,10 +1822,11 @@ export default function Trade() {
       } else {
         // Existing SafuLauncher logic
         writeContract({
-          abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+          abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
           address: isV1
             ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+            : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+              : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
           functionName: mode,
           args: mode === "sell" ? [tokenAddress, tokenValue] : [tokenAddress],
           value: mode === "buy" ? ethValue : undefined,
@@ -1752,6 +1842,7 @@ export default function Trade() {
       tokenValue,
       ethValue,
       isV1,
+      isV3,
       networkInfo.chainId,
       isListed,
       slippage,
@@ -1781,9 +1872,6 @@ export default function Trade() {
         ([] as readonly number[]),
     [isWhiteListOngoing, whitelistUpload]
   );
-
-  // console.log("wlArray", wlArray);
-  // console.log("initialCapsBps", initialCapsBps);
 
   const parseWlCsv = (text: string) => {
     const rawLines = text
@@ -2043,15 +2131,16 @@ export default function Trade() {
     setLastTxnType("startTrading");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "startTrading",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, networkInfo.chainId]);
+  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
 
   const handleAddToWhitelist = useCallback(() => {
     if (!tokenAddress || !isTokenCreator) {
@@ -2069,10 +2158,11 @@ export default function Trade() {
     // });
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "addToWhitelist",
       args: [
         tokenAddress as `0x${string}`,
@@ -2098,15 +2188,16 @@ export default function Trade() {
     setLastTxnType("disableWhitelist");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "disableWhitelist",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, networkInfo.chainId]);
+  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
 
   const handleDisableMaxWalletLimit = useCallback(() => {
     if (!tokenAddress || !isTokenCreator) return;
@@ -2115,15 +2206,16 @@ export default function Trade() {
     setLastTxnType("disableMaxWalletLimit");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "disableMaxWalletLimit",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, networkInfo.chainId]);
+  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
 
   const handleButtonClick = useCallback(
     (e: FormEvent) => {
@@ -3088,10 +3180,9 @@ export default function Trade() {
                         )}
                       </button>
                     </div>
-
                     {/* Settings Panel */}
                     {showSettings && (
-                      <div className="absolute z-10 mt-2 p-4 bg-white dark:bg-[#0B132B] border dark:border-white/10 border-black/20 rounded-lg shadow-lg w-full max-w-xs">
+                      <div className="absolute z-[10000] bottom-full mb-2 p-4 bg-white dark:bg-[#0B132B] border-2 dark:border-white/20 border-black/30 rounded-lg shadow-xl drop-shadow-lg outline outline-1 outline-black/10 dark:outline-white/10 w-full max-w-xs">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-medium dark:text-white text-black">
                             Swap Settings

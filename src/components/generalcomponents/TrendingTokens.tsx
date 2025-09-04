@@ -9,6 +9,8 @@ import {
   getPureAmountOutMarketCapV2,
   getPureInfoV1DataRaw,
   getPureInfoV2DataRaw,
+  getPureInfoV3DataRaw,
+  getPureAmountOutMarketCapV3,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 import { useApiClient } from "../../lib/api";
@@ -229,6 +231,16 @@ const TrendingTokens = () => {
                   networkInfo.chainId,
                   tokenAddress
                 );
+              } else if (version === "token_v3") {
+                // Use v2 functions
+                info = await getPureInfoV3DataRaw(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
+                rawAmt = await getPureAmountOutMarketCapV3(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
               } else {
                 // Default to v2
                 info = await getPureInfoV2DataRaw(
@@ -364,8 +376,7 @@ const TrendingTokens = () => {
         // Log the ranking for debugging
         rankedTokens.forEach((token, index) => {
           console.log(
-            `#${index + 1} ${token.token.symbol} (${
-              token.token.tokenAddress
+            `#${index + 1} ${token.token.symbol} (${token.token.tokenAddress
             }):`,
             `Criteria: ${token.criteriaCount}/4`,
             `[Vol≥4%: ${token.criteria.volumeThreshold ? "✓" : "✗"},`,
@@ -422,11 +433,10 @@ const TrendingTokens = () => {
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-3 py-1 rounded-full transition-colors ${
-                  range === selectedRange
+                className={`px-3 py-1 rounded-full transition-colors ${range === selectedRange
                     ? "bg-[#1D223E] text-white"
                     : "text-gray-400 dark:hover:text-white hover:text-black"
-                }`}
+                  }`}
               >
                 {range}
               </button>
@@ -471,7 +481,7 @@ const TrendingTokens = () => {
                             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                           >
                             {data.token.tokenImageId &&
-                            data.token.image?.path ? (
+                              data.token.image?.path ? (
                               <img
                                 src={`${networkInfo.apiBaseUrl}${data.token.image.path}`}
                                 alt={data.token.name}
@@ -499,11 +509,10 @@ const TrendingTokens = () => {
                           {formatCurrency(data.marketCap)}
                         </td>
                         <td
-                          className={`p-3 font-semibold ${
-                            data.priceChange < 0
+                          className={`p-3 font-semibold ${data.priceChange < 0
                               ? "text-red-500"
                               : "text-green-400"
-                          }`}
+                            }`}
                         >
                           {formatPercentage(data.priceChange)}
                         </td>

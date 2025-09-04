@@ -5,6 +5,7 @@ import Navbar from "../components/launchintro/Navbar";
 import AdminPageForm from "../components/generalcomponents/AdminPageForm";
 import AdminContractConfig from "../components/generalcomponents/AdminContractConfig";
 import AdminContractConfigV2 from "../components/generalcomponents/AdminContractConfigV2";
+import AdminContractConfigV3 from "../components/generalcomponents/AdminContractConfigV3";
 import Footer from "../components/launchintro/Footer";
 
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
@@ -13,7 +14,7 @@ const Admin = () => {
   const { address, isConnected } = useAccount();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<"form" | "contractV1" | "contractV2">("form");
+  const [activeTab, setActiveTab] = useState<"form" | "contractV1" | "contractV2" | "contractV3">("form");
 
   useEffect(() => {
     if (!isConnected) {
@@ -123,15 +124,26 @@ const Admin = () => {
             >
               Contract Config V2
             </button>
+            <button
+              onClick={() => setActiveTab("contractV3")}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === "contractV3"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+            >
+              Contract Config V3
+            </button>
+
           </div>
         </div>
 
         {/* Tab Content */}
         {activeTab === "form" ? (
           <AdminPageForm address={address} />
-        ) : (activeTab === "contractV2" ? (<AdminContractConfigV2 />) :
-          <AdminContractConfig />
-        )}
+        ) : activeTab === "contractV2" ? (<AdminContractConfigV2 />) :
+          (activeTab === "contractV3" ? (<AdminContractConfigV3 />) :
+            <AdminContractConfig />
+          )}
       </div>
       <div className="mt-auto">
         <Footer />

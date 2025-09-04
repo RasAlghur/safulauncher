@@ -14,6 +14,8 @@ import {
   getPureInfoV2DataRaw,
   getPureAmountOutMarketCapV1,
   getPureAmountOutMarketCapV2,
+  getPureInfoV3DataRaw,
+  getPureAmountOutMarketCapV3,
 } from "../../web3/readContracts";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
@@ -133,6 +135,24 @@ const Navbar = () => {
                   : 0;
 
               const rawAmt = await getPureAmountOutMarketCapV1(
+                networkInfo.chainId,
+                token.tokenAddress
+              );
+              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+
+              const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
+              newMap[token.tokenAddress] = marketCap;
+            } else if (token?.tokenVersion == "token_v3") {
+              const info = await getPureInfoV3DataRaw(
+                networkInfo.chainId,
+                token.tokenAddress
+              );
+              const supply =
+                Array.isArray(info) && typeof info[7] !== "undefined"
+                  ? Number(info[6])
+                  : 0;
+
+              const rawAmt = await getPureAmountOutMarketCapV3(
                 networkInfo.chainId,
                 token.tokenAddress
               );

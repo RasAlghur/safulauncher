@@ -132,6 +132,7 @@ const PlatformStats = () => {
         ]);
         setCombinedMetrics(metrics);
         setUniqueTraderCount(traders);
+
       } catch (e) {
         console.error("Error loading on-chain stats", e);
       }
@@ -303,8 +304,8 @@ const PlatformStats = () => {
       {
         id: 9,
         title: "Total Unique Traders",
-        mainValue: Number(uniqueTraderCount).toLocaleString(),
-        ethValue: Number(uniqueTraderCount), // This might need updating if you have real data
+        mainValue: (Number(uniqueTraderCount) + Number(combinedMetrics?.[8])).toLocaleString(),
+        ethValue: (Number(uniqueTraderCount) + Number(combinedMetrics?.[8])), // This might need updating if you have real data
         icon: UniqueWallet,
       },
     ];

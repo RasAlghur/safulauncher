@@ -302,7 +302,7 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Total Unique Traders",
-        mainValue: uniqueTraderCount.toString(),
+        mainValue: (Number(uniqueTraderCount) + Number(metrics?.[8])).toString(),
         ethValue: "",
         icon: UniqueWallet,
       },

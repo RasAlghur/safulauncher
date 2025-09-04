@@ -7,7 +7,9 @@ import {
   getPureInfoV2DataRaw,
   getPureInfoV1DataRaw,
   getPureAmountOutMarketCapV1,
-  getPureAmountOutMarketCapV2
+  getPureAmountOutMarketCapV2,
+  getPureInfoV3DataRaw,
+  getPureAmountOutMarketCapV3
 } from "../web3/readContracts";
 import { useApiClient } from "../lib/api";
 import type { TokenMetadata } from "../pages/Tokens";
@@ -56,8 +58,9 @@ export const useTrendingTokens = (selectedRange: TimeRange = "24h") => {
       try {
         // Determine token version and select appropriate functions
         const isV1 = tokenVersion === "token_v1";
-        const getInfo = isV1 ? getPureInfoV1DataRaw : getPureInfoV2DataRaw;
-        const getAmountOut = isV1 ? getPureAmountOutMarketCapV1 : getPureAmountOutMarketCapV2;
+        const isV3 = tokenVersion === "token_v3";
+        const getInfo = isV1 ? getPureInfoV1DataRaw : isV3 ? getPureInfoV3DataRaw : getPureInfoV2DataRaw;
+        const getAmountOut = isV1 ? getPureAmountOutMarketCapV1 : isV3 ? getPureAmountOutMarketCapV3 : getPureAmountOutMarketCapV2;
 
         // Fetch token info and price
         const info = await getInfo(networkInfo.chainId, tokenAddress);
