@@ -32,7 +32,6 @@ useTradeHandlers.ts
 useTradeUI.ts
 
 constants.ts
-types.ts
 
 node_modules
 dist
