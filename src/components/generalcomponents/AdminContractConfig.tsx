@@ -9,9 +9,140 @@ import {
 } from "wagmi";
 import { LAUNCHER_ABI_V1, SAFU_LAUNCHER_ADDRESSES_V1 } from "../../web3/config";
 import { ethers } from "ethers";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
+
+const Tooltip = ({
+  content,
+  children,
+}: {
+  content: string;
+  children: React.ReactNode;
+}) => (
+  <div className="relative group inline-block">
+    {children}
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+      {content}
+      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+    </div>
+  </div>
+);
+
+const FormSection = ({
+  title,
+  children,
+  tooltip,
+}: {
+  title: string;
+  children: React.ReactNode;
+  tooltip?: string;
+}) => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex items-center gap-2 mb-4">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+        {title}
+      </h3>
+      {tooltip && (
+        <Tooltip content={tooltip}>
+          <Info className="w-4 h-4 text-gray-500 hover:text-blue-500 cursor-help" />
+        </Tooltip>
+      )}
+    </div>
+    {children}
+  </div>
+);
+
+const InputField = memo(
+  ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    type = "text",
+    currentValue,
+    tooltip,
+    validator,
+    fieldName,
+    unit,
+    validationErrors,
+    handleValidation,
+  }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder: string;
+    type?: string;
+    currentValue?: string | number;
+    tooltip?: string;
+    validator?: (val: string) => string | null;
+    fieldName?: string;
+    unit?: string;
+    validationErrors: { [key: string]: string };
+    handleValidation: (
+      fieldName: string,
+      value: string,
+      validator: (val: string) => string | null
+    ) => boolean;
+  }) => {
+    const hasError = fieldName && validationErrors[fieldName];
+
+    const handleChange = (newValue: string) => {
+      onChange(newValue);
+      if (validator && fieldName) {
+        handleValidation(fieldName, newValue, validator);
+      }
+    };
+
+    return (
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {label}
+            {currentValue !== undefined && (
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                (Current: {currentValue.toString()}
+                {unit && ` ${unit}`})
+              </span>
+            )}
+          </label>
+          {tooltip && (
+            <Tooltip content={tooltip}>
+              <Info className="w-3 h-3 text-gray-400 hover:text-blue-500 cursor-help" />
+            </Tooltip>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            type={type}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2 border rounded-md 
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           ${
+                             hasError
+                               ? "border-red-500 dark:border-red-400"
+                               : "border-gray-300 dark:border-gray-600"
+                           }`}
+          />
+          {hasError && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+            </div>
+          )}
+        </div>
+        {hasError && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            {hasError}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
 
 const AdminContractConfig = () => {
   const networkInfo = useNetworkEnvironment();
@@ -240,126 +371,6 @@ const AdminContractConfig = () => {
     return !error;
   };
 
-  const Tooltip = ({
-    content,
-    children,
-  }: {
-    content: string;
-    children: React.ReactNode;
-  }) => (
-    <div className="relative group inline-block">
-      {children}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-        {content}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-      </div>
-    </div>
-  );
-
-  const FormSection = ({
-    title,
-    children,
-    tooltip,
-  }: {
-    title: string;
-    children: React.ReactNode;
-    tooltip?: string;
-  }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          {title}
-        </h3>
-        {tooltip && (
-          <Tooltip content={tooltip}>
-            <Info className="w-4 h-4 text-gray-500 hover:text-blue-500 cursor-help" />
-          </Tooltip>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-
-  const InputField = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    type = "text",
-    currentValue,
-    tooltip,
-    validator,
-    fieldName,
-    unit,
-  }: {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    type?: string;
-    currentValue?: string | number;
-    tooltip?: string;
-    validator?: (val: string) => string | null;
-    fieldName?: string;
-    unit?: string;
-  }) => {
-    const hasError = fieldName && validationErrors[fieldName];
-
-    const handleChange = (newValue: string) => {
-      onChange(newValue);
-      if (validator && fieldName) {
-        handleValidation(fieldName, newValue, validator);
-      }
-    };
-
-    return (
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {label}
-            {currentValue !== undefined && (
-              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                (Current: {currentValue.toString()}
-                {unit && ` ${unit}`})
-              </span>
-            )}
-          </label>
-          {tooltip && (
-            <Tooltip content={tooltip}>
-              <Info className="w-3 h-3 text-gray-400 hover:text-blue-500 cursor-help" />
-            </Tooltip>
-          )}
-        </div>
-        <div className="relative">
-          <input
-            type={type}
-            value={value}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder={placeholder}
-            className={`w-full px-3 py-2 border rounded-md 
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                           ${hasError
-                ? "border-red-500 dark:border-red-400"
-                : "border-gray-300 dark:border-gray-600"
-              }`}
-          />
-          {hasError && (
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-            </div>
-          )}
-        </div>
-        {hasError && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            {hasError}
-          </p>
-        )}
-      </div>
-    );
-  };
-
   const ActionButton = ({
     onClick,
     children,
@@ -455,7 +466,6 @@ const AdminContractConfig = () => {
     tier2WLCap.trim() !== "" &&
     tier2WLDiv.trim() !== "";
 
-
   const isLockingConfigValid: boolean =
     !validationErrors.tLockDurDays &&
     !validationErrors.lpLockDurDays &&
@@ -466,10 +476,13 @@ const AdminContractConfig = () => {
 
   return (
     <div className="p-4 max-w-6xl mx-auto mt-8 space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
-          SafuLauncher Admin Panel for Address: {SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]}
+      <div className="text-center mb-8 text-gray-800 dark:text-white">
+        <h1 className="lg:text-3xl text-xl font-bold  mb-2">
+          SafuLauncher Admin Panel for Address{" "}
         </h1>
+        <h2 className="text-sm sm:text-base">
+          {SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]}
+        </h2>
         <p className="text-gray-600 dark:text-gray-400">
           Manage contract parameters and system configurations
         </p>
@@ -648,6 +661,8 @@ const AdminContractConfig = () => {
               tooltip="New contract owner address"
               validator={validateAddress}
               fieldName="newOwner"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
             />
 
             <ActionButton
@@ -683,6 +698,8 @@ const AdminContractConfig = () => {
               validator={validateTradeFeeBps}
               fieldName="tradeFeeBps"
               unit="%"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
             />
             <ActionButton
               onClick={() =>
@@ -708,6 +725,8 @@ const AdminContractConfig = () => {
                 tooltip="Numerator for listing fee calculation"
                 validator={(val) => validatePercentage(val, 100)}
                 fieldName="listingFeeBps"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
               <InputField
                 label="Listing Fee Divisor"
@@ -722,6 +741,8 @@ const AdminContractConfig = () => {
                   return null;
                 }}
                 fieldName="listingFeeDiv"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
             </div>
             <ActionButton
@@ -731,7 +752,10 @@ const AdminContractConfig = () => {
 
                   abi: LAUNCHER_ABI_V1.abi,
                   functionName: "updateListingFee",
-                  args: [BigInt(parseInt(listingFeeBps)), BigInt(parseInt(listingFeeDiv))],
+                  args: [
+                    BigInt(parseInt(listingFeeBps)),
+                    BigInt(parseInt(listingFeeDiv)),
+                  ],
                 })
               }
               isValid={isListingFeeValid}
@@ -762,6 +786,8 @@ const AdminContractConfig = () => {
               validator={validateEthAmount}
               fieldName="newPoolETH"
               unit="ETH"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
             />
             <InputField
               label="Dev Reward ETH"
@@ -778,6 +804,8 @@ const AdminContractConfig = () => {
               validator={validateEthAmount}
               fieldName="newDevRewardETH"
               unit="ETH"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
             />
             <ActionButton
               onClick={() =>
@@ -811,11 +839,15 @@ const AdminContractConfig = () => {
                 value={tLockDurDays}
                 onChange={setTLockDurDays}
                 placeholder="30"
-                currentValue={currentTLockDur ? Number(currentTLockDur) / 86400 : "N/A"}
+                currentValue={
+                  currentTLockDur ? Number(currentTLockDur) / 86400 : "N/A"
+                }
                 tooltip="Duration (in days) for token lock when enabled (min 7 days)"
                 validator={validateLockDays}
                 fieldName="tLockDurDays"
                 unit="days"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
 
               <InputField
@@ -823,11 +855,15 @@ const AdminContractConfig = () => {
                 value={lpLockDurDays}
                 onChange={setLpLockDurDays}
                 placeholder="30"
-                currentValue={currentLpLockDur ? Number(currentLpLockDur) / 86400 : "N/A"}
+                currentValue={
+                  currentLpLockDur ? Number(currentLpLockDur) / 86400 : "N/A"
+                }
                 tooltip="Duration (in days) for LP token lock (min 7 days)"
                 validator={validateLockDays}
                 fieldName="lpLockDurDays"
                 unit="days"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
 
               <InputField
@@ -835,20 +871,30 @@ const AdminContractConfig = () => {
                 value={tLockPercent}
                 onChange={setTLockPercent}
                 placeholder="5"
-                currentValue={currentTLockPrcnt ? Number(currentTLockPrcnt) / 100 : "N/A"}
+                currentValue={
+                  currentTLockPrcnt ? Number(currentTLockPrcnt) / 100 : "N/A"
+                }
                 tooltip="Percent of tokens to lock (e.g. 5 = 5%)"
                 validator={validateLockPercent}
                 fieldName="tLockPercent"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
             </div>
 
             <ActionButton
               onClick={() => {
                 // convert days -> seconds, percent -> BPS (percent * 100)
-                const tLockSecs = BigInt(Math.floor(parseInt(tLockDurDays || "0") * 86400));
-                const lpLockSecs = BigInt(Math.floor(parseInt(lpLockDurDays || "0") * 86400));
-                const tLockPrcntBps = BigInt(Math.round(parseFloat(tLockPercent || "0") * 100));
+                const tLockSecs = BigInt(
+                  Math.floor(parseInt(tLockDurDays || "0") * 86400)
+                );
+                const lpLockSecs = BigInt(
+                  Math.floor(parseInt(lpLockDurDays || "0") * 86400)
+                );
+                const tLockPrcntBps = BigInt(
+                  Math.round(parseFloat(tLockPercent || "0") * 100)
+                );
 
                 writeContract({
                   address: SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId],
@@ -863,7 +909,6 @@ const AdminContractConfig = () => {
             </ActionButton>
           </div>
         </FormSection>
-
 
         {/* Creator Configuration */}
         <FormSection
@@ -882,6 +927,8 @@ const AdminContractConfig = () => {
                 validator={(val) => validatePercentage(val, 50)}
                 fieldName="taxOnSafuMaxBps"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
               <InputField
                 label="Max Tax on Dex (%)"
@@ -893,6 +940,8 @@ const AdminContractConfig = () => {
                 validator={(val) => validatePercentage(val, 50)}
                 fieldName="taxOnDexMaxBps"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -906,6 +955,8 @@ const AdminContractConfig = () => {
                 validator={(val) => validatePercentage(val, 50)}
                 fieldName="bundleMaxAmount"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
               <InputField
                 label="Listing Milestone (%)"
@@ -922,6 +973,8 @@ const AdminContractConfig = () => {
                 }}
                 fieldName="listingMilestone"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
               <InputField
                 label="Max Whitelist (%)"
@@ -933,6 +986,8 @@ const AdminContractConfig = () => {
                 validator={(val) => validatePercentage(val, 10)}
                 fieldName="maxWhitelistBps"
                 unit="%"
+                validationErrors={validationErrors}
+                handleValidation={handleValidation}
               />
             </div>
             <ActionButton
@@ -972,6 +1027,8 @@ const AdminContractConfig = () => {
               tooltip="Contract address of the SAFU token used for auto-whitelist tiers"
               validator={validateAddress}
               fieldName="safuTokenAddress"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
             />
             <ActionButton
               onClick={() =>
@@ -1026,6 +1083,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier1Threshold"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 1 Threshold Divisor"
@@ -1040,6 +1099,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier1ThresholdDiv"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 1 WL Cap"
@@ -1054,6 +1115,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier1WLCap"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 1 WL Divisor"
@@ -1068,23 +1131,25 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier1WLDiv"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
                   <p className="text-blue-700 dark:text-blue-300">
                     Current:{" "}
                     {tier1Threshold && tier1ThresholdDiv
                       ? `${(
-                        (parseInt(tier1Threshold) /
-                          parseInt(tier1ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier1Threshold) /
+                            parseInt(tier1ThresholdDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier1WLCap && tier1WLDiv
                       ? `${(
-                        (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1111,6 +1176,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier2Threshold"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 2 Threshold Divisor"
@@ -1125,6 +1192,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier2ThresholdDiv"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 2 WL Cap"
@@ -1139,6 +1208,8 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier2WLCap"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <InputField
                   label="Tier 2 WL Divisor"
@@ -1153,23 +1224,25 @@ const AdminContractConfig = () => {
                     return null;
                   }}
                   fieldName="tier2WLDiv"
+                  validationErrors={validationErrors}
+                  handleValidation={handleValidation}
                 />
                 <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm">
                   <p className="text-gray-700 dark:text-gray-300">
                     Current:{" "}
                     {tier2Threshold && tier2ThresholdDiv
                       ? `${(
-                        (parseInt(tier2Threshold) /
-                          parseInt(tier2ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier2Threshold) /
+                            parseInt(tier2ThresholdDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier2WLCap && tier2WLDiv
                       ? `${(
-                        (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1186,10 +1259,10 @@ const AdminContractConfig = () => {
                   • Tier 1 users need ≥
                   {tier1Threshold && tier1ThresholdDiv
                     ? `${(
-                      (parseInt(tier1Threshold) /
-                        parseInt(tier1ThresholdDiv)) *
-                      100
-                    ).toFixed(3)}%`
+                        (parseInt(tier1Threshold) /
+                          parseInt(tier1ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1197,10 +1270,10 @@ const AdminContractConfig = () => {
                   • Tier 2 users need ≥
                   {tier2Threshold && tier2ThresholdDiv
                     ? `${(
-                      (parseInt(tier2Threshold) /
-                        parseInt(tier2ThresholdDiv)) *
-                      100
-                    ).toFixed(3)}%`
+                        (parseInt(tier2Threshold) /
+                          parseInt(tier2ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1243,74 +1316,86 @@ const AdminContractConfig = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div
-            className={`flex items-center gap-2 ${isTradeFeeBpsValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isTradeFeeBpsValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Trade Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isPoolConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isPoolConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Pool Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isListingFeeValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isListingFeeValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isListingFeeValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isListingFeeValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Listing Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isCreatorConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isCreatorConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Creator Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isSafuTokenValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isSafuTokenValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             SAFU Token Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isTierConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isTierConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isTierConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isTierConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Tier Config
           </div>

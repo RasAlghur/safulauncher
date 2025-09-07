@@ -405,11 +405,16 @@ export default function Trade() {
     isLoading: isLoadingWhitelistBalance,
     refetch: refetchWhitelistBalance,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi : (isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi),
+    abi: isV1
+      ? LAUNCHER_ABI_V1.abi
+      : isV3
+      ? LAUNCHER_ABI_V3.abi
+      : LAUNCHER_ABI_V2.abi,
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3
+      ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
 
     functionName: "getRemainingWhitelistBalance",
     args: [tokenAddress as `0x${string}`, address as `0x${string}`],
@@ -420,13 +425,16 @@ export default function Trade() {
     isLoading: isLoadingInfoData,
     refetch: refetchInfoData,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi
-      : isV3 ? LAUNCHER_ABI_V3.abi :
-        LAUNCHER_ABI_V2.abi,
+    abi: isV1
+      ? LAUNCHER_ABI_V1.abi
+      : isV3
+      ? LAUNCHER_ABI_V3.abi
+      : LAUNCHER_ABI_V2.abi,
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3
+      ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
     functionName: "data",
     args: [tokenAddress!],
   });
@@ -458,8 +466,8 @@ export default function Trade() {
   const ywhitelistBalance = isLoadingWhitelistBalance
     ? 0
     : whitelistBalance !== undefined
-      ? Number(whitelistBalance) / 1e18
-      : 0;
+    ? Number(whitelistBalance) / 1e18
+    : 0;
 
   const uniPath = useMemo(() => {
     return mode === "buy"
@@ -479,11 +487,11 @@ export default function Trade() {
   } = useReadContract(
     shouldCallUni
       ? {
-        ...UNISWAP_ROUTER_ABI,
-        address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
-        functionName: "getAmountsOut",
-        args: [amountInForUni as bigint, uniPath as any],
-      }
+          ...UNISWAP_ROUTER_ABI,
+          address: UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId],
+          functionName: "getAmountsOut",
+          args: [amountInForUni as bigint, uniPath as any],
+        }
       : undefined
   );
 
@@ -494,20 +502,23 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress
       ? {
-        abi: isV1 ? LAUNCHER_ABI_V1.abi
-          : isV3 ? LAUNCHER_ABI_V3.abi
+          abi: isV1
+            ? LAUNCHER_ABI_V1.abi
+            : isV3
+            ? LAUNCHER_ABI_V3.abi
             : LAUNCHER_ABI_V2.abi,
-        address: isV1
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+          address: isV1
+            ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+            : isV3
+            ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
             : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        functionName: "getAmountOut",
-        args: [
-          tokenAddress,
-          mode === "buy" ? ethValue : tokenValue,
-          mode === "buy" ? true : false,
-        ],
-      }
+          functionName: "getAmountOut",
+          args: [
+            tokenAddress,
+            mode === "buy" ? ethValue : tokenValue,
+            mode === "buy" ? true : false,
+          ],
+        }
       : undefined
   );
 
@@ -578,11 +589,11 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress as `0x${string}`,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
-      }
+          ...TOKEN_ABI,
+          address: tokenAddress as `0x${string}`,
+          functionName: "balanceOf",
+          args: [address as `0x${string}`],
+        }
       : undefined
   );
 
@@ -593,19 +604,20 @@ export default function Trade() {
   } = useReadContract(
     tokenAddress && address
       ? {
-        ...TOKEN_ABI,
-        address: tokenAddress,
-        functionName: "allowance",
-        args: [
-          address as `0x${string}`,
-          isListed
-            ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
-            : isV1
+          ...TOKEN_ABI,
+          address: tokenAddress,
+          functionName: "allowance",
+          args: [
+            address as `0x${string}`,
+            isListed
+              ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
+              : isV1
               ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-              : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-                : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
-        ],
-      }
+              : isV3
+              ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+              : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+          ],
+        }
       : undefined
   );
 
@@ -645,7 +657,11 @@ export default function Trade() {
 
       try {
         const amountIn = mode === "buy" ? ethValue : tokenValue;
-        const fn = isV1 ? getPureAmountOutV1 : isV3 ? getPureAmountOutV3 : getPureAmountOutV2;
+        const fn = isV1
+          ? getPureAmountOutV1
+          : isV3
+          ? getPureAmountOutV3
+          : getPureAmountOutV2;
         const result = await fn(
           networkInfo.chainId,
           tokenAddress!,
@@ -675,7 +691,7 @@ export default function Trade() {
     mode,
     networkInfo.chainId,
     isV1,
-    isV3
+    isV3,
   ]);
 
   useEffect(() => {
@@ -704,11 +720,16 @@ export default function Trade() {
     isLoading: isLoadingSafuHolder,
     refetch: refetchSafuHolder,
   } = useReadContract({
-    abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+    abi: isV1
+      ? LAUNCHER_ABI_V1.abi
+      : isV3
+      ? LAUNCHER_ABI_V3.abi
+      : LAUNCHER_ABI_V2.abi,
     address: isV1
       ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-      : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+      : isV3
+      ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+      : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
     functionName: "isSafuTokenAutoWL",
     args: [address as `0x${string}`],
   });
@@ -733,7 +754,6 @@ export default function Trade() {
     address: SAFU_TOKEN_ADDRESSES[networkInfo.chainId],
     functionName: "totalSupply",
   });
-
 
   useEffect(() => {
     let cancelled = false;
@@ -784,13 +804,13 @@ export default function Trade() {
       // read directly from v3Metrics[19]
       const raw = v3Metrics?.[19];
       const pct = toNumberPct(raw);
-      console.log('pct', pct)
+      console.log("pct", pct);
       if (!cancelled) setListingMilestonePct(pct);
     } else {
       // legacy async fetch
       getListingMilestone(networkInfo.chainId)
         .then((raw) => {
-          console.log('raw', raw)
+          console.log("raw", raw);
           if (!cancelled) setListingMilestonePct(toNumberPct(raw));
         })
         .catch((err) => {
@@ -804,7 +824,6 @@ export default function Trade() {
     };
     // include any external values used inside effect:
   }, [networkInfo.chainId, isV3, v3Metrics]);
-
 
   const infoETHCurrentPrice = useMemo(() => {
     if (isConnected && !isLoadingLatestETHPrice && latestETHPrice) {
@@ -852,7 +871,6 @@ export default function Trade() {
 
   const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
 
-
   // 3) Synchronous percent calculation
   const calculateCurvePercent = useCallback((): number => {
     if (!infoData) return 0;
@@ -867,14 +885,14 @@ export default function Trade() {
       const initPool = (virtPool - ETHRaised) / 1e18;
 
       const tokenSupply = Array.isArray(infoData) ? Number(infoData[6]) : 1;
-      const index1 = (initPool * tokenSupply) / 1e18
+      const index1 = (initPool * tokenSupply) / 1e18;
 
       if (listingMilestonePct === null) return 0;
       const lmstone = (listingMilestonePct / 100) * tokenSupply;
 
       const index2 = (tokenSupply - lmstone) / 1e18;
       const index1Div2 = index1 / index2;
-      const index3 = (index1Div2 / index2) * (tokenSupply / 1e18)
+      const index3 = (index1Div2 / index2) * (tokenSupply / 1e18);
       const finalMC = index3 * infoETHCurrentPrice;
 
       const m1 = Math.min(Math.max((marketCapUSD / finalMC) * 100, 0), 100);
@@ -884,7 +902,13 @@ export default function Trade() {
       return m1;
     }
     // require that the milestone has arrived
-  }, [infoData, isListed, listingMilestonePct, infoETHCurrentPrice, marketCapUSD]);
+  }, [
+    infoData,
+    isListed,
+    listingMilestonePct,
+    infoETHCurrentPrice,
+    marketCapUSD,
+  ]);
 
   // 4) Memoize the final clamped value
   const curvePercentClamped = useMemo(
@@ -905,9 +929,9 @@ export default function Trade() {
               ).catch(() => []),
               priceFeedAddress
                 ? await getPureGetLatestETHPrice(
-                  networkInfo.chainId,
-                  priceFeedAddress
-                ).catch(() => null)
+                    networkInfo.chainId,
+                    priceFeedAddress
+                  ).catch(() => null)
                 : Promise.resolve(null),
             ]);
             setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
@@ -920,9 +944,9 @@ export default function Trade() {
               ).catch(() => []),
               priceFeedAddress
                 ? await getPureGetLatestETHPrice(
-                  networkInfo.chainId,
-                  priceFeedAddress
-                ).catch(() => null)
+                    networkInfo.chainId,
+                    priceFeedAddress
+                  ).catch(() => null)
                 : Promise.resolve(null),
             ]);
             setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
@@ -935,9 +959,9 @@ export default function Trade() {
               ).catch(() => []),
               priceFeedAddress
                 ? await getPureGetLatestETHPrice(
-                  networkInfo.chainId,
-                  priceFeedAddress
-                ).catch(() => null)
+                    networkInfo.chainId,
+                    priceFeedAddress
+                  ).catch(() => null)
                 : Promise.resolve(null),
             ]);
             setFallbackInfoData(Array.isArray(infoData) ? infoData : []);
@@ -954,7 +978,14 @@ export default function Trade() {
 
       fetchFallbackData();
     }
-  }, [isConnected, tokenAddress, networkInfo.chainId, priceFeedAddress, isV1, isV3]); // Added isV1 dependency
+  }, [
+    isConnected,
+    tokenAddress,
+    networkInfo.chainId,
+    priceFeedAddress,
+    isV1,
+    isV3,
+  ]); // Added isV1 dependency
 
   // Load one token price
   useEffect(() => {
@@ -965,7 +996,9 @@ export default function Trade() {
       try {
         const fn = isV1
           ? getPureAmountOutMarketCapV1
-          : isV3 ? getPureAmountOutMarketCapV3 : getPureAmountOutMarketCapV2;
+          : isV3
+          ? getPureAmountOutMarketCapV3
+          : getPureAmountOutMarketCapV2;
         const raw = await fn(networkInfo.chainId, tokenAddress);
 
         if (raw !== undefined && raw !== null) {
@@ -1007,8 +1040,10 @@ export default function Trade() {
 
       try {
         console.log(
-          `${isAutoUpdate ? "Auto-" : ""
-          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${selectedTimeframe.value
+          `${
+            isAutoUpdate ? "Auto-" : ""
+          }Loading OHLC data for token: ${tokenAddress}, timeframe: ${
+            selectedTimeframe.value
           }`
         );
 
@@ -1351,7 +1386,7 @@ export default function Trade() {
     tokenAddress,
     networkInfo.chainId,
     isV1,
-    isV3
+    isV3,
   ]);
 
   const loggedTxns = useRef<Set<string>>(new Set());
@@ -1692,9 +1727,10 @@ export default function Trade() {
       const spender = isListed
         ? UNISWAP_V2_ROUTER_ADDRESSES[networkInfo.chainId]
         : isV1
-          ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-          : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
+        ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
+        : isV3
+        ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId];
 
       writeContract({
         ...TOKEN_ABI,
@@ -1757,8 +1793,8 @@ export default function Trade() {
               ? "swapExactETHForTokensSupportingFeeOnTransferTokens"
               : "swapExactTokensForETHSupportingFeeOnTransferTokens"
             : mode === "buy"
-              ? "swapExactETHForTokens"
-              : "swapExactTokensForETH";
+            ? "swapExactETHForTokens"
+            : "swapExactTokensForETH";
 
           if (mode === "buy") {
             console.log("buy", {
@@ -1822,11 +1858,16 @@ export default function Trade() {
       } else {
         // Existing SafuLauncher logic
         writeContract({
-          abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+          abi: isV1
+            ? LAUNCHER_ABI_V1.abi
+            : isV3
+            ? LAUNCHER_ABI_V3.abi
+            : LAUNCHER_ABI_V2.abi,
           address: isV1
             ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-            : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-              : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+            : isV3
+            ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+            : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
           functionName: mode,
           args: mode === "sell" ? [tokenAddress, tokenValue] : [tokenAddress],
           value: mode === "buy" ? ethValue : undefined,
@@ -1866,10 +1907,10 @@ export default function Trade() {
     () =>
       isWhiteListOngoing
         ? (whitelistUpload.map((e) =>
-          Math.round(e.cap * 100)
-        ) as readonly number[])
+            Math.round(e.cap * 100)
+          ) as readonly number[])
         : // Default to 100% for each whitelist entry
-        ([] as readonly number[]),
+          ([] as readonly number[]),
     [isWhiteListOngoing, whitelistUpload]
   );
 
@@ -2051,8 +2092,9 @@ export default function Trade() {
           if (addr.cap > maxWalletAmountOnSafu) {
             errors.push({
               field: "whitelist",
-              message: `Entry ${index + 1
-                }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
+              message: `Entry ${
+                index + 1
+              }: max cap for whitelisted addrs must not be greater than maxWalletAmountOnSafu.`,
             });
           }
         }
@@ -2131,16 +2173,28 @@ export default function Trade() {
     setLastTxnType("startTrading");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1
+        ? LAUNCHER_ABI_V1.abi
+        : isV3
+        ? LAUNCHER_ABI_V3.abi
+        : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3
+        ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "startTrading",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
+  }, [
+    writeContract,
+    tokenAddress,
+    isTokenCreator,
+    isV1,
+    isV3,
+    networkInfo.chainId,
+  ]);
 
   const handleAddToWhitelist = useCallback(() => {
     if (!tokenAddress || !isTokenCreator) {
@@ -2158,11 +2212,16 @@ export default function Trade() {
     // });
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1
+        ? LAUNCHER_ABI_V1.abi
+        : isV3
+        ? LAUNCHER_ABI_V3.abi
+        : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3
+        ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "addToWhitelist",
       args: [
         tokenAddress as `0x${string}`,
@@ -2188,16 +2247,28 @@ export default function Trade() {
     setLastTxnType("disableWhitelist");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1
+        ? LAUNCHER_ABI_V1.abi
+        : isV3
+        ? LAUNCHER_ABI_V3.abi
+        : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3
+        ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "disableWhitelist",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
+  }, [
+    writeContract,
+    tokenAddress,
+    isTokenCreator,
+    isV1,
+    isV3,
+    networkInfo.chainId,
+  ]);
 
   const handleDisableMaxWalletLimit = useCallback(() => {
     if (!tokenAddress || !isTokenCreator) return;
@@ -2206,16 +2277,28 @@ export default function Trade() {
     setLastTxnType("disableMaxWalletLimit");
 
     writeContract({
-      abi: isV1 ? LAUNCHER_ABI_V1.abi : isV3 ? LAUNCHER_ABI_V3.abi : LAUNCHER_ABI_V2.abi,
+      abi: isV1
+        ? LAUNCHER_ABI_V1.abi
+        : isV3
+        ? LAUNCHER_ABI_V3.abi
+        : LAUNCHER_ABI_V2.abi,
       address: isV1
         ? SAFU_LAUNCHER_ADDRESSES_V1[networkInfo.chainId]
-        : isV3 ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
-          : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
+        : isV3
+        ? SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId]
+        : SAFU_LAUNCHER_ADDRESSES_V2[networkInfo.chainId],
       functionName: "disableMaxWalletLimit",
       args: [tokenAddress as `0x${string}`],
     });
     setIsProcessingTxn(true);
-  }, [writeContract, tokenAddress, isTokenCreator, isV1, isV3, networkInfo.chainId]);
+  }, [
+    writeContract,
+    tokenAddress,
+    isTokenCreator,
+    isV1,
+    isV3,
+    networkInfo.chainId,
+  ]);
 
   const handleButtonClick = useCallback(
     (e: FormEvent) => {
@@ -2702,10 +2785,11 @@ export default function Trade() {
                       type="button"
                       onClick={handleAddToWhitelist}
                       disabled={!isFormValid || isWhiteListOngoing === 0}
-                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${isFormValid
-                        ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
-                        : "opacity-50 cursor-not-allowed"
-                        }`}
+                      className={`w-full rounded-xl px-6 py-4 text-white font-semibold mt-10 ${
+                        isFormValid
+                          ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0]"
+                          : "opacity-50 cursor-not-allowed"
+                      }`}
                     >
                       Add to whitelist
                     </button>
@@ -2760,10 +2844,11 @@ export default function Trade() {
                 <div
                   className={`absolute z-20 left-[2px] pt-[1px] size-[20px] rounded-full flex items-center justify-center
         transition-transform duration-300 ease-in-out dark:shadow-[1px_-2px_12px_0px_rgba(71,_71,_77,_0.5)]
-        ${showSectionA
-                      ? "translate-x-[17.5px] bg-white"
-                      : "translate-x-0 bg-[#D9D9D9]"
-                    }`}
+        ${
+          showSectionA
+            ? "translate-x-[17.5px] bg-white"
+            : "translate-x-0 bg-[#D9D9D9]"
+        }`}
                 >
                   {showSectionA ? (
                     <CircleCheckBig className="text-Primary w-[12px] h-[12px]" />
@@ -2788,10 +2873,11 @@ export default function Trade() {
 
             <div className="relative">
               <div
-                className={`transition-opacity duration-700 ${showSectionA
-                  ? "opacity-100 relative z-40"
-                  : "opacity-0 absolute inset-0 pointer-events-none -z-50"
-                  }`}
+                className={`transition-opacity duration-700 ${
+                  showSectionA
+                    ? "opacity-100 relative z-40"
+                    : "opacity-0 absolute inset-0 pointer-events-none -z-50"
+                }`}
               >
                 {/* ✅ Section A — Token Metadata */}
                 <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
@@ -2910,8 +2996,9 @@ export default function Trade() {
               </div>
 
               <div
-                className={`transition-opacity duration-700 ${showSectionA ? "opacity-0 absolute inset-0" : "opacity-100"
-                  }`}
+                className={`transition-opacity duration-700 ${
+                  showSectionA ? "opacity-0 absolute inset-0" : "opacity-100"
+                }`}
               >
                 {/* 🚀 Section B — Launch Info */}
                 <div className="grid sm:grid-cols-2 gap-3 mt-2 text-sm">
@@ -2959,30 +3046,31 @@ export default function Trade() {
                     // },
                     ...(isWhiteListOngoing && ywhitelistBalance > 0
                       ? [
-                        {
-                          label: "Whitelisted Amount",
-                          value: { isWhiteListOngoing },
-                          extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${token?.symbol
+                          {
+                            label: "Whitelisted Amount",
+                            value: { isWhiteListOngoing },
+                            extra: `${ywhitelistBalance.toFixed(2) ?? 0} ${
+                              token?.symbol
                             }`,
-                        },
-                      ]
+                          },
+                        ]
                       : []),
                     ...(isWhiteListOngoing && isSafuHolder
                       ? [
-                        {
-                          label: "Auto Whitelisted",
-                          value: `${isSafuHolder}`,
-                        },
-                      ]
+                          {
+                            label: "Auto Whitelisted",
+                            value: `${isSafuHolder}`,
+                          },
+                        ]
                       : []),
                     ...(isWhiteListOngoing && isSafuHolder
                       ? [
-                        {
-                          label: "Your Safu",
-                          value: `${isSafuHolder}`,
-                          extra: `${safuHolderBalance} SAFU`,
-                        },
-                      ]
+                          {
+                            label: "Your Safu",
+                            value: `${isSafuHolder}`,
+                            extra: `${safuHolderBalance} SAFU`,
+                          },
+                        ]
                       : []),
                   ].map(({ label, value, extra }, i) => (
                     <div
@@ -3071,7 +3159,8 @@ export default function Trade() {
                           {isLoadingBalance ? (
                             <span className="inline-block w-10 h-3 bg-black/10 dark:bg-white/20 animate-pulse rounded" />
                           ) : (
-                            `${parseFloat(tokenBalance).toLocaleString()} ${token.symbol
+                            `${parseFloat(tokenBalance).toLocaleString()} ${
+                              token.symbol
                             }`
                           )}
                         </span>
@@ -3117,9 +3206,9 @@ export default function Trade() {
                           <>
                             {formatTokenAmount(
                               (Number(amountOutSelect.toString()) / 1e18) *
-                              (isListed && isTaxedOnDex
-                                ? 1 - taxOnDexBps / 100
-                                : 1),
+                                (isListed && isTaxedOnDex
+                                  ? 1 - taxOnDexBps / 100
+                                  : 1),
                               mode === "sell" ? 8 : 2
                             )}
                             {isListed && isTaxedOnDex && (
@@ -3168,10 +3257,11 @@ export default function Trade() {
                       <button
                         type="button"
                         onClick={handleButtonClick}
-                        className={`flex-1 rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${validationState.isDisabled
-                          ? "opacity-60 cursor-not-allowed"
-                          : ""
-                          }`}
+                        className={`flex-1 rounded-lg py-2 text-white text-xs bg-[#0C8CE0] hover:bg-blue-600 transition ${
+                          validationState.isDisabled
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
                         disabled={validationState.isDisabled}
                       >
                         {validationState.message}
@@ -3182,7 +3272,7 @@ export default function Trade() {
                     </div>
                     {/* Settings Panel */}
                     {showSettings && (
-                      <div className="absolute z-[10000] bottom-full mb-2 p-4 bg-white dark:bg-[#0B132B] border-2 dark:border-white/20 border-black/30 rounded-lg shadow-xl drop-shadow-lg outline outline-1 outline-black/10 dark:outline-white/10 w-full max-w-xs">
+                      <div className="absolute z-[10000] bottom-full mb-2 p-4 bg-white dark:bg-[#0B132B] border-2 dark:border-white/20 border-black/30 rounded-lg shadow-xl drop-shadow-lg outline-1 outline-black/10 dark:outline-white/10 w-full max-w-xs">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-medium dark:text-white text-black">
                             Swap Settings
@@ -3266,10 +3356,10 @@ export default function Trade() {
                         {lastTxnType === "approval"
                           ? "Approval confirmed!"
                           : lastTxnType === "sell"
-                            ? "Sell confirmed!"
-                            : lastTxnType === "buy"
-                              ? "Buy confirmed!"
-                              : getAdminTxnMessage()}
+                          ? "Sell confirmed!"
+                          : lastTxnType === "buy"
+                          ? "Buy confirmed!"
+                          : getAdminTxnMessage()}
                       </p>
                       <a
                         href={`${networkInfo.explorerUrl}/tx/${txHash}`}
@@ -3332,8 +3422,9 @@ export default function Trade() {
                         className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                         style={{
                           width: `${stripeWidth}px`,
-                          left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
-                            }px)`,
+                          left: `calc(${(i * spacing).toFixed(2)}% - ${
+                            stripeWidth / 2
+                          }px)`,
                         }}
                       />
                     );
@@ -3351,8 +3442,9 @@ export default function Trade() {
 
                   return (
                     <div
-                      className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                        } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                      className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                        progress < 100 ? "rounded-l-full" : "rounded-full"
+                      } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
                       style={{
                         width: `${isLoadingInfoData ? 0 : progress}%`,
                         ...gradientStyle,
@@ -3362,10 +3454,11 @@ export default function Trade() {
                 })()}
 
                 <div
-                  className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${curvePercentClamped < 100
-                    ? "rounded-l-full"
-                    : "rounded-full"
-                    } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
+                  className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                    curvePercentClamped < 100
+                      ? "rounded-l-full"
+                      : "rounded-full"
+                  } ${isLoadingInfoData ? "bg-gray-600" : ""}`}
                   style={{
                     width: `${isLoadingInfoData ? 0 : curvePercentClamped}%`,
                     backgroundImage: isLoadingInfoData
@@ -3472,10 +3565,11 @@ export default function Trade() {
                             ? "Disable auto-update"
                             : "Enable auto-update"
                         }
-                        className={`px-3 py-[3px] rounded text-xs font-medium ${isAutoUpdateEnabled
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          } transition duration-150`}
+                        className={`px-3 py-[3px] rounded text-xs font-medium ${
+                          isAutoUpdateEnabled
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        } transition duration-150`}
                       >
                         {isAutoUpdateEnabled ? "Auto" : "Manual"}
                       </button>
@@ -3510,8 +3604,9 @@ export default function Trade() {
                         </span>
 
                         <FaChevronDown
-                          className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${isDropdownOpen ? "rotate-180" : ""
-                            }`}
+                          className={`ml-1 text-sm transition-transform cursor-pointer text-black dark:text-white ${
+                            isDropdownOpen ? "rotate-180" : ""
+                          }`}
                         />
                       </div>
 
@@ -3595,20 +3690,22 @@ export default function Trade() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${activeTab === "transactions"
-                    ? " dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] font-raleway font-medium text-left ${
+                    activeTab === "transactions"
+                      ? " dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Recent Transactions
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 rounded-lg lg:text-[20px] flex items-center gap-2 font-raleway font-medium text-left ${activeTab === "chat"
-                    ? "dark:text-white text-[#141314]"
-                    : "dark:text-white/60 text-[#141314]/40"
-                    } transition cursor-pointer`}
+                  className={`px-4 py-2 rounded-lg lg:text-[20px] flex items-center gap-2 font-raleway font-medium text-left ${
+                    activeTab === "chat"
+                      ? "dark:text-white text-[#141314]"
+                      : "dark:text-white/60 text-[#141314]/40"
+                  } transition cursor-pointer`}
                 >
                   Community Chat{" "}
                   {/* {messageCount > 0 && (
@@ -3648,10 +3745,11 @@ export default function Trade() {
                               className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none"
                             >
                               <td
-                                className={`font-medium py-3 pl-1 flex items-center gap-1 ${tx.type === "buy"
-                                  ? "text-green-500"
-                                  : "text-red-500"
-                                  }`}
+                                className={`font-medium py-3 pl-1 flex items-center gap-1 ${
+                                  tx.type === "buy"
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                }`}
                               >
                                 {tx.type === "buy" ? (
                                   <MdAddCircleOutline className="text-[22px]" />
@@ -3666,11 +3764,11 @@ export default function Trade() {
                                 {/* Market Cap Cell */}
                                 {tx.oldMarketCap
                                   ? `$${Number(tx.oldMarketCap).toLocaleString(
-                                    undefined,
-                                    {
-                                      maximumFractionDigits: 0,
-                                    }
-                                  )}`
+                                      undefined,
+                                      {
+                                        maximumFractionDigits: 0,
+                                      }
+                                    )}`
                                   : "—"}
                               </td>
 
