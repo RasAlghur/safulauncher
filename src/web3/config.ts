@@ -15,7 +15,7 @@ export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
 };
 
 export const SAFU_LAUNCHER_ADDRESSES_V3: Record<number, `0x${string}`> = {
-  1: "0x0000000000000000000000000000000000000000", // Mainnet address
+  1: "0x471dF254269eBEEE55db5E131C3A97E5Ec2ba425", // Mainnet address
   11155111: "0x0Da431855bca6777c41fb467bCd40848ED46AAf6", // Sepolia address
 };
 
@@ -37,6 +37,11 @@ export const SAFU_TOKEN_ADDRESSES: Record<number, `0x${string}`> = {
 export const WETH_ADDRESS: Record<number, `0x${string}`> = {
   1: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // Mainnet address
   11155111: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14", // Sepolia address
+};
+
+export const WITHDRAW_ADDRESS: Record<number, `0x${string}`> = {
+  1: "0xaa96B58D505aAcB381E83EEB21E57f4780c2CFc6", // Mainnet address
+  11155111: "0xfC982991bb0F1dE633631f90FeA76153785CebBB", // Sepolia address
 };
 
 /**
@@ -3804,6 +3809,11 @@ export const LAUNCHER_ABI_V3 = {
           "name": "_safuToken",
           "type": "address",
           "internalType": "address"
+        },
+        {
+          "name": "_revenueRecipient",
+          "type": "address",
+          "internalType": "address"
         }
       ],
       "stateMutability": "nonpayable"
@@ -4337,25 +4347,6 @@ export const LAUNCHER_ABI_V3 = {
     },
     {
       "type": "function",
-      "name": "hasTraded",
-      "inputs": [
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool",
-          "internalType": "bool"
-        }
-      ],
-      "stateMutability": "view"
-    },
-    {
-      "type": "function",
       "name": "isCreationFeeExempt",
       "inputs": [
         {
@@ -4407,25 +4398,6 @@ export const LAUNCHER_ABI_V3 = {
     },
     {
       "type": "function",
-      "name": "pendingTaxWithdrawals",
-      "inputs": [
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256",
-          "internalType": "uint256"
-        }
-      ],
-      "stateMutability": "view"
-    },
-    {
-      "type": "function",
       "name": "recoverERC20",
       "inputs": [
         {
@@ -4453,6 +4425,19 @@ export const LAUNCHER_ABI_V3 = {
       "inputs": [],
       "outputs": [],
       "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revenueRecipient",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
     },
     {
       "type": "function",
@@ -4684,6 +4669,19 @@ export const LAUNCHER_ABI_V3 = {
     },
     {
       "type": "function",
+      "name": "updateRevRecipient",
+      "inputs": [
+        {
+          "name": "_recipient",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
       "name": "updateSafuTokenCA",
       "inputs": [
         {
@@ -4694,78 +4692,6 @@ export const LAUNCHER_ABI_V3 = {
       ],
       "outputs": [],
       "stateMutability": "nonpayable"
-    },
-    {
-      "type": "function",
-      "name": "whitelist",
-      "inputs": [
-        {
-          "name": "_tokenAddr",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "_eoa",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "bool",
-          "internalType": "bool"
-        }
-      ],
-      "stateMutability": "view"
-    },
-    {
-      "type": "function",
-      "name": "whitelistAllocationLeft",
-      "inputs": [
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256",
-          "internalType": "uint256"
-        }
-      ],
-      "stateMutability": "view"
-    },
-    {
-      "type": "function",
-      "name": "whitelistMaxWallet",
-      "inputs": [
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "",
-          "type": "address",
-          "internalType": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "uint256",
-          "internalType": "uint256"
-        }
-      ],
-      "stateMutability": "view"
     },
     {
       "type": "function",
@@ -4859,6 +4785,25 @@ export const LAUNCHER_ABI_V3 = {
           "type": "uint256",
           "indexed": false,
           "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RevenueRecipientUpdated",
+      "inputs": [
+        {
+          "name": "oldRecipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newRecipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
         }
       ],
       "anonymous": false
@@ -5021,6 +4966,229 @@ export const LAUNCHER_ABI_V3 = {
     {
       "type": "error",
       "name": "TradingNL",
+      "inputs": []
+    }
+  ]
+} as const;
+
+export const WITHDRAW_ABI = {
+  abi: [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "initialOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "emergencyWithdrawERC20",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "renounceOwnership",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawAccumulatedFees",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address payable"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawEtherInPercent",
+      "inputs": [
+        {
+          "name": "_recipients",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_percentages",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "EmergencyERC20Withdraw",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "EtherWithdrawn",
+      "inputs": [
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "LengthsOfArraysDontMatch",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OwnableInvalidOwner",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableUnauthorizedAccount",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "RecipientAddrSetToZero",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SafeERC20FailedOperation",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "TotalPercentNot100",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TransferFailed",
       "inputs": []
     }
   ]

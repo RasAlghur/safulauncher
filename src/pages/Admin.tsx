@@ -7,6 +7,7 @@ import AdminContractConfig from "../components/generalcomponents/AdminContractCo
 import AdminContractConfigV2 from "../components/generalcomponents/AdminContractConfigV2";
 import AdminContractConfigV3 from "../components/generalcomponents/AdminContractConfigV3";
 import Footer from "../components/launchintro/Footer";
+import AdminWithdrawConfig from "../components/generalcomponents/AdminWithdrawConfig";
 
 const ADMIN_ADDRESS = import.meta.env.VITE_ADMIN_WALLET?.toLowerCase();
 
@@ -15,7 +16,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "form" | "contractV1" | "contractV2" | "contractV3"
+    "form" | "contractV1" | "contractV2" | "contractV3" | "withdraw"
   >("form");
 
   useEffect(() => {
@@ -139,6 +140,16 @@ const Admin = () => {
             >
               Contract Config V3
             </button>
+            <button
+              onClick={() => setActiveTab("withdraw")}
+              className={`px-2 py-2 lg:px-6 lg:py-2 rounded-md font-medium transition-colors ${
+                activeTab === "withdraw"
+                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
+            >
+              Withdraw Config
+            </button>
           </div>
         </div>
 
@@ -149,7 +160,10 @@ const Admin = () => {
           <AdminContractConfigV2 />
         ) : activeTab === "contractV3" ? (
           <AdminContractConfigV3 />
-        ) : (
+        ) : activeTab === "withdraw" ? (
+          <AdminWithdrawConfig />
+        )
+         : (
           <AdminContractConfig />
         )}
       </div>

@@ -119,11 +119,10 @@ const InputField = memo(
             className={`w-full px-3 py-2 border rounded-md 
                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                           ${
-                             hasError
-                               ? "border-red-500 dark:border-red-400"
-                               : "border-gray-300 dark:border-gray-600"
-                           }`}
+                           ${hasError
+                ? "border-red-500 dark:border-red-400"
+                : "border-gray-300 dark:border-gray-600"
+              }`}
           />
           {hasError && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -185,6 +184,15 @@ const AdminContractConfigV3 = () => {
   const [tier2WLCap, setTier2WLCap] = useState<string>("");
   const [tier2WLDiv, setTier2WLDiv] = useState<string>("");
 
+  // ERC20 Recovery states
+  const [tokenAddress, setTokenAddress] = useState<string>("");
+  const [recipientAddress, setRecipientAddress] = useState<string>("");
+  const [recoveryAmount, setRecoveryAmount] = useState<string>("");
+
+  // Revenue recipient state
+  const [newRevenueRecipient, setNewRevenueRecipient] = useState<string>("");
+
+
   // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
@@ -219,6 +227,12 @@ const AdminContractConfigV3 = () => {
     functionName: "owner",
   });
 
+  const { data: revenueRecipientAddr } = useReadContract({
+    address: SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId],
+    abi: LAUNCHER_ABI_V3.abi,
+    functionName: "revenueRecipient",
+  });
+
   const secondsToDays = (seconds: number): number => {
     return Math.floor(seconds / 86400); // 86400 seconds in a day
   };
@@ -235,6 +249,14 @@ const AdminContractConfigV3 = () => {
     if (num > 10) return "Cannot exceed 10% (contract limit)";
     return null;
   };
+
+  const validateTokenAmount = (value: string): string | null => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "Must be a valid number";
+    if (num <= 0) return "Must be greater than 0";
+    return null;
+  };
+
 
   const validateLockDurationDays = (value: string): string | null => {
     const num = parseInt(value);
@@ -426,6 +448,17 @@ const AdminContractConfigV3 = () => {
     tLockDur.trim() !== "" &&
     lpLockDur.trim() !== "" &&
     tLckPrcnt.trim() !== "";
+
+  const isRecoverERC20Valid: boolean =
+    !validationErrors.tokenAddress &&
+    !validationErrors.recipientAddress &&
+    !validationErrors.recoveryAmount &&
+    tokenAddress.trim() !== "" &&
+    recipientAddress.trim() !== "" &&
+    recoveryAmount.trim() !== "";
+
+  const isRevenueRecipientValid: boolean =
+    !validationErrors.newRevenueRecipient && newRevenueRecipient.trim() !== "";
 
   const isCreationFeeValid: boolean =
     !validationErrors.creationFeeETH &&
@@ -725,6 +758,128 @@ const AdminContractConfigV3 = () => {
               variant="danger"
             >
               Transfer Ownership
+            </ActionButton>
+          </div>
+        </FormSection>
+
+        {/* ERC20 Recovery Section */}
+        <FormSection
+          title="🔄 ERC20 Token Recovery"
+          tooltip="Recover accidentally sent ERC20 tokens (not platform-created tokens)"
+        >
+          <div className="space-y-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <p className="text-yellow-800 dark:text-yellow-200 text-sm mb-2">
+                ⚠️ <strong>Warning:</strong> This can only recover tokens that were NOT created by SafuLauncher.
+                Platform-created tokens cannot be recovered.
+              </p>
+            </div>
+
+            <InputField
+              label="Token Contract Address"
+              value={tokenAddress}
+              onChange={setTokenAddress}
+              placeholder="0x..."
+              tooltip="Address of the ERC20 token to recover"
+              validator={validateAddress}
+              fieldName="tokenAddress"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
+            />
+
+            <InputField
+              label="Recovery Recipient Address"
+              value={recipientAddress}
+              onChange={setRecipientAddress}
+              placeholder="0x..."
+              tooltip="Address to send the recovered tokens to"
+              validator={validateAddress}
+              fieldName="recipientAddress"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
+            />
+
+            <InputField
+              label="Amount to Recover"
+              value={recoveryAmount}
+              onChange={setRecoveryAmount}
+              placeholder="1000"
+              type="number"
+              tooltip="Amount of tokens to recover (in token units)"
+              validator={validateTokenAmount}
+              fieldName="recoveryAmount"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
+            />
+
+            <ActionButton
+              onClick={() =>
+                writeContract({
+                  address: SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId],
+                  abi: LAUNCHER_ABI_V3.abi,
+                  functionName: "recoverERC20",
+                  args: [
+                    tokenAddress as `0x${string}`,
+                    recipientAddress as `0x${string}`,
+                    ethers.parseUnits(recoveryAmount, 18), // Assuming 18 decimals, adjust as needed
+                  ],
+                })
+              }
+              isValid={isRecoverERC20Valid}
+              variant="danger"
+            >
+              Recover ERC20 Tokens
+            </ActionButton>
+          </div>
+        </FormSection>
+
+        {/* Revenue Recipient Section */}
+        <FormSection
+          title="💰 Revenue Recipient"
+          tooltip="Update where platform revenues (creation/trade/listing fees) are sent"
+        >
+          <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-blue-800 dark:text-blue-200 text-sm">
+                <strong>Info:</strong> This address receives all platform fees including creation fees,
+                trade fees, and listing fees.
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Current Owner
+              </label>
+              <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-800 dark:text-gray-200 font-mono text-sm truncate">
+                {revenueRecipientAddr?.toString() || "Loading..."}
+              </div>
+            </div>
+
+            <InputField
+              label="New Revenue Recipient Address"
+              value={newRevenueRecipient}
+              onChange={setNewRevenueRecipient}
+              placeholder="0x..."
+              tooltip="New address to receive platform revenues"
+              validator={validateAddress}
+              fieldName="newRevenueRecipient"
+              validationErrors={validationErrors}
+              handleValidation={handleValidation}
+            />
+
+            <ActionButton
+              onClick={() =>
+                writeContract({
+                  address: SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId],
+                  abi: LAUNCHER_ABI_V3.abi,
+                  functionName: "updateRevRecipient",
+                  args: [newRevenueRecipient as `0x${string}`],
+                })
+              }
+              isValid={isRevenueRecipientValid}
+              variant="primary"
+            >
+              Update Revenue Recipient
             </ActionButton>
           </div>
         </FormSection>
@@ -1243,17 +1398,17 @@ const AdminContractConfigV3 = () => {
                     Current:{" "}
                     {tier1Threshold && tier1ThresholdDiv
                       ? `${(
-                          (parseInt(tier1Threshold) /
-                            parseInt(tier1ThresholdDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier1Threshold) /
+                          parseInt(tier1ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier1WLCap && tier1WLDiv
                       ? `${(
-                          (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1336,17 +1491,17 @@ const AdminContractConfigV3 = () => {
                     Current:{" "}
                     {tier2Threshold && tier2ThresholdDiv
                       ? `${(
-                          (parseInt(tier2Threshold) /
-                            parseInt(tier2ThresholdDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier2Threshold) /
+                          parseInt(tier2ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier2WLCap && tier2WLDiv
                       ? `${(
-                          (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
-                          100
-                        ).toFixed(3)}%`
+                        (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
+                        100
+                      ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1363,10 +1518,10 @@ const AdminContractConfigV3 = () => {
                   • Tier 1 users need ≥
                   {tier1Threshold && tier1ThresholdDiv
                     ? `${(
-                        (parseInt(tier1Threshold) /
-                          parseInt(tier1ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                      (parseInt(tier1Threshold) /
+                        parseInt(tier1ThresholdDiv)) *
+                      100
+                    ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1374,10 +1529,10 @@ const AdminContractConfigV3 = () => {
                   • Tier 2 users need ≥
                   {tier2Threshold && tier2ThresholdDiv
                     ? `${(
-                        (parseInt(tier2Threshold) /
-                          parseInt(tier2ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                      (parseInt(tier2Threshold) /
+                        parseInt(tier2ThresholdDiv)) *
+                      100
+                    ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1420,114 +1575,125 @@ const AdminContractConfigV3 = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div
-            className={`flex items-center gap-2 ${
-              isTradeFeeBpsValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isTradeFeeBpsValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Trade Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isPoolConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isPoolConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Pool Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isLockDurationValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isLockDurationValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isLockDurationValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isLockDurationValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Lock Duration Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isCreationFeeValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isCreationFeeValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isCreationFeeValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isCreationFeeValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Creation Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isListingFeeValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isListingFeeValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isListingFeeValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isListingFeeValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Listing Fee Config
           </div>
+
           <div
-            className={`flex items-center gap-2 ${
-              isCreatorConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isRecoverERC20Valid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
+              className={`w-2 h-2 rounded-full ${isRecoverERC20Valid ? "bg-green-500" : "bg-gray-300"
+                }`}
+            ></div>
+            ERC20 Recovery Config
+          </div>
+
+          <div
+            className={`flex items-center gap-2 ${isRevenueRecipientValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
               }`}
+          >
+            <div
+              className={`w-2 h-2 rounded-full ${isRevenueRecipientValid ? "bg-green-500" : "bg-gray-300"
+                }`}
+            ></div>
+            Revenue Recipient Config
+          </div>
+
+          <div
+            className={`flex items-center gap-2 ${isCreatorConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
+          >
+            <div
+              className={`w-2 h-2 rounded-full ${isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Creator Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isSafuTokenValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isSafuTokenValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             SAFU Token Config
           </div>
           <div
-            className={`flex items-center gap-2 ${
-              isTierConfigValid
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+            className={`flex items-center gap-2 ${isTierConfigValid
+              ? "text-green-600 dark:text-green-400"
+              : "text-gray-500 dark:text-gray-400"
+              }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${
-                isTierConfigValid ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${isTierConfigValid ? "bg-green-500" : "bg-gray-300"
+                }`}
             ></div>
             Tier Config
           </div>
