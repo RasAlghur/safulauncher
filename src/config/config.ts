@@ -20,7 +20,8 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
-const alchemyKey = import.meta.env.VITE_ALCHEMY_API_KEY!;
+const alchemyKey = import.meta.env.VITE_RPC_API_KEY!;
+const Sepolia_AlchemyKey = import.meta.env.VITE_SEPOLIA_RPC_API_KEY!;
 
 // Define all supported chains
 export const ALL_CHAINS = [
@@ -39,8 +40,8 @@ export const config = getDefaultConfig({
   chains: [mainnet, sepolia], // Support all chains
   ssr: true,
   transports: {
-    [mainnet.id]: http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`),
-    [sepolia.id]: http(`https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`),
+    [mainnet.id]: http(alchemyKey),
+    [sepolia.id]: http(Sepolia_AlchemyKey),
   },
   wallets: [
     {
