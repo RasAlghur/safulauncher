@@ -124,12 +124,16 @@ const PlatformStats = () => {
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: networkInfo.chainId === 1 ? "0x1" : "0xaa36a7", // Sepolia
+          chain: networkInfo.chainId === 1 ? "0x1" : networkInfo.chainId === 56 ? "0x38" : networkInfo.chainId === 97 ? "0x61 " : "0xaa36a7", // Sepolia
           order: "DESC",
           tokenAddress:
             networkInfo.chainId === 1
-              ? SAFU_TOKEN_ADDRESSES[1]
-              : SAFU_TOKEN_ADDRESSES[11155111],
+              ? SAFU_TOKEN_ADDRESSES[1] :
+              networkInfo.chainId === 56
+                ? SAFU_TOKEN_ADDRESSES[56] :
+                networkInfo.chainId === 97
+                  ? SAFU_TOKEN_ADDRESSES[97]
+                  : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
         const holdersCount = response.raw().result.length;
@@ -265,9 +269,8 @@ const PlatformStats = () => {
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${
-          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+          }%`,
         ethValue: "",
         icon: AverageBonding,
       },

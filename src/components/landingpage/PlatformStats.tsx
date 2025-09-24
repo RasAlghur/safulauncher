@@ -73,12 +73,16 @@ const PlatformStats = () => {
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: networkInfo.chainId === 1 ? "0x1" : "0xaa36a7", // Sepolia
+          chain: networkInfo.chainId === 1 ? "0x1" : networkInfo.chainId === 56 ? "0x38" : networkInfo.chainId === 97 ? "0x61 " : "0xaa36a7", // Sepolia
           order: "DESC",
           tokenAddress:
             networkInfo.chainId === 1
-              ? SAFU_TOKEN_ADDRESSES[1]
-              : SAFU_TOKEN_ADDRESSES[11155111],
+              ? SAFU_TOKEN_ADDRESSES[1] :
+              networkInfo.chainId === 56
+                ? SAFU_TOKEN_ADDRESSES[56] :
+                networkInfo.chainId === 97
+                  ? SAFU_TOKEN_ADDRESSES[97]
+                  : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
         // Moralis returns the holders list in `result`
@@ -150,8 +154,8 @@ const PlatformStats = () => {
   const averageVolume = useMemo(() => {
     return totalTokenCount > 0
       ? (combinedMetrics[0] !== undefined
-          ? Number(combinedMetrics[0]) / 1e18
-          : 0) / totalTokenCount
+        ? Number(combinedMetrics[0]) / 1e18
+        : 0) / totalTokenCount
       : 0;
   }, [combinedMetrics, totalTokenCount]);
 
@@ -206,10 +210,9 @@ const PlatformStats = () => {
           combinedMetrics[0] !== undefined
             ? Number(combinedMetrics[0]) / 1e18
             : 0,
-          `${
-            combinedMetrics[0] !== undefined
-              ? (Number(combinedMetrics[0]) / 1e18).toFixed(8)
-              : 0
+          `${combinedMetrics[0] !== undefined
+            ? (Number(combinedMetrics[0]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: VolumeIcon,
@@ -228,10 +231,9 @@ const PlatformStats = () => {
           combinedMetrics[1] !== undefined
             ? Number(combinedMetrics[1]) / 1e18
             : 0,
-          `${
-            combinedMetrics[1] !== undefined
-              ? (Number(combinedMetrics[1]) / 1e18).toFixed(8)
-              : 0
+          `${combinedMetrics[1] !== undefined
+            ? (Number(combinedMetrics[1]) / 1e18).toFixed(8)
+            : 0
           } ETH`
         ),
         icon: FeeCollected,
@@ -253,9 +255,8 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Average Bonding",
-        mainValue: `${
-          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+          }%`,
         ethValue: "",
         icon: AverageBonding,
       },

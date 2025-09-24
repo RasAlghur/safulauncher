@@ -10,7 +10,7 @@ export async function getHoldersFromMoralis(
     }
 
     const response = await Moralis.EvmApi.token.getTokenOwners({
-      chain: chainId === 1 ? '0x1' : "0xaa36a7", // Sepolia
+      chain: chainId === 1 ? "0x1" : chainId === 56 ? "0x38" : chainId === 97 ? "0x61 " : "0xaa36a7", // Sepolia
       order: "DESC",
       tokenAddress,
     });
