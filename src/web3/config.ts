@@ -10,7 +10,7 @@ export const ROUTER_ADDRESSES_LIST: Record<number, Router[]> = {
   1: [{ address: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", label: "Uniswap V2" }],
   11155111: [{ address: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3", label: "Uniswap V2 (Sepolia)" }],
   97: [
-    { address: "0x0000000000000000000000000000000000000000", label: "Uniswap BSC Router (testnet)" },
+    { address: "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", label: "Uniswap BSC Router (testnet)" },
     { address: "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", label: "PancakeSwap (testnet)" },
   ],
   56: [
@@ -18,6 +18,8 @@ export const ROUTER_ADDRESSES_LIST: Record<number, Router[]> = {
     { address: "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24", label: "Uniswap BSC Router" },
   ],
 };
+
+export const GIGGLE_ACADEMY_WALLET = "0xC7f501D25Ea088aeFCa8B4b3ebD936aAe12bF4A4";
 
 // export const ROUTER_ADDRESSES_LIST: Record<number, `0x${string}`[]> = {
 //   1: [

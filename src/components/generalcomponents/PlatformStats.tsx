@@ -1,4 +1,4 @@
-// LlaunchIntro/PlatformStats.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -51,112 +51,202 @@ const PlatformStats = () => {
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
 
-  // State variables
+  // State
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
   const [safuHolders, setSafuHolders] = useState<number>(0);
-  const [combinedMetrics, setCombinedMetrics] = useState<bigint[]>([]);
+  // getMetrics returns 24 values in v3/v4 — create a safe default
+  const DEFAULT_METRICS = Array(24).fill(0n) as bigint[];
+  const [combinedMetrics, setCombinedMetrics] = useState<bigint[]>(DEFAULT_METRICS);
   const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Fetch combined metrics from contracts
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        if (!networkInfo?.chainId) return;
+  // Map supported chains -> moralis hex values
+  const chainHexMap: Record<number, string> = {
+    1: "0x1", // Ethereum Mainnet
+    56: "0x38", // BSC Mainnet
+    97: "0x61", // BSC Testnet
+    11155111: "0xaa36a7", // Sepolia
+    // add more supported chains if needed
+  };
 
+  // helper: safe bigint / BigNumber -> number conversion
+  const bnToNumber = useCallback((v: any): number => {
+    if (v === null || v === undefined) return 0;
+    try {
+      if (typeof v === "number") return v;
+      if (typeof v === "bigint") return Number(v);
+      if (typeof v === "string") return Number(v);
+      if (typeof v?.toString === "function") return Number(v.toString());
+    } catch {
+      // fallback
+    }
+    return 0;
+  }, []);
+
+  // ---------- METRICS ----------
+  useEffect(() => {
+    let cancelled = false;
+    const fetchMetrics = async () => {
+      if (!networkInfo?.chainId) return;
+      try {
         const [metrics, traderCount] = await Promise.all([
-          getPureMetrics(networkInfo.chainId),
-          getPureUniqueTraderCount(networkInfo.chainId),
+          getPureMetrics(networkInfo.chainId).catch(() => DEFAULT_METRICS),
+          getPureUniqueTraderCount(networkInfo.chainId).catch(() => 0n),
         ]);
 
-        setCombinedMetrics(metrics);
-        setUniqueTraderCount(traderCount);
+        if (cancelled) return;
+
+        // ensure metrics is an array of bigints
+        const safeMetrics = Array.isArray(metrics)
+          ? metrics.map((m: any) => (typeof m === "bigint" ? m : BigInt(m ?? 0)))
+          : DEFAULT_METRICS;
+
+        setCombinedMetrics(safeMetrics);
+        setUniqueTraderCount(typeof traderCount === "bigint" ? traderCount : BigInt(traderCount ?? 0));
       } catch (error) {
         console.error("Error fetching metrics:", error);
-        // Set default values if fetch fails
-        setCombinedMetrics([0n, 0n, 0n, 0n, 0n, 0n, 0n]);
-        setUniqueTraderCount(0n);
+        if (!cancelled) {
+          setCombinedMetrics(DEFAULT_METRICS);
+          setUniqueTraderCount(0n);
+        }
       }
-    }
+    };
 
     fetchMetrics();
-  }, [networkInfo?.chainId]);
 
-  // Fetch ETH price
+    return () => {
+      cancelled = true;
+    };
+  }, [networkInfo?.chainId, bnToNumber]);
+
+  // ---------- ETH PRICE ----------
   useEffect(() => {
-    async function fetchETHPrice() {
+    let cancelled = false;
+    const fetchETHPrice = async () => {
       try {
         if (
           !networkInfo?.chainId ||
           !ETH_USDT_PRICE_FEED_ADDRESSES?.[networkInfo.chainId]
         ) {
           console.warn("Chain ID or price feed address not available");
+          setCurrentETHPrice(0);
           return;
         }
 
         const priceResult = await getPureGetLatestETHPrice(
           networkInfo.chainId,
           ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId]
-        );
+        ).catch(() => null);
 
-        const price =
-          (typeof priceResult === "number"
-            ? priceResult
-            : Number(priceResult)) / 1e8;
-        setCurrentETHPrice(price);
+        if (cancelled) return;
+
+        // priceResult may be 0n, bigint, string, number
+        const priceRaw = priceResult ?? 0;
+        const priceNum = bnToNumber(priceRaw) / 1e8;
+        setCurrentETHPrice(Number.isFinite(priceNum) ? priceNum : 0);
       } catch (error) {
         console.error("Failed to fetch ETH price:", error);
-        // You might want to set a fallback price or fetch from an alternative source
-        setCurrentETHPrice(0);
+        if (!cancelled) setCurrentETHPrice(0);
       }
-    }
+    };
 
     fetchETHPrice();
-  }, [networkInfo?.chainId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [networkInfo?.chainId, bnToNumber]);
 
-  // Fetch SAFU holders
+  // ---------- SAFU HOLDERS (Moralis) ----------
+  const startMoralisIfNeeded = useCallback(async () => {
+    try {
+      const apiKey = import.meta.env.VITE_MORALIS_API_KEY;
+      if (!apiKey) {
+        console.warn("VITE_MORALIS_API_KEY not set - Moralis calls will fail");
+        return;
+      }
+
+      if ((Moralis as any)?.Core && !(Moralis as any).Core.isStarted) {
+        await Moralis.start({ apiKey });
+      } else if (!(Moralis as any).Core && !(Moralis as any).started) {
+        await Moralis.start?.({ apiKey });
+      }
+    } catch (e) {
+      console.warn("Moralis start failed:", e);
+    }
+  }, []);
+
   useEffect(() => {
-    async function fetchSafuHolders() {
+    let cancelled = false;
+    const fetchSafuHolders = async () => {
       try {
-        if (!Moralis.Core.isStarted) {
-          await Moralis.start({ apiKey: import.meta.env.VITE_MORALIS_API_KEY });
+        await startMoralisIfNeeded();
+
+        if (!networkInfo?.chainId) {
+          setSafuHolders(0);
+          return;
+        }
+
+        // compute chain param
+        const chainParam = chainHexMap[networkInfo.chainId] ?? `0x${networkInfo.chainId.toString(16)}`;
+
+        if (!/^0x[0-9a-fA-F]+$/.test(chainParam)) {
+          console.warn("Invalid chainParam for Moralis:", chainParam);
+          setSafuHolders(0);
+          return;
+        }
+
+        // pick SAFU token address for chain or fallback
+        const safuAddress =
+          SAFU_TOKEN_ADDRESSES[networkInfo.chainId] ??
+          SAFU_TOKEN_ADDRESSES[1] ??
+          SAFU_TOKEN_ADDRESSES[56] ??
+          SAFU_TOKEN_ADDRESSES[11155111];
+
+        if (!safuAddress) {
+          console.warn("No SAFU token address for chain:", networkInfo.chainId);
+          setSafuHolders(0);
+          return;
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
-          chain: networkInfo.chainId === 1 ? "0x1" : networkInfo.chainId === 56 ? "0x38" : networkInfo.chainId === 97 ? "0x61 " : "0xaa36a7", // Sepolia
+          chain: chainParam,
+          tokenAddress: safuAddress,
           order: "DESC",
-          tokenAddress:
-            networkInfo.chainId === 1
-              ? SAFU_TOKEN_ADDRESSES[1] :
-              networkInfo.chainId === 56
-                ? SAFU_TOKEN_ADDRESSES[56] :
-                networkInfo.chainId === 97
-                  ? SAFU_TOKEN_ADDRESSES[97]
-                  : SAFU_TOKEN_ADDRESSES[11155111],
         });
 
-        const holdersCount = response.raw().result.length;
-        setSafuHolders(holdersCount);
+        if (cancelled) return;
+
+        const raw = response.raw?.() ?? response;
+        const owners = Array.isArray(raw?.result) ? raw.result : raw?.result ?? [];
+        setSafuHolders(owners.length);
       } catch (err) {
         console.error("Error fetching SAFU holders:", err);
-        setSafuHolders(0);
+        if (!cancelled) setSafuHolders(0);
       }
-    }
+    };
 
     fetchSafuHolders();
-  }, [networkInfo.chainId]);
 
-  // Fetch token list
+    return () => {
+      cancelled = true;
+    };
+  }, [networkInfo?.chainId, startMoralisIfNeeded]);
+
+  // ---------- TOKEN LIST ----------
   useEffect(() => {
-    async function fetchTokens() {
+    let cancelled = false;
+    const fetchTokens = async () => {
+      setIsLoading(true);
       try {
         const response = await base.get("token-all");
-        const data = response.data.data;
+        if (cancelled) return;
 
+        const data = response?.data?.data;
         let flattenedTokens: TokenMetadata[] = [];
 
         if (Array.isArray(data)) {
+          // some endpoints return nested arrays
           flattenedTokens = data.flat();
         } else if (data && typeof data === "object") {
           flattenedTokens = [data];
@@ -165,32 +255,35 @@ const PlatformStats = () => {
         setTotalTokenCount(flattenedTokens.length);
       } catch (error) {
         console.error("Error fetching tokens:", error);
-        setTotalTokenCount(0);
+        if (!cancelled) setTotalTokenCount(0);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
-    }
+    };
 
     fetchTokens();
+    return () => {
+      cancelled = true;
+    };
   }, [base]);
 
-  // Calculate derived values
+  // Derived values
   const averageBondingProgress = useMemo(() => {
-    return totalTokenCount > 0 && combinedMetrics.length > 3
-      ? (Number(combinedMetrics[3]) / totalTokenCount) * 100
-      : 0;
-  }, [combinedMetrics, totalTokenCount]);
+    // metrics[3] corresponds to tokens listed in your combined metrics logic
+    const denom = totalTokenCount > 0 ? totalTokenCount : 1;
+    const metricVal = combinedMetrics?.[3] ?? 0n;
+    return (bnToNumber(metricVal) / denom) * 100;
+  }, [combinedMetrics, totalTokenCount, bnToNumber]);
 
   const averageVolume = useMemo(() => {
-    return totalTokenCount > 0 && combinedMetrics.length > 0
-      ? Number(combinedMetrics[0]) / 1e18 / totalTokenCount
-      : 0;
-  }, [combinedMetrics, totalTokenCount]);
+    const denom = totalTokenCount > 0 ? totalTokenCount : 1;
+    return (bnToNumber(combinedMetrics?.[0] ?? 0n) / 1e18) / denom;
+  }, [combinedMetrics, totalTokenCount, bnToNumber]);
 
-  // Helper functions
+  // Helper display functions
   const getMainValue = useCallback(
     (ethValue: number, fallbackValue: string) => {
-      if (currentETHPrice === 0) return fallbackValue;
+      if (!currentETHPrice) return fallbackValue;
       const usdValue = ethValue * currentETHPrice;
       return `$${usdValue.toLocaleString("en-US", {
         minimumFractionDigits: 2,
@@ -202,27 +295,20 @@ const PlatformStats = () => {
 
   const getETHDisplay = useCallback(
     (ethValue: number) => {
-      if (currentETHPrice === 0) return "";
+      if (!currentETHPrice) return "";
       return `(${ethValue.toFixed(2)} ETH)`;
     },
     [currentETHPrice]
   );
 
-  // Stats configurations
+  // build stats arrays
   const stats1 = useMemo(() => {
-    const metrics =
-      combinedMetrics.length > 0
-        ? combinedMetrics
-        : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
-
+    const metrics = combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
     return [
       {
         id: 1,
         title: "Total Volume",
-        mainValue: getMainValue(
-          Number(metrics[0]) / 1e18,
-          `${(Number(metrics[0]) / 1e18).toFixed(8)} ETH`
-        ),
+        mainValue: getMainValue(bnToNumber(metrics[0]) / 1e18, `${(bnToNumber(metrics[0]) / 1e18).toFixed(8)} ETH`),
         icon: VolumeIcon,
       },
       {
@@ -235,56 +321,49 @@ const PlatformStats = () => {
       {
         id: 3,
         title: "Fees Collected",
-        mainValue: getMainValue(
-          Number(metrics[1]) / 1e18,
-          `${(Number(metrics[1]) / 1e18).toFixed(8)} ETH`
-        ),
+        mainValue: getMainValue(bnToNumber(metrics[1]) / 1e18, `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`),
         icon: FeeCollected,
       },
       {
         id: 4,
         title: "Tokens Deployed",
-        mainValue: `${metrics[2]?.toString() || 0}`,
+        mainValue: `${bnToNumber(metrics[2]) || 0}`,
         ethValue: "",
         icon: TokensLaunched,
       },
       {
         id: 5,
         title: "Graduated Tokens",
-        mainValue: `${metrics[3]?.toString() || 0}`,
+        mainValue: `${bnToNumber(metrics[3]) || 0}`,
         ethValue: "",
         icon: TokensListed,
       },
     ];
-  }, [getMainValue, averageVolume, combinedMetrics]);
+  }, [getMainValue, averageVolume, combinedMetrics, bnToNumber]);
 
   const stats2 = useMemo(() => {
-    const metrics =
-      combinedMetrics.length > 0
-        ? combinedMetrics
-        : [0n, 0n, 0n, 0n, 0n, 0n, 0n];
-    const devReward = Number(metrics[6]) / 1e18;
-
+    const metrics = combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
+    const devReward = bnToNumber(metrics[6]) / 1e18;
+    const metric8 = bnToNumber(metrics[8] ?? 0n);
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)}%`,
         ethValue: "",
         icon: AverageBonding,
       },
       {
         id: 2,
         title: "Tax Tokens",
-        mainValue: `${metrics[4]?.toString() || 0}`,
+        mainValue: `${bnToNumber(metrics[4]) || 0}`,
         ethValue: "",
         icon: TaxTokens,
       },
       {
         id: 3,
         title: "0% Tax Tokens",
-        mainValue: `${metrics[5]?.toString() || 0}`,
+        mainValue: `${bnToNumber(metrics[5]) || 0}`,
         ethValue: "",
         icon: ZeroTaxTokens,
       },
@@ -305,19 +384,12 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Total Unique Traders",
-        mainValue: (Number(uniqueTraderCount) + Number(metrics?.[8])).toString(),
+        mainValue: (bnToNumber(uniqueTraderCount) + metric8).toString(),
         ethValue: "",
         icon: UniqueWallet,
       },
     ];
-  }, [
-    averageBondingProgress,
-    getMainValue,
-    getETHDisplay,
-    combinedMetrics,
-    safuHolders,
-    uniqueTraderCount,
-  ]);
+  }, [averageBondingProgress, getMainValue, getETHDisplay, combinedMetrics, safuHolders, uniqueTraderCount, bnToNumber]);
 
   // GSAP animations
   useEffect(() => {
@@ -331,16 +403,12 @@ const PlatformStats = () => {
         },
       });
 
-      tl.from(
-        headlineRef.current,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 0.8,
-          ease: "power2.out",
-        },
-        "+=0.1"
-      ).from(cardRefs.current, {
+      tl.from(headlineRef.current, {
+        opacity: 0,
+        y: 20,
+        duration: 0.8,
+        ease: "power2.out",
+      }, "+=0.1").from(cardRefs.current, {
         opacity: 0,
         y: 50,
         stagger: 0.2,
@@ -362,7 +430,7 @@ const PlatformStats = () => {
       const el = document.getElementById(`main-value-${index}`);
       if (!el) return;
 
-      const raw = stat.mainValue;
+      const raw = String(stat.mainValue);
       const clean = parseFloat(raw.replace(/[^0-9.]/g, ""));
       const isCurrency = raw.includes("$");
       const isETH = raw.includes("ETH");
@@ -377,7 +445,7 @@ const PlatformStats = () => {
           ease: "power3.out",
           snap: { innerText: isPercent ? 0.1 : 1 },
           onUpdate: function () {
-            const val = parseFloat(el.innerText);
+            const val = parseFloat(String(el.innerText || "0")) || 0;
             if (isCurrency) {
               el.innerText = `$${val.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -412,6 +480,7 @@ const PlatformStats = () => {
           <DustParticles key={i} />
         ))}
       </div>
+
       <div className="dark:hidden block">
         <img
           src={cloudRight}
@@ -419,13 +488,16 @@ const PlatformStats = () => {
           className="absolute -top-[7rem] md:-top-[15rem] -right-[1rem] -z-[100px]"
         />
       </div>
+
       <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute bottom-[100px] right-0 blur-3xl hidden dark:block"></div>
+
       <h1
         ref={headlineRef}
         className="text-[1.5rem] lg:text-[2rem] font-bold dark:text-[#ECF1F0] text-black mb-[45px] text-center lg:text-left"
       >
         Platform Stats
       </h1>
+
       <div className="flex flex-col lg:grid lg:grid-cols-[.3fr_.7fr] gap-4">
         <div className="grid grid-cols-2 xl:gap-4 gap-4 md:gap-2">
           <div className="bg-[#0c8be011] p-[20px] rounded-[10px] grid grid-cols-1 gap-4">
@@ -460,14 +532,16 @@ const PlatformStats = () => {
               );
             })}
           </div>
+
           <div className="bg-[#0c8be011] p-[20px] rounded-[20px] grid grid-cols-1 gap-4">
             {stats2.map((stat, index) => {
               const Icon = stat.icon;
+              const idx = stats1.length + index;
               return (
                 <div
                   key={index}
                   ref={(el) => {
-                    if (el) cardRefs.current[stats1.length + index] = el;
+                    if (el) cardRefs.current[idx] = el;
                   }}
                   className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
                 >
@@ -480,7 +554,7 @@ const PlatformStats = () => {
                     )}
                   </div>
                   <div
-                    id={`main-value-${stats1.length + index}`}
+                    id={`main-value-${idx}`}
                     className="xl:text-lg text-base font-semibold dark:text-white text-black mb-2"
                   >
                     {isLoading ? "Loading..." : stat.mainValue}
@@ -498,6 +572,7 @@ const PlatformStats = () => {
             })}
           </div>
         </div>
+
         <div>
           <TrendingTokens />
           <NotableBuys />

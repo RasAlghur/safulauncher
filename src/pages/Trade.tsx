@@ -403,8 +403,8 @@ export default function Trade() {
   const isLoadingChartRef = useRef(false);
 
   const isV1 = token?.tokenVersion === "token_v1";
-  const isV4 = token?.tokenVersion === "token_v3";
-  const isV3 = token?.tokenVersion === "token_v4";
+  const isV3 = token?.tokenVersion === "token_v3";
+  const isV4 = token?.tokenVersion === "token_v4";
 
   const getChainIdForContract = useMemo(() => {
     try {
@@ -3556,6 +3556,8 @@ export default function Trade() {
                   [
                     SAFU_LAUNCHER_ADDRESSES_V1[debouncedChainId],
                     SAFU_LAUNCHER_ADDRESSES_V2[debouncedChainId],
+                    SAFU_LAUNCHER_ADDRESSES_V3[debouncedChainId],
+                    SAFU_LAUNCHER_ADDRESSES_V4[debouncedChainId],
                   ].filter(Boolean) as string[]
                 }
                 chainId={debouncedChainId}

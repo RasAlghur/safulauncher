@@ -1,4 +1,5 @@
-// I want to add icon effects to the top of the top to switch chains from BNB to ETH, The active chain should also be highlighted
+// in the enableTaxOnSafu  and enableTaxOnDex I want to include autofill of the Giggle Academy wallet into the wallet input if it is toggled on
+
 
 // safu-dapp/src/pages/Launch.tsx
 import React, {
@@ -17,7 +18,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI_V4, SAFU_LAUNCHER_ADDRESSES_V4, ROUTER_ADDRESSES_LIST, SAFU_TOKEN_ADDRESSES, TOKEN_ABI } from "../web3/config";
+import { LAUNCHER_ABI_V4, SAFU_LAUNCHER_ADDRESSES_V4, ROUTER_ADDRESSES_LIST, SAFU_TOKEN_ADDRESSES, TOKEN_ABI, GIGGLE_ACADEMY_WALLET } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -82,6 +83,9 @@ export default function Launch(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [logoError, setLogoError] = useState("");
   const [isLogoLoading, setIsLogoLoading] = useState(false);
+
+  const [autoFillGiggleOnDex, setAutoFillGiggleOnDex] = useState(false);
+  const [autoFillGiggleOnSafu, setAutoFillGiggleOnSafu] = useState(false);
 
   const navigate = useNavigate();
   const [wlCsvText, setWlCsvText] = useState("");
@@ -357,6 +361,7 @@ export default function Launch(): JSX.Element {
   const walletInputRef = useRef<HTMLInputElement>(null);
   const [deployError, setDeployError] = useState<string>("");
   const [tokenAddress, setTokenAddress] = useState<string>("");
+
 
   // Dynamic groups...
   const [taxList, setTaxList] = useState<{ addr: string; bps: number }[]>([]);
@@ -1454,7 +1459,7 @@ export default function Launch(): JSX.Element {
             </p>
           </div>
 
-          <ChainSwitcher/>
+          <ChainSwitcher />
 
           <form
             id="launch-form"
@@ -1747,6 +1752,37 @@ export default function Launch(): JSX.Element {
 
                   {enableTaxOnDex && (
                     <div className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                      {/* Add Autofill Toggle for DEX */}
+                      <div className="flex justify-between items-center mb-4">
+                        <label className="text-sm font-medium dark:text-white text-black">
+                          Donate Some Fees to Giggle Academy Wallet
+                        </label>
+                        <div
+                          onClick={() => {
+                            const newValue = !autoFillGiggleOnDex;
+                            setAutoFillGiggleOnDex(newValue);
+
+                            // Autofill or clear based on toggle
+                            if (newValue) {
+                              // Only fill the wallet input, not the percentage
+                              setNewAddr(GIGGLE_ACADEMY_WALLET);
+                              // Leave newBps as 0 so user can set it
+                            } else {
+                              // Only clear if the current input matches Giggle wallet
+                              if (newAddr === GIGGLE_ACADEMY_WALLET) {
+                                setNewAddr("");
+                              }
+                            }
+                          }}
+                          className={`w-14 h-7 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${autoFillGiggleOnDex ? "bg-green-500" : "bg-gray-400"
+                            }`}
+                        >
+                          <div
+                            className={`bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${autoFillGiggleOnDex ? "translate-x-7" : "translate-x-0"
+                              }`}
+                          />
+                        </div>
+                      </div>
                       <label
                         htmlFor=""
                         className="dark:text-white font-raleway text-xl font-semibold"
@@ -1895,10 +1931,46 @@ export default function Launch(): JSX.Element {
 
                 {/* Platform Fee Section */}
                 {enableTaxOnSafu && (
-                  <div
-                    id="pf-section"
-                    className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4"
-                  >
+                  <div id="pf-section" className="space-y-4 bg-[#01061c0d] dark:bg-[#060920] p-6 rounded-xl shadow-md mt-4">
+                    {/* Add Autofill Toggle for Safu */}
+                    <div className="flex justify-between items-center mb-4">
+                      <label className="text-sm font-medium dark:text-white text-black">
+                        Donate Some Fees to Giggle Academy Wallet
+                      </label>
+                      <div
+                        onClick={() => {
+                          const newValue = !autoFillGiggleOnSafu;
+                          setAutoFillGiggleOnSafu(newValue);
+
+                          if (newValue) {
+                            // Only fill the first wallet input if it's empty
+                            if (platformFeeList.length === 0 || platformFeeList[0].addr === "") {
+                              const newList = [...platformFeeList];
+                              if (newList.length === 0) {
+                                newList.push({ addr: GIGGLE_ACADEMY_WALLET, pct: 0, pctInput: "" });
+                              } else {
+                                newList[0].addr = GIGGLE_ACADEMY_WALLET;
+                              }
+                              setPlatformFeeList(newList);
+                            }
+                          } else {
+                            // Only clear if the first input matches Giggle wallet
+                            if (platformFeeList.length > 0 && platformFeeList[0].addr === GIGGLE_ACADEMY_WALLET) {
+                              const newList = [...platformFeeList];
+                              newList[0].addr = "";
+                              setPlatformFeeList(newList);
+                            }
+                          }
+                        }}
+                        className={`w-14 h-7 rounded-full p-1 cursor-pointer flex items-center transition-colors duration-300 ${autoFillGiggleOnSafu ? "bg-green-500" : "bg-gray-400"
+                          }`}
+                      >
+                        <div
+                          className={`bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${autoFillGiggleOnSafu ? "translate-x-7" : "translate-x-0"
+                            }`}
+                        />
+                      </div>
+                    </div>
                     <label className="flex flex-col gap-1 font-medium">
                       <span className="dark:text-white font-raleway text-xl font-semibold">
                         Tax on SafuLauncher
@@ -2465,28 +2537,34 @@ export default function Launch(): JSX.Element {
               </div>
             </div>
 
-            {/* Dex Router Dropdown */}
-            <div className="flex flex-col gap-[10px] mt-[34px]">
-              <label htmlFor="dexRouter">
-                <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
-                  DEX Router
-                </span>
-              </label>
-              <select
-                id="dexRouter"
-                value={dexRouter}
-                onChange={(e) => setDexRouter(e.target.value)}
-                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[13px] sm:placeholder:text-base placeholder:text-[#141313]/42 w-full"
-                required
-              >
-                {dexRouterOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Dex Router Dropdown - Only show if multiple options available */}
+            {dexRouterOptions.length > 2 && (
+              <div className="flex flex-col gap-[10px] mt-[34px]">
+                <label htmlFor="dexRouter">
+                  <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
+                    DEX Router
+                  </span>
+                </label>
+                <select
+                  id="dexRouter"
+                  value={dexRouter}
+                  onChange={(e) => setDexRouter(e.target.value)}
+                  className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[13px] sm:placeholder:text-base placeholder:text-[#141313]/42 w-full"
+                  required
+                >
+                  {dexRouterOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
+            {/* For networks with only 1 router, set it automatically and don't show dropdown */}
+            {dexRouterOptions.length === 2 && ( // 2 because first option is placeholder
+              <input type="hidden" value={dexRouterOptions[1].value} />
+            )}
             {/* Submit */}
             <button
               type="submit"
