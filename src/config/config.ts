@@ -9,6 +9,7 @@ import {
   arbitrum,
   base,
   bscTestnet,
+  bsc
 } from "wagmi/chains";
 import {
   metaMaskWallet,
@@ -22,6 +23,8 @@ import {
 const projectId = import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!;
 const alchemyKey = import.meta.env.VITE_RPC_API_KEY!;
 const Sepolia_AlchemyKey = import.meta.env.VITE_SEPOLIA_RPC_API_KEY!;
+const bsc_AlchemyKey = import.meta.env.VITE_BSC_RPC_API_KEY!;
+const bscTestnet_AlchemyKey = import.meta.env.VITE_BSC_TESTNET_RPC_API_KEY! || import.meta.env.VITE_BSC_TESTNET_RPC_API_KEY2!; // Fallback to second key if first is not set
 
 // Define all supported chains
 export const ALL_CHAINS = [
@@ -32,16 +35,19 @@ export const ALL_CHAINS = [
   arbitrum,
   base,
   bscTestnet,
+  bsc
 ];
 
 export const config = getDefaultConfig({
   appName: "Abyss App",
   projectId,
-  chains: [mainnet, sepolia], // Support all chains
+  chains: [mainnet, sepolia, bscTestnet, bsc], // Support all chains
   ssr: true,
   transports: {
     [mainnet.id]: http(alchemyKey),
     [sepolia.id]: http(Sepolia_AlchemyKey),
+    [bscTestnet.id]: http(bscTestnet_AlchemyKey),
+    [bsc.id]: http(bsc_AlchemyKey),
   },
   wallets: [
     {

@@ -1,3 +1,5 @@
+// I want to add icon effects to the top of the top to switch chains from BNB to ETH, The active chain should also be highlighted
+
 // safu-dapp/src/pages/Launch.tsx
 import React, {
   useCallback,
@@ -15,7 +17,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI_V3, SAFU_LAUNCHER_ADDRESSES_V3, SAFU_TOKEN_ADDRESSES, TOKEN_ABI } from "../web3/config";
+import { LAUNCHER_ABI_V4, SAFU_LAUNCHER_ADDRESSES_V4, ROUTER_ADDRESSES_LIST, SAFU_TOKEN_ADDRESSES, TOKEN_ABI } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -35,6 +37,7 @@ import { getPureMetrics } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import { formatRawAmount } from "../lib/formatting";
+import ChainSwitcher from "../components/generalcomponents/ChainSwitcher";
 
 /**
  * Description placeholder
@@ -47,6 +50,8 @@ interface ValidationError {
   message: string;
 }
 
+
+
 /**
  * Description placeholder
  *
@@ -57,7 +62,7 @@ export default function Launch(): JSX.Element {
   const { address, isConnected } = useAccount();
   const { saveOrFetchUser } = useUser();
   const networkInfo = useNetworkEnvironment();
-  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V3[networkInfo.chainId];
+  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V4[networkInfo.chainId];
 
   // Basic fields
   const [name, setName] = useState("");
@@ -331,6 +336,7 @@ export default function Launch(): JSX.Element {
 
   // const [statusMessage, setStatusMessage] = useState("");
   const [myStringIndex, setMyStringIndex] = useState(`token_${uuidv4()}`);
+  const [dexRouter, setDexRouter] = useState("");
   // const [waitingForVerification, setWaitingForVerification] = useState(false); // State for waiting message
 
   // Toggles
@@ -484,15 +490,6 @@ export default function Launch(): JSX.Element {
       }
       : undefined
   );
-
-  // const { data: getMetric } = useReadContract({
-  //   ...LAUNCHER_ABI_V3,
-  //   address: safuLauncherAddress,
-  //   functionName: "getMetrics",
-  //   query: {
-  //     enabled: isConnected,
-  //   },
-  // });
 
   // Comprehensive validation function
   const validateForm = useCallback(async (): Promise<ValidationError[]> => {
@@ -1002,6 +999,16 @@ export default function Launch(): JSX.Element {
     ? Math.floor(maxWalletAmountOnSafu * 100)
     : 0;
 
+  const dexRouterOptions = React.useMemo(() => {
+    const routers = ROUTER_ADDRESSES_LIST[networkInfo.chainId] ?? [];
+    return [
+      { value: "", label: "Select DEX Router" },
+      ...routers.map((r) => ({ value: r.address, label: r.label })),
+    ];
+  }, [networkInfo.chainId]);
+
+  console.log("dexRouterOptions", dexRouterOptions)
+
   // 4. Add an input handler for decimal validation (optional)
   const handlePlatformFeeBpsChange = (value: string) => {
     setPlatformFeeInput(value); // Always update the visible input
@@ -1149,7 +1156,8 @@ export default function Launch(): JSX.Element {
         enableWhitelist,
         wlArray,
         initialCapsBps,
-        myStringIndex,
+        dexRouter as `0x${string}`,
+        myStringIndex
       ] as unknown as [
         string,
         string,
@@ -1169,6 +1177,7 @@ export default function Launch(): JSX.Element {
         boolean,
         readonly `0x${string}`[],
         readonly bigint[],
+        `0x${string}`,
         string
       ],
     [
@@ -1190,7 +1199,8 @@ export default function Launch(): JSX.Element {
       enableWhitelist,
       wlArray,
       initialCapsBps,
-      myStringIndex,
+      dexRouter,
+      myStringIndex
     ]
   );
 
@@ -1199,17 +1209,13 @@ export default function Launch(): JSX.Element {
     100
   ).toFixed(2);
 
-  const { data: uniV2Router } = useReadContract({
-    ...LAUNCHER_ABI_V3,
-    address: safuLauncherAddress,
-    functionName: "_uniV2Router",
-  });
-
   const { data: uniV2WETH } = useReadContract({
-    ...LAUNCHER_ABI_V3,
+    ...LAUNCHER_ABI_V4,
     address: safuLauncherAddress,
     functionName: "WETH",
   });
+
+  console.log("dexRouter", dexRouter)
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -1242,7 +1248,7 @@ export default function Launch(): JSX.Element {
           name,
           symbol,
           ethers.parseUnits(supply.toString(), 18),
-          uniV2Router,
+          dexRouter,
           uniV2WETH,
           taxOnDexRecipientsAddrs,
           taxOnDexPercentsArray,
@@ -1294,7 +1300,7 @@ export default function Launch(): JSX.Element {
 
         setDeployError("");
         writeContract({
-          ...LAUNCHER_ABI_V3,
+          ...LAUNCHER_ABI_V4,
           address: safuLauncherAddress,
           functionName: "createToken",
           args: argArray,
@@ -1315,32 +1321,7 @@ export default function Launch(): JSX.Element {
         setMyStringIndex(`token_${uuidv4()}`);
       }
     },
-    [
-      validateForm,
-      name,
-      symbol,
-      website,
-      description,
-      myStringIndex,
-      enableBundle,
-      bundleAddrs.length,
-      logo,
-      writeContract,
-      argArray,
-      ethValue,
-      deploymentFee,
-      percentBundled,
-      supply,
-      taxOnDexRecipientsAddrs,
-      taxOnDexPercentsArray,
-      uniV2Router,
-      uniV2WETH,
-      telegram,
-      twitter,
-      taxOnDexBps,
-      networkInfo.apiBaseUrl,
-      safuLauncherAddress,
-    ]
+    [validateForm, name, symbol, website, description, myStringIndex, twitter, telegram, enableBundle, bundleAddrs.length, logo, supply, dexRouter, uniV2WETH, taxOnDexRecipientsAddrs, taxOnDexPercentsArray, taxOnDexBps, safuLauncherAddress, networkInfo.apiBaseUrl, writeContract, argArray, ethValue, deploymentFee, percentBundled]
   );
 
   useEffect(() => {
@@ -1472,6 +1453,8 @@ export default function Launch(): JSX.Element {
               reaches the bonding curve
             </p>
           </div>
+
+          <ChainSwitcher/>
 
           <form
             id="launch-form"
@@ -2480,6 +2463,28 @@ export default function Launch(): JSX.Element {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Dex Router Dropdown */}
+            <div className="flex flex-col gap-[10px] mt-[34px]">
+              <label htmlFor="dexRouter">
+                <span className="mandatory text-[20px] dark:text-white text-black font-semibold font-raleway">
+                  DEX Router
+                </span>
+              </label>
+              <select
+                id="dexRouter"
+                value={dexRouter}
+                onChange={(e) => setDexRouter(e.target.value)}
+                className="py-[14px] px-4 rounded-lg dark:bg-[#d5f2f80a] bg-[#01061c0d] dark:text-white text-black dark:placeholder:text-[#B6B6B6] placeholder:text-[13px] sm:placeholder:text-base placeholder:text-[#141313]/42 w-full"
+                required
+              >
+                {dexRouterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Submit */}

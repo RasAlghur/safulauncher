@@ -11,6 +11,8 @@ import {
   getPureInfoV2DataRaw,
   getPureInfoV3DataRaw,
   getPureAmountOutMarketCapV3,
+  getPureInfoV4DataRaw,
+  getPureAmountOutMarketCapV4,
 } from "../../web3/readContracts";
 import { ETH_USDT_PRICE_FEED_ADDRESSES } from "../../web3/config";
 import { useApiClient } from "../../lib/api";
@@ -238,6 +240,16 @@ const TrendingTokens = () => {
                   tokenAddress
                 );
                 rawAmt = await getPureAmountOutMarketCapV3(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
+              } else if (version === "token_v4") {
+                // Use v4 functions
+                info = await getPureInfoV4DataRaw(
+                  networkInfo.chainId,
+                  tokenAddress
+                );
+                rawAmt = await getPureAmountOutMarketCapV4(
                   networkInfo.chainId,
                   tokenAddress
                 );

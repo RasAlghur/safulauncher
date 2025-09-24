@@ -21,6 +21,9 @@ import {
   getPureAmountOutMarketCapV2,
   getPureAmountOutMarketCapV3,
   getV3Metrics,
+  getPureInfoV4DataRaw,
+  getV4Metrics,
+  getPureAmountOutMarketCapV4,
 } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -93,6 +96,7 @@ export interface TokenMetadata {
   };
   createdAt?: string;
   expiresAt?: string;
+  chainId?: number; // Add this line
 }
 
 type searchField = "all" | "address" | "creator" | "name";
@@ -113,13 +117,13 @@ export default function Tokens() {
   >({});
 
   const [v3Metrics, setV3Metrics] = useState<bigint[] | null>(null);
+  const [v4Metrics, setV4Metrics] = useState<bigint[] | null>(null);
 
   const [curveProgressMap, setCurveProgressMap] = useState<
     Record<string, number>
   >({});
   const [marketCapMap, setMarketCapMap] = useState<Record<string, number>>({});
   const [volume24hMap, setVolume24hMap] = useState<Record<string, number>>({});
-  const [ethPriceUSD, setEthPriceUSD] = useState<number>(0);
 
   // Loading states
   const [isLoadingTokens, setIsLoadingTokens] = useState<boolean>(true);
@@ -193,10 +197,14 @@ export default function Tokens() {
 
   useEffect(() => {
     const fetchMetrics = async () => {
-      const metrics = await getV3Metrics(networkInfo.chainId);
+      const metrics3 = await getV3Metrics(networkInfo.chainId);
 
-      const metricsArray: bigint[] = Array.from(metrics);
-      setV3Metrics(metricsArray);
+      const metrics3Array: bigint[] = Array.from(metrics3);
+      setV3Metrics(metrics3Array);
+
+      const metrics4 = await getV4Metrics(networkInfo.chainId);
+      const metrics4Array: bigint[] = Array.from(metrics4);
+      setV4Metrics(metrics4Array);
     };
 
     fetchMetrics();
@@ -240,7 +248,9 @@ export default function Tokens() {
 
   // Fetch list of tokens
   const fetchTokenList = useCallback(
+
     async (pageNum = 1, query = "", searchTerm = "all", append = false) => {
+      console.log("responding...........")
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -255,7 +265,7 @@ export default function Tokens() {
               `tokens?include=image&include=transaction&search=${query}&searchTerm=${searchTerm}&page=${pageNum}`,
               { signal: controller.signal }
             );
-            
+
             return res;
           } catch (err) {
             lastError = err;
@@ -278,11 +288,19 @@ export default function Tokens() {
         const res = await withRetry();
         const apiData = res.data.data;
 
+        console.log("API Data:", apiData);
+
+        const tokensWithChainId = apiData.data.map((token: TokenMetadata) => ({
+          ...token,
+          chainId: token.chainId || networkInfo.chainId, // Fallback to current chain
+        }));
+
+        console.log("Tokens with Chain ID:", tokensWithChainId);
+
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
         setTokens((prev) => {
-          const newTokens = append ? [...prev, ...apiData.data] : apiData.data;
-
+          const newTokens = append ? [...prev, ...tokensWithChainId] : tokensWithChainId;
           return newTokens;
         });
       } catch (error) {
@@ -301,7 +319,7 @@ export default function Tokens() {
         setIsLoadingTokens(false);
       }
     },
-    [base]
+    [base, networkInfo.chainId]
   );
 
   const debouncedFetch = useMemo(
@@ -352,20 +370,42 @@ export default function Tokens() {
 
   useEffect(() => {
     if (tokens.length === 0) return;
-
-    async function fetchTokenMetrics() {
+    const fetchTokenMetrics = async () => {
       setIsLoadingMetrics(true);
 
-      // Get ETH price
+      // Create a map of ETH prices per chain
+      const ethPriceMap: Record<number, number> = {};
+
       try {
-        const raw = await getPureGetLatestETHPrice(
-          networkInfo.chainId,
-          priceFeedAddress
+        // Fetch ETH price for each unique chain in the tokens list
+        const uniqueChainIds = [...new Set(tokens.map(t => t.chainId))];
+
+        await Promise.all(
+          uniqueChainIds.map(async (chainId) => {
+            try {
+              if (typeof chainId !== "number") {
+                console.warn(`Invalid chainId: ${chainId}`);
+                return;
+              }
+              const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[chainId];
+              if (!priceFeedAddress) {
+                console.warn(`No price feed address for chain ${chainId}`);
+                return;
+              }
+
+              const raw = await getPureGetLatestETHPrice(chainId, priceFeedAddress);
+              const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
+              ethPriceMap[chainId] = price;
+            } catch (error) {
+              console.error(`Failed to fetch ETH price for chain ${chainId}:`, error);
+              if (typeof chainId === "number") {
+                ethPriceMap[chainId] = 0;
+              }
+            }
+          })
         );
-        const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
-        setEthPriceUSD(price);
       } catch {
-        console.error("Failed to fetch ETH price");
+        console.error("Failed to fetch ETH prices");
       }
 
       const newCurve: Record<string, number> = {};
@@ -377,85 +417,74 @@ export default function Tokens() {
       await Promise.all(
         tokens.map(async (token) => {
           try {
+            const token_ChainId = token.chainId || networkInfo.chainId;
+            console.log(`Fetching data for ${token.tokenAddress} on chain ${token_ChainId}`);
+
             const isV1 = token.tokenVersion === "token_v1";
             const isV3 = token.tokenVersion === "token_v3";
+            const isV4 = token.tokenVersion === "token_v4";
 
-            // Fetch bonding curve data
+            // Use token's specific chainId for all blockchain calls
             const info = isV1
-              ? await getPureInfoV1DataRaw(
-                networkInfo.chainId,
-                token.tokenAddress
-              )
-              : isV3 ? await getPureInfoV3DataRaw(
-                networkInfo.chainId,
-                token.tokenAddress
-              )
-                : await getPureInfoV2DataRaw(
-                  networkInfo.chainId,
-                  token.tokenAddress
-                );
+              ? await getPureInfoV1DataRaw(token_ChainId, token.tokenAddress)
+              : isV3
+                ? await getPureInfoV3DataRaw(token_ChainId, token.tokenAddress)
+                : isV4
+                  ? await getPureInfoV4DataRaw(token_ChainId, token.tokenAddress)
+                  : await getPureInfoV2DataRaw(token_ChainId, token.tokenAddress);
+
             if (Array.isArray(info)) {
-              // ( current mc / final mc ) * 100
               const isListed = Number(info[2]);
-              
-              // implement 2 starts here
               const virtPool = Number(info[9]);
               const ETHRaised = Number(info[7]);
-
               const initPool = (virtPool - ETHRaised) / 1e18;
-
               const supply = Number(info[6]);
               const index1 = (initPool * supply) / 1e18;
 
-              const milestone = isV3 ? v3Metrics?.[19] : await getListingMilestone(networkInfo.chainId);
+              const milestone = isV3
+                ? v3Metrics?.[19]
+                : isV4
+                  ? v4Metrics?.[19]
+                  : await getListingMilestone(token_ChainId);
 
               const lmstone = (Number(milestone) / 1e2) * supply;
-
               const index2 = (supply - lmstone) / 1e18;
               const index1Div2 = index1 / index2;
-
               const index3 = (index1Div2 / index2) * (supply / 1e18);
+
+              // Use the ETH price for this token's chain
+              const ethPriceUSD = ethPriceMap[token_ChainId] || 0;
               const finalMC = index3 * ethPriceUSD;
 
               const rawAmt = isV1
-                ? await getPureAmountOutMarketCapV1(
-                  networkInfo.chainId,
-                  token.tokenAddress
-                )
-                : isV3 ? await getPureAmountOutMarketCapV3(
-                  networkInfo.chainId,
-                  token.tokenAddress
-                )
-                  : await getPureAmountOutMarketCapV2(
-                    networkInfo.chainId,
-                    token.tokenAddress
-                  );
-              // Price per token in ETH
-              const pricePerToken = rawAmt
-                ? Number(rawAmt.toString()) / 1e18
-                : 0;
-              // Market cap USD
-              newMarketCap[token.tokenAddress] =
-                pricePerToken * (supply / 1e18) * ethPriceUSD;
+                ? await getPureAmountOutMarketCapV1(token_ChainId, token.tokenAddress)
+                : isV3
+                  ? await getPureAmountOutMarketCapV3(token_ChainId, token.tokenAddress)
+                  : isV4
+                    ? await getPureAmountOutMarketCapV4(token_ChainId, token.tokenAddress)
+                    : await getPureAmountOutMarketCapV2(token_ChainId, token.tokenAddress);
+
+              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+
+              newMarketCap[token.tokenAddress] = pricePerToken * (supply / 1e18) * ethPriceUSD;
 
               const percent = isListed
                 ? 100
                 : (newMarketCap[token.tokenAddress] / finalMC) * 100;
-              newCurve[token.tokenAddress] = Math.min(
-                Math.max(percent, 0),
-                100
-              );
+              newCurve[token.tokenAddress] = Math.min(Math.max(percent, 0), 100);
             }
 
             // Fetch transaction logs
             const logs = token.transactions;
+            const tokenChainId = token.chainId || networkInfo.chainId;
+            const ethPriceUSD = ethPriceMap[tokenChainId] || 0;
 
             const volEth = logs
               .filter((tx) => new Date(tx.timestamp).getTime() >= since24h)
               .reduce((sum, tx) => sum + parseFloat(String(tx.ethAmount)), 0);
             newVolume[token.tokenAddress] = volEth * ethPriceUSD;
           } catch (e) {
-            console.error(`Error for ${token.tokenAddress}:`, e);
+            console.error(`Error for ${token.tokenAddress} on chain ${token.chainId}:`, e);
           }
         })
       );
@@ -464,10 +493,10 @@ export default function Tokens() {
       setMarketCapMap(newMarketCap);
       setVolume24hMap(newVolume);
       setIsLoadingMetrics(false);
-    }
+    };
 
     fetchTokenMetrics();
-  }, [tokens, ethPriceUSD, networkInfo.chainId, priceFeedAddress, v3Metrics]);
+  }, [tokens, networkInfo.chainId, priceFeedAddress, v3Metrics, v4Metrics]);
 
   // Infinite scroll handler
   useEffect(() => {
