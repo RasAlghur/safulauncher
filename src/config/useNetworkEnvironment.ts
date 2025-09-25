@@ -27,9 +27,9 @@ export const useNetworkEnvironment = () => {
       return DEFAULT_MAINNET_CHAIN_ID;
     }
 
-    if (hostname === "http://localhost:5173/") {
-      return DEFAULT_MAINNET_CHAIN_ID;
-    }
+    // if (hostname === "http://localhost:5173/") {
+    //   return DEFAULT_MAINNET_CHAIN_ID;
+    // }
     
     // Default to testnet for dev/localhost
     return DEFAULT_TESTNET_CHAIN_ID;
