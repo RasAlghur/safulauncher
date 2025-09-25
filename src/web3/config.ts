@@ -10,7 +10,7 @@ export const ROUTER_ADDRESSES_LIST: Record<number, Router[]> = {
   1: [{ address: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", label: "Uniswap V2" }],
   11155111: [{ address: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3", label: "Uniswap V2 (Sepolia)" }],
   97: [
-    { address: "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", label: "Uniswap BSC Router (testnet)" },
+    { address: "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3", label: "Uniswap BSC Router (testnet)" },
     { address: "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", label: "PancakeSwap (testnet)" },
   ],
   56: [
@@ -29,6 +29,8 @@ export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
 export const SAFU_LAUNCHER_ADDRESSES_V3: Record<number, `0x${string}`> = {
   1: "0x471dF254269eBEEE55db5E131C3A97E5Ec2ba425", // Mainnet address
   11155111: "0x0Da431855bca6777c41fb467bCd40848ED46AAf6", // Sepolia address
+  97: "0x7E791b0e1F56c9dFAb86b373bd552B844878A3Da",
+  56: "0x0000000000000000000000000000000000000000",
 };
 
 export const SAFU_LAUNCHER_ADDRESSES_V4: Record<number, `0x${string}`> = {

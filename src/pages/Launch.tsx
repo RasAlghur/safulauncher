@@ -1,6 +1,4 @@
-// in the enableTaxOnSafu  and enableTaxOnDex I want to include autofill of the Giggle Academy wallet into the wallet input if it is toggled on
-
-
+// Implement v3 and v4 here 
 // safu-dapp/src/pages/Launch.tsx
 import React, {
   useCallback,
@@ -18,7 +16,7 @@ import {
   type BaseError,
   useAccount,
 } from "wagmi";
-import { LAUNCHER_ABI_V4, SAFU_LAUNCHER_ADDRESSES_V4, ROUTER_ADDRESSES_LIST, SAFU_TOKEN_ADDRESSES, TOKEN_ABI, GIGGLE_ACADEMY_WALLET } from "../web3/config";
+import { LAUNCHER_ABI_V4, SAFU_LAUNCHER_ADDRESSES_V4, ROUTER_ADDRESSES_LIST, SAFU_TOKEN_ADDRESSES, TOKEN_ABI, GIGGLE_ACADEMY_WALLET, SAFU_LAUNCHER_ADDRESSES_V3, LAUNCHER_ABI_V3 } from "../web3/config";
 import { ethers } from "ethers";
 // import { verifyContract } from "../web3/etherscan";
 import Navbar from "../components/launchintro/Navbar";
@@ -34,7 +32,7 @@ import RocketLoader from "../components/generalcomponents/Loader";
 import { v4 as uuidv4 } from "uuid";
 import RocketSpinner from "../components/generalcomponents/RocketSpinner";
 import RocketSpinner2 from "../components/generalcomponents/RocketSpinner2";
-import { getPureMetrics } from "../web3/readContracts";
+import { getV3Metrics, getV4Metrics } from "../web3/readContracts";
 import { useNavigate } from "react-router-dom";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import { formatRawAmount } from "../lib/formatting";
@@ -63,7 +61,30 @@ export default function Launch(): JSX.Element {
   const { address, isConnected } = useAccount();
   const { saveOrFetchUser } = useUser();
   const networkInfo = useNetworkEnvironment();
-  const safuLauncherAddress = SAFU_LAUNCHER_ADDRESSES_V4[networkInfo.chainId];
+
+  const getContractConfig = (chainId: number): {
+    safuABI: any; // replace `any` with your ABI type if you have one
+    safuCA?: `0x${string}`;
+  } => {
+    if (chainId === 1 || chainId === 11155111) {
+      return {
+        safuABI: LAUNCHER_ABI_V3,
+        safuCA: SAFU_LAUNCHER_ADDRESSES_V3[chainId],
+      };
+    }
+    if (chainId === 56 || chainId === 97) {
+      return {
+        safuABI: LAUNCHER_ABI_V4,
+        safuCA: SAFU_LAUNCHER_ADDRESSES_V4[chainId],
+      };
+    }
+    return {
+      safuABI: LAUNCHER_ABI_V4,
+      safuCA: SAFU_LAUNCHER_ADDRESSES_V4[chainId],
+    };
+  };
+
+  const { safuABI, safuCA } = getContractConfig(networkInfo.chainId)
 
   // Basic fields
   const [name, setName] = useState("");
@@ -973,8 +994,19 @@ export default function Launch(): JSX.Element {
 
   useEffect(() => {
     const fetchMetrics = async () => {
-      const metrics = await getPureMetrics(networkInfo.chainId);
-      setCombinedMetrics(metrics);
+      if (networkInfo.chainId === 1 || networkInfo.chainId === 11155111) {
+        const metrics = await getV3Metrics(networkInfo.chainId);
+        const metrics3Array: bigint[] = Array.from(metrics).map((m: any) =>
+          typeof m === "bigint" ? m : BigInt(m)
+        );
+        setCombinedMetrics(metrics3Array);
+      } else {
+        const metrics = await getV4Metrics(networkInfo.chainId);
+        const metrics3Array: bigint[] = Array.from(metrics).map((m: any) =>
+          typeof m === "bigint" ? m : BigInt(m)
+        );
+        setCombinedMetrics(metrics3Array);
+      }
     };
 
     fetchMetrics();
@@ -1072,15 +1104,15 @@ export default function Launch(): JSX.Element {
     [enableTaxOnSafu, platformFeeList]
   );
 
-  const taxOnSafuPercentArray = React.useMemo(
-    () =>
-      enableTaxOnSafu
-        ? (platformFeeList.map((p) =>
-          Math.floor(p.pct * 100)
-        ) as readonly number[])
-        : ([] as readonly number[]),
-    [enableTaxOnSafu, platformFeeList]
-  );
+  // const taxOnSafuPercentArray = React.useMemo(
+  //   () =>
+  //     enableTaxOnSafu
+  //       ? (platformFeeList.map((p) =>
+  //         Math.floor(p.pct * 100)
+  //       ) as readonly number[])
+  //       : ([] as readonly number[]),
+  //   [enableTaxOnSafu, platformFeeList]
+  // );
 
   const taxOnDexRecipientsAddrs = React.useMemo(
     () =>
@@ -1117,13 +1149,13 @@ export default function Launch(): JSX.Element {
     [enableBundle, bundleList]
   );
 
-  const bundleShares = React.useMemo(
-    () =>
-      enableBundle
-        ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
-        : ([] as readonly number[]),
-    [enableBundle, bundleList]
-  );
+  // const bundleShares = React.useMemo(
+  //   () =>
+  //     enableBundle
+  //       ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
+  //       : ([] as readonly number[]),
+  //   [enableBundle, bundleList]
+  // );
 
   const deploymentFee = !isLoadingBalance || !isLoadingSupply ? (safuBalance! >= (creationHolderThresholdBps * (Number(safuSupply)) / 10000) ? 0 : creationFeeETH) : 0;
   const ethValue = enableBundle ? (ethers.parseEther(bundleEth.toString()) + BigInt(deploymentFee)) : BigInt(deploymentFee);
@@ -1139,84 +1171,79 @@ export default function Launch(): JSX.Element {
     [enableWhitelist, whitelistUpload]
   );
 
-  // Build args
-  const argArray = React.useMemo(
-    () =>
-      [
-        name,
-        symbol,
-        ethers.parseUnits(supply.toString(), 18),
-        lpOption === "lock",
-        startNow,
-        isMaxWalletAmountOnSafu,
-        maxWalletAmountOnSafuBps,
-        bundleAddrs,
-        bundleShares,
-        taxOnDexBps,
-        taxOnDexRecipientsAddrs,
-        taxOnDexPercentsArray,
-        taxOnSafuBps,
-        taxOnSafuRecipientsAddrs,
-        taxOnSafuPercentArray,
-        enableWhitelist,
-        wlArray,
-        initialCapsBps,
-        dexRouter as `0x${string}`,
-        myStringIndex
-      ] as unknown as [
-        string,
-        string,
-        bigint,
-        boolean,
-        boolean,
-        boolean,
-        bigint,
-        readonly `0x${string}`[],
-        readonly bigint[],
-        bigint,
-        readonly `0x${string}`[],
-        readonly bigint[],
-        bigint,
-        readonly `0x${string}`[],
-        readonly bigint[],
-        boolean,
-        readonly `0x${string}`[],
-        readonly bigint[],
-        `0x${string}`,
-        string
-      ],
-    [
-      name,
-      symbol,
-      supply,
-      lpOption,
-      startNow,
-      isMaxWalletAmountOnSafu,
-      maxWalletAmountOnSafuBps,
-      bundleAddrs,
-      bundleShares,
-      taxOnDexBps,
-      taxOnDexRecipientsAddrs,
-      taxOnDexPercentsArray,
-      taxOnSafuBps,
-      taxOnSafuRecipientsAddrs,
-      taxOnSafuPercentArray,
-      enableWhitelist,
-      wlArray,
-      initialCapsBps,
-      dexRouter,
-      myStringIndex
-    ]
-  );
+
+  const isV3 = networkInfo.chainId === 1 || networkInfo.chainId === 11155111;
+
+  // Normalize values used inside args
+  const bundleSharesBigint = (bundleList.length > 0 ? bundleList.map(b => BigInt(Math.floor(b.pct * 100))) : []) as unknown as readonly bigint[];
+  const taxOnDexPercentsBigint = (taxList.length > 0 ? taxList.map(t => BigInt(Math.floor(t.bps))) : []) as unknown as readonly bigint[];
+  const taxOnSafuPercentsBigint = (platformFeeList.length > 0 ? platformFeeList.map(p => BigInt(Math.floor(p.pct * 100))) : []) as unknown as readonly bigint[];
+  const initialCapsBpsBigint = (initialCapsBps.length > 0 ? initialCapsBps.map((n) => BigInt(n)) : []) as unknown as readonly bigint[];
+
+  // Build V4 args (20 params) — includes dexRouter
+  const argsV4 = [
+    name,
+    symbol,
+    ethers.parseUnits(supply.toString(), 18),
+    lpOption === "lock",
+    startNow,
+    isMaxWalletAmountOnSafu,
+    BigInt(maxWalletAmountOnSafuBps),
+    bundleAddrs,
+    bundleSharesBigint,
+    BigInt(taxOnDexBps),
+    taxOnDexRecipientsAddrs,
+    taxOnDexPercentsBigint,
+    BigInt(taxOnSafuBps),
+    taxOnSafuRecipientsAddrs,
+    taxOnSafuPercentsBigint,
+    enableWhitelist,
+    wlArray,
+    initialCapsBpsBigint,
+    dexRouter as `0x${string}`,
+    myStringIndex,
+  ] as const;
+
+  // Build V3 args (19 params) — omit dexRouter (or whichever param is not present in V3)
+  const argsV3 = [
+    name,
+    symbol,
+    ethers.parseUnits(supply.toString(), 18),
+    lpOption === "lock",
+    startNow,
+    isMaxWalletAmountOnSafu,
+    BigInt(maxWalletAmountOnSafuBps),
+    bundleAddrs,
+    bundleSharesBigint,
+    BigInt(taxOnDexBps),
+    taxOnDexRecipientsAddrs,
+    taxOnDexPercentsBigint,
+    BigInt(taxOnSafuBps),
+    taxOnSafuRecipientsAddrs,
+    taxOnSafuPercentsBigint,
+    enableWhitelist,
+    wlArray,
+    initialCapsBpsBigint,
+    myStringIndex,
+  ] as const;
+
+  // Choose the right args and ABI
+  const argsForCreate = isV3 ? argsV3 : argsV4;
 
   const percentBundled = (
     (calculateBundleTokens(bundleEth, supply) / supply) *
     100
   ).toFixed(2);
 
+  const { data: uniV2Router } = useReadContract({
+    ...safuABI,
+    address: safuCA,
+    functionName: "_uniV2Router",
+  });
+
   const { data: uniV2WETH } = useReadContract({
-    ...LAUNCHER_ABI_V4,
-    address: safuLauncherAddress,
+    ...safuABI,
+    address: safuCA as `0x${string}`,
     functionName: "WETH",
   });
 
@@ -1253,12 +1280,12 @@ export default function Launch(): JSX.Element {
           name,
           symbol,
           ethers.parseUnits(supply.toString(), 18),
-          dexRouter,
+          networkInfo.chainId === 1 || networkInfo.chainId === 11155111 ? uniV2Router : dexRouter,
           uniV2WETH,
           taxOnDexRecipientsAddrs,
           taxOnDexPercentsArray,
           taxOnDexBps,
-          safuLauncherAddress,
+          safuCA,
         ];
 
         console.log("message", message);
@@ -1305,10 +1332,10 @@ export default function Launch(): JSX.Element {
 
         setDeployError("");
         writeContract({
-          ...LAUNCHER_ABI_V4,
-          address: safuLauncherAddress,
+          ...safuABI,
+          address: safuCA as `0x${string}`,
           functionName: "createToken",
-          args: argArray,
+          args: argsForCreate,
           value: enableBundle ? ethValue : BigInt(deploymentFee),
         });
       } catch (err) {
@@ -1326,7 +1353,7 @@ export default function Launch(): JSX.Element {
         setMyStringIndex(`token_${uuidv4()}`);
       }
     },
-    [validateForm, name, symbol, website, description, myStringIndex, twitter, telegram, enableBundle, bundleAddrs.length, logo, supply, dexRouter, uniV2WETH, taxOnDexRecipientsAddrs, taxOnDexPercentsArray, taxOnDexBps, safuLauncherAddress, networkInfo.apiBaseUrl, writeContract, argArray, ethValue, deploymentFee, percentBundled]
+    [validateForm, name, symbol, website, description, myStringIndex, twitter, telegram, enableBundle, bundleAddrs.length, logo, supply, dexRouter, uniV2WETH, taxOnDexRecipientsAddrs, taxOnDexPercentsArray, taxOnDexBps, safuCA, networkInfo.apiBaseUrl, writeContract, argsForCreate, ethValue, deploymentFee, percentBundled]
   );
 
   useEffect(() => {
@@ -2658,7 +2685,7 @@ export default function Launch(): JSX.Element {
                   onClick={() => navigate(`/trade/${tokenAddress}`)}
                   className="w-[200px] text-[1rem] font-bold px-[24px] py-[13px] text-white cursor-pointer hero-cta dark:bg-[#0C8CE0] rounded-full"
                 >
-                  Trade <span>{argArray[1]}</span> now!
+                  Trade <span>{argsForCreate[1]}</span> now!
                 </button>
 
                 {/* <button
