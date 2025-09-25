@@ -21,23 +21,6 @@ export const ROUTER_ADDRESSES_LIST: Record<number, Router[]> = {
 
 export const GIGGLE_ACADEMY_WALLET = "0xC7f501D25Ea088aeFCa8B4b3ebD936aAe12bF4A4";
 
-// export const ROUTER_ADDRESSES_LIST: Record<number, `0x${string}`[]> = {
-//   1: [
-//     "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-//   ],
-//   11155111: [
-//     "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3",
-//   ],
-//   97: [
-//     "0x0000000000000000000000000000000000000000", //from uniswap docs
-//     "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", //from pancakeswap docs
-//   ],
-//   56: [
-//     "0x10ED43C718714eb63d5aA57B78B54704E256024E", //from pancakeswap docs
-//     "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24", //from uniswap docs
-//   ]
-// };
-
 export const SAFU_LAUNCHER_ADDRESSES_V2: Record<number, `0x${string}`> = {
   1: "0x8899EE4869eA410970eDa6b9D5a4a8Cee1148b87", // Mainnet address
   11155111: "0xF2aE04bC24ee9fa6f2ea3a2b5f7845809234BC01", // Sepolia address
@@ -50,8 +33,8 @@ export const SAFU_LAUNCHER_ADDRESSES_V3: Record<number, `0x${string}`> = {
 
 export const SAFU_LAUNCHER_ADDRESSES_V4: Record<number, `0x${string}`> = {
   1: "0x0000000000000000000000000000000000000000", // Mainnet address
-  11155111: "0x0000000000000000000000000000000000000000", // Sepolia address
-  97: "0x7E791b0e1F56c9dFAb86b373bd552B844878A3Da",
+  11155111: "0xF1ff0848F4d452E3e9B8304e87757974757A75f8", // Sepolia address
+  97: "0x77737c9b388C53c1d9955408E8418472805d7e16",
   56: "0x0000000000000000000000000000000000000000",
 };
 
@@ -76,7 +59,7 @@ export const SAFU_TOKEN_ADDRESSES: Record<number, `0x${string}`> = {
 
 export const WETH_ADDRESS: Record<number, `0x${string}`> = {
   1: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // Mainnet address
-  11155111: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14", // Sepolia address
+  11155111: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", // Sepolia address
   97: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
   56: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
 };
