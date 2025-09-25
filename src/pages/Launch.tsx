@@ -1104,15 +1104,15 @@ export default function Launch(): JSX.Element {
     [enableTaxOnSafu, platformFeeList]
   );
 
-  // const taxOnSafuPercentArray = React.useMemo(
-  //   () =>
-  //     enableTaxOnSafu
-  //       ? (platformFeeList.map((p) =>
-  //         Math.floor(p.pct * 100)
-  //       ) as readonly number[])
-  //       : ([] as readonly number[]),
-  //   [enableTaxOnSafu, platformFeeList]
-  // );
+  const taxOnSafuPercentArray = React.useMemo(
+    () =>
+      enableTaxOnSafu
+        ? (platformFeeList.map((p) =>
+          Math.floor(p.pct * 100)
+        ) as readonly number[])
+        : ([] as readonly number[]),
+    [enableTaxOnSafu, platformFeeList]
+  );
 
   const taxOnDexRecipientsAddrs = React.useMemo(
     () =>
@@ -1149,13 +1149,13 @@ export default function Launch(): JSX.Element {
     [enableBundle, bundleList]
   );
 
-  // const bundleShares = React.useMemo(
-  //   () =>
-  //     enableBundle
-  //       ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
-  //       : ([] as readonly number[]),
-  //   [enableBundle, bundleList]
-  // );
+  const bundleShares = React.useMemo(
+    () =>
+      enableBundle
+        ? (bundleList.map((b) => Math.floor(b.pct * 100)) as readonly number[])
+        : ([] as readonly number[]),
+    [enableBundle, bundleList]
+  );
 
   const deploymentFee = !isLoadingBalance || !isLoadingSupply ? (safuBalance! >= (creationHolderThresholdBps * (Number(safuSupply)) / 10000) ? 0 : creationFeeETH) : 0;
   const ethValue = enableBundle ? (ethers.parseEther(bundleEth.toString()) + BigInt(deploymentFee)) : BigInt(deploymentFee);
@@ -1174,61 +1174,152 @@ export default function Launch(): JSX.Element {
 
   const isV3 = networkInfo.chainId === 1 || networkInfo.chainId === 11155111;
 
-  // Normalize values used inside args
-  const bundleSharesBigint = (bundleList.length > 0 ? bundleList.map(b => BigInt(Math.floor(b.pct * 100))) : []) as unknown as readonly bigint[];
-  const taxOnDexPercentsBigint = (taxList.length > 0 ? taxList.map(t => BigInt(Math.floor(t.bps))) : []) as unknown as readonly bigint[];
-  const taxOnSafuPercentsBigint = (platformFeeList.length > 0 ? platformFeeList.map(p => BigInt(Math.floor(p.pct * 100))) : []) as unknown as readonly bigint[];
-  const initialCapsBpsBigint = (initialCapsBps.length > 0 ? initialCapsBps.map((n) => BigInt(n)) : []) as unknown as readonly bigint[];
+  console.log("isV3", isV3)
 
   // Build V4 args (20 params) — includes dexRouter
-  const argsV4 = [
-    name,
-    symbol,
-    ethers.parseUnits(supply.toString(), 18),
-    lpOption === "lock",
-    startNow,
-    isMaxWalletAmountOnSafu,
-    BigInt(maxWalletAmountOnSafuBps),
-    bundleAddrs,
-    bundleSharesBigint,
-    BigInt(taxOnDexBps),
-    taxOnDexRecipientsAddrs,
-    taxOnDexPercentsBigint,
-    BigInt(taxOnSafuBps),
-    taxOnSafuRecipientsAddrs,
-    taxOnSafuPercentsBigint,
-    enableWhitelist,
-    wlArray,
-    initialCapsBpsBigint,
-    dexRouter as `0x${string}`,
-    myStringIndex,
-  ] as const;
+
+  // Build args
+  const argsV4 = React.useMemo(
+    () =>
+      [
+        name,
+        symbol,
+        ethers.parseUnits(supply.toString(), 18),
+        lpOption === "lock",
+        startNow,
+        isMaxWalletAmountOnSafu,
+        maxWalletAmountOnSafuBps,
+        bundleAddrs,
+        bundleShares,
+        taxOnDexBps,
+        taxOnDexRecipientsAddrs,
+        taxOnDexPercentsArray,
+        taxOnSafuBps,
+        taxOnSafuRecipientsAddrs,
+        taxOnSafuPercentArray,
+        enableWhitelist,
+        wlArray,
+        initialCapsBps,
+        dexRouter,
+        myStringIndex,
+      ] as unknown as [
+        string,
+        string,
+        bigint,
+        boolean,
+        boolean,
+        boolean,
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        boolean,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        string,
+        string
+      ],
+    [
+      name,
+      symbol,
+      supply,
+      lpOption,
+      startNow,
+      isMaxWalletAmountOnSafu,
+      maxWalletAmountOnSafuBps,
+      bundleAddrs,
+      bundleShares,
+      taxOnDexBps,
+      taxOnDexRecipientsAddrs,
+      taxOnDexPercentsArray,
+      taxOnSafuBps,
+      taxOnSafuRecipientsAddrs,
+      taxOnSafuPercentArray,
+      enableWhitelist,
+      wlArray,
+      initialCapsBps,
+      dexRouter,
+      myStringIndex,
+    ]
+  );
 
   // Build V3 args (19 params) — omit dexRouter (or whichever param is not present in V3)
-  const argsV3 = [
-    name,
-    symbol,
-    ethers.parseUnits(supply.toString(), 18),
-    lpOption === "lock",
-    startNow,
-    isMaxWalletAmountOnSafu,
-    BigInt(maxWalletAmountOnSafuBps),
-    bundleAddrs,
-    bundleSharesBigint,
-    BigInt(taxOnDexBps),
-    taxOnDexRecipientsAddrs,
-    taxOnDexPercentsBigint,
-    BigInt(taxOnSafuBps),
-    taxOnSafuRecipientsAddrs,
-    taxOnSafuPercentsBigint,
-    enableWhitelist,
-    wlArray,
-    initialCapsBpsBigint,
-    myStringIndex,
-  ] as const;
+  // Build args
+  const argsV3 = React.useMemo(
+    () =>
+      [
+        name,
+        symbol,
+        ethers.parseUnits(supply.toString(), 18),
+        lpOption === "lock",
+        startNow,
+        isMaxWalletAmountOnSafu,
+        maxWalletAmountOnSafuBps,
+        bundleAddrs,
+        bundleShares,
+        taxOnDexBps,
+        taxOnDexRecipientsAddrs,
+        taxOnDexPercentsArray,
+        taxOnSafuBps,
+        taxOnSafuRecipientsAddrs,
+        taxOnSafuPercentArray,
+        enableWhitelist,
+        wlArray,
+        initialCapsBps,
+        myStringIndex,
+      ] as unknown as [
+        string,
+        string,
+        bigint,
+        boolean,
+        boolean,
+        boolean,
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        bigint,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        boolean,
+        readonly `0x${string}`[],
+        readonly bigint[],
+        string
+      ],
+    [
+      name,
+      symbol,
+      supply,
+      lpOption,
+      startNow,
+      isMaxWalletAmountOnSafu,
+      maxWalletAmountOnSafuBps,
+      bundleAddrs,
+      bundleShares,
+      taxOnDexBps,
+      taxOnDexRecipientsAddrs,
+      taxOnDexPercentsArray,
+      taxOnSafuBps,
+      taxOnSafuRecipientsAddrs,
+      taxOnSafuPercentArray,
+      enableWhitelist,
+      wlArray,
+      initialCapsBps,
+      myStringIndex,
+    ]
+  );
 
   // Choose the right args and ABI
   const argsForCreate = isV3 ? argsV3 : argsV4;
+
+  console.log("argsForCreate", argsForCreate)
 
   const percentBundled = (
     (calculateBundleTokens(bundleEth, supply) / supply) *

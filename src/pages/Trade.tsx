@@ -416,7 +416,7 @@ export default function Trade() {
   }, [tokenChainId, networkInfo.chainId]);
 
   const debouncedChainId = useDebouncedChainId(getChainIdForContract, 5000);
-  
+
   const switchToTokenChain = useCallback(async () => {
     if (!tokenChainId || !switchChain) return
 
@@ -444,6 +444,41 @@ export default function Trade() {
       return BigInt(0);
     }
   }, [mode, amount]);
+
+  // utils (can live in the same file or a small util module)
+  const getGeckoChainSlug = (chainName?: string | null) => {
+    const name = (chainName ?? "").toLowerCase().trim();
+
+    const nameMap: Record<string, string> = {
+      // common aliases -> geckoterminal slugs
+      bnb: "bsc",
+      "binance": "bsc",
+      "binance smart chain": "bsc",
+      bsc: "bsc",
+
+      eth: "ethereum",
+      ethereum: "ethereum",
+
+      polygon: "polygon",
+      matic: "polygon",
+
+      avax: "avalanche",
+      avalanche: "avalanche",
+
+      fantom: "fantom",
+
+      arbitrum: "arbitrum",
+      optimism: "optimism",
+    };
+
+    if (name && nameMap[name]) return nameMap[name];
+  };
+
+
+  const tokenChainSlug = useMemo(
+    () => getGeckoChainSlug(tokenChainName),
+    [tokenChainName]
+  );
 
   const {
     data: whitelistBalance,
@@ -3725,7 +3760,7 @@ export default function Trade() {
                       <div className="h-[390px] w-full">
                         <iframe
                           title="GeckoTerminal Embed"
-                          src={`https://www.geckoterminal.com/eth/pools/${token.tokenAddress}?embed=1&info=0&swaps=0&light_chart=0&chart_type=price&resolution=15m&bg_color=111827`}
+                          src={`https://www.geckoterminal.com/${tokenChainSlug}/pools/${token.tokenAddress}?embed=1&info=0&swaps=0&light_chart=0&chart_type=price&resolution=15m&bg_color=111827`}
                           className="w-full h-full"
                           frameBorder="0"
                           allow="clipboard-write"
