@@ -394,8 +394,8 @@ export default function Trade() {
     TIMEFRAME_OPTIONS.find((tf) => tf.value === "15m") || TIMEFRAME_OPTIONS[0]
   );
   const [isLoadingChart, setIsLoadingChart] = useState(false);
-  const [tokenChainId, setTokenChainId] = useState<number | null>(null);
-  const [tokenChainName, setTokenChainName] = useState<string | null>(null);
+  const [tokenChainId, setTokenChainId] = useState<number | null>(1);
+  const [tokenChainName, setTokenChainName] = useState<string | null>("eth");
 
   const [isAutoUpdateEnabled, setIsAutoUpdateEnabled] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());

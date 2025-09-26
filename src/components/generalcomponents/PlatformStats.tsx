@@ -333,7 +333,7 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "Fees Collected",
+        title: "Revenue Generated",
         mainValue: getMainValue(
           bnToNumber(metrics[1]) / 1e18,
           `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`
