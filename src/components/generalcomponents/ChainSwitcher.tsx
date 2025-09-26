@@ -1,5 +1,3 @@
-
-
 /**
  * Chain Switcher Component
  */
@@ -12,31 +10,30 @@ const ChainSwitcher = () => {
   const { switchChain } = useSwitchChain();
   const chainId = useChainId();
 
-
   // Define supported chains with their icons and names
   const supportedChains = [
     {
       id: 56, // BSC Mainnet
       name: "BNB Chain",
-      icon: <SiBinance className="w-5 h-5" />
+      icon: <SiBinance className="w-5 h-5" />,
     },
     {
       id: 1, // Ethereum Mainnet
       name: "Ethereum",
-      icon: <SiEthereum className="w-4 h-4" />
-    }
+      icon: <SiEthereum className="w-4 h-4" />,
+    },
   ];
 
   const getCurrentChain = () => {
-    return supportedChains.find(chain =>
-      chain.id === chainId
-    ) || supportedChains[0]; // Default to BNB
+    return (
+      supportedChains.find((chain) => chain.id === chainId) ||
+      supportedChains[0]
+    ); // Default to BNB
   };
 
   const currentChain = getCurrentChain();
 
-
-  const switchToChain = (targetChain: typeof supportedChains[0]) => {
+  const switchToChain = (targetChain: (typeof supportedChains)[0]) => {
     // Try to switch to mainnet first, fallback to testnet
     try {
       switchChain({ chainId: targetChain.id });
@@ -44,8 +41,9 @@ const ChainSwitcher = () => {
     } catch (error) {
       console.warn(`Could not switch to mainnet`);
       try {
+        /* empty */
       } catch (testnetError) {
-        console.error('Failed to switch chain:', testnetError);
+        console.error("Failed to switch chain:", testnetError);
       }
     }
   };
@@ -54,8 +52,8 @@ const ChainSwitcher = () => {
     <div className="flex justify-center mb-6 mt-4">
       <div className="flex bg-white/10 dark:bg-black/20 backdrop-blur-sm rounded-full p-1 border border-white/20">
         {supportedChains.map((chain) => {
-          const isActive = chain.id === currentChain.id ||
-            (chain.id === currentChain.id) 
+          const isActive =
+            chain.id === currentChain.id || chain.id === currentChain.id;
 
           return (
             <button
@@ -63,13 +61,14 @@ const ChainSwitcher = () => {
               onClick={() => switchToChain(chain)}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200
-                ${isActive
-                  ? 'bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-white/10 dark:hover:bg-white/5'
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#3BC3DB] to-[#0C8CE0] text-white shadow-lg"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-white/10 dark:hover:bg-white/5"
                 }
               `}
             >
-              <span className={`${isActive ? 'text-white' : 'text-current'}`}>
+              <span className={`${isActive ? "text-white" : "text-current"}`}>
                 {chain.icon}
               </span>
               <span className="font-medium text-sm">{chain.name}</span>
@@ -82,6 +81,6 @@ const ChainSwitcher = () => {
       </div>
     </div>
   );
-}
+};
 
 export default ChainSwitcher;

@@ -157,7 +157,7 @@ const AdminWithdrawConfig = () => {
     { address: "", percentage: 0 },
   ]);
   const [newOwner, setNewOwner] = useState<string>("");
-  
+
   // ERC20 emergency withdrawal
   const [erc20TokenAddress, setErc20TokenAddress] = useState<string>("");
   const [erc20Recipient, setErc20Recipient] = useState<string>("");
@@ -219,7 +219,11 @@ const AdminWithdrawConfig = () => {
     }
   };
 
-  const updateRecipient = (index: number, field: keyof Recipient, value: string | number) => {
+  const updateRecipient = (
+    index: number,
+    field: keyof Recipient,
+    value: string | number
+  ) => {
     const updated = recipients.map((recipient, i) =>
       i === index ? { ...recipient, [field]: value } : recipient
     );
@@ -227,7 +231,10 @@ const AdminWithdrawConfig = () => {
   };
 
   const getTotalPercentage = () => {
-    return recipients.reduce((sum, recipient) => sum + (recipient.percentage || 0), 0);
+    return recipients.reduce(
+      (sum, recipient) => sum + (recipient.percentage || 0),
+      0
+    );
   };
 
   const isPercentageDistributionValid = () => {
@@ -339,7 +346,12 @@ const AdminWithdrawConfig = () => {
           </div>
           <div className="text-right">
             <p className="text-sm text-green-700 dark:text-green-300">
-              Owner: {currentOwner ? `${currentOwner.toString().slice(0, 6)}...${currentOwner.toString().slice(-4)}` : "Loading..."}
+              Owner:{" "}
+              {currentOwner
+                ? `${currentOwner.toString().slice(0, 6)}...${currentOwner
+                    .toString()
+                    .slice(-4)}`
+                : "Loading..."}
             </p>
           </div>
         </div>
@@ -387,7 +399,10 @@ const AdminWithdrawConfig = () => {
         >
           <div className="space-y-4">
             {recipients.map((recipient, index) => (
-              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div
+                key={index}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Recipient {index + 1}
@@ -401,13 +416,15 @@ const AdminWithdrawConfig = () => {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div className="md:col-span-2">
                     <input
                       type="text"
                       value={recipient.address}
-                      onChange={(e) => updateRecipient(index, 'address', e.target.value)}
+                      onChange={(e) =>
+                        updateRecipient(index, "address", e.target.value)
+                      }
                       placeholder="0x..."
                       className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300 dark:border-gray-600"
                     />
@@ -415,8 +432,14 @@ const AdminWithdrawConfig = () => {
                   <div>
                     <input
                       type="number"
-                      value={recipient.percentage || ''}
-                      onChange={(e) => updateRecipient(index, 'percentage', parseFloat(e.target.value) || 0)}
+                      value={recipient.percentage || ""}
+                      onChange={(e) =>
+                        updateRecipient(
+                          index,
+                          "percentage",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       placeholder="Percentage"
                       min="0"
                       max="100"
@@ -426,7 +449,7 @@ const AdminWithdrawConfig = () => {
                 </div>
               </div>
             ))}
-            
+
             <div className="flex items-center justify-between">
               <button
                 onClick={addRecipient}
@@ -435,9 +458,16 @@ const AdminWithdrawConfig = () => {
                 <Plus className="w-4 h-4" />
                 Add Recipient
               </button>
-              
+
               <div className="text-sm">
-                Total: <span className={`font-bold ${getTotalPercentage() === 100 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                Total:{" "}
+                <span
+                  className={`font-bold ${
+                    getTotalPercentage() === 100
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
                   {getTotalPercentage()}%
                 </span>
               </div>
@@ -445,9 +475,11 @@ const AdminWithdrawConfig = () => {
 
             <ActionButton
               onClick={() => {
-                const addresses = recipients.map(r => r.address as `0x${string}`);
-                const percentages = recipients.map(r => BigInt(r.percentage));
-                
+                const addresses = recipients.map(
+                  (r) => r.address as `0x${string}`
+                );
+                const percentages = recipients.map((r) => BigInt(r.percentage));
+
                 writeContract({
                   address: WITHDRAW_ADDRESS[networkInfo.chainId],
                   abi: WITHDRAW_ABI.abi,

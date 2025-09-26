@@ -140,7 +140,9 @@ const Navbar = () => {
                 networkInfo.chainId,
                 token.tokenAddress
               );
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
 
               const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               newMap[token.tokenAddress] = marketCap;
@@ -158,7 +160,9 @@ const Navbar = () => {
                 networkInfo.chainId,
                 token.tokenAddress
               );
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
 
               const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               newMap[token.tokenAddress] = marketCap;
@@ -176,7 +180,9 @@ const Navbar = () => {
                 networkInfo.chainId,
                 token.tokenAddress
               );
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
 
               const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               newMap[token.tokenAddress] = marketCap;
@@ -194,7 +200,9 @@ const Navbar = () => {
                 networkInfo.chainId,
                 token.tokenAddress
               );
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
 
               const marketCap = pricePerToken * (supply / 1e18) * ethPriceUSD;
               newMap[token.tokenAddress] = marketCap;
@@ -272,10 +280,11 @@ const Navbar = () => {
   return (
     <>
       <header
-        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${navBg
-          ? "bg-Dark-Purple"
-          : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
-          } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
+        className={`py-3 lg:px-[40px]  px-3 md:px-[79px] ${
+          navBg
+            ? "bg-Dark-Purple"
+            : "bg-[#ffffff0d] backdrop-blur-[40px] shadow"
+        } fixed w-full top-0 left-0 z-[60] transition-all duration-300 backdrop-blur-[20px]`}
       >
         <nav className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
@@ -284,7 +293,7 @@ const Navbar = () => {
           </a>
 
           {/* Dropdown & Search */}
-          <div className="flex items-center w-full max-w-[10rem] lg:max-w-[700px] mx-2 lg:mx-6">
+          <div className="flex items-center w-full max-w-[10rem] lg:max-w-[600px] mx-2 lg:mx-6">
             {/* Dropdown */}
             <div className="relative z-50" ref={dropdownRef}>
               <button
@@ -438,8 +447,9 @@ const Navbar = () => {
           onClick={() => setIsOpen(false)}
         >
           <div
-            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
-              }`}
+            className={`absolute z-10 sm:w-1/2 bg-white/2 backdrop-blur-2xl text-black right-0 top-0 h-screen w-[70%] transform transition-transform duration-300 ${
+              isOpen ? "translate-x-0" : "translate-x-full"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end p-4">

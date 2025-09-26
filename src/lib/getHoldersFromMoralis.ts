@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Moralis from "moralis";
 
 const CHAIN_HEX_MAP: Record<number, string> = {
@@ -50,7 +51,10 @@ export async function getHoldersFromMoralis(
   try {
     // basic validation
     if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
-      console.warn("Invalid tokenAddress passed to getHoldersFromMoralis:", tokenAddress);
+      console.warn(
+        "Invalid tokenAddress passed to getHoldersFromMoralis:",
+        tokenAddress
+      );
       return 0;
     }
 
@@ -78,13 +82,19 @@ export async function getHoldersFromMoralis(
       const response = await Moralis.EvmApi.token.getTokenOwners(params);
 
       // robustly read results
-      const raw = typeof response?.raw === "function" ? response.raw() : response;
-      const owners = Array.isArray(raw?.result) ? raw.result : raw?.result ?? [];
+      const raw =
+        typeof response?.raw === "function" ? response.raw() : response;
+      const owners = Array.isArray(raw?.result)
+        ? raw.result
+        : raw?.result ?? [];
 
       totalCount += owners.length;
 
       // attempt to read the cursor for next page; only access from raw if present
-      cursor = (raw && typeof raw === "object" && "cursor" in raw) ? (raw as { cursor?: string }).cursor : undefined;
+      cursor =
+        raw && typeof raw === "object" && "cursor" in raw
+          ? (raw as { cursor?: string }).cursor
+          : undefined;
 
       // break if not fetching all
       if (!fetchAll) break;
@@ -95,7 +105,11 @@ export async function getHoldersFromMoralis(
 
     return totalCount;
   } catch (error) {
-    console.error("Failed to fetch holders from Moralis for", tokenAddress, error);
+    console.error(
+      "Failed to fetch holders from Moralis for",
+      tokenAddress,
+      error
+    );
     return 0;
   }
 }

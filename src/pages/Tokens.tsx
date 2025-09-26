@@ -9,7 +9,11 @@ import DustParticles from "../components/generalcomponents/DustParticles";
 import Footer from "../components/launchintro/Footer";
 import Navbar from "../components/launchintro/Navbar";
 import { useApiClient } from "../lib/api";
-import { ETH_USDT_PRICE_FEED_ADDRESSES, mainnetID, testChainID } from "../web3/config";
+import {
+  ETH_USDT_PRICE_FEED_ADDRESSES,
+  mainnetID,
+  testChainID,
+} from "../web3/config";
 import { useNetworkEnvironment } from "../config/useNetworkEnvironment";
 import {
   getPureGetLatestETHPrice,
@@ -35,6 +39,15 @@ import { useTrendingTokens } from "../lib/useTrendingTokens";
 import CopyButton from "../components/generalcomponents/CopyButton";
 import Message from "../components/svgcomponents/Message";
 import { useChainId } from "wagmi";
+import bscLogo from "../assets/bnb-binance-coin-logo.webp";
+import ethLogo from "../assets/ethereum-eth-logo.svg";
+
+const chainLogos: Record<number, string> = {
+  1: ethLogo, // Ethereum mainnet
+  56: bscLogo, // Binance Smart Chain
+  97: bscLogo, // BSC testnet (re-using BSC logo)
+  11155111: ethLogo, // Sepolia testnet
+};
 
 const gradientSteps = [
   { threshold: 9, color: "#dc2626" }, // Red
@@ -231,9 +244,8 @@ export default function Tokens() {
 
   // Fetch list of tokens
   const fetchTokenList = useCallback(
-
     async (pageNum = 1, query = "", searchTerm = "all", append = false) => {
-      console.log("responding...........")
+      console.log("responding...........");
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -275,15 +287,21 @@ export default function Tokens() {
 
         const tokensWithChainId = apiData.data.map((token: TokenMetadata) => ({
           ...token,
-          chainId: token.chainId || (connectedChain === 1 || connectedChain === 56 ? mainnetID : testChainID), // Fallback to current chain
+          chainId:
+            token.chainId ||
+            (connectedChain === 1 || connectedChain === 56
+              ? mainnetID
+              : testChainID), // Fallback to current chain
         }));
         console.log(`token with Chain ID: ${tokensWithChainId}`);
-        console.log("Conectedchain", connectedChain)
+        console.log("Conectedchain", connectedChain);
 
         setHasNext(apiData.hasNextPage);
         setPage(pageNum);
         setTokens((prev) => {
-          const newTokens = append ? [...prev, ...tokensWithChainId] : tokensWithChainId;
+          const newTokens = append
+            ? [...prev, ...tokensWithChainId]
+            : tokensWithChainId;
           return newTokens;
         });
       } catch (error) {
@@ -302,7 +320,7 @@ export default function Tokens() {
         setIsLoadingTokens(false);
       }
     },
-    [base]
+    [base, connectedChain]
   );
 
   const debouncedFetch = useMemo(
@@ -359,7 +377,7 @@ export default function Tokens() {
 
       try {
         // Fetch ETH price for each unique chain in the tokens list
-        const uniqueChainIds = [...new Set(tokens.map(t => t.chainId))];
+        const uniqueChainIds = [...new Set(tokens.map((t) => t.chainId))];
 
         await Promise.all(
           uniqueChainIds.map(async (chainId) => {
@@ -374,11 +392,17 @@ export default function Tokens() {
                 return;
               }
 
-              const raw = await getPureGetLatestETHPrice(chainId, priceFeedAddress);
+              const raw = await getPureGetLatestETHPrice(
+                chainId,
+                priceFeedAddress
+              );
               const price = (typeof raw === "number" ? raw : Number(raw)) / 1e8;
               ethPriceMap[chainId] = price;
             } catch (error) {
-              console.error(`Failed to fetch ETH price for chain ${chainId}:`, error);
+              console.error(
+                `Failed to fetch ETH price for chain ${chainId}:`,
+                error
+              );
               if (typeof chainId === "number") {
                 ethPriceMap[chainId] = 0;
               }
@@ -399,7 +423,9 @@ export default function Tokens() {
         tokens.map(async (token) => {
           try {
             const token_ChainId = token.chainId || testChainID;
-            console.log(`Fetching data for ${token.tokenAddress} on chain ${token_ChainId}`);
+            console.log(
+              `Fetching data for ${token.tokenAddress} on chain ${token_ChainId}`
+            );
 
             const isV1 = token.tokenVersion === "token_v1";
             const isV3 = token.tokenVersion === "token_v3";
@@ -409,10 +435,10 @@ export default function Tokens() {
             const info = isV1
               ? await getPureInfoV1DataRaw(token_ChainId, token.tokenAddress)
               : isV3
-                ? await getPureInfoV3DataRaw(token_ChainId, token.tokenAddress)
-                : isV4
-                  ? await getPureInfoV4DataRaw(token_ChainId, token.tokenAddress)
-                  : await getPureInfoV2DataRaw(token_ChainId, token.tokenAddress);
+              ? await getPureInfoV3DataRaw(token_ChainId, token.tokenAddress)
+              : isV4
+              ? await getPureInfoV4DataRaw(token_ChainId, token.tokenAddress)
+              : await getPureInfoV2DataRaw(token_ChainId, token.tokenAddress);
 
             console.log(`Info data for ${token.tokenAddress}: ${info}`);
 
@@ -424,21 +450,24 @@ export default function Tokens() {
               const supply = Number(info[6]);
               const index1 = (initPool * supply) / 1e18;
 
-              const metrics  = isV3
+              const metrics = isV3
                 ? await getV3Metrics(token_ChainId)
                 : isV4
-                  ? await getV4Metrics(token_ChainId)
-                  : await getListingMilestone(token_ChainId);
+                ? await getV4Metrics(token_ChainId)
+                : await getListingMilestone(token_ChainId);
 
-              const milestoneRaw = Array.isArray(metrics) ? metrics[19] : metrics;
+              const milestoneRaw = Array.isArray(metrics)
+                ? metrics[19]
+                : metrics;
 
-              console.log(`Milestone for ${token.tokenAddress}: ${milestoneRaw}`);
+              console.log(
+                `Milestone for ${token.tokenAddress}: ${milestoneRaw}`
+              );
 
               const lmstone = (Number(milestoneRaw) / 1e2) * supply;
               const index2 = (supply - lmstone) / 1e18;
               const index1Div2 = index1 / index2;
               const index3 = (index1Div2 / index2) * (supply / 1e18);
-
 
               console.log(`Index3 for ${token.tokenAddress}: ${index3}`);
 
@@ -446,34 +475,59 @@ export default function Tokens() {
               const ethPriceUSD = ethPriceMap[token_ChainId] || 0;
               const finalMC = index3 * ethPriceUSD;
 
-              console.log(`ethPriceUSD data for ${token.tokenAddress}: ${ethPriceUSD}`);
+              console.log(
+                `ethPriceUSD data for ${token.tokenAddress}: ${ethPriceUSD}`
+              );
               console.log(`finalMC data for ${token.tokenAddress}: ${finalMC}`);
 
               const rawAmt = isV1
-                ? await getPureAmountOutMarketCapV1(token_ChainId, token.tokenAddress)
+                ? await getPureAmountOutMarketCapV1(
+                    token_ChainId,
+                    token.tokenAddress
+                  )
                 : isV3
-                  ? await getPureAmountOutMarketCapV3(token_ChainId, token.tokenAddress)
-                  : isV4
-                    ? await getPureAmountOutMarketCapV4(token_ChainId, token.tokenAddress)
-                    : await getPureAmountOutMarketCapV2(token_ChainId, token.tokenAddress);
+                ? await getPureAmountOutMarketCapV3(
+                    token_ChainId,
+                    token.tokenAddress
+                  )
+                : isV4
+                ? await getPureAmountOutMarketCapV4(
+                    token_ChainId,
+                    token.tokenAddress
+                  )
+                : await getPureAmountOutMarketCapV2(
+                    token_ChainId,
+                    token.tokenAddress
+                  );
 
-              const pricePerToken = rawAmt ? Number(rawAmt.toString()) / 1e18 : 0;
+              const pricePerToken = rawAmt
+                ? Number(rawAmt.toString()) / 1e18
+                : 0;
 
-              newMarketCap[token.tokenAddress] = pricePerToken * (supply / 1e18) * ethPriceUSD;
+              newMarketCap[token.tokenAddress] =
+                pricePerToken * (supply / 1e18) * ethPriceUSD;
 
-
-              console.log(`newMarketCap[token.tokenAddress] data for ${token.tokenAddress}: ${newMarketCap[token.tokenAddress]}`);
+              console.log(
+                `newMarketCap[token.tokenAddress] data for ${
+                  token.tokenAddress
+                }: ${newMarketCap[token.tokenAddress]}`
+              );
 
               const percent = isListed
                 ? 100
                 : (newMarketCap[token.tokenAddress] / finalMC) * 100;
-              newCurve[token.tokenAddress] = Math.min(Math.max(percent, 0), 100);
+              newCurve[token.tokenAddress] = Math.min(
+                Math.max(percent, 0),
+                100
+              );
 
               console.log(`percent data for ${token.tokenAddress}: ${percent}`);
-              console.log(`newCurve[token.tokenAddress] data for ${token.tokenAddress}: ${newCurve[token.tokenAddress]}`);
+              console.log(
+                `newCurve[token.tokenAddress] data for ${token.tokenAddress}: ${
+                  newCurve[token.tokenAddress]
+                }`
+              );
             }
-
-
 
             // Fetch transaction logs
             const logs = token.transactions;
@@ -485,7 +539,10 @@ export default function Tokens() {
               .reduce((sum, tx) => sum + parseFloat(String(tx.ethAmount)), 0);
             newVolume[token.tokenAddress] = volEth * ethPriceUSD;
           } catch (e) {
-            console.error(`Error for ${token.tokenAddress} on chain ${token.chainId}:`, e);
+            console.error(
+              `Error for ${token.tokenAddress} on chain ${token.chainId}:`,
+              e
+            );
           }
         })
       );
@@ -507,7 +564,7 @@ export default function Tokens() {
         container &&
         hasNext &&
         container.scrollTop + container.clientHeight >=
-        container.scrollHeight - 100
+          container.scrollHeight - 100
       ) {
         fetchTokenList(page + 1, searchTerm, searchField, true);
       }
@@ -527,8 +584,8 @@ export default function Tokens() {
   const filteredTokens =
     sortField === "bonded"
       ? tokens.filter(
-        (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
-      )
+          (t) => Math.round(curveProgressMap[t.tokenAddress] ?? 0) >= 100
+        )
       : tokens;
 
   const sortedTokens = [...filteredTokens].sort((a, b) => {
@@ -763,14 +820,44 @@ export default function Tokens() {
                         className="flex flex-col"
                       >
                         <div className="flex items-center gap-3">
-                          {t.token.tokenImageId && (
+                          <div className="flex flex-col justify-between h-full relative">
+                            {t.token.tokenImageId ? (
+                              <img
+                                src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
+                                alt={`${t.token.symbol} logo`}
+                                className="w-10 h-10 rounded-lg"
+                                crossOrigin=""
+                              />
+                            ) : (
+                              // Transparent placeholder
+                              <div className="w-10 h-10 rounded-lg bg-transparent" />
+                            )}
+
+                            {/* Chain logo */}
+                            {t.token.chainId && chainLogos[t.token.chainId] && (
+                              <div
+                                className={`flex items-center justify-center rounded-full w-7 h-7 absolute bottom-0 left-0 ${
+                                  [56, 97].includes(t.token.chainId)
+                                    ? ""
+                                    : "bg-white"
+                                }`}
+                              >
+                                <img
+                                  src={chainLogos[t.token.chainId]}
+                                  alt="chain logo"
+                                  className="w-4 h-4"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          {/* {t.token.tokenImageId && (
                             <img
                               src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
                               alt={`${t.token.symbol} logo`}
                               className="w-10 h-10 rounded-md"
                               crossOrigin=""
                             />
-                          )}
+                          )} */}
                           <div className="flex-1">
                             <h3 className="text-[13px] max-w-[10rem] font-semibold text-[#01061C] dark:text-white">
                               {t.token.name} ({t.token.symbol})
@@ -805,12 +892,13 @@ export default function Tokens() {
                             {isLoadingMetrics ? (
                               <span className="">Loading...</span>
                             ) : (
-                              `$${volume24hMap[
-                                t.token.tokenAddress
-                              ]?.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }) ?? "0.00"
+                              `$${
+                                volume24hMap[
+                                  t.token.tokenAddress
+                                ]?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }) ?? "0.00"
                               }`
                             )}
                           </div>
@@ -869,12 +957,13 @@ export default function Tokens() {
                       <div
                         key={field}
                         onClick={() => searchChange(field)}
-                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${field === "all"
-                          ? "rounded-t-xl"
-                          : field === "name"
+                        className={`px-4 py-2 cursor-pointer hover:bg-Primary capitalize ${
+                          field === "all"
+                            ? "rounded-t-xl"
+                            : field === "name"
                             ? "rounded-b-xl"
                             : ""
-                          }`}
+                        }`}
                       >
                         {field === "name" ? "Name/Symbol" : field}
                       </div>
@@ -908,12 +997,13 @@ export default function Tokens() {
                         setSortField(value as any);
                         setSortDropdownOpen(false);
                       }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${idx === 0
-                        ? "rounded-t-xl"
-                        : idx === arr.length - 1
+                      className={`px-4 py-2 cursor-pointer hover:bg-[#147ABD]/20 ${
+                        idx === 0
+                          ? "rounded-t-xl"
+                          : idx === arr.length - 1
                           ? "rounded-b-xl"
                           : ""
-                        }`}
+                      }`}
                     >
                       {label}
                     </div>
@@ -977,12 +1067,14 @@ export default function Tokens() {
           ) : (
             <div
               ref={containerRef}
-              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
-                } px-2 py-5 border border-white/10`}
+              className={`dark:bg-[#0B132B]/40 bg-[#141313]/5 rounded-xl ${
+                sortedTokens.length === 1 ? "max-w-2xl mx-auto" : "w-full"
+              } px-2 py-5 border border-white/10`}
             >
               <ul
-                className={`grid gap-6 z-10 relative ${sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
-                  }`}
+                className={`grid gap-6 z-10 relative ${
+                  sortedTokens.length === 1 ? "grid-cols-1" : "md:grid-cols-2"
+                }`}
               >
                 {sortedTokens.map((t, idx) => (
                   <div key={idx} className="flex flex-col">
@@ -992,14 +1084,35 @@ export default function Tokens() {
                     >
                       <div className="grid grid-cols-[.7fr_.3fr] justify-between">
                         <div className="flex items-start sm:gap-4 gap-1">
-                          {t.tokenImageId && (
-                            <img
-                              src={`${networkInfo.apiBaseUrl}${t.image?.path}`}
-                              alt={`${t.symbol} logo`}
-                              className="w-14 h-14 rounded-lg"
-                              crossOrigin=""
-                            />
-                          )}
+                          <div className="flex flex-col justify-between h-full relative">
+                            {t.tokenImageId ? (
+                              <img
+                                src={`${networkInfo.apiBaseUrl}${t.image?.path}`}
+                                alt={`${t.symbol} logo`}
+                                className="w-14 h-14 rounded-lg"
+                                crossOrigin=""
+                              />
+                            ) : (
+                              // Transparent placeholder
+                              <div className="w-14 h-14 rounded-lg bg-transparent" />
+                            )}
+
+                            {/* Chain logo */}
+                            {t.chainId && chainLogos[t.chainId] && (
+                              <div
+                                className={`flex items-center justify-center rounded-full w-7 h-7 absolute bottom-0 left-0 ${
+                                  [56, 97].includes(t.chainId) ? "" : "bg-white"
+                                }`}
+                              >
+                                <img
+                                  src={chainLogos[t.chainId]}
+                                  alt="chain logo"
+                                  className="w-6 h-6"
+                                />
+                              </div>
+                            )}
+                          </div>
+
                           <div>
                             <h3 className="dark:text-white text-black text-[18px] sm:text-[20px] font-semibold mb-2.5">
                               {t.name} ({t.symbol})
@@ -1049,13 +1162,14 @@ export default function Tokens() {
                                 Loading...
                               </span>
                             ) : (
-                              ` $${volume24hMap[t.tokenAddress]?.toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              ) ?? "0.00"
+                              ` $${
+                                volume24hMap[t.tokenAddress]?.toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                ) ?? "0.00"
                               }`
                             )}
                           </p>
@@ -1118,9 +1232,10 @@ export default function Tokens() {
                       <p className="absolute right-4 text-white text-[13px] font-semibold z-50 flex items-center">
                         {isLoadingMetrics
                           ? "Loading..."
-                          : `${curveProgressMap[t.tokenAddress]?.toFixed(2) ??
-                          "0"
-                          }%`}
+                          : `${
+                              curveProgressMap[t.tokenAddress]?.toFixed(2) ??
+                              "0"
+                            }%`}
                       </p>
 
                       {!isLoadingMetrics &&
@@ -1134,8 +1249,9 @@ export default function Tokens() {
                               className="bg-[#031E51] h-full absolute top-0 -skew-x-[24deg] z-40"
                               style={{
                                 width: `${stripeWidth}px`,
-                                left: `calc(${(i * spacing).toFixed(2)}% - ${stripeWidth / 2
-                                  }px)`,
+                                left: `calc(${(i * spacing).toFixed(2)}% - ${
+                                  stripeWidth / 2
+                                }px)`,
                               }}
                             />
                           );
@@ -1153,8 +1269,9 @@ export default function Tokens() {
 
                         return (
                           <div
-                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${progress < 100 ? "rounded-l-full" : "rounded-full"
-                              } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
+                            className={`h-full absolute top-0 left-0 z-10 transition-all duration-500 ease-in-out ${
+                              progress < 100 ? "rounded-l-full" : "rounded-full"
+                            } ${isLoadingMetrics ? "bg-gray-600" : ""}`}
                             style={{
                               width: `${isLoadingMetrics ? 0 : progress}%`,
                               ...gradientStyle,

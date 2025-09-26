@@ -162,8 +162,7 @@ const Admin = () => {
           <AdminContractConfigV3 />
         ) : activeTab === "withdraw" ? (
           <AdminWithdrawConfig />
-        )
-         : (
+        ) : (
           <AdminContractConfig />
         )}
       </div>

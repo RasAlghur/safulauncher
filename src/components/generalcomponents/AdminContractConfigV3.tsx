@@ -119,10 +119,11 @@ const InputField = memo(
             className={`w-full px-3 py-2 border rounded-md 
                            bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                           ${hasError
-                ? "border-red-500 dark:border-red-400"
-                : "border-gray-300 dark:border-gray-600"
-              }`}
+                           ${
+                             hasError
+                               ? "border-red-500 dark:border-red-400"
+                               : "border-gray-300 dark:border-gray-600"
+                           }`}
           />
           {hasError && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -192,7 +193,6 @@ const AdminContractConfigV3 = () => {
   // Revenue recipient state
   const [newRevenueRecipient, setNewRevenueRecipient] = useState<string>("");
 
-
   // Validation errors state
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
@@ -256,7 +256,6 @@ const AdminContractConfigV3 = () => {
     if (num <= 0) return "Must be greater than 0";
     return null;
   };
-
 
   const validateLockDurationDays = (value: string): string | null => {
     const num = parseInt(value);
@@ -770,8 +769,9 @@ const AdminContractConfigV3 = () => {
           <div className="space-y-4">
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
               <p className="text-yellow-800 dark:text-yellow-200 text-sm mb-2">
-                ⚠️ <strong>Warning:</strong> This can only recover tokens that were NOT created by SafuLauncher.
-                Platform-created tokens cannot be recovered.
+                ⚠️ <strong>Warning:</strong> This can only recover tokens that
+                were NOT created by SafuLauncher. Platform-created tokens cannot
+                be recovered.
               </p>
             </div>
 
@@ -841,14 +841,14 @@ const AdminContractConfigV3 = () => {
           <div className="space-y-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-blue-800 dark:text-blue-200 text-sm">
-                <strong>Info:</strong> This address receives all platform fees including creation fees,
-                trade fees, and listing fees.
+                <strong>Info:</strong> This address receives all platform fees
+                including creation fees, trade fees, and listing fees.
               </p>
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Current Owner
+                Fee Recipient
               </label>
               <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-800 dark:text-gray-200 font-mono text-sm truncate">
                 {revenueRecipientAddr?.toString() || "Loading..."}
@@ -1398,17 +1398,17 @@ const AdminContractConfigV3 = () => {
                     Current:{" "}
                     {tier1Threshold && tier1ThresholdDiv
                       ? `${(
-                        (parseInt(tier1Threshold) /
-                          parseInt(tier1ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier1Threshold) /
+                            parseInt(tier1ThresholdDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier1WLCap && tier1WLDiv
                       ? `${(
-                        (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier1WLCap) / parseInt(tier1WLDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1491,17 +1491,17 @@ const AdminContractConfigV3 = () => {
                     Current:{" "}
                     {tier2Threshold && tier2ThresholdDiv
                       ? `${(
-                        (parseInt(tier2Threshold) /
-                          parseInt(tier2ThresholdDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier2Threshold) /
+                            parseInt(tier2ThresholdDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     threshold,{" "}
                     {tier2WLCap && tier2WLDiv
                       ? `${(
-                        (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
-                        100
-                      ).toFixed(3)}%`
+                          (parseInt(tier2WLCap) / parseInt(tier2WLDiv)) *
+                          100
+                        ).toFixed(3)}%`
                       : "N/A"}{" "}
                     cap
                   </p>
@@ -1518,10 +1518,10 @@ const AdminContractConfigV3 = () => {
                   • Tier 1 users need ≥
                   {tier1Threshold && tier1ThresholdDiv
                     ? `${(
-                      (parseInt(tier1Threshold) /
-                        parseInt(tier1ThresholdDiv)) *
-                      100
-                    ).toFixed(3)}%`
+                        (parseInt(tier1Threshold) /
+                          parseInt(tier1ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1529,10 +1529,10 @@ const AdminContractConfigV3 = () => {
                   • Tier 2 users need ≥
                   {tier2Threshold && tier2ThresholdDiv
                     ? `${(
-                      (parseInt(tier2Threshold) /
-                        parseInt(tier2ThresholdDiv)) *
-                      100
-                    ).toFixed(3)}%`
+                        (parseInt(tier2Threshold) /
+                          parseInt(tier2ThresholdDiv)) *
+                        100
+                      ).toFixed(3)}%`
                     : "0"}{" "}
                   of SAFU supply
                 </p>
@@ -1575,125 +1575,145 @@ const AdminContractConfigV3 = () => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div
-            className={`flex items-center gap-2 ${isTradeFeeBpsValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isTradeFeeBpsValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isTradeFeeBpsValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Trade Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isPoolConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isPoolConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isPoolConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Pool Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isLockDurationValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isLockDurationValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isLockDurationValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isLockDurationValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Lock Duration Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isCreationFeeValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isCreationFeeValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isCreationFeeValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isCreationFeeValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Creation Fee Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isListingFeeValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isListingFeeValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isListingFeeValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isListingFeeValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Listing Fee Config
           </div>
 
           <div
-            className={`flex items-center gap-2 ${isRecoverERC20Valid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isRecoverERC20Valid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isRecoverERC20Valid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isRecoverERC20Valid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             ERC20 Recovery Config
           </div>
 
           <div
-            className={`flex items-center gap-2 ${isRevenueRecipientValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isRevenueRecipientValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isRevenueRecipientValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isRevenueRecipientValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Revenue Recipient Config
           </div>
 
           <div
-            className={`flex items-center gap-2 ${isCreatorConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isCreatorConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isCreatorConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Creator Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isSafuTokenValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isSafuTokenValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isSafuTokenValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             SAFU Token Config
           </div>
           <div
-            className={`flex items-center gap-2 ${isTierConfigValid
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-500 dark:text-gray-400"
-              }`}
+            className={`flex items-center gap-2 ${
+              isTierConfigValid
+                ? "text-green-600 dark:text-green-400"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
           >
             <div
-              className={`w-2 h-2 rounded-full ${isTierConfigValid ? "bg-green-500" : "bg-gray-300"
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                isTierConfigValid ? "bg-green-500" : "bg-gray-300"
+              }`}
             ></div>
             Tier Config
           </div>

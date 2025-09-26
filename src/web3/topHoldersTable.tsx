@@ -33,15 +33,6 @@ export function TopHoldersTable({
     String(a).toLowerCase()
   );
 
-  // Map of supported chains -> Moralis chain hex values
-  const chainHexMap: Record<number, string> = {
-    1: "0x1", // Ethereum Mainnet
-    56: "0x38", // BSC Mainnet
-    97: "0x61", // BSC Testnet
-    11155111: "0xaa36a7", // Sepolia
-    // add other chain mappings you support...
-  };
-
   const MORALIS_LIMIT = 100; // controls max items fetched per request
 
   // Ensure Moralis is started once (defensive)
@@ -75,6 +66,15 @@ export function TopHoldersTable({
       }
 
       await startMoralisIfNeeded();
+
+      // Define chainHexMap inside the callback so it's stable
+      const chainHexMap: Record<number, string> = {
+        1: "0x1", // Ethereum Mainnet
+        56: "0x38", // BSC Mainnet
+        97: "0x61", // BSC Testnet
+        11155111: "0xaa36a7", // Sepolia
+        // add other chain mappings you support...
+      };
 
       // get chain param from map, fallback to hex of chainId
       let chainParam = chainHexMap[chainId];
@@ -195,7 +195,11 @@ export function TopHoldersTable({
     if (creatorAddress && lc === creatorAddress.toLowerCase()) {
       return (
         <IconWithTooltip tooltip="Dev Wallet">
-          <svg className="w-4 h-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+          <svg
+            className="w-4 h-4 text-blue-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
             <path
               fillRule="evenodd"
               d="M9.664 1.319a.75.75 0 01.672 0 41.059 41.059 0 018.198 5.424.75.75 0 01-.254 1.285 31.372 31.372 0 00-7.86 3.83.75.75 0 01-.84 0 31.508 31.508 0 00-2.08-1.287V9.394c0-.244.116-.463.302-.592a35.504 35.504 0 013.305-2.033.75.75 0 00-.714-1.319 37 37 0 00-3.446 2.12A2.216 2.216 0 006 9.393v.38a31.293 31.293 0 00-4.28-1.746.75.75 0 01-.254-1.285 41.059 41.059 0 018.198-5.424zM6 11.459a29.848 29.848 0 00-2.455-1.158 41.029 41.029 0 00-.39 3.114.75.75 0 00.419.74c.528.256 1.046.53 1.554.82-.21-.899-.438-1.895-.518-3.516zM21.852 14.442a.75.75 0 00-.334-.815A47.077 47.077 0 0018 12.794v2.243a.75.75 0 01-1.5 0v-2.014a45.624 45.624 0 00-6.365-1.78.75.75 0 00-.186 1.491 44.137 44.137 0 016.034 1.735 6.932 6.932 0 01-2.373 3.133.75.75 0 01-.75 1.3 8.432 8.432 0 002.992-4.024c.06.135.124.27.191.403.204.406.449.803.738 1.184a.75.75 0 101.26-.827 14.95 14.95 0 01-.738-1.184 25.99 25.99 0 00-3.261-4.871z"
@@ -208,7 +212,11 @@ export function TopHoldersTable({
     if (normalizedBonding.includes(lc)) {
       return (
         <IconWithTooltip tooltip="SafuLauncher Pool (tokens available for sale)">
-          <svg className="w-4 h-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+          <svg
+            className="w-4 h-4 text-green-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
             <path
               fillRule="evenodd"
               d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
@@ -225,7 +233,9 @@ export function TopHoldersTable({
     return (
       <div className="flex items-center justify-center py-10 flex-col gap-4">
         <div className="h-12 w-12 border-4 border-dashed border-gray-300 dark:border-white/20 rounded-full animate-spin"></div>
-        <p className="text-lg font-medium dark:text-white text-[#141313]">Loading top holders…</p>
+        <p className="text-lg font-medium dark:text-white text-[#141313]">
+          Loading top holders…
+        </p>
       </div>
     );
 
@@ -233,7 +243,9 @@ export function TopHoldersTable({
 
   return (
     <div ref={ref} className="mt-14">
-      <h2 className="text-lg md:text-xl font-semibold mb-2 dark:text-white text-black font-raleway">Top Holders</h2>
+      <h2 className="text-lg md:text-xl font-semibold mb-2 dark:text-white text-black font-raleway">
+        Top Holders
+      </h2>
 
       <div className="tx-table overflow-x-auto max-h-[500px] overflow-y-auto">
         <table className="min-w-[400px] sm:min-w-[600px] md:min-w-full text-sm dark:text-white/80">
@@ -245,7 +257,10 @@ export function TopHoldersTable({
           </thead>
           <tbody>
             {paginatedHolders.map((holder, i) => (
-              <tr key={`${holder.owner}-${i}`} className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none">
+              <tr
+                key={`${holder.owner}-${i}`}
+                className="mb-4 border-b-2 dark:border-b-white/20 border-black/10 last-of-type:border-none"
+              >
                 <td className="py-3 pl-1 flex items-center gap-1 font-mono dark:text-white/80 text-[#141313] font-semibold">
                   <span>
                     {holder.owner.slice(0, 6)}…{holder.owner.slice(-4)}
@@ -259,7 +274,10 @@ export function TopHoldersTable({
             ))}
             {paginatedHolders.length === 0 && (
               <tr>
-                <td colSpan={2} className="py-6 text-center text-sm text-gray-600 dark:text-white/70">
+                <td
+                  colSpan={2}
+                  className="py-6 text-center text-sm text-gray-600 dark:text-white/70"
+                >
                   No top holders found
                 </td>
               </tr>

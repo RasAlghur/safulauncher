@@ -56,19 +56,11 @@ const PlatformStats = () => {
   const [safuHolders, setSafuHolders] = useState<number>(0);
   // getMetrics returns 24 values in v3/v4 — create a safe default
   const DEFAULT_METRICS = Array(24).fill(0n) as bigint[];
-  const [combinedMetrics, setCombinedMetrics] = useState<bigint[]>(DEFAULT_METRICS);
+  const [combinedMetrics, setCombinedMetrics] =
+    useState<bigint[]>(DEFAULT_METRICS);
   const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Map supported chains -> moralis hex values
-  const chainHexMap: Record<number, string> = {
-    1: "0x1", // Ethereum Mainnet
-    56: "0x38", // BSC Mainnet
-    97: "0x61", // BSC Testnet
-    11155111: "0xaa36a7", // Sepolia
-    // add more supported chains if needed
-  };
 
   // helper: safe bigint / BigNumber -> number conversion
   const bnToNumber = useCallback((v: any): number => {
@@ -99,11 +91,17 @@ const PlatformStats = () => {
 
         // ensure metrics is an array of bigints
         const safeMetrics = Array.isArray(metrics)
-          ? metrics.map((m: any) => (typeof m === "bigint" ? m : BigInt(m ?? 0)))
+          ? metrics.map((m: any) =>
+              typeof m === "bigint" ? m : BigInt(m ?? 0)
+            )
           : DEFAULT_METRICS;
 
         setCombinedMetrics(safeMetrics);
-        setUniqueTraderCount(typeof traderCount === "bigint" ? traderCount : BigInt(traderCount ?? 0));
+        setUniqueTraderCount(
+          typeof traderCount === "bigint"
+            ? traderCount
+            : BigInt(traderCount ?? 0)
+        );
       } catch (error) {
         console.error("Error fetching metrics:", error);
         if (!cancelled) {
@@ -118,7 +116,7 @@ const PlatformStats = () => {
     return () => {
       cancelled = true;
     };
-  }, [networkInfo?.chainId, bnToNumber]);
+  }, [networkInfo?.chainId, bnToNumber, DEFAULT_METRICS]);
 
   // ---------- ETH PRICE ----------
   useEffect(() => {
@@ -178,6 +176,7 @@ const PlatformStats = () => {
 
   useEffect(() => {
     let cancelled = false;
+
     const fetchSafuHolders = async () => {
       try {
         await startMoralisIfNeeded();
@@ -187,8 +186,17 @@ const PlatformStats = () => {
           return;
         }
 
-        // compute chain param
-        const chainParam = chainHexMap[networkInfo.chainId] ?? `0x${networkInfo.chainId.toString(16)}`;
+        // define chainHexMap inside the effect
+        const chainHexMap: Record<number, string> = {
+          1: "0x1", // Ethereum Mainnet
+          56: "0x38", // BSC Mainnet
+          97: "0x61", // BSC Testnet
+          11155111: "0xaa36a7", // Sepolia
+        };
+
+        const chainParam =
+          chainHexMap[networkInfo.chainId] ??
+          `0x${networkInfo.chainId.toString(16)}`;
 
         if (!/^0x[0-9a-fA-F]+$/.test(chainParam)) {
           console.warn("Invalid chainParam for Moralis:", chainParam);
@@ -196,7 +204,6 @@ const PlatformStats = () => {
           return;
         }
 
-        // pick SAFU token address for chain or fallback
         const safuAddress =
           SAFU_TOKEN_ADDRESSES[networkInfo.chainId] ??
           SAFU_TOKEN_ADDRESSES[1] ??
@@ -218,7 +225,9 @@ const PlatformStats = () => {
         if (cancelled) return;
 
         const raw = response.raw?.() ?? response;
-        const owners = Array.isArray(raw?.result) ? raw.result : raw?.result ?? [];
+        const owners = Array.isArray(raw?.result)
+          ? raw.result
+          : raw?.result ?? [];
         setSafuHolders(owners.length);
       } catch (err) {
         console.error("Error fetching SAFU holders:", err);
@@ -277,7 +286,7 @@ const PlatformStats = () => {
 
   const averageVolume = useMemo(() => {
     const denom = totalTokenCount > 0 ? totalTokenCount : 1;
-    return (bnToNumber(combinedMetrics?.[0] ?? 0n) / 1e18) / denom;
+    return bnToNumber(combinedMetrics?.[0] ?? 0n) / 1e18 / denom;
   }, [combinedMetrics, totalTokenCount, bnToNumber]);
 
   // Helper display functions
@@ -303,12 +312,16 @@ const PlatformStats = () => {
 
   // build stats arrays
   const stats1 = useMemo(() => {
-    const metrics = combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
+    const metrics =
+      combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
     return [
       {
         id: 1,
         title: "Total Volume",
-        mainValue: getMainValue(bnToNumber(metrics[0]) / 1e18, `${(bnToNumber(metrics[0]) / 1e18).toFixed(8)} ETH`),
+        mainValue: getMainValue(
+          bnToNumber(metrics[0]) / 1e18,
+          `${(bnToNumber(metrics[0]) / 1e18).toFixed(8)} ETH`
+        ),
         icon: VolumeIcon,
       },
       {
@@ -321,7 +334,10 @@ const PlatformStats = () => {
       {
         id: 3,
         title: "Fees Collected",
-        mainValue: getMainValue(bnToNumber(metrics[1]) / 1e18, `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`),
+        mainValue: getMainValue(
+          bnToNumber(metrics[1]) / 1e18,
+          `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`
+        ),
         icon: FeeCollected,
       },
       {
@@ -339,17 +355,26 @@ const PlatformStats = () => {
         icon: TokensListed,
       },
     ];
-  }, [getMainValue, averageVolume, combinedMetrics, bnToNumber]);
+  }, [
+    getMainValue,
+    averageVolume,
+    combinedMetrics,
+    bnToNumber,
+    DEFAULT_METRICS,
+  ]);
 
   const stats2 = useMemo(() => {
-    const metrics = combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
+    const metrics =
+      combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
     const devReward = bnToNumber(metrics[6]) / 1e18;
     const metric8 = bnToNumber(metrics[8] ?? 0n);
     return [
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)}%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -389,7 +414,16 @@ const PlatformStats = () => {
         icon: UniqueWallet,
       },
     ];
-  }, [averageBondingProgress, getMainValue, getETHDisplay, combinedMetrics, safuHolders, uniqueTraderCount, bnToNumber]);
+  }, [
+    averageBondingProgress,
+    getMainValue,
+    getETHDisplay,
+    combinedMetrics,
+    safuHolders,
+    uniqueTraderCount,
+    bnToNumber,
+    DEFAULT_METRICS,
+  ]);
 
   // GSAP animations
   useEffect(() => {
@@ -403,12 +437,16 @@ const PlatformStats = () => {
         },
       });
 
-      tl.from(headlineRef.current, {
-        opacity: 0,
-        y: 20,
-        duration: 0.8,
-        ease: "power2.out",
-      }, "+=0.1").from(cardRefs.current, {
+      tl.from(
+        headlineRef.current,
+        {
+          opacity: 0,
+          y: 20,
+          duration: 0.8,
+          ease: "power2.out",
+        },
+        "+=0.1"
+      ).from(cardRefs.current, {
         opacity: 0,
         y: 50,
         stagger: 0.2,
