@@ -457,7 +457,7 @@ export default function Trade() {
       bsc: "bsc",
 
       eth: "eth",
-      ethereum: "ethereum",
+      ethereum: "eth",
 
       polygon: "polygon",
       matic: "polygon",
