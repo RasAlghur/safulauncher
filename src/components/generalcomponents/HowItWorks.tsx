@@ -186,8 +186,10 @@ const HowItWorks = () => {
                 Once the goal is reached, SafuLauncher automatically:
               </p>
               <ul className="dark:text-white text-[#141313] list-disc pl-6 space-y-1">
-                <li>Takes a 5% listing fee & pays 0.1 ETH to the team</li>
-                <li>Adds remaining ETH + tokens to Uniswap</li>
+                <li>
+                  Takes a 5% listing fee & pays 0.1 ETH / 0.4 BNB to the team
+                </li>
+                <li>Adds remaining ETH / BNB + tokens to Uniswap</li>
                 <li>Locks or burns LP tokens</li>
                 <li>Renounces contract ownership</li>
               </ul>
