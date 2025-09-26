@@ -189,7 +189,9 @@ const HowItWorks = () => {
                 <li>
                   Takes a 5% listing fee & pays 0.1 ETH / 0.4 BNB to the team
                 </li>
-                <li>Adds remaining ETH / BNB + tokens to Uniswap</li>
+                <li>
+                  Adds remaining ETH / BNB + tokens to Uniswap / Pancakeswap
+                </li>
                 <li>Locks or burns LP tokens</li>
                 <li>Renounces contract ownership</li>
               </ul>
