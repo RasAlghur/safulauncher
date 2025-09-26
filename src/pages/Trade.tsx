@@ -3910,6 +3910,7 @@ export default function Trade() {
                         ethToUsdRate={infoETHCurrentPrice}
                         totalSupply={tokenSupply / 1e18}
                         symbol={token.symbol}
+                        chain={tokenChainName!}
                       />
                     )}
 

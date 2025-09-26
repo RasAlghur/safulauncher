@@ -105,6 +105,12 @@ interface ChartProps {
    * @type {?string}
    */
   volume?: string;
+  /**
+   * Description placeholder
+   *
+   * @type {?string}
+   */
+  chain?: string;
 }
 
 /**
@@ -121,6 +127,7 @@ interface ChartProps {
  * @param {number} [param0.rightOffset=20]
  * @param {number} [param0.minBarSpacing=6]
  * @param {string} param0.symbol
+ * @param {string} param0.chain
  * @param {number} param0.currentPrice
  * @param {number} param0.priceChange
  * @param {number} param0.priceChangePercent
@@ -140,13 +147,14 @@ export default function LightweightChart({
   currentPrice,
   priceChange,
   priceChangePercent,
+  chain,
   volume = "0%",
 }: ChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  const [currency, setCurrency] = useState<"ETH" | "USD">("USD");
+  const [currency, setCurrency] = useState<"chain" | "USD">("USD");
   const [metric, setMetric] = useState<"price" | "marketcap">("price");
 
   // Function to ensure candle continuity
@@ -346,7 +354,7 @@ export default function LightweightChart({
     if (currency === "USD") {
       return price < 0.01 ? `$${price.toFixed(6)}` : `$${price.toFixed(4)}`;
     }
-    return `${price.toFixed(6)} ETH`;
+    return `${price.toFixed(6)} ${chain}`;
   };
 
   const formatMarketCap = (value: number) => {
@@ -391,14 +399,14 @@ export default function LightweightChart({
           {/* ETH / USD Toggle */}
           <div className="text-sm dark:text-white/60 text-black/80">
             <span
-              onClick={() => setCurrency("ETH")}
+              onClick={() => setCurrency(`chain`)}
               className={`cursor-pointer transition ${
-                currency === "ETH"
+               `${ currency === 'chain'
                   ? " font-semibold"
-                  : "dark:hover:text-white/80 hover:text-black/50"
+                  : "dark:hover:text-white/80 hover:text-black/50"}`
               }`}
             >
-              ETH
+              {chain}
             </span>
             <span className="mx-1 text-white/40">/</span>
             <span
