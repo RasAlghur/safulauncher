@@ -456,7 +456,7 @@ export default function Trade() {
       "binance smart chain": "bsc",
       bsc: "bsc",
 
-      eth: "ethereum",
+      eth: "eth",
       ethereum: "ethereum",
 
       polygon: "polygon",
