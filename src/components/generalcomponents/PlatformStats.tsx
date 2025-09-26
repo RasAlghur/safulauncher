@@ -1,3 +1,5 @@
+// src/compponents/generalcomponents/PlatfromStats.tsx
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { gsap } from "gsap";
@@ -20,6 +22,8 @@ import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 import {
   ETH_USDT_PRICE_FEED_ADDRESSES,
   SAFU_TOKEN_ADDRESSES,
+  GIGGLE_ACADEMY_WALLET,
+  SAFU_LAUNCHER_ADDRESSES_V3
 } from "../../web3/config";
 import {
   getPureMetrics,
@@ -44,6 +48,49 @@ export interface TokenMetadata {
   expiresAt?: string;
 }
 
+// Interface for storing transfer data
+interface TransferData {
+  totalBNBTransferred: number;
+  lastBlockNumber: number;
+  lastFetchTimestamp: number;
+}
+
+// Default data structure
+const DEFAULT_TRANSFER_DATA: TransferData = {
+  totalBNBTransferred: 0,
+  lastBlockNumber: 0,
+  lastFetchTimestamp: 0
+};
+
+// localStorage key
+const STORAGE_KEY = 'bnb_transfers_data';
+
+// Helper function to read transfer data from localStorage
+const readTransferData = (): TransferData => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) {
+        return JSON.parse(data);
+      }
+    }
+  } catch (error) {
+    console.error('Error reading transfer data from localStorage:', error);
+  }
+  return DEFAULT_TRANSFER_DATA;
+};
+
+// Helper function to write transfer data to localStorage
+const writeTransferData = (data: TransferData): void => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  } catch (error) {
+    console.error('Error writing transfer data to localStorage:', error);
+  }
+};
+
 const PlatformStats = () => {
   const networkInfo = useNetworkEnvironment();
   const base = useApiClient();
@@ -61,6 +108,10 @@ const PlatformStats = () => {
   const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [bnbTransferredToGiggle, setBnbTransferredToGiggle] = useState<number>(0);
+  const [lastProcessedBlock, setLastProcessedBlock] = useState<number>(0);
+
+  console.log(lastProcessedBlock);
 
   // helper: safe bigint / BigNumber -> number conversion
   const bnToNumber = useCallback((v: any): number => {
@@ -92,8 +143,8 @@ const PlatformStats = () => {
         // ensure metrics is an array of bigints
         const safeMetrics = Array.isArray(metrics)
           ? metrics.map((m: any) =>
-              typeof m === "bigint" ? m : BigInt(m ?? 0)
-            )
+            typeof m === "bigint" ? m : BigInt(m ?? 0)
+          )
           : DEFAULT_METRICS;
 
         setCombinedMetrics(safeMetrics);
@@ -214,6 +265,74 @@ const PlatformStats = () => {
           console.warn("No SAFU token address for chain:", networkInfo.chainId);
           setSafuHolders(0);
           return;
+        }
+
+        // Read previous transfer data from localStorage
+        const previousData = readTransferData();
+        setBnbTransferredToGiggle(previousData.totalBNBTransferred);
+        setLastProcessedBlock(previousData.lastBlockNumber);
+
+        const params: any = {
+          chain: chainHexMap[56], // Using BSC mainnet for the launcher
+          address: SAFU_LAUNCHER_ADDRESSES_V3[56],
+          order: 'DESC' // Get newest first to find the latest block quickly
+        };
+
+        // Only add from_block if we have a previous block to avoid fetching old data
+        if (previousData.lastBlockNumber > 0) {
+          params.from_block = previousData.lastBlockNumber + 1; // Start from next block
+        }
+
+        const res2 = await Moralis.EvmApi.wallets.getWalletHistory(params);
+        const raw2 = res2.raw?.() ?? res2;
+        console.log('res2 for getWalletHistory', raw2);
+
+        let totalBNB = previousData.totalBNBTransferred;
+        let highestBlock = previousData.lastBlockNumber;
+
+        if (raw2.result && Array.isArray(raw2.result)) {
+          for (const transaction of raw2.result) {
+            // Update highest block if this transaction is newer
+            const blockNum = parseInt(transaction.block_number);
+            if (blockNum > highestBlock) {
+              highestBlock = blockNum;
+            }
+
+            // Only process transactions that are newer than our last processed block
+            if (blockNum > previousData.lastBlockNumber) {
+              // Check if this transaction has native transfers
+              if (transaction.native_transfers && Array.isArray(transaction.native_transfers)) {
+                for (const transfer of transaction.native_transfers) {
+                  // Check if transfer is from SAFU_LAUNCHER to GIGGLE_ACADEMY_WALLET
+                  if (transfer.from_address?.toLowerCase() === SAFU_LAUNCHER_ADDRESSES_V3[56]?.toLowerCase() &&
+                    transfer.to_address?.toLowerCase() === GIGGLE_ACADEMY_WALLET.toLowerCase()) {
+
+                    // Convert value from wei to BNB and add to total
+                    const valueInWei = parseFloat(transfer.value) || 0;
+                    const valueInBNB = valueInWei / 1e18;
+                    totalBNB += valueInBNB;
+
+                    console.log(`Found transfer: ${valueInBNB} BNB from ${transfer.from_address} to ${transfer.to_address} at block ${blockNum}`);
+                  }
+                }
+              }
+            }
+          }
+
+          // Update state and save to localStorage
+          if (highestBlock > previousData.lastBlockNumber) {
+            const newData: TransferData = {
+              totalBNBTransferred: totalBNB,
+              lastBlockNumber: highestBlock,
+              lastFetchTimestamp: Date.now()
+            };
+
+            setBnbTransferredToGiggle(totalBNB);
+            setLastProcessedBlock(highestBlock);
+            writeTransferData(newData);
+
+            console.log(`Updated BNB transfers: ${totalBNB} BNB total, last block: ${highestBlock}`);
+          }
         }
 
         const response = await Moralis.EvmApi.token.getTokenOwners({
@@ -372,9 +491,8 @@ const PlatformStats = () => {
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${
-          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-        }%`,
+        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+          }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -413,17 +531,15 @@ const PlatformStats = () => {
         ethValue: "",
         icon: UniqueWallet,
       },
+      {
+        id: 7,
+        title: "BNB to Giggle Academy",
+        mainValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`,
+        ethValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`,
+        icon: UniqueWallet,
+      },
     ];
-  }, [
-    averageBondingProgress,
-    getMainValue,
-    getETHDisplay,
-    combinedMetrics,
-    safuHolders,
-    uniqueTraderCount,
-    bnToNumber,
-    DEFAULT_METRICS,
-  ]);
+  }, [combinedMetrics, DEFAULT_METRICS, bnToNumber, averageBondingProgress, safuHolders, getMainValue, getETHDisplay, uniqueTraderCount, bnbTransferredToGiggle]);
 
   // GSAP animations
   useEffect(() => {
