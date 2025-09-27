@@ -1650,7 +1650,7 @@ export default function Launch(): JSX.Element {
         <div className=" bg-[#01061C]/2 max-w-5xl mx-auto py-10 mb-20  dark:bg-[#050A1E]/50 border border-white/10 px-4 lg:px-[90px] lg:pb-20 rounded-[10px] ">
           <div className="">
             <p className="font-raleway dark:text-white/70 text-[#141313] text-center">
-              Launch your token effortlessly — earn 0.2 ETH / 0.4 BNB instantly
+              Launch your token effortlessly — earn 0.1 ETH / 0.4 BNB instantly
               when it reaches the bonding curve
             </p>
           </div>

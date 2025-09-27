@@ -125,7 +125,8 @@ export default function Tokens() {
   const connectedChain = useChainId();
   const base = useApiClient();
   const [tokens, setTokens] = useState<TokenMetadata[]>([]);
-  const [featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_featuredTokens, setFeaturedTokens] = useState<TokenMetadata[]>([]);
   const [hasSetFeatured, setHasSetFeatured] = useState(false);
   const [messageCountMap, setMessageCountMap] = useState<
     Record<string, number>
@@ -742,180 +743,177 @@ export default function Tokens() {
       </div>
 
       <div className=" mb-20 px-4 lg:px-0 relative ">
-        {isLoadingTokens || isLoadingMetrics || featuredTokens.length === 0 ? (
-          <section className="fixed top-0 left-0 right-0 z-30 dark:bg-transparent bg-transparent backdrop-blur-md">
-            <div className="pt-20 max-w-6xl mx-auto">
-              <div className="flex justify-between items-center px-4">
-                <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
-                  Featured Tokens
-                </h2>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
-                  <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
+        {trendingData.length > 0 &&
+          (isLoadingTokens || isLoadingMetrics ? (
+            // 🔹 Skeleton (only if featured tokens exist AND loading)
+            <section className="fixed top-0 left-0 right-0 z-30 dark:bg-transparent bg-transparent backdrop-blur-md">
+              <div className="pt-20 max-w-6xl mx-auto">
+                <div className="flex justify-between items-center px-4">
+                  <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
+                    Featured Tokens
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
+                    <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10 animate-pulse" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="relative rounded-xl">
-                <div className="flex overflow-x-auto no-scrollbar px-4 py-5 gap-4">
-                  {[...Array(5)].map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl p-4 animate-pulse space-y-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-gray-300 dark:bg-gray-700" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
-                          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/4" />
-                          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/3" />
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center mt-3">
-                        <div className="h-6 w-16 rounded-full bg-gray-400 dark:bg-gray-600" />
-                        <div className="h-4 w-20 rounded bg-gray-300 dark:bg-gray-700" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : (
-          <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md ">
-            <div className="pt-20 max-w-6xl mx-auto">
-              <div className="flex justify-between items-center px-4">
-                <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
-                  Featured Tokens
-                </h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
-                    onClick={() => scroll("left")}
-                  >
-                    <FaChevronLeft className="text-[#141313] dark:text-white text-sm" />
-                  </button>
-                  <button
-                    className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
-                    onClick={() => scroll("right")}
-                  >
-                    <FaChevronRight className="text-[#141313] dark:text-white text-sm" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative rounded-xl">
-                <div
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                  ref={sliderRef}
-                  className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-2 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
-                >
-                  {trendingData.map((t, idx) => (
-                    <div
-                      key={idx}
-                      className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 relative z-10"
-                    >
-                      <Link
-                        to={`/trade/${t.token.tokenAddress}`}
-                        className="flex flex-col"
+                <div className="relative rounded-xl">
+                  <div className="flex overflow-x-auto no-scrollbar px-4 py-5 gap-4">
+                    {[...Array(5)].map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl p-4 animate-pulse space-y-3"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex flex-col justify-between h-full relative">
-                            {t.token.tokenImageId ? (
-                              <img
-                                src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
-                                alt={`${t.token.symbol} logo`}
-                                className="w-10 h-10 rounded-lg"
-                                crossOrigin=""
-                              />
-                            ) : (
-                              // Transparent placeholder
-                              <div className="w-10 h-10 rounded-lg bg-transparent" />
-                            )}
-
-                            {/* Chain logo */}
-                            {t.token.chainId && chainLogos[t.token.chainId] && (
-                              <div
-                                className={`flex items-center justify-center rounded-full w-7 h-7 absolute bottom-0 left-0 ${
-                                  [56, 97].includes(t.token.chainId)
-                                    ? ""
-                                    : "bg-white"
-                                }`}
-                              >
-                                <img
-                                  src={chainLogos[t.token.chainId]}
-                                  alt="chain logo"
-                                  className="w-4 h-4"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          {/* {t.token.tokenImageId && (
-                            <img
-                              src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
-                              alt={`${t.token.symbol} logo`}
-                              className="w-10 h-10 rounded-md"
-                              crossOrigin=""
-                            />
-                          )} */}
-                          <div className="flex-1">
-                            <h3 className="text-[13px] max-w-[10rem] font-semibold text-[#01061C] dark:text-white">
-                              {t.token.name} ({t.token.symbol})
-                            </h3>
-                            <p className="text-xs text-[#147ABD] truncate">
-                              by {t.token.tokenCreator.slice(0, 6)}...
-                              {t.token.tokenCreator.slice(-4)}
-                            </p>
-                            <div className="flex items-center">
-                              <p className="text-sm dark:text-[#B6B6B6] text-[#141313]">
-                                Address: {t.token.tokenAddress.slice(0, 6)}...
-                                {t.token.tokenAddress.slice(-4)}
-                              </p>
-                              <CopyButton value={t.token.tokenAddress} />
-                            </div>
+                          <div className="w-10 h-10 rounded-md bg-gray-300 dark:bg-gray-700" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/4" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/3" />
                           </div>
                         </div>
-
-                        <div className="flex justify-between items-center text-sm text-white">
-                          <div className="bg-[#064C7A] text-xs px-2 py-1 rounded-full">
-                            $
-                            {marketCapMap[t.token.tokenAddress]?.toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            ) ?? "0.00"}
-                          </div>
-                          <div className="text-xs text-right dark:text-gray-400 text-black/80">
-                            24h Vol:{" "}
-                            {isLoadingMetrics ? (
-                              <span className="">Loading...</span>
-                            ) : (
-                              `$${
-                                volume24hMap[
-                                  t.token.tokenAddress
-                                ]?.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }) ?? "0.00"
-                              }`
-                            )}
-                          </div>
+                        <div className="flex justify-between items-center mt-3">
+                          <div className="h-6 w-16 rounded-full bg-gray-400 dark:bg-gray-600" />
+                          <div className="h-4 w-20 rounded bg-gray-300 dark:bg-gray-700" />
                         </div>
-                      </Link>
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          ) : (
+            // 🔹 Actual Featured Tokens Slider
+            <section className="fixed top-0 left-0 right-0 z-40 dark:bg-transparent bg-transparent backdrop-blur-md">
+              <div className="pt-20 max-w-6xl mx-auto">
+                <div className="flex justify-between items-center px-4">
+                  <h2 className="text-xl font-bold text-[#01061C] dark:text-white">
+                    Featured Tokens
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
+                      onClick={() => scroll("left")}
+                    >
+                      <FaChevronLeft className="text-[#141313] dark:text-white text-sm" />
+                    </button>
+                    <button
+                      className="p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded"
+                      onClick={() => scroll("right")}
+                    >
+                      <FaChevronRight className="text-[#141313] dark:text-white text-sm" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative rounded-xl">
+                  <div
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    ref={sliderRef}
+                    className="flex overflow-x-auto no-scrollbar scroll-smooth px-4 py-2 gap-4 touch-pan-x cursor-grab active:cursor-grabbing relative z-10"
+                  >
+                    {trendingData.map((t, idx) => (
+                      <div
+                        key={idx}
+                        className="flex-shrink-0 w-[260px] sm:w-[300px] bg-white/90 dark:bg-[#101B3B]/80 border border-white/10 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 relative z-10"
+                      >
+                        <Link
+                          to={`/trade/${t.token.tokenAddress}`}
+                          className="flex flex-col"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col justify-between h-full relative">
+                              {t.token.tokenImageId ? (
+                                <img
+                                  src={`${networkInfo.apiBaseUrl}${t.token.image?.path}`}
+                                  alt={`${t.token.symbol} logo`}
+                                  className="w-10 h-10 rounded-lg"
+                                  crossOrigin=""
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-transparent" />
+                              )}
+
+                              {t.token.chainId &&
+                                chainLogos[t.token.chainId] && (
+                                  <div
+                                    className={`flex items-center justify-center rounded-full w-7 h-7 absolute bottom-0 left-0 ${
+                                      [56, 97].includes(t.token.chainId)
+                                        ? ""
+                                        : "bg-white"
+                                    }`}
+                                  >
+                                    <img
+                                      src={chainLogos[t.token.chainId]}
+                                      alt="chain logo"
+                                      className="w-4 h-4"
+                                    />
+                                  </div>
+                                )}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-[13px] max-w-[10rem] font-semibold text-[#01061C] dark:text-white">
+                                {t.token.name} ({t.token.symbol})
+                              </h3>
+                              <p className="text-xs text-[#147ABD] truncate">
+                                by {t.token.tokenCreator.slice(0, 6)}...
+                                {t.token.tokenCreator.slice(-4)}
+                              </p>
+                              <div className="flex items-center">
+                                <p className="text-sm dark:text-[#B6B6B6] text-[#141313]">
+                                  Address: {t.token.tokenAddress.slice(0, 6)}...
+                                  {t.token.tokenAddress.slice(-4)}
+                                </p>
+                                <CopyButton value={t.token.tokenAddress} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center text-sm text-white">
+                            <div className="bg-[#064C7A] text-xs px-2 py-1 rounded-full">
+                              $
+                              {marketCapMap[
+                                t.token.tokenAddress
+                              ]?.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }) ?? "0.00"}
+                            </div>
+                            <div className="text-xs text-right dark:text-gray-400 text-black/80">
+                              24h Vol:{" "}
+                              {isLoadingMetrics ? (
+                                <span className="">Loading...</span>
+                              ) : (
+                                `$${
+                                  volume24hMap[
+                                    t.token.tokenAddress
+                                  ]?.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }) ?? "0.00"
+                                }`
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          ))}
 
         {/* Background Glow */}
         <div className="lg:size-[30rem] lg:w-[50rem] rounded-full bg-[#3BC3DB]/10 absolute top-[100px] left-0 right-0 mx-auto blur-3xl z-0 hidden dark:block"></div>
 
-        <div className="max-w-6xl mx-auto pt-[14.3rem]">
+        <div
+          className={`max-w-6xl mx-auto ${
+            trendingData.length > 0 ? "pt-[14.3rem]" : "pt-[7rem]"
+          }`}
+        >
           <h2 className="text-3xl font-bold dark:text-white text-[#01061C] text-center my-10 z-10 relative">
             Launched Tokens
             {isLoadingMetrics && (
@@ -1144,10 +1142,12 @@ export default function Tokens() {
                                 </a>
                               </p>
                             )}
-                            <div className="h-[3rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
+                            <div className="h-[4rem] w-[10rem] lg:w-[16rem] mb-2 overflow-hidden">
                               {t.description && (
-                                <p className="mt-1 text-[14px] dark:text-white text-wrap text-[#141313] truncate">
-                                  {t.description}
+                                <p className="mt-1 text-[14px] dark:text-white text-[#141313]">
+                                  {t.description.length > 110
+                                    ? `${t.description.slice(0, 110)}...`
+                                    : t.description}
                                 </p>
                               )}
                             </div>

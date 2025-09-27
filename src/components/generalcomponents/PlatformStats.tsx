@@ -17,13 +17,14 @@ import ZeroTaxTokens from "../svgcomponents/ZeroTaxTokens";
 import SafuHolders from "../svgcomponents/SafuHolders";
 import AverageVolume from "../svgcomponents/AverageVolume";
 import UniqueWallet from "../svgcomponents/UniqueWallet";
+import Donate from "../svgcomponents/Donate";
 import DustParticles from "./DustParticles";
 import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 import {
   ETH_USDT_PRICE_FEED_ADDRESSES,
   SAFU_TOKEN_ADDRESSES,
   GIGGLE_ACADEMY_WALLET,
-  SAFU_LAUNCHER_ADDRESSES_V3
+  SAFU_LAUNCHER_ADDRESSES_V3,
 } from "../../web3/config";
 import {
   getPureMetrics,
@@ -59,23 +60,23 @@ interface TransferData {
 const DEFAULT_TRANSFER_DATA: TransferData = {
   totalBNBTransferred: 0,
   lastBlockNumber: 0,
-  lastFetchTimestamp: 0
+  lastFetchTimestamp: 0,
 };
 
 // localStorage key
-const STORAGE_KEY = 'bnb_transfers_data';
+const STORAGE_KEY = "bnb_transfers_data";
 
 // Helper function to read transfer data from localStorage
 const readTransferData = (): TransferData => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== "undefined" && window.localStorage) {
       const data = localStorage.getItem(STORAGE_KEY);
       if (data) {
         return JSON.parse(data);
       }
     }
   } catch (error) {
-    console.error('Error reading transfer data from localStorage:', error);
+    console.error("Error reading transfer data from localStorage:", error);
   }
   return DEFAULT_TRANSFER_DATA;
 };
@@ -83,13 +84,23 @@ const readTransferData = (): TransferData => {
 // Helper function to write transfer data to localStorage
 const writeTransferData = (data: TransferData): void => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
   } catch (error) {
-    console.error('Error writing transfer data to localStorage:', error);
+    console.error("Error writing transfer data to localStorage:", error);
   }
 };
+
+// define chainHexMap inside the effect
+const chainHexMap: Record<number, string> = {
+  1: "0x1", // Ethereum Mainnet
+  56: "0x38", // BSC Mainnet
+  97: "0x61", // BSC Testnet
+  11155111: "0xaa36a7", // Sepolia
+};
+
+const DEFAULT_METRICS = Array(24).fill(0n) as bigint[];
 
 const PlatformStats = () => {
   const networkInfo = useNetworkEnvironment();
@@ -102,13 +113,14 @@ const PlatformStats = () => {
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
   const [safuHolders, setSafuHolders] = useState<number>(0);
   // getMetrics returns 24 values in v3/v4 — create a safe default
-  const DEFAULT_METRICS = Array(24).fill(0n) as bigint[];
+
   const [combinedMetrics, setCombinedMetrics] =
     useState<bigint[]>(DEFAULT_METRICS);
   const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [bnbTransferredToGiggle, setBnbTransferredToGiggle] = useState<number>(0);
+  const [bnbTransferredToGiggle, setBnbTransferredToGiggle] =
+    useState<number>(0);
   const [lastProcessedBlock, setLastProcessedBlock] = useState<number>(0);
 
   console.log(lastProcessedBlock);
@@ -143,8 +155,8 @@ const PlatformStats = () => {
         // ensure metrics is an array of bigints
         const safeMetrics = Array.isArray(metrics)
           ? metrics.map((m: any) =>
-            typeof m === "bigint" ? m : BigInt(m ?? 0)
-          )
+              typeof m === "bigint" ? m : BigInt(m ?? 0)
+            )
           : DEFAULT_METRICS;
 
         setCombinedMetrics(safeMetrics);
@@ -167,7 +179,7 @@ const PlatformStats = () => {
     return () => {
       cancelled = true;
     };
-  }, [networkInfo?.chainId, bnToNumber, DEFAULT_METRICS]);
+  }, [networkInfo?.chainId, bnToNumber]);
 
   // ---------- ETH PRICE ----------
   useEffect(() => {
@@ -237,14 +249,6 @@ const PlatformStats = () => {
           return;
         }
 
-        // define chainHexMap inside the effect
-        const chainHexMap: Record<number, string> = {
-          1: "0x1", // Ethereum Mainnet
-          56: "0x38", // BSC Mainnet
-          97: "0x61", // BSC Testnet
-          11155111: "0xaa36a7", // Sepolia
-        };
-
         const chainParam =
           chainHexMap[networkInfo.chainId] ??
           `0x${networkInfo.chainId.toString(16)}`;
@@ -275,7 +279,7 @@ const PlatformStats = () => {
         const params: any = {
           chain: chainHexMap[56], // Using BSC mainnet for the launcher
           address: SAFU_LAUNCHER_ADDRESSES_V3[56],
-          order: 'DESC' // Get newest first to find the latest block quickly
+          order: "DESC", // Get newest first to find the latest block quickly
         };
 
         // Only add from_block if we have a previous block to avoid fetching old data
@@ -285,7 +289,7 @@ const PlatformStats = () => {
 
         const res2 = await Moralis.EvmApi.wallets.getWalletHistory(params);
         const raw2 = res2.raw?.() ?? res2;
-        console.log('res2 for getWalletHistory', raw2);
+        console.log("res2 for getWalletHistory", raw2);
 
         let totalBNB = previousData.totalBNBTransferred;
         let highestBlock = previousData.lastBlockNumber;
@@ -301,18 +305,26 @@ const PlatformStats = () => {
             // Only process transactions that are newer than our last processed block
             if (blockNum > previousData.lastBlockNumber) {
               // Check if this transaction has native transfers
-              if (transaction.native_transfers && Array.isArray(transaction.native_transfers)) {
+              if (
+                transaction.native_transfers &&
+                Array.isArray(transaction.native_transfers)
+              ) {
                 for (const transfer of transaction.native_transfers) {
                   // Check if transfer is from SAFU_LAUNCHER to GIGGLE_ACADEMY_WALLET
-                  if (transfer.from_address?.toLowerCase() === SAFU_LAUNCHER_ADDRESSES_V3[56]?.toLowerCase() &&
-                    transfer.to_address?.toLowerCase() === GIGGLE_ACADEMY_WALLET.toLowerCase()) {
-
+                  if (
+                    transfer.from_address?.toLowerCase() ===
+                      SAFU_LAUNCHER_ADDRESSES_V3[56]?.toLowerCase() &&
+                    transfer.to_address?.toLowerCase() ===
+                      GIGGLE_ACADEMY_WALLET.toLowerCase()
+                  ) {
                     // Convert value from wei to BNB and add to total
                     const valueInWei = parseFloat(transfer.value) || 0;
                     const valueInBNB = valueInWei / 1e18;
                     totalBNB += valueInBNB;
 
-                    console.log(`Found transfer: ${valueInBNB} BNB from ${transfer.from_address} to ${transfer.to_address} at block ${blockNum}`);
+                    console.log(
+                      `Found transfer: ${valueInBNB} BNB from ${transfer.from_address} to ${transfer.to_address} at block ${blockNum}`
+                    );
                   }
                 }
               }
@@ -324,14 +336,16 @@ const PlatformStats = () => {
             const newData: TransferData = {
               totalBNBTransferred: totalBNB,
               lastBlockNumber: highestBlock,
-              lastFetchTimestamp: Date.now()
+              lastFetchTimestamp: Date.now(),
             };
 
             setBnbTransferredToGiggle(totalBNB);
             setLastProcessedBlock(highestBlock);
             writeTransferData(newData);
 
-            console.log(`Updated BNB transfers: ${totalBNB} BNB total, last block: ${highestBlock}`);
+            console.log(
+              `Updated BNB transfers: ${totalBNB} BNB total, last block: ${highestBlock}`
+            );
           }
         }
 
@@ -474,13 +488,7 @@ const PlatformStats = () => {
         icon: TokensListed,
       },
     ];
-  }, [
-    getMainValue,
-    averageVolume,
-    combinedMetrics,
-    bnToNumber,
-    DEFAULT_METRICS,
-  ]);
+  }, [getMainValue, averageVolume, combinedMetrics, bnToNumber]);
 
   const stats2 = useMemo(() => {
     const metrics =
@@ -491,8 +499,9 @@ const PlatformStats = () => {
       {
         id: 1,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
-          }%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -534,12 +543,21 @@ const PlatformStats = () => {
       {
         id: 7,
         title: "BNB to Giggle Academy",
-        mainValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`,
-        ethValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`,
-        icon: UniqueWallet,
+        mainValue: "", // hide main value
+        ethValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`, // show only BNB here
+        icon: Donate,
       },
     ];
-  }, [combinedMetrics, DEFAULT_METRICS, bnToNumber, averageBondingProgress, safuHolders, getMainValue, getETHDisplay, uniqueTraderCount, bnbTransferredToGiggle]);
+  }, [
+    combinedMetrics,
+    bnToNumber,
+    averageBondingProgress,
+    safuHolders,
+    getMainValue,
+    getETHDisplay,
+    uniqueTraderCount,
+    bnbTransferredToGiggle,
+  ]);
 
   // GSAP animations
   useEffect(() => {
@@ -707,12 +725,15 @@ const PlatformStats = () => {
                       </p>
                     )}
                   </div>
-                  <div
-                    id={`main-value-${idx}`}
-                    className="xl:text-lg text-base font-semibold dark:text-white text-black mb-2"
-                  >
-                    {isLoading ? "Loading..." : stat.mainValue}
-                  </div>
+                  {/* Main value */}
+                  {stat.mainValue && (
+                    <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                      <span className="main-value" id={`main-value-${index}`}>
+                        {isLoading ? "Loading..." : stat.mainValue}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
                   </div>

@@ -18,6 +18,8 @@ import { useNetworkEnvironment } from "../../config/useNetworkEnvironment";
 import {
   ETH_USDT_PRICE_FEED_ADDRESSES,
   SAFU_TOKEN_ADDRESSES,
+  GIGGLE_ACADEMY_WALLET,
+  SAFU_LAUNCHER_ADDRESSES_V3,
 } from "../../web3/config";
 import cloudRight from "../../assets/cloud-right.png";
 import cloudLeft from "../../assets/cloud-left.png";
@@ -35,6 +37,7 @@ import UniqueWallet from "../svgcomponents/UniqueWallet";
 import DustParticles from "../generalcomponents/DustParticles";
 import Reward from "../svgcomponents/Reward";
 import AverageVolume from "../svgcomponents/AverageVolume";
+import Donate from "../svgcomponents/Donate";
 import Moralis from "moralis";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -50,6 +53,49 @@ export interface TokenMetadata {
   createdAt?: string;
   expiresAt?: string;
 }
+
+// Interface for storing transfer data
+interface TransferData {
+  totalBNBTransferred: number;
+  lastBlockNumber: number;
+  lastFetchTimestamp: number;
+}
+
+// Default data structure
+const DEFAULT_TRANSFER_DATA: TransferData = {
+  totalBNBTransferred: 0,
+  lastBlockNumber: 0,
+  lastFetchTimestamp: 0,
+};
+
+// localStorage key
+const STORAGE_KEY = "bnb_transfers_data";
+
+// Helper function to read transfer data from localStorage
+const readTransferData = (): TransferData => {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) {
+        return JSON.parse(data);
+      }
+    }
+  } catch (error) {
+    console.error("Error reading transfer data from localStorage:", error);
+  }
+  return DEFAULT_TRANSFER_DATA;
+};
+
+// Helper function to write transfer data to localStorage
+const writeTransferData = (data: TransferData): void => {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  } catch (error) {
+    console.error("Error writing transfer data to localStorage:", error);
+  }
+};
 
 const DEFAULT_METRICS = Array(24).fill(0n) as bigint[]; // match getMetrics length for v3/v4
 
@@ -72,9 +118,15 @@ const PlatformStats = () => {
   const [currentETHPrice, setCurrentETHPrice] = useState<number>(0);
   const [totalTokenCount, setTotalTokenCount] = useState<number>(0);
   const [safuHolders, setSafuHolders] = useState<number>(0);
-  const [combinedMetrics, setCombinedMetrics] = useState<bigint[]>(DEFAULT_METRICS);
+  const [combinedMetrics, setCombinedMetrics] =
+    useState<bigint[]>(DEFAULT_METRICS);
   const [uniqueTraderCount, setUniqueTraderCount] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [bnbTransferredToGiggle, setBnbTransferredToGiggle] =
+    useState<number>(0);
+  const [lastProcessedBlock, setLastProcessedBlock] = useState<number>(0);
+
+  console.log(lastProcessedBlock);
 
   // Safe conversion helper for BigInt / BigNumber / string / number -> number
   const bnToNumber = useCallback((v: any): number => {
@@ -102,7 +154,9 @@ const PlatformStats = () => {
       const apiKey = import.meta.env.VITE_MORALIS_API_KEY;
       if (!apiKey) {
         // warn but continue — caller will handle absence
-        console.warn("VITE_MORALIS_API_KEY is not set; Moralis calls will fail.");
+        console.warn(
+          "VITE_MORALIS_API_KEY is not set; Moralis calls will fail."
+        );
         return;
       }
 
@@ -124,7 +178,7 @@ const PlatformStats = () => {
   // Single effect to fetch metrics, price, SAFU holders, token count in parallel,
   // with cancellation guard.
   useEffect(() => {
-    let cancelled = false;
+    const cancelled = false;
 
     const fetchAll = async () => {
       setIsLoading(true);
@@ -134,7 +188,8 @@ const PlatformStats = () => {
 
       // 1) metrics + unique traders
       const metricsTask = (async () => {
-        if (!networkInfo?.chainId) return { metrics: DEFAULT_METRICS, traders: 0n };
+        if (!networkInfo?.chainId)
+          return { metrics: DEFAULT_METRICS, traders: 0n };
         try {
           const [metricsRaw, tradersRaw] = await Promise.all([
             getPureMetrics(networkInfo.chainId).catch(() => DEFAULT_METRICS),
@@ -142,9 +197,14 @@ const PlatformStats = () => {
           ]);
           // normalize metrics -> bigint[]
           const metrics = Array.isArray(metricsRaw)
-            ? metricsRaw.map((m: any) => (typeof m === "bigint" ? m : BigInt(m ?? 0)))
+            ? metricsRaw.map((m: any) =>
+                typeof m === "bigint" ? m : BigInt(m ?? 0)
+              )
             : DEFAULT_METRICS;
-          const traders = typeof tradersRaw === "bigint" ? tradersRaw : BigInt(tradersRaw ?? 0);
+          const traders =
+            typeof tradersRaw === "bigint"
+              ? tradersRaw
+              : BigInt(tradersRaw ?? 0);
           return { metrics, traders };
         } catch (err) {
           console.error("getPureMetrics/getPureUniqueTraderCount failed:", err);
@@ -156,10 +216,14 @@ const PlatformStats = () => {
       // 2) ETH price
       const priceTask = (async () => {
         if (!networkInfo?.chainId) return null;
-        const priceFeedAddress = ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
+        const priceFeedAddress =
+          ETH_USDT_PRICE_FEED_ADDRESSES[networkInfo.chainId];
         if (!priceFeedAddress) return null;
         try {
-          const raw = await getPureGetLatestETHPrice(networkInfo.chainId, priceFeedAddress).catch(() => null);
+          const raw = await getPureGetLatestETHPrice(
+            networkInfo.chainId,
+            priceFeedAddress
+          ).catch(() => null);
           const price = bnToNumber(raw) / 1e8;
           return Number.isFinite(price) ? price : null;
         } catch (err) {
@@ -176,7 +240,9 @@ const PlatformStats = () => {
 
           if (!networkInfo?.chainId) return 0;
 
-          const chainParam = chainHexMap[networkInfo.chainId] ?? `0x${networkInfo.chainId.toString(16)}`;
+          const chainParam =
+            chainHexMap[networkInfo.chainId] ??
+            `0x${networkInfo.chainId.toString(16)}`;
 
           if (!/^0x[0-9a-fA-F]+$/.test(chainParam)) {
             console.warn("Invalid chain param for Moralis:", chainParam);
@@ -192,8 +258,89 @@ const PlatformStats = () => {
             null;
 
           if (!safuAddress) {
-            console.warn("No SAFU token address configured for chain:", networkInfo.chainId);
+            console.warn(
+              "No SAFU token address configured for chain:",
+              networkInfo.chainId
+            );
             return 0;
+          }
+
+          // Read previous transfer data from localStorage
+          const previousData = readTransferData();
+          setBnbTransferredToGiggle(previousData.totalBNBTransferred);
+          setLastProcessedBlock(previousData.lastBlockNumber);
+
+          const params: any = {
+            chain: chainHexMap[56], // Using BSC mainnet for the launcher
+            address: SAFU_LAUNCHER_ADDRESSES_V3[56],
+            order: "DESC", // Get newest first to find the latest block quickly
+          };
+
+          // Only add from_block if we have a previous block to avoid fetching old data
+          if (previousData.lastBlockNumber > 0) {
+            params.from_block = previousData.lastBlockNumber + 1; // Start from next block
+          }
+
+          const res2 = await Moralis.EvmApi.wallets.getWalletHistory(params);
+          const raw2 = res2.raw?.() ?? res2;
+          console.log("res2 for getWalletHistory", raw2);
+
+          let totalBNB = previousData.totalBNBTransferred;
+          let highestBlock = previousData.lastBlockNumber;
+
+          if (raw2.result && Array.isArray(raw2.result)) {
+            for (const transaction of raw2.result) {
+              // Update highest block if this transaction is newer
+              const blockNum = parseInt(transaction.block_number);
+              if (blockNum > highestBlock) {
+                highestBlock = blockNum;
+              }
+
+              // Only process transactions that are newer than our last processed block
+              if (blockNum > previousData.lastBlockNumber) {
+                // Check if this transaction has native transfers
+                if (
+                  transaction.native_transfers &&
+                  Array.isArray(transaction.native_transfers)
+                ) {
+                  for (const transfer of transaction.native_transfers) {
+                    // Check if transfer is from SAFU_LAUNCHER to GIGGLE_ACADEMY_WALLET
+                    if (
+                      transfer.from_address?.toLowerCase() ===
+                        SAFU_LAUNCHER_ADDRESSES_V3[56]?.toLowerCase() &&
+                      transfer.to_address?.toLowerCase() ===
+                        GIGGLE_ACADEMY_WALLET.toLowerCase()
+                    ) {
+                      // Convert value from wei to BNB and add to total
+                      const valueInWei = parseFloat(transfer.value) || 0;
+                      const valueInBNB = valueInWei / 1e18;
+                      totalBNB += valueInBNB;
+
+                      console.log(
+                        `Found transfer: ${valueInBNB} BNB from ${transfer.from_address} to ${transfer.to_address} at block ${blockNum}`
+                      );
+                    }
+                  }
+                }
+              }
+            }
+
+            // Update state and save to localStorage
+            if (highestBlock > previousData.lastBlockNumber) {
+              const newData: TransferData = {
+                totalBNBTransferred: totalBNB,
+                lastBlockNumber: highestBlock,
+                lastFetchTimestamp: Date.now(),
+              };
+
+              setBnbTransferredToGiggle(totalBNB);
+              setLastProcessedBlock(highestBlock);
+              writeTransferData(newData);
+
+              console.log(
+                `Updated BNB transfers: ${totalBNB} BNB total, last block: ${highestBlock}`
+              );
+            }
           }
 
           const resp = await Moralis.EvmApi.token.getTokenOwners({
@@ -204,7 +351,9 @@ const PlatformStats = () => {
 
           // robustly read result
           const raw = resp?.raw?.() ?? resp;
-          const owners = Array.isArray(raw?.result) ? raw.result : raw?.result ?? [];
+          const owners = Array.isArray(raw?.result)
+            ? raw.result
+            : raw?.result ?? [];
           return owners.length;
         } catch (err) {
           console.error("Moralis token owners fetch failed:", err);
@@ -247,7 +396,11 @@ const PlatformStats = () => {
 
       // priceTask index 1
       const priceResult = results[1];
-      if (priceResult.status === "fulfilled" && priceResult.value !== null && typeof priceResult.value !== "undefined") {
+      if (
+        priceResult.status === "fulfilled" &&
+        priceResult.value !== null &&
+        typeof priceResult.value !== "undefined"
+      ) {
         setCurrentETHPrice(priceResult.value as number);
       } else {
         setCurrentETHPrice(0);
@@ -284,7 +437,6 @@ const PlatformStats = () => {
       // nothing to do here explicitly
       // (kept for clarity)
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networkInfo?.chainId, base, bnToNumber, startMoralisIfNeeded]);
 
   // Derived: average bonding & average volume
@@ -297,7 +449,7 @@ const PlatformStats = () => {
   const averageVolume = useMemo(() => {
     const denom = totalTokenCount > 0 ? totalTokenCount : 1;
     const v = combinedMetrics?.[0] ?? 0n;
-    return (bnToNumber(v) / 1e18) / denom;
+    return bnToNumber(v) / 1e18 / denom;
   }, [combinedMetrics, totalTokenCount, bnToNumber]);
 
   // display helpers
@@ -323,7 +475,8 @@ const PlatformStats = () => {
 
   // build stats array (unique ids)
   const stats = useMemo(() => {
-    const metrics = combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
+    const metrics =
+      combinedMetrics.length > 0 ? combinedMetrics : DEFAULT_METRICS;
     const totalTradersExtra = bnToNumber(metrics[8] ?? 0n); // earlier code used metrics[8]
     const devRewardEth = bnToNumber(metrics[6] ?? 0n) / 1e18;
 
@@ -331,7 +484,10 @@ const PlatformStats = () => {
       {
         id: 1,
         title: "Total Volume",
-        mainValue: getMainValue(bnToNumber(metrics[0]) / 1e18, `${(bnToNumber(metrics[0]) / 1e18).toFixed(8)} ETH`),
+        mainValue: getMainValue(
+          bnToNumber(metrics[0]) / 1e18,
+          `${(bnToNumber(metrics[0]) / 1e18).toFixed(8)} ETH`
+        ),
         icon: VolumeIcon,
       },
       {
@@ -343,8 +499,11 @@ const PlatformStats = () => {
       },
       {
         id: 3,
-        title: "Fees Collected",
-        mainValue: getMainValue(bnToNumber(metrics[1]) / 1e18, `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`),
+        title: "Revenue Generated",
+        mainValue: getMainValue(
+          bnToNumber(metrics[1]) / 1e18,
+          `${(bnToNumber(metrics[1]) / 1e18).toFixed(8)} ETH`
+        ),
         icon: FeeCollected,
       },
       {
@@ -364,7 +523,9 @@ const PlatformStats = () => {
       {
         id: 6,
         title: "Average Bonding",
-        mainValue: `${isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)}%`,
+        mainValue: `${
+          isNaN(averageBondingProgress) ? 0 : averageBondingProgress.toFixed(2)
+        }%`,
         ethValue: "",
         icon: AverageBonding,
       },
@@ -399,12 +560,31 @@ const PlatformStats = () => {
       {
         id: 11,
         title: "Total Unique Traders",
-        mainValue: (bnToNumber(uniqueTraderCount) + totalTradersExtra).toLocaleString(),
+        mainValue: (
+          bnToNumber(uniqueTraderCount) + totalTradersExtra
+        ).toLocaleString(),
         ethValue: "", // not applicable
         icon: UniqueWallet,
       },
+      {
+        id: 12,
+        title: "BNB to Giggle Academy",
+        mainValue: "", // hide main value
+        ethValue: `${bnbTransferredToGiggle.toFixed(6)} BNB`, // show only BNB here
+        icon: Donate,
+      },
     ];
-  }, [combinedMetrics, averageBondingProgress, averageVolume, getMainValue, getETHDisplay, safuHolders, uniqueTraderCount, bnToNumber]);
+  }, [
+    combinedMetrics,
+    averageBondingProgress,
+    averageVolume,
+    getMainValue,
+    getETHDisplay,
+    safuHolders,
+    uniqueTraderCount,
+    bnToNumber,
+    bnbTransferredToGiggle,
+  ]);
 
   // GSAP entrance animation (useLayoutEffect for better layout timing)
   useLayoutEffect(() => {
@@ -418,12 +598,16 @@ const PlatformStats = () => {
         },
       });
 
-      tl.from(headlineRef.current, {
-        opacity: 0,
-        y: 20,
-        duration: 0.6,
-        ease: "power2.out",
-      }, "+=0.1").from(cardRefs.current, {
+      tl.from(
+        headlineRef.current,
+        {
+          opacity: 0,
+          y: 20,
+          duration: 0.6,
+          ease: "power2.out",
+        },
+        "+=0.1"
+      ).from(cardRefs.current, {
         opacity: 0,
         y: 50,
         stagger: 0.15,
@@ -524,7 +708,9 @@ const PlatformStats = () => {
               return (
                 <div
                   key={stat.id}
-                  ref={(el) => { if (el) cardRefs.current[index] = el; }}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
                   className="dark:bg-[#9747FF]/5 bg-[#064C7A]/10 px-2.5 py-8 rounded-xl flex flex-col items-center justify-center text-center"
                 >
                   <div className="w-16 h-16 mb-4 relative">
@@ -536,11 +722,15 @@ const PlatformStats = () => {
                     )}
                   </div>
                   {/* Main value */}
-                  <div className="text-lg font-semibold dark:text-white text-black mb-2">
-                    <span className="main-value" id={`main-value-${index}`}>
-                      {isLoading ? "Loading..." : stat.mainValue}
-                    </span>
-                  </div>
+                  {/* Main value */}
+                  {stat.mainValue && (
+                    <div className="text-lg font-semibold dark:text-white text-black mb-2">
+                      <span className="main-value" id={`main-value-${index}`}>
+                        {isLoading ? "Loading..." : stat.mainValue}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Title */}
                   <div className="text-sm dark:text-white/70 text-[#141313] leading-tight mb-2">
                     {stat.title}
