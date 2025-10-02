@@ -40,6 +40,23 @@ export const ROUTER_ADDRESSES_LIST: Record<number, Router[]> = {
   ],
 };
 
+
+// Add this mapping constant in your configuration file or within Trade.tsx
+const CHAIN_EXPLORER_URLS: { [chainId: number]: string } = {
+  // Ethereum Mainnet and Testnets
+  1: "https://etherscan.io",
+  11155111: "https://sepolia.etherscan.io",
+  
+  // BNB Smart Chain
+  56: "https://bscscan.com", // BSC Mainnet:cite[4]:cite[8]
+  97: "https://testnet.bscscan.com"
+};
+
+// Helper function to get explorer URL
+export const getExplorerUrl = (chainId: number): string => {
+  return CHAIN_EXPLORER_URLS[chainId] || "https://etherscan.io"; // Default fallback
+};
+
 export const GIGGLE_ACADEMY_WALLET =
   "0xC7f501D25Ea088aeFCa8B4b3ebD936aAe12bF4A4";
 
